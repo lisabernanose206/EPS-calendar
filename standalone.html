@@ -359,6 +359,15 @@
       .hoursDetail span { color: #64748b; font-size: 10px; }
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
+      .cloudPage { display: grid; gap: 12px; margin-top: 16px; max-width: 980px; }
+      .cloudPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 14px; }
+      .cloudGrid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cloudField { display: grid; gap: 5px; }
+      .cloudField label { color: #64748b; font-size: 12px; font-weight: 900; }
+      .cloudField input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 36px; padding: 0 10px; }
+      .cloudActions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+      .cloudStatus { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 12px; font-weight: 850; padding: 10px; }
+      .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2 { background: #fff; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA3 .top, body.printA2 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA3 .builderActions, body.printA2 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA3 .legend, body.printA2 .legend { display: none !important; }
       body.printA3 .app, body.printA2 .app { padding: 0; }
@@ -544,6 +553,11 @@
       let unavailableSlotIds = [];
       let unavailableCells = [];
       let editingUnavailableId = null;
+      const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
+      let cloudConfig = loadCloudConfig();
+      let cloudStatus = "Cloud non configuré.";
+      let cloudSaveTimer = null;
+      let cloudSyncing = false;
 
       function emptyStats() {
         return Object.fromEntries(teachers.map((teacher) => [teacher.id, {
@@ -816,6 +830,7 @@
 
       function saveYearPlan() {
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
+        scheduleCloudSave();
       }
 
       function yearValue(rowId, weekRank) {
@@ -835,6 +850,7 @@
 
       function saveConstructionPlan() {
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
+        scheduleCloudSave();
       }
 
       function loadTeachers() {
@@ -849,6 +865,7 @@
 
       function saveTeachers() {
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
+        scheduleCloudSave();
       }
 
       function shadeColor(hex, amount) {
@@ -906,6 +923,7 @@
 
       function saveConstructionRules() {
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        scheduleCloudSave();
       }
 
       function loadBlockExclusions() {
@@ -919,6 +937,7 @@
 
       function saveBlockExclusions() {
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
+        scheduleCloudSave();
       }
 
       function isBlockExcluded(ruleId, key) {
@@ -960,6 +979,7 @@
 
       function saveSportEvents() {
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
+        scheduleCloudSave();
       }
 
       function loadAsSessions() {
@@ -973,6 +993,7 @@
 
       function saveAsSessions() {
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
+        scheduleCloudSave();
       }
 
       function loadFacilities() {
@@ -992,6 +1013,7 @@
 
       function saveFacilities() {
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
+        scheduleCloudSave();
       }
 
       function loadFacilityUnavailability() {
@@ -1005,6 +1027,7 @@
 
       function saveFacilityUnavailability() {
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
+        scheduleCloudSave();
       }
 
       function loadEventExclusions() {
@@ -1018,6 +1041,7 @@
 
       function saveEventExclusions() {
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
+        scheduleCloudSave();
       }
 
       function isRuleExcluded(ruleId, key) {
@@ -1200,6 +1224,147 @@
 
       function saveCycles() {
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
+        scheduleCloudSave();
+      }
+
+      function loadCloudConfig() {
+        try {
+          const saved = localStorage.getItem(CLOUD_CONFIG_KEY);
+          return saved ? JSON.parse(saved) : { enabled: false, autoSave: true, autoLoad: false, url: "", anonKey: "", planningId: "vaucanson-2026-2027" };
+        } catch {
+          return { enabled: false, autoSave: true, autoLoad: false, url: "", anonKey: "", planningId: "vaucanson-2026-2027" };
+        }
+      }
+
+      function saveCloudConfig() {
+        localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+      }
+
+      function cloudReady() {
+        return Boolean(cloudConfig.enabled && cloudConfig.url && cloudConfig.anonKey && cloudConfig.planningId);
+      }
+
+      function cloudEndpoint() {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/rest/v1/eps_plannings`;
+      }
+
+      function cloudHeaders(extra = {}) {
+        return {
+          apikey: cloudConfig.anonKey,
+          Authorization: `Bearer ${cloudConfig.anonKey}`,
+          "Content-Type": "application/json",
+          ...extra
+        };
+      }
+
+      function collectPlanningData() {
+        return {
+          version: 1,
+          savedAt: new Date().toISOString(),
+          teachers,
+          facilities,
+          yearPlan,
+          cycles,
+          constructionRules,
+          constructionPlan,
+          blockExclusions,
+          sportEvents,
+          asSessions,
+          facilityUnavailability,
+          eventExclusions
+        };
+      }
+
+      function applyPlanningData(data) {
+        if (!data || typeof data !== "object") return;
+        teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
+        facilities = Array.isArray(data.facilities) && data.facilities.length ? data.facilities : facilities;
+        yearPlan = data.yearPlan || yearPlan;
+        cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
+        activeCycleId = cycles[0]?.id || activeCycleId;
+        constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
+        blockExclusions = data.blockExclusions || blockExclusions;
+        sportEvents = Array.isArray(data.sportEvents) ? data.sportEvents : sportEvents;
+        asSessions = Array.isArray(data.asSessions) ? data.asSessions : asSessions;
+        facilityUnavailability = Array.isArray(data.facilityUnavailability) ? data.facilityUnavailability : facilityUnavailability;
+        eventExclusions = data.eventExclusions || eventExclusions;
+        selectedTeacherIds = teachers.map((teacher) => teacher.id);
+        cycleTeacherIds = teachers.map((teacher) => teacher.id);
+        cycleFacilityIds = facilities.map((facility) => facility.id);
+        constructionPlan = buildConstructionPlanFromRules();
+        localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
+        localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
+        localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
+        localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
+        localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
+        localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
+        localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
+        localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
+        localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
+        localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
+      }
+
+      function scheduleCloudSave() {
+        if (!cloudReady() || !cloudConfig.autoSave || cloudSyncing) return;
+        clearTimeout(cloudSaveTimer);
+        cloudStatus = "Sauvegarde cloud en attente...";
+        cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false), 900);
+      }
+
+      async function cloudSaveToRemote(shouldRender = true) {
+        if (!cloudReady()) {
+          cloudStatus = "Cloud non configuré.";
+          if (shouldRender) render();
+          return;
+        }
+        cloudSyncing = true;
+        cloudStatus = "Sauvegarde cloud en cours...";
+        if (shouldRender) render();
+        try {
+          const response = await fetch(`${cloudEndpoint()}?on_conflict=id`, {
+            method: "POST",
+            headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+            body: JSON.stringify({ id: cloudConfig.planningId, data: collectPlanningData(), updated_at: new Date().toISOString() })
+          });
+          if (!response.ok) throw new Error(await response.text());
+          cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`;
+        } catch (error) {
+          cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
+        } finally {
+          cloudSyncing = false;
+          if (shouldRender) render();
+        }
+      }
+
+      async function cloudLoadFromRemote(shouldRender = true) {
+        if (!cloudReady()) {
+          cloudStatus = "Cloud non configuré.";
+          if (shouldRender) render();
+          return;
+        }
+        cloudSyncing = true;
+        cloudStatus = "Chargement depuis le cloud...";
+        if (shouldRender) render();
+        try {
+          const response = await fetch(`${cloudEndpoint()}?select=data,updated_at&id=eq.${encodeURIComponent(cloudConfig.planningId)}`, {
+            headers: cloudHeaders()
+          });
+          if (!response.ok) throw new Error(await response.text());
+          const rows = await response.json();
+          if (!rows.length) {
+            cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
+          } else {
+            applyPlanningData(rows[0].data);
+            cloudStatus = `Données cloud chargées (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
+          }
+        } catch (error) {
+          cloudStatus = `Erreur cloud : ${error.message || "chargement impossible"}`;
+        } finally {
+          cloudSyncing = false;
+          if (shouldRender) render();
+        }
       }
 
       function setCycleCount(count) {
@@ -2245,6 +2410,12 @@
             ${renderHoursBalance()}
           </section>`;
         }
+        if (constructionMode === "cloud") {
+          return `<section>
+            ${renderConstructionTabs()}
+            ${renderCloudSettings()}
+          </section>`;
+        }
         return `<section class="builderPage">
           <div>
             ${renderConstructionTabs()}
@@ -2277,8 +2448,58 @@
           <button class="${constructionMode === "as" ? "active" : ""}" data-construction-mode="as">AS</button>
           <button class="${constructionMode === "events" ? "active" : ""}" data-construction-mode="events">Événements sportifs</button>
           <button class="${constructionMode === "hours" ? "active" : ""}" data-construction-mode="hours">Bilan heures</button>
+          <button class="${constructionMode === "cloud" ? "active" : ""}" data-construction-mode="cloud">Cloud</button>
           <button class="${constructionMode === "planning" ? "active" : ""}" data-construction-mode="planning">Construction</button>
         </div>`;
+      }
+
+      function renderCloudSettings() {
+        const sql = `create table public.eps_plannings (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.eps_plannings disable row level security;`;
+        return `<section class="cloudPage">
+          <div class="cloudPanel">
+            <h3>Synchronisation cloud</h3>
+            <p class="muted">À configurer avec Supabase : une fois activé, le planning est partagé entre ordinateur, iPad et collègues.</p>
+            <div class="cloudGrid">
+              <div class="cloudField">
+                <label>URL Supabase</label>
+                <input id="cloudUrl" value="${cloudConfig.url || ""}" placeholder="https://xxxxx.supabase.co" />
+              </div>
+              <div class="cloudField">
+                <label>Clé publique anon</label>
+                <input id="cloudAnonKey" value="${cloudConfig.anonKey || ""}" placeholder="eyJhbGci..." />
+              </div>
+              <div class="cloudField">
+                <label>Identifiant du planning</label>
+                <input id="cloudPlanningId" value="${cloudConfig.planningId || "vaucanson-2026-2027"}" />
+              </div>
+              <div class="cloudField">
+                <label>Options</label>
+                <div class="choiceGrid">
+                  <button class="choiceButton ${cloudConfig.enabled ? "active" : ""}" data-cloud-toggle="enabled">${cloudConfig.enabled ? "Cloud actif" : "Cloud inactif"}</button>
+                  <button class="choiceButton ${cloudConfig.autoSave ? "active" : ""}" data-cloud-toggle="autoSave">Autosauvegarde</button>
+                  <button class="choiceButton ${cloudConfig.autoLoad ? "active" : ""}" data-cloud-toggle="autoLoad">Charger au démarrage</button>
+                </div>
+              </div>
+            </div>
+            <div class="cloudActions">
+              <button class="ghostButton" id="saveCloudConfig">Enregistrer la configuration</button>
+              <button class="ghostButton" id="pushCloudNow" ${!cloudReady() || cloudSyncing ? "disabled" : ""}>Envoyer ce planning vers le cloud</button>
+              <button class="ghostButton" id="pullCloudNow" ${!cloudReady() || cloudSyncing ? "disabled" : ""}>Charger le planning cloud</button>
+            </div>
+            <div class="cloudStatus">${cloudStatus}</div>
+          </div>
+          <div class="cloudPanel">
+            <h3>Table Supabase à créer</h3>
+            <p class="muted">Dans Supabase, va dans SQL Editor, colle ce script, puis récupère l'URL du projet et la clé publique anon.</p>
+            <pre class="cloudSql">${sql}</pre>
+          </div>
+        </section>`;
       }
 
       function renderBuildModal() {
@@ -3005,6 +3226,33 @@
             render();
           });
         });
+        document.querySelectorAll("[data-cloud-toggle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const key = button.dataset.cloudToggle;
+            cloudConfig = { ...cloudConfig, [key]: !cloudConfig[key] };
+            saveCloudConfig();
+            cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            render();
+          });
+        });
+        const saveCloudConfigButton = document.getElementById("saveCloudConfig");
+        if (saveCloudConfigButton) {
+          saveCloudConfigButton.addEventListener("click", () => {
+            cloudConfig = {
+              ...cloudConfig,
+              url: document.getElementById("cloudUrl")?.value.trim() || "",
+              anonKey: document.getElementById("cloudAnonKey")?.value.trim() || "",
+              planningId: document.getElementById("cloudPlanningId")?.value.trim() || "vaucanson-2026-2027"
+            };
+            saveCloudConfig();
+            cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            render();
+          });
+        }
+        const pushCloudNow = document.getElementById("pushCloudNow");
+        if (pushCloudNow) pushCloudNow.addEventListener("click", () => cloudSaveToRemote(true));
+        const pullCloudNow = document.getElementById("pullCloudNow");
+        if (pullCloudNow) pullCloudNow.addEventListener("click", () => cloudLoadFromRemote(true));
         document.querySelectorAll("[data-construction-zoom]").forEach((button) => {
           button.addEventListener("click", () => {
             const direction = button.dataset.constructionZoom;
@@ -3594,6 +3842,9 @@
         });
       });
       render();
+      if (cloudReady() && cloudConfig.autoLoad) {
+        setTimeout(() => cloudLoadFromRemote(true), 300);
+      }
     </script>
   </body>
 </html>
