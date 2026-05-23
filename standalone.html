@@ -579,7 +579,7 @@
       let adminSession = loadAdminSession();
       let authEmail = ADMIN_EMAIL;
       let authPassword = "";
-      let authStatus = adminSession ? "Mode admin actif." : "Lecture seule.";
+      let authStatus = adminSession ? "Mode admin actif." : "";
 
       function emptyStats() {
         return Object.fromEntries(teachers.map((teacher) => [teacher.id, {
@@ -1373,7 +1373,7 @@
       function signOutAdmin() {
         saveAdminSession(null);
         authPassword = "";
-        authStatus = "Lecture seule.";
+        authStatus = "";
         if (week === "build" || week === "alerts") week = "current";
         render();
       }
@@ -3229,6 +3229,8 @@ alter table public.eps_plannings disable row level security;`;
             <div class="authStatus">Admin connectÃ© : ${adminSession.user?.email || ADMIN_EMAIL}</div>
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
           `;
+          authBox.querySelector(".authStatus").innerHTML = `Admin connect&eacute; : ${adminSession.user?.email || ADMIN_EMAIL}`;
+          authBox.querySelector("#logoutAdmin").innerHTML = "D&eacute;connexion";
           return;
         }
         authBox.innerHTML = `
@@ -3237,7 +3239,7 @@ alter table public.eps_plannings disable row level security;`;
             <input id="adminPassword" type="password" value="${authPassword}" autocomplete="current-password" placeholder="Mot de passe admin" aria-label="Mot de passe admin" />
             <button class="authButton" type="submit">Admin</button>
           </form>
-          <div class="authStatus">${authStatus}</div>
+          ${authStatus ? `<div class="authStatus">${authStatus}</div>` : ""}
         `;
       }
 
