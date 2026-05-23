@@ -1,0 +1,425 @@
+:root {
+  color: #0f172a;
+  background: #f8fafc;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.appShell {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.appHeader {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.appHeader p {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.appHeader h1 {
+  font-size: clamp(26px, 5vw, 42px);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.primaryButton {
+  align-items: center;
+  background: #0f766e;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+.metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 18px auto 0;
+  max-width: 1180px;
+}
+
+.metrics div {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 3px;
+  min-height: 88px;
+  padding: 12px;
+}
+
+.metrics svg {
+  color: #0f766e;
+}
+
+.metrics strong {
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.metrics span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.toolbar {
+  background: #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  gap: 4px;
+  margin: 16px auto;
+  max-width: max-content;
+  padding: 4px;
+}
+
+.toolbar button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  width: 58px;
+}
+
+.toolbar button.active {
+  background: #0f172a;
+  color: #fff;
+}
+
+.calendarScroller {
+  margin: 0 auto;
+  max-width: 1240px;
+  overflow-x: auto;
+  padding-bottom: 18px;
+}
+
+.calendarGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(250px, 1fr));
+  min-width: 1180px;
+}
+
+.dayColumn h2,
+.teacherSummary h2,
+.constraintsView h2 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+
+.slotBlock {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  min-height: 170px;
+  padding: 10px;
+}
+
+.slotHeader,
+.lessonTop,
+.teacherLesson,
+.statsRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.slotHeader span,
+.lessonCard span,
+.teacherSummary p,
+.teacherLesson span,
+.priorityRow small,
+.statsRow small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.lessonList {
+  display: grid;
+  gap: 7px;
+}
+
+.lessonCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  border-radius: 7px;
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+}
+
+.badge {
+  border-radius: 6px;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 950;
+  padding: 3px 7px;
+}
+
+.badge.external {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.badge.internal {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.teacherView,
+.constraintsView {
+  margin: 0 auto;
+  max-width: 780px;
+}
+
+.teacherTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.teacherTab {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 40px;
+  padding: 0 13px;
+  white-space: nowrap;
+}
+
+.teacherSummary {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 16px;
+}
+
+.teacherSummary p {
+  margin: 3px 0 0;
+}
+
+.hoursBadge strong {
+  color: #0f766e;
+  font-size: 30px;
+  font-weight: 950;
+}
+
+.hoursBadge span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.balanceGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 10px;
+}
+
+.balanceGrid div {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 12px;
+}
+
+.balanceGrid svg {
+  color: #0f766e;
+  flex: 0 0 auto;
+}
+
+.balanceGrid span {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.teacherLessons {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.teacherLesson {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.teacherLesson div {
+  display: grid;
+  gap: 3px;
+}
+
+.checkPanel {
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid;
+  display: flex;
+  gap: 10px;
+  padding: 13px;
+}
+
+.checkPanel.good {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.checkPanel.warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.constraintsView h2 {
+  margin-top: 18px;
+}
+
+.priorityList,
+.statsList {
+  display: grid;
+  gap: 8px;
+}
+
+.priorityRow {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  padding: 11px;
+}
+
+.priorityRow > strong {
+  background: #0f172a;
+  border-radius: 6px;
+  color: #fff;
+  min-width: 31px;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.priorityRow div {
+  display: grid;
+  gap: 2px;
+}
+
+.priorityRow span {
+  font-weight: 900;
+}
+
+.statsRow {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 10px;
+  padding: 11px;
+}
+
+.statsRow strong {
+  flex: 1;
+}
+
+.statsRow span {
+  color: #0f172a;
+  font-weight: 950;
+}
+
+@media (max-width: 720px) {
+  .appShell {
+    padding: 14px;
+  }
+
+  .appHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metrics div {
+    min-height: 82px;
+    padding: 10px;
+  }
+
+  .metrics strong {
+    font-size: 20px;
+  }
+
+  .metrics span {
+    font-size: 12px;
+  }
+
+  .calendarGrid {
+    grid-template-columns: repeat(5, 270px);
+    min-width: 1390px;
+  }
+
+  .balanceGrid {
+    grid-template-columns: 1fr;
+  }
+}
