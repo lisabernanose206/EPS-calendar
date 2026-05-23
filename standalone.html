@@ -17,6 +17,12 @@
       .top, .metrics, .legend, .calendar, .panel, .dateInfo, .builderPage, .workspace { margin-left: auto; margin-right: auto; max-width: 1180px; }
       .top { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
       .top p { color: #64748b; font-size: 12px; font-weight: 800; margin: 0 0 4px; text-transform: uppercase; }
+      .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
+      .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
+      .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
+      .authButton.secondary { background: #e2e8f0; color: #0f172a; }
+      .authStatus { color: #64748b; font-size: 12px; font-weight: 850; text-align: right; }
       h1 { font-size: clamp(26px, 5vw, 42px); line-height: 1.05; margin: 0; }
       h2 { font-size: 18px; margin: 0 0 10px; }
       .primary { align-items: center; background: #0f766e; border: 0; border-radius: 8px; color: white; cursor: pointer; display: inline-flex; font-weight: 900; min-height: 44px; padding: 0 14px; }
@@ -50,6 +56,7 @@
       .weeks button, .tabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 14px; font-weight: 900; min-height: 42px; padding: 0 12px; text-align: left; white-space: nowrap; width: 100%; }
       .tabs button { min-width: 0; }
       .weeks button.active { background: #0f766e; color: white; }
+      .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
       .mainContent { min-width: 0; }
       .calendarWrap { margin: 16px auto 0; max-width: 1240px; overflow-x: visible; padding-bottom: 18px; }
@@ -425,6 +432,7 @@
           <p>EPS · equipe de 5</p>
           <h1>Emploi du temps EPS</h1>
         </div>
+        <div class="authBox" id="authBox"></div>
       </header>
 
       <section class="dateInfo" id="dateInfo"></section>
@@ -442,7 +450,7 @@
             </section>
           </section>
 
-          <section class="navGroup">
+          <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
               <button data-week="build">Construction</button>
@@ -554,10 +562,24 @@
       let unavailableCells = [];
       let editingUnavailableId = null;
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
+      const BUILT_IN_CLOUD_CONFIG = {
+        enabled: true,
+        autoSave: true,
+        autoLoad: true,
+        url: "https://kgmhuwuiswabbmeyqibp.supabase.co",
+        anonKey: "sb_publishable_dJcG78XPNikpRqKGDB_0tw_ZZO7QAgj",
+        planningId: "planning-eps-2026-2027"
+      };
+      const AUTH_SESSION_KEY = "planningEpsAdminSession2026";
+      const ADMIN_EMAIL = "eps@lm.com";
       let cloudConfig = loadCloudConfig();
-      let cloudStatus = "Cloud non configuré.";
+      let cloudStatus = cloudReady() ? "Cloud configuré. Chargement automatique activé." : "Cloud non configuré.";
       let cloudSaveTimer = null;
       let cloudSyncing = false;
+      let adminSession = loadAdminSession();
+      let authEmail = ADMIN_EMAIL;
+      let authPassword = "";
+      let authStatus = adminSession ? "Mode admin actif." : "Lecture seule.";
 
       function emptyStats() {
         return Object.fromEntries(teachers.map((teacher) => [teacher.id, {
@@ -1228,16 +1250,55 @@
       }
 
       function loadCloudConfig() {
+        const defaults = {
+          enabled: false,
+          autoSave: true,
+          autoLoad: false,
+          url: "",
+          anonKey: "",
+          planningId: "vaucanson-2026-2027",
+          ...BUILT_IN_CLOUD_CONFIG,
+          ...(window.__EPS_CLOUD_CONFIG__ || {})
+        };
+        if (!defaults.planningId) defaults.planningId = "vaucanson-2026-2027";
+        if (defaults.url && defaults.anonKey) defaults.enabled = defaults.enabled || true;
         try {
           const saved = localStorage.getItem(CLOUD_CONFIG_KEY);
-          return saved ? JSON.parse(saved) : { enabled: false, autoSave: true, autoLoad: false, url: "", anonKey: "", planningId: "vaucanson-2026-2027" };
+          const savedConfig = saved ? JSON.parse(saved) : {};
+          const merged = { ...defaults, ...savedConfig };
+          if (defaults.url && defaults.anonKey) {
+            return {
+              ...merged,
+              enabled: true,
+              autoSave: true,
+              autoLoad: true,
+              url: defaults.url,
+              anonKey: defaults.anonKey,
+              planningId: defaults.planningId
+            };
+          }
+          return merged;
         } catch {
-          return { enabled: false, autoSave: true, autoLoad: false, url: "", anonKey: "", planningId: "vaucanson-2026-2027" };
+          return defaults;
         }
       }
 
       function saveCloudConfig() {
         localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+      }
+
+      function readCloudConfigInputs() {
+        const urlInput = document.getElementById("cloudUrl");
+        const anonKeyInput = document.getElementById("cloudAnonKey");
+        const planningIdInput = document.getElementById("cloudPlanningId");
+        if (!urlInput && !anonKeyInput && !planningIdInput) return cloudConfig;
+        cloudConfig = {
+          ...cloudConfig,
+          url: urlInput?.value.trim() || cloudConfig.url || "",
+          anonKey: anonKeyInput?.value.trim() || cloudConfig.anonKey || "",
+          planningId: planningIdInput?.value.trim() || cloudConfig.planningId || "vaucanson-2026-2027"
+        };
+        return cloudConfig;
       }
 
       function cloudReady() {
@@ -1250,12 +1311,71 @@
       }
 
       function cloudHeaders(extra = {}) {
+        const token = adminSession?.access_token || cloudConfig.anonKey;
         return {
           apikey: cloudConfig.anonKey,
-          Authorization: `Bearer ${cloudConfig.anonKey}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
           ...extra
         };
+      }
+
+      function authEndpoint(path) {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/auth/v1/${path}`;
+      }
+
+      function loadAdminSession() {
+        try {
+          const saved = localStorage.getItem(AUTH_SESSION_KEY);
+          if (!saved) return null;
+          const session = JSON.parse(saved);
+          const expiresAt = Number(session.expires_at || 0) * 1000;
+          return session.access_token && (!expiresAt || expiresAt > Date.now()) ? session : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function saveAdminSession(session) {
+        adminSession = session;
+        if (session) localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+        else localStorage.removeItem(AUTH_SESSION_KEY);
+      }
+
+      function isAdmin() {
+        return Boolean(adminSession?.access_token);
+      }
+
+      async function signInAdmin() {
+        authStatus = "Connexion en cours...";
+        render();
+        try {
+          const response = await fetch(authEndpoint("token?grant_type=password"), {
+            method: "POST",
+            headers: cloudHeaders(),
+            body: JSON.stringify({ email: authEmail.trim(), password: authPassword })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error_description || result.msg || result.message || "connexion impossible");
+          saveAdminSession(result);
+          authPassword = "";
+          authStatus = "Mode admin actif.";
+          await cloudLoadFromRemote(false);
+        } catch (error) {
+          saveAdminSession(null);
+          authStatus = `Connexion refusée : ${error.message || "identifiants incorrects"}`;
+        } finally {
+          render();
+        }
+      }
+
+      function signOutAdmin() {
+        saveAdminSession(null);
+        authPassword = "";
+        authStatus = "Lecture seule.";
+        if (week === "build" || week === "alerts") week = "current";
+        render();
       }
 
       function collectPlanningData() {
@@ -1307,13 +1427,18 @@
       }
 
       function scheduleCloudSave() {
-        if (!cloudReady() || !cloudConfig.autoSave || cloudSyncing) return;
+        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave || cloudSyncing) return;
         clearTimeout(cloudSaveTimer);
         cloudStatus = "Sauvegarde cloud en attente...";
         cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false), 900);
       }
 
       async function cloudSaveToRemote(shouldRender = true) {
+        if (!isAdmin()) {
+          cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
+          if (shouldRender) render();
+          return;
+        }
         if (!cloudReady()) {
           cloudStatus = "Cloud non configuré.";
           if (shouldRender) render();
@@ -2410,12 +2535,6 @@
             ${renderHoursBalance()}
           </section>`;
         }
-        if (constructionMode === "cloud") {
-          return `<section>
-            ${renderConstructionTabs()}
-            ${renderCloudSettings()}
-          </section>`;
-        }
         return `<section class="builderPage">
           <div>
             ${renderConstructionTabs()}
@@ -2448,7 +2567,6 @@
           <button class="${constructionMode === "as" ? "active" : ""}" data-construction-mode="as">AS</button>
           <button class="${constructionMode === "events" ? "active" : ""}" data-construction-mode="events">Événements sportifs</button>
           <button class="${constructionMode === "hours" ? "active" : ""}" data-construction-mode="hours">Bilan heures</button>
-          <button class="${constructionMode === "cloud" ? "active" : ""}" data-construction-mode="cloud">Cloud</button>
           <button class="${constructionMode === "planning" ? "active" : ""}" data-construction-mode="planning">Construction</button>
         </div>`;
       }
@@ -3103,7 +3221,31 @@ alter table public.eps_plannings disable row level security;`;
         </section>`;
       }
 
+      function renderAuthBox() {
+        const authBox = document.getElementById("authBox");
+        if (!authBox) return;
+        if (isAdmin()) {
+          authBox.innerHTML = `
+            <div class="authStatus">Admin connectÃ© : ${adminSession.user?.email || ADMIN_EMAIL}</div>
+            <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
+          `;
+          return;
+        }
+        authBox.innerHTML = `
+          <form class="authForm" id="adminLoginForm">
+            <input id="adminEmail" type="email" value="${authEmail}" autocomplete="username" aria-label="Email admin" />
+            <input id="adminPassword" type="password" value="${authPassword}" autocomplete="current-password" placeholder="Mot de passe admin" aria-label="Mot de passe admin" />
+            <button class="authButton" type="submit">Admin</button>
+          </form>
+          <div class="authStatus">${authStatus}</div>
+        `;
+      }
+
       function render() {
+        if (!isAdmin() && (week === "build" || week === "alerts")) week = "current";
+        renderAuthBox();
+        const adminNavGroup = document.getElementById("adminNavGroup");
+        if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
         const cycle = generateCycle();
         const root = document.getElementById("root");
         const weekInfo = displayedSchoolWeek();
@@ -3138,6 +3280,21 @@ alter table public.eps_plannings disable row level security;`;
         else if (week === "build") root.innerHTML = renderConstructionView();
         else if (week === "alerts") root.innerHTML = renderAlertsView();
         else root.innerHTML = renderCalendar(cycle);
+        const adminLoginForm = document.getElementById("adminLoginForm");
+        if (adminLoginForm) {
+          adminLoginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            authEmail = document.getElementById("adminEmail")?.value.trim() || ADMIN_EMAIL;
+            authPassword = document.getElementById("adminPassword")?.value || "";
+            signInAdmin();
+          });
+        }
+        const adminEmailInput = document.getElementById("adminEmail");
+        if (adminEmailInput) adminEmailInput.addEventListener("input", () => authEmail = adminEmailInput.value);
+        const adminPasswordInput = document.getElementById("adminPassword");
+        if (adminPasswordInput) adminPasswordInput.addEventListener("input", () => authPassword = adminPasswordInput.value);
+        const logoutAdmin = document.getElementById("logoutAdmin");
+        if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
         document.querySelectorAll("[data-year-week-rank]").forEach((button) => {
           button.addEventListener("click", () => {
             selectedYearWeekRank = Number(button.dataset.yearWeekRank);
@@ -3229,6 +3386,7 @@ alter table public.eps_plannings disable row level security;`;
         document.querySelectorAll("[data-cloud-toggle]").forEach((button) => {
           button.addEventListener("click", () => {
             const key = button.dataset.cloudToggle;
+            readCloudConfigInputs();
             cloudConfig = { ...cloudConfig, [key]: !cloudConfig[key] };
             saveCloudConfig();
             cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
@@ -3238,21 +3396,33 @@ alter table public.eps_plannings disable row level security;`;
         const saveCloudConfigButton = document.getElementById("saveCloudConfig");
         if (saveCloudConfigButton) {
           saveCloudConfigButton.addEventListener("click", () => {
-            cloudConfig = {
-              ...cloudConfig,
-              url: document.getElementById("cloudUrl")?.value.trim() || "",
-              anonKey: document.getElementById("cloudAnonKey")?.value.trim() || "",
-              planningId: document.getElementById("cloudPlanningId")?.value.trim() || "vaucanson-2026-2027"
-            };
+            readCloudConfigInputs();
             saveCloudConfig();
             cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
             render();
           });
         }
+        ["cloudUrl", "cloudAnonKey", "cloudPlanningId"].forEach((id) => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.addEventListener("input", () => {
+              readCloudConfigInputs();
+              saveCloudConfig();
+            });
+          }
+        });
         const pushCloudNow = document.getElementById("pushCloudNow");
-        if (pushCloudNow) pushCloudNow.addEventListener("click", () => cloudSaveToRemote(true));
+        if (pushCloudNow) pushCloudNow.addEventListener("click", () => {
+          readCloudConfigInputs();
+          saveCloudConfig();
+          cloudSaveToRemote(true);
+        });
         const pullCloudNow = document.getElementById("pullCloudNow");
-        if (pullCloudNow) pullCloudNow.addEventListener("click", () => cloudLoadFromRemote(true));
+        if (pullCloudNow) pullCloudNow.addEventListener("click", () => {
+          readCloudConfigInputs();
+          saveCloudConfig();
+          cloudLoadFromRemote(true);
+        });
         document.querySelectorAll("[data-construction-zoom]").forEach((button) => {
           button.addEventListener("click", () => {
             const direction = button.dataset.constructionZoom;
@@ -3834,6 +4004,11 @@ alter table public.eps_plannings disable row level security;`;
 
       document.querySelectorAll("[data-week]").forEach((button) => {
         button.addEventListener("click", () => {
+          if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts")) {
+            authStatus = "Connexion admin requise.";
+            render();
+            return;
+          }
           week = button.dataset.week;
           if (week === "current") displayedCurrentWeekRank = null;
           if (week === "build") constructionMode = "planning";
