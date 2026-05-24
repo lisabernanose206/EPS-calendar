@@ -4043,7 +4043,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const facilityDraftNameInput = document.getElementById("facilityDraftName");
         if (facilityDraftNameInput) facilityDraftNameInput.addEventListener("input", () => facilityDraftName = facilityDraftNameInput.value);
         const activityDraftNameInput = document.getElementById("activityDraftName");
-        if (activityDraftNameInput) activityDraftNameInput.addEventListener("input", () => activityDraftName = activityDraftNameInput.value);
+        if (activityDraftNameInput) activityDraftNameInput.addEventListener("input", () => {
+          activityDraftName = activityDraftNameInput.value;
+          const addActivity = document.getElementById("addActivity");
+          if (addActivity) addActivity.disabled = activityDraftName.trim().length === 0;
+        });
         const teacherDraftNameInput = document.getElementById("teacherDraftName");
         if (teacherDraftNameInput) teacherDraftNameInput.addEventListener("input", () => teacherDraftName = teacherDraftNameInput.value);
         document.querySelectorAll("[data-teacher-draft-color]").forEach((button) => {
