@@ -2324,7 +2324,7 @@
       function confirmSlotItemDeletion(label) {
         const firstConfirm = window.confirm(`Supprimer ${label} uniquement sur ce creneau ?`);
         if (!firstConfirm) return false;
-        return window.prompt("Deuxieme validation : tapez SUPPRIMER pour confirmer.") === "SUPPRIMER";
+        return window.confirm("Confirmer une deuxieme fois la suppression sur ce creneau ?");
       }
 
       function excludeEventFromSlot(eventId, key) {
