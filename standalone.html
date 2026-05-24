@@ -360,6 +360,7 @@
       .teacherColorPalette { display: flex; flex-wrap: wrap; gap: 7px; }
       .teacherColorSwatch { border: 2px solid transparent; border-radius: 999px; cursor: pointer; height: 30px; width: 30px; }
       .teacherColorSwatch.active { border-color: #0f172a; box-shadow: 0 0 0 2px #fff inset; }
+      .teacherColorToggle { justify-self: start; }
       .replacementEdit { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; width: 100%; }
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
@@ -500,23 +501,23 @@
 
     <script>
       const defaultTeachers = [
-        { id: "p1", name: "Prof A", color: "#bfdbfe", border: "#60a5fa", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 18, B: 16 } },
-        { id: "p2", name: "Prof B", color: "#bbf7d0", border: "#4ade80", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
-        { id: "p3", name: "Prof C", color: "#fecaca", border: "#f87171", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 18, B: 16 } },
-        { id: "p4", name: "Prof D", color: "#ddd6fe", border: "#a78bfa", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
-        { id: "p5", name: "Prof E agrege", color: "#fde68a", border: "#f59e0b", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
+        { id: "p1", name: "Prof A", color: "#bfdbfe", border: "#2563eb", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 18, B: 16 } },
+        { id: "p2", name: "Prof B", color: "#bbf7d0", border: "#16a34a", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
+        { id: "p3", name: "Prof C", color: "#fecaca", border: "#dc2626", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 18, B: 16 } },
+        { id: "p4", name: "Prof D", color: "#ddd6fe", border: "#7c3aed", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
+        { id: "p5", name: "Prof E agrege", color: "#fde68a", border: "#d97706", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
       ];
       const teacherPalette = [
-        { color: "#bfdbfe", border: "#3b82f6" },
-        { color: "#bbf7d0", border: "#22c55e" },
-        { color: "#fecaca", border: "#ef4444" },
-        { color: "#ddd6fe", border: "#8b5cf6" },
-        { color: "#fde68a", border: "#f59e0b" },
-        { color: "#fbcfe8", border: "#ec4899" },
-        { color: "#a7f3d0", border: "#10b981" },
-        { color: "#bae6fd", border: "#0ea5e9" },
-        { color: "#fed7aa", border: "#f97316" },
-        { color: "#c7d2fe", border: "#6366f1" }
+        { color: "#bfdbfe", border: "#2563eb" },
+        { color: "#bbf7d0", border: "#16a34a" },
+        { color: "#fecaca", border: "#dc2626" },
+        { color: "#ddd6fe", border: "#7c3aed" },
+        { color: "#fde68a", border: "#d97706" },
+        { color: "#fbcfe8", border: "#db2777" },
+        { color: "#99f6e4", border: "#0f766e" },
+        { color: "#fed7aa", border: "#ea580c" },
+        { color: "#cbd5e1", border: "#475569" },
+        { color: "#e7d3b2", border: "#92400e" }
       ];
       let teachers = loadTeachers();
       const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
@@ -554,6 +555,8 @@
       let selectedTeacherIds = teachers.map((teacher) => teacher.id);
       let yearPlan = loadYearPlan();
       let cycles = loadCycles();
+      let cyclesByLevel = loadCyclesByLevel();
+      let activeCycleScope = "default";
       let activeCycleId = cycles[0].id;
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
@@ -576,6 +579,7 @@
       let teacherDraftName = "";
       let teacherDraftColor = teacherPalette[0].color;
       let teacherDraftStatus = "certifie";
+      let expandedTeacherColorId = "";
       let activeBuildCell = null;
       let editingBuildBlock = null;
       let pendingBlockDelete = null;
@@ -1057,7 +1061,7 @@
       function buildConstructionPlanFromRules() {
         const plan = {};
         constructionRules.forEach((rule) => {
-          const cycle = cycles.find((item) => item.id === rule.cycleId);
+          const cycle = findCycleForRule(rule);
           if (!cycle) return;
           weeksForCycle(cycle).forEach((weekItem) => {
             if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
@@ -1262,7 +1266,7 @@
           const matchesPeriod = item.periodMode === "cycles" && (item.cycleIds || []).length
             ? (item.cycleIds || []).some((cycleId) => {
               const cycle = cycles.find((entry) => entry.id === cycleId);
-              return cycle && rowDate >= dateOnly(cycle.start) && rowDate <= dateOnly(cycle.end);
+              return cycle && weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank);
             })
             : rowDate >= dateOnly(item.start) && rowDate <= dateOnly(item.end);
           const cells = item.cells || [];
@@ -1337,8 +1341,19 @@
         }
       }
 
+      function loadCyclesByLevel() {
+        try {
+          const saved = localStorage.getItem("planningEpsCyclesByLevel2026");
+          const parsed = saved ? JSON.parse(saved) : {};
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
       function saveCycles() {
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
+        localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
         scheduleCloudSave();
       }
 
@@ -1493,6 +1508,7 @@
           facilities,
           yearPlan,
           cycles,
+          cyclesByLevel,
           constructionRules,
           constructionPlan,
           blockExclusions,
@@ -1509,6 +1525,7 @@
         facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
+        cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
@@ -1524,6 +1541,7 @@
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
+        localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
@@ -1600,16 +1618,61 @@
       }
 
       function setCycleCount(count) {
+        const targetCycles = activeCycles();
         const safeCount = Math.max(1, Math.min(12, Number(count) || 1));
         const defaults = defaultCycles(safeCount);
-        cycles = Array.from({ length: safeCount }, (_, index) => cycles[index] || defaults[index]);
-        if (!cycles.some((cycle) => cycle.id === activeCycleId)) activeCycleId = cycles[0].id;
+        const nextCycles = Array.from({ length: safeCount }, (_, index) => targetCycles[index] || cycleForScope(defaults[index], activeCycleScope));
+        setActiveCycles(nextCycles);
+        if (!activeCycles().some((cycle) => cycle.id === activeCycleId)) activeCycleId = activeCycles()[0]?.id || "";
         saveCycles();
         rebuildConstructionPlan();
       }
 
       function activeCycle() {
-        return cycles.find((cycle) => cycle.id === activeCycleId) || cycles[0];
+        return activeCycles().find((cycle) => cycle.id === activeCycleId) || activeCycles()[0];
+      }
+
+      function cycleForScope(cycle, scope) {
+        if (scope === "default") return cycle;
+        return {
+          ...cycle,
+          id: cycle.id.startsWith(`${scope}-`) ? cycle.id : `${scope}-${cycle.id}`,
+          name: cycle.name
+        };
+      }
+
+      function ensureCyclesForLevel(level) {
+        if (!classLevels.includes(level)) return cycles;
+        if (!Array.isArray(cyclesByLevel[level]) || !cyclesByLevel[level].length) {
+          cyclesByLevel[level] = cycles.map((cycle) => cycleForScope(cycle, level));
+        }
+        return cyclesByLevel[level];
+      }
+
+      function cyclesForScope(scope) {
+        return scope === "default" ? cycles : ensureCyclesForLevel(scope);
+      }
+
+      function activeCycles() {
+        return cyclesForScope(activeCycleScope);
+      }
+
+      function setActiveCycles(nextCycles) {
+        if (activeCycleScope === "default") cycles = nextCycles;
+        else cyclesByLevel[activeCycleScope] = nextCycles;
+      }
+
+      function cyclesForClassLevel(level) {
+        return classLevels.includes(level) && Array.isArray(cyclesByLevel[level]) && cyclesByLevel[level].length
+          ? cyclesByLevel[level]
+          : cycles;
+      }
+
+      function allCycleSets() {
+        return [
+          { scope: "default", cycles },
+          ...classLevels.map((level) => ({ scope: level, cycles: cyclesForClassLevel(level) }))
+        ];
       }
 
       function dateOnly(value) {
@@ -1644,8 +1707,15 @@
         return schoolYearWeeks().filter((weekItem) => weekItem.end >= start && weekItem.start <= end);
       }
 
-      function cycleForWeek(weekItem) {
-        return cycles.find((cycle) => weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
+      function cycleForWeek(weekItem, classLevel = "") {
+        return cyclesForClassLevel(classLevel).find((cycle) => weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
+      }
+
+      function findCycleForRule(rule) {
+        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+        return cyclesForClassLevel(level).find((item) => item.id === rule.cycleId)
+          || cycles.find((item) => item.id === rule.cycleId)
+          || allCycleSets().flatMap((set) => set.cycles).find((item) => item.id === rule.cycleId);
       }
 
       function plannedHoursForWeeks(weeks) {
@@ -1703,7 +1773,10 @@
           classes: new Set(),
           cycles: []
         }]));
-        cycles.forEach((cycle) => {
+        const cycleEntries = allCycleSets()
+          .flatMap((set) => set.cycles)
+          .filter((cycle, index, list) => list.findIndex((item) => item.id === cycle.id) === index);
+        cycleEntries.forEach((cycle) => {
           const cycleWeeks = weeksForCycle(cycle).filter((weekItem) => workingRanks.has(weekItem.rank));
           teachers.forEach((teacher) => {
             const cycleStats = { total: 0, weeks: cycleWeeks.length, classes: new Set() };
@@ -1774,22 +1847,28 @@
       }
 
       function applyBlockToCycle(rowId, cycleId, block, weekLetter = "all") {
-        const cycle = cycles.find((item) => item.id === cycleId);
+        const classLevel = classParts(block.schoolClass).level;
+        const cycle = cyclesForClassLevel(classLevel).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
         if (!cycle) return;
         constructionRules.push({
           id: `rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
           rowId,
           cycleId: cycle.id,
+          classLevel,
           weekLetter,
           block
         });
         rebuildConstructionPlan();
       }
 
-      function updateConstructionRule(ruleId, block, weekLetter = "all") {
+      function updateConstructionRule(ruleId, block, weekLetter = "all", weekItem = null) {
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule) return;
+        const classLevel = classParts(block.schoolClass).level;
+        const targetCycle = weekItem ? cycleForWeek(weekItem, classLevel) : null;
         rule.block = block;
+        rule.classLevel = classLevel;
+        if (targetCycle) rule.cycleId = targetCycle.id;
         rule.weekLetter = weekLetter;
         rebuildConstructionPlan();
       }
@@ -1927,7 +2006,7 @@
         constructionRules.forEach((rule) => {
           const row = rows.find((item) => item.id === rule.rowId);
           if (!row || !eventTouchesBlock(event, rule.block) || !rowMatchesEventHalfDay(row, event)) return;
-          const cycle = cycles.find((item) => item.id === rule.cycleId);
+          const cycle = findCycleForRule(rule);
           if (!cycle) return;
           weeksForCycle(cycle).forEach((weekItem) => {
             if (!rowDateInEvent(row, weekItem, event)) return;
@@ -2174,7 +2253,7 @@
       }
 
       function blockCycleConflictMessage(rowId, cycleId, candidate, ignoredRuleId = "", weekLetter = "all") {
-        const cycle = cycles.find((item) => item.id === cycleId);
+        const cycle = cyclesForClassLevel(classParts(candidate.schoolClass).level).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
         if (!cycle) return "";
         for (const weekItem of weeksForCycle(cycle)) {
           if (weekLetter !== "all" && weekItem.letter !== weekLetter) continue;
@@ -2182,6 +2261,18 @@
           const items = (constructionPlan[key] || []).filter((item) => !ignoredRuleId || item.ruleId !== ignoredRuleId);
           const message = blockConflictMessageForItems(items, candidate);
           if (message) return `${message} Conflit sur la semaine ${weekItem.rank}${weekItem.letter}.`;
+        }
+        return "";
+      }
+
+      function blockCycleUnavailableMessage(rowId, cycleId, candidate, weekLetter = "all") {
+        const cycle = cyclesForClassLevel(classParts(candidate.schoolClass).level).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
+        const row = yearRows().find((item) => item.id === rowId);
+        if (!cycle || !row) return "";
+        for (const weekItem of weeksForCycle(cycle)) {
+          if (weekLetter !== "all" && weekItem.letter !== weekLetter) continue;
+          const message = blockUnavailableMessage(row, weekItem, candidate);
+          if (message) return `${message} Bloc impossible sur la semaine ${weekItem.rank}${weekItem.letter}.`;
         }
         return "";
       }
@@ -2842,8 +2933,9 @@ alter table public.eps_feedback disable row level security;`;
         const { rowId, weekRank } = parseYearCellKey(activeBuildCell);
         const row = yearRows().find((item) => item.id === rowId);
         const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
-        const cellCycle = cycleForWeek(weekItem);
         const block = currentBlock();
+        const blockLevel = classParts(block.schoolClass).level;
+        const cellCycle = cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
         const selectedClassUnavailable = occupied.classes.has(blockClass) || occupied.unavailableClasses.has(blockClass);
@@ -2851,7 +2943,8 @@ alter table public.eps_feedback disable row level security;`;
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId));
         const weekLetterMismatch = blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
         const unavailableMessage = blockUnavailableMessage(row, weekItem, block);
-        const conflictMessage = unavailableMessage || (weekLetterMismatch
+        const cycleUnavailableMessage = cellCycle ? blockCycleUnavailableMessage(row.id, cellCycle.id, block, blockWeekLetter) : "";
+        const conflictMessage = unavailableMessage || cycleUnavailableMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && blockClass && blockFacilityId && !selectedClassUnavailable && !selectedFacilityUnavailable && !selectedTeachersUnavailable && !conflictMessage);
@@ -2862,7 +2955,7 @@ alter table public.eps_feedback disable row level security;`;
             <div class="modalHeader">
               <div>
                 <h3>${row.day} · ${row.slot.label}</h3>
-                <p class="muted">Semaine ${weekItem.rank}${weekItem.letter}. Cycle automatique : ${cellCycle ? cellCycle.name : "aucun cycle défini"}.</p>
+                <p class="muted">Semaine ${weekItem.rank}${weekItem.letter}. Cycle ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? cellCycle.name : "aucun cycle defini"}.</p>
                 ${editingLabel ? `<p class="muted">${editingLabel}</p>` : ""}
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
@@ -2963,12 +3056,18 @@ alter table public.eps_feedback disable row level security;`;
       }
 
       function renderCycleDefinition() {
+        const shownCycles = activeCycles();
         return `<h3>Définition des cycles</h3>
+          <div class="constructionTabs">
+            <button class="${activeCycleScope === "default" ? "active" : ""}" data-cycle-scope="default">Tous niveaux</button>
+            ${classLevels.map((level) => `<button class="${activeCycleScope === level ? "active" : ""}" data-cycle-scope="${level}">${level}</button>`).join("")}
+          </div>
+          ${activeCycleScope === "default" ? `<p class="muted">Par defaut, ces cycles s'appliquent a tous les niveaux.</p>` : `<p class="muted">Cycles specifiques aux ${activeCycleScope}. Ils seront utilises pour les blocs de classes ${activeCycleScope}.</p>`}
           <div class="cycleCount">
             <label for="cycleCount">Nombre de cycles</label>
-            <input id="cycleCount" type="number" min="1" max="12" value="${cycles.length}" />
+            <input id="cycleCount" type="number" min="1" max="12" value="${shownCycles.length}" />
           </div>
-          <div class="cycleList">${cycles.map((cycle) => `
+          <div class="cycleList">${shownCycles.map((cycle) => `
             <div class="cycleRow">
               <label>${cycle.name}</label>
               <div class="cycleDates">
@@ -2976,22 +3075,23 @@ alter table public.eps_feedback disable row level security;`;
                 <input type="date" data-cycle-id="${cycle.id}" data-cycle-field="end" value="${cycle.end}" />
               </div>
             </div>`).join("")}</div>
-          ${renderCycleCoverage()}`;
+          ${renderCycleCoverage(activeCycleScope)}`;
       }
 
-      function renderCycleCoverage() {
+      function renderCycleCoverage(scope = "default") {
         const weeks = schoolYearWeeks();
+        const shownCycles = cyclesForScope(scope);
         const palette = ["#dbeafe", "#dcfce7", "#fef3c7", "#fce7f3", "#ede9fe", "#cffafe", "#fee2e2", "#e0e7ff", "#ecfccb", "#fae8ff", "#f1f5f9", "#ffedd5"];
         const cycleStyle = (cycle) => {
           if (!cycle) return "";
-          const index = Math.max(0, cycles.findIndex((item) => item.id === cycle.id));
+          const index = Math.max(0, shownCycles.findIndex((item) => item.id === cycle.id));
           return `background:${palette[index % palette.length]};border-color:#111827;color:#0f172a;`;
         };
         const groupedCoverageCells = () => {
           const groups = [];
           weeks.forEach((weekItem) => {
             const vacation = vacationForWeek(weekItem);
-            const cycle = cycleForWeek(weekItem);
+            const cycle = shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
             const label = vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "";
             const className = vacation ? "vacationCell" : cycle ? "coveredCell" : "gapCell";
             const style = cycle && !vacation ? cycleStyle(cycle) : "";
@@ -3018,9 +3118,9 @@ alter table public.eps_feedback disable row level security;`;
               <tr><th class="timeHead">Repère</th>${groupedHeaderCells(weeks, monthLabelForWeek, () => "monthCell")}</tr>
               <tr><th class="timeHead">Cycle</th>${groupedHeaderCells(weeks, (weekItem) => {
                 const vacation = vacationForWeek(weekItem);
-                const cycle = cycleForWeek(weekItem);
+                const cycle = shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
                 return vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "";
-              }, (weekItem) => vacationForWeek(weekItem) ? "vacationHeader" : cycleForWeek(weekItem) ? "cycleHeader" : "gapCell")}</tr>
+              }, (weekItem) => vacationForWeek(weekItem) ? "vacationHeader" : shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank)) ? "cycleHeader" : "gapCell")}</tr>
               <tr><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th>${weekItem.rank}${weekItem.letter}</th>`).join("")}</tr>
             </thead>
             <tbody>
@@ -3228,7 +3328,8 @@ alter table public.eps_feedback disable row level security;`;
               </div>
               <div class="eventField">
                 <label>Couleur</label>
-                <div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>
+                <button class="ghostButton teacherColorToggle" data-toggle-teacher-color="${teacher.id}">${expandedTeacherColorId === teacher.id ? "Masquer les couleurs" : "Changer la couleur"}</button>
+                ${expandedTeacherColorId === teacher.id ? `<div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>` : ""}
               </div>
               <div class="eventField">
                 <label>Remplacant</label>
@@ -3866,6 +3967,12 @@ alter table public.eps_feedback disable row level security;`;
             render();
           });
         });
+        document.querySelectorAll("[data-toggle-teacher-color]").forEach((button) => {
+          button.addEventListener("click", () => {
+            expandedTeacherColorId = expandedTeacherColorId === button.dataset.toggleTeacherColor ? "" : button.dataset.toggleTeacherColor;
+            render();
+          });
+        });
         document.querySelectorAll("[data-update-teacher-color]").forEach((button) => {
           button.addEventListener("click", () => {
             const teacher = teachers.find((item) => item.id === button.dataset.updateTeacherColor);
@@ -3875,6 +3982,7 @@ alter table public.eps_feedback disable row level security;`;
             syncConstructionRulesForTeacher(teacher.id);
             saveTeachers();
             rebuildConstructionPlan();
+            expandedTeacherColorId = "";
             render();
           });
         });
@@ -4250,10 +4358,10 @@ alter table public.eps_feedback disable row level security;`;
           addBuiltBlock.addEventListener("click", () => {
             const { rowId, weekRank } = parseYearCellKey(activeBuildCell);
             const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
-            const cellCycle = cycleForWeek(weekItem);
-            if (!cellCycle) return;
             if (!blockTeacherIds.length) return;
             const block = currentBlock();
+            const cellCycle = cycleForWeek(weekItem, classParts(block.schoolClass).level);
+            if (!cellCycle) return;
             const row = yearRows().find((item) => item.id === rowId);
             if (blockUnavailableMessage(row, weekItem, block)) {
               render();
@@ -4267,7 +4375,11 @@ alter table public.eps_feedback disable row level security;`;
               render();
               return;
             }
-            if (editingBuildBlock?.ruleId) updateConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter);
+            if (blockCycleUnavailableMessage(rowId, cellCycle.id, block, blockWeekLetter)) {
+              render();
+              return;
+            }
+            if (editingBuildBlock?.ruleId) updateConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter, weekItem);
             else applyBlockToCycle(rowId, cellCycle.id, block, blockWeekLetter);
             editingBuildBlock = null;
             activeBuildCell = null;
@@ -4299,11 +4411,19 @@ alter table public.eps_feedback disable row level security;`;
         }
         document.querySelectorAll("[data-cycle-id]").forEach((input) => {
           input.addEventListener("input", () => {
-            const cycle = cycles.find((item) => item.id === input.dataset.cycleId);
+            const cycle = activeCycles().find((item) => item.id === input.dataset.cycleId);
             if (!cycle) return;
             cycle[input.dataset.cycleField] = input.value;
             saveCycles();
             rebuildConstructionPlan();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cycle-scope]").forEach((button) => {
+          button.addEventListener("click", () => {
+            activeCycleScope = button.dataset.cycleScope;
+            const scopedCycles = activeCycles();
+            activeCycleId = scopedCycles[0]?.id || "";
             render();
           });
         });
