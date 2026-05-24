@@ -973,7 +973,7 @@
 
       function yearRows() {
         return days.flatMap((day) => {
-          const asSlot = { id: "as", label: day === "Mercredi" ? "AS 12h30-15h" : "AS 12h30-13h15", hours: 0 };
+          const asSlot = { id: "as", label: day === "Mercredi" ? "AS 12h30-15h30" : "AS 12h30-13h15", hours: 0 };
           const daySlots = day === "Mercredi"
             ? [slots[0], slots[1], asSlot]
             : [slots[0], slots[1], asSlot, slots[2], slots[3]];

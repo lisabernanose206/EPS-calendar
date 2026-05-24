@@ -1,5 +1,6 @@
 # Log des corrections
 
+- AS : creneau du mercredi ajuste a 12h30-15h30.
 - Evenements sportifs : liste des classes affichee dans les evenements existants avec regroupement par niveau.
 - Annee scolaire : detail de case affiche dans une popup au clic.
 - AS : blocs visuels compactes avec hauteur adaptee au texte.
