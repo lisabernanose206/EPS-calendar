@@ -3662,9 +3662,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 ${teachers.map((teacher) => `<button class="choiceButton ${unavailableTeacherIds.includes(teacher.id) ? "active" : ""}" data-unavailable-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("") || `<span class="muted">Aucun prof disponible.</span>`}
               </div>
               <span class="muted">${unavailableTeacherIds.length ? `Profs selectionnes : ${teacherNamesFromIds(unavailableTeacherIds).join(", ")}` : "Aucun prof selectionne"}</span>
-              <label>CrÃ©neaux indisponibles</label>
+              <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
-                <thead><tr><th>CrÃ©neau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
+                <thead><tr><th>Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
                 <tbody>${slots.map((slot) => `<tr>
                   <th>${slot.label}</th>
                   ${days.map((day) => `<td><button class="choiceButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
