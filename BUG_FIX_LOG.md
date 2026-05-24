@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : affectation des classes par prof organisee par boutons de niveau avant le choix des classes et heures.
 - Activites : affichage des activites existantes en quatre cartes par ligne.
 - Construction : colonnes des semaines de vacances reduites car aucune saisie n'y est possible.
 - Construction : suppression d'une AS sur un creneau limitee a une confirmation OK/Annuler.
