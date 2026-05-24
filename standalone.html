@@ -3090,7 +3090,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 }).join("")}</div>
               </div>
               <div class="buildField">
-                <label>Activité</label>
+                <label>Activité (optionnel)</label>
                 <div class="choiceGrid">${activities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">Aucune activité ajoutée.</span>`}</div>
                 <span class="muted">Optionnel : recliquez sur l'activité sélectionnée pour l'enlever.</span>
               </div>
