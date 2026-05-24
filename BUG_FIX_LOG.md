@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Vacances scolaires : calendrier base sur la zone B pour l'annee 2026-2027.
 - Selection des classes : le choix d'un niveau complet remplace les demi-groupes du niveau par les classes entieres.
 - Sauvegarde automatique : retrait des boutons d'enregistrement manuel pour cycles, installations, activites et indisponibilites.
 - Cycles : dates de debut/fin limitees aux jours travailles et cycles non superposables.
