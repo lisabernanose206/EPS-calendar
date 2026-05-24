@@ -3017,9 +3017,16 @@
       function renderCalendar(cycle) {
         const weekItem = displayedSchoolWeek();
         const rows = yearRows();
+        const calendarSlots = [
+          slots[0],
+          slots[1],
+          { id: "as", label: "AS 12h30-13h15 / mer. 12h30-15h30" },
+          slots[2],
+          slots[3]
+        ];
         return `<div class="homeTimetableWrap"><table class="homeTimetable">
           <thead><tr><th class="timeColumn">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
-          <tbody>${slots.map((slot) => `<tr>
+          <tbody>${calendarSlots.map((slot) => `<tr>
             <th class="timeColumn">${slot.label}</th>
             ${days.map((day) => {
               const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
@@ -3029,6 +3036,7 @@
               const vacation = vacationForCell(row, weekItem);
               const lessons = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
               const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
+              const asItems = asSessionsForCell(row, weekItem).filter(asMatchesTeacherSelection);
               return `<td><div class="homeTimetableSlot">
                 ${vacation ? `<div class="emptyLesson">${vacation.name}</div>` : ""}
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
@@ -3038,7 +3046,8 @@
                     <div class="lessonMeta"><span class="muted">${lesson.schoolClass} · ${lesson.facilityLabel}</span></div>
                   </div>`).join("")}
                 ${events.map((event) => `<div class="lesson eventBlock"><strong>${event.name}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
-                ${!vacation && !holiday && !lessons.length && !events.length ? `<div class="emptyLesson">Libre</div>` : ""}
+                ${asItems.map((session) => `<div class="lesson asBlock" style="${asSessionStyle(session)}"><strong>${asBlockLabel(session)}</strong><span>${asSessionTeacherLabel(session)}</span></div>`).join("")}
+                ${!vacation && !holiday && !lessons.length && !events.length && !asItems.length ? `<div class="emptyLesson">Libre</div>` : ""}
               </div></td>`;
             }).join("")}
           </tr>`).join("")}</tbody>
