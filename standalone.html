@@ -149,9 +149,10 @@
       .constructionTable .rowHead, .constructionTable .timeHead { border-right: 3px solid #111827; }
       .constructionWeekHead { display: grid; gap: 2px; justify-items: center; line-height: 1.05; }
       .constructionWeekHead small { color: #475569; font-size: 9px; font-weight: 850; white-space: nowrap; }
-      .constructionZoomWrap .yearWrap { overflow: visible; width: max-content; }
-      .constructionTable .rowHead { left: 0; min-width: 74px; position: sticky; width: 74px; z-index: 6; }
-      .constructionTable .timeHead { left: 74px; min-width: 82px; position: sticky; width: 82px; z-index: 6; }
+      .constructionZoomWrap .yearWrap { max-height: calc(100vh - 220px); overflow: auto; padding-bottom: 0; position: relative; width: 100%; }
+      .constructionTable { border-collapse: separate; border-spacing: 0; }
+      .constructionTable .rowHead { left: 0 !important; min-width: 74px !important; position: sticky; width: 74px !important; z-index: 16; }
+      .constructionTable .timeHead { left: 74px !important; min-width: 82px !important; position: sticky; width: 82px !important; z-index: 16; }
       .constructionTable thead .rowHead, .constructionTable thead .timeHead { z-index: 9; }
       .constructionTable thead th { position: sticky; z-index: 8; }
       .constructionTable thead tr:nth-child(1) th { top: 0; }
@@ -269,7 +270,7 @@
       .buildBlock button { background: rgba(255,255,255,0.55); border: 0; border-radius: 999px; color: #334155; cursor: pointer; font-size: 10px; font-weight: 950; justify-self: end; padding: 1px 5px; }
       .zoomControls { align-items: center; display: inline-flex; gap: 6px; }
       .zoomControls .ghostButton { min-width: 34px; padding: 0 9px; text-align: center; }
-      .constructionZoomWrap { background: #fff; border: 2px solid #111827; border-radius: 8px; max-width: 100%; overflow: auto; transform-origin: top left; width: 100%; }
+      .constructionZoomWrap { background: #fff; border: 2px solid #111827; border-radius: 8px; max-width: 100%; overflow: hidden; transform-origin: top left; width: 100%; }
       .blockBuilder { align-self: start; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; position: sticky; top: 12px; }
       .blockBuilder h3 { font-size: 15px; margin: 0 0 8px; }
       .buildField { display: grid; gap: 6px; margin-top: 9px; }
@@ -410,6 +411,9 @@
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
       .eventBlock button { background: rgba(255,255,255,0.18) !important; color: #fff !important; }
+      .eventBlockControls { align-items: center; display: flex; gap: 4px; justify-content: space-between; min-height: 13px; }
+      .eventBlockControls .eventTeacherDots { flex: 1; margin-top: 0; }
+      .eventBlockControls button { flex: 0 0 auto; }
       .eventTeacherDots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
       .eventTeacherDot { border: 1px solid rgba(255,255,255,0.82); border-radius: 3px; display: inline-block; height: 10px; width: 10px; }
       .eventSpanFull { min-height: 210px; }
@@ -3880,9 +3884,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock">
-            ${editable && row.slot.id === eventStartSlotId(event) ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
             <strong>${event.name} : ${eventClassSummary(event)}</strong>
-            ${eventTeacherDots(event)}
+            <div class="eventBlockControls">
+              ${eventTeacherDots(event)}
+              ${editable && row.slot.id === eventStartSlotId(event) ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
+            </div>
           </div>`).join("")}${asItems.map((session) => `
           <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
             <strong>${asBlockLabel(session)}</strong>
@@ -4024,9 +4030,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   const event = mergeableEvents[0];
                   return `<td rowspan="${eventRowSpan(event, group.rows)}">
                     <div class="buildBlock eventBlock">
-                      ${editable ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
                       <strong>${event.name} : ${eventClassSummary(event)}</strong>
-                      ${eventTeacherDots(event)}
+                      <div class="eventBlockControls">
+                        ${eventTeacherDots(event)}
+                        ${editable ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
+                      </div>
                     </div>
                   </td>`;
                 }
