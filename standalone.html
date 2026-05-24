@@ -2989,7 +2989,9 @@ create table public.eps_feedback (
   created_at timestamptz not null default now()
 );
 
-alter table public.eps_feedback disable row level security;`;
+alter table public.eps_feedback disable row level security;
+grant usage on schema public to anon, authenticated;
+grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<section class="cloudPage">
           <div class="cloudPanel">
             <h3>Synchronisation cloud</h3>
@@ -3735,16 +3737,12 @@ alter table public.eps_feedback disable row level security;`;
       }
 
       async function submitFeedback() {
-        if (!cloudReady()) {
-          requestStatus = "Envoi impossible : cloud non configure.";
-          render();
-          return;
-        }
         if (!requestMessage.trim() || requestSubmitting) return;
         requestSubmitting = true;
         requestStatus = "Envoi en cours...";
         render();
         try {
+          if (!cloudReady()) throw new Error("cloud non configure");
           const payload = {
             planning_id: cloudConfig.planningId,
             kind: requestKind,
@@ -3760,7 +3758,12 @@ alter table public.eps_feedback disable row level security;`;
           };
           const response = await fetch(feedbackEndpoint(), {
             method: "POST",
-            headers: cloudHeaders({ Prefer: "return=minimal" }),
+            headers: {
+              apikey: cloudConfig.anonKey,
+              Authorization: `Bearer ${cloudConfig.anonKey}`,
+              "Content-Type": "application/json",
+              Prefer: "return=minimal"
+            },
             body: JSON.stringify(payload)
           });
           if (!response.ok) throw new Error(await response.text());
@@ -3775,7 +3778,7 @@ alter table public.eps_feedback disable row level security;`;
       }
 
       function renderRequestView() {
-        const canSend = requestMessage.trim().length > 0 && cloudReady() && !requestSubmitting;
+        const canSend = requestMessage.trim().length > 0 && !requestSubmitting;
         return `<section class="requestPage">
           <div class="requestPanel">
             <h2>Faire une requete</h2>
@@ -3800,10 +3803,6 @@ alter table public.eps_feedback disable row level security;`;
             </div>
             ${requestStatus ? `<div class="cloudStatus">${requestStatus}</div>` : ""}
           </div>
-          <article class="alertHelp">
-            <strong>Note</strong>
-            <span>Les demandes sont enregistrees dans la table Supabase eps_feedback. Pour recevoir un mail a chaque bug, il faut ajouter une notification externe vers lisa.bernanose@gmail.com.</span>
-          </article>
         </section>`;
       }
 
