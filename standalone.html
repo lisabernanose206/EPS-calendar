@@ -324,6 +324,17 @@
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
+      .logPage { display: grid; gap: 10px; margin-top: 16px; max-width: 980px; }
+      .logCard { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; display: grid; gap: 5px; padding: 12px; }
+      .logCard strong { color: #1e3a8a; }
+      .logCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .requestPage { display: grid; gap: 12px; margin-top: 16px; max-width: 760px; }
+      .requestPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 14px; }
+      .requestPanel h2, .requestPanel h3 { margin: 0; }
+      .requestField { display: grid; gap: 5px; }
+      .requestField label { color: #64748b; font-size: 12px; font-weight: 900; }
+      .requestField input, .requestField textarea { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 38px; padding: 9px; width: 100%; }
+      .requestField textarea { min-height: 140px; resize: vertical; }
       .holidayCell, .vacationCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #e2e8f0 6px, #e2e8f0 12px) !important; color: #64748b; }
       .vacationHeader { background: repeating-linear-gradient(135deg, #e5e7eb 0, #e5e7eb 6px, #cbd5e1 6px, #cbd5e1 12px) !important; color: #334155 !important; font-weight: 950; }
       .eventPage { display: grid; gap: 14px; grid-template-columns: 360px minmax(0, 1fr); margin-top: 12px; }
@@ -462,6 +473,7 @@
               <button class="active" data-week="current">Emploi du temps</button>
               <button data-week="year">Année scolaire</button>
               <button data-week="cycle">Cycle</button>
+              <button data-week="request">Faire une requete</button>
             </section>
           </section>
 
@@ -470,6 +482,7 @@
             <section class="weeks">
               <button data-week="build">Construction</button>
               <button data-week="alerts">Alertes</button>
+              <button data-week="log">Log</button>
             </section>
           </section>
 
@@ -591,6 +604,11 @@
       let unavailableSlotIds = [];
       let unavailableCells = [];
       let editingUnavailableId = null;
+      let requestKind = "bug";
+      let requestAuthor = "";
+      let requestMessage = "";
+      let requestStatus = "";
+      let requestSubmitting = false;
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
       const BUILT_IN_CLOUD_CONFIG = {
         enabled: true,
@@ -602,6 +620,32 @@
       };
       const AUTH_SESSION_KEY = "planningEpsAdminSession2026";
       const ADMIN_EMAIL = "eps@lm.com";
+      const bugFixLogEntries = [
+        {
+          title: "Vidage selectif de la construction",
+          details: "Le bouton permet maintenant de vider la construction, l'AS, les evenements sportifs, ou plusieurs elements a la fois."
+        },
+        {
+          title: "AS et evenements sportifs rattaches au planning",
+          details: "Les AS et evenements sportifs sont sauvegardes dans eps_plannings.data avec le planningId courant."
+        },
+        {
+          title: "Installations sans selection par defaut",
+          details: "Le type d'installation doit etre choisi explicitement, et toutes les installations peuvent etre supprimees."
+        },
+        {
+          title: "Gestion des professeurs",
+          details: "Palette pastel imposee, couleur modifiable, remplacant possible, suppression coherente des cours, AS et evenements sportifs."
+        },
+        {
+          title: "Indisponibilites ameliorees",
+          details: "Les indisponibilites acceptent toutes les installations, les dates libres ou les cycles selectionnes."
+        },
+        {
+          title: "Dates de semaines visibles",
+          details: "Les bandeaux et tableaux affichent les dates des semaines uniquement sur les jours travailles."
+        }
+      ];
       let cloudConfig = loadCloudConfig();
       let cloudStatus = cloudReady() ? "Cloud configuré. Chargement automatique activé." : "Cloud non configuré.";
       let cloudSaveTimer = null;
@@ -1353,6 +1397,11 @@
         return `${base}/rest/v1/eps_plannings`;
       }
 
+      function feedbackEndpoint() {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/rest/v1/eps_feedback`;
+      }
+
       function cloudHeaders(extra = {}) {
         const token = adminSession?.access_token || cloudConfig.anonKey;
         return {
@@ -1570,7 +1619,7 @@
       }
 
       function weekDisplayStart(weekItem) {
-        return weekItem.start < schoolYear.start ? schoolYear.start : weekItem.start;
+        return weekItem.start;
       }
 
       function weekDisplayEnd(weekItem) {
@@ -2693,7 +2742,7 @@
           <h3>Vider les elements selectionnes</h3>
           <div class="clearConstructionOptions">
             <label><input type="checkbox" data-clear-option="all" /> Tout</label>
-            <label><input type="checkbox" data-clear-option="construction" checked /> Construction</label>
+            <label><input type="checkbox" data-clear-option="construction" checked /> Creneau prof</label>
             <label><input type="checkbox" data-clear-option="as" /> AS</label>
             <label><input type="checkbox" data-clear-option="events" /> Evenements sportifs</label>
           </div>
@@ -2728,7 +2777,20 @@
 -- data->'asSessions' et data->'sportEvents'.
 -- Chaque entree contient planningId = eps_plannings.id.
 
-alter table public.eps_plannings disable row level security;`;
+alter table public.eps_plannings disable row level security;
+
+create table public.eps_feedback (
+  id uuid primary key default gen_random_uuid(),
+  planning_id text not null,
+  kind text not null check (kind in ('bug', 'improvement')),
+  author text,
+  message text not null,
+  context jsonb not null default '{}'::jsonb,
+  status text not null default 'new',
+  created_at timestamptz not null default now()
+);
+
+alter table public.eps_feedback disable row level security;`;
         return `<section class="cloudPage">
           <div class="cloudPanel">
             <h3>Synchronisation cloud</h3>
@@ -3400,6 +3462,95 @@ alter table public.eps_plannings disable row level security;`;
         </section>`;
       }
 
+      function renderBugFixLogView() {
+        return `<section class="logPage">
+          <h2>Log des corrections</h2>
+          <article class="alertHelp">
+            <strong>Historique simple</strong>
+            <span>Liste des bugs et ajustements corriges dans cette version du planning.</span>
+          </article>
+          ${bugFixLogEntries.map((entry) => `
+            <article class="logCard">
+              <strong>${entry.title}</strong>
+              <span>${entry.details}</span>
+            </article>
+          `).join("")}
+        </section>`;
+      }
+
+      async function submitFeedback() {
+        if (!cloudReady()) {
+          requestStatus = "Envoi impossible : cloud non configure.";
+          render();
+          return;
+        }
+        if (!requestMessage.trim() || requestSubmitting) return;
+        requestSubmitting = true;
+        requestStatus = "Envoi en cours...";
+        render();
+        try {
+          const payload = {
+            planning_id: cloudConfig.planningId,
+            kind: requestKind,
+            author: requestAuthor.trim() || null,
+            message: requestMessage.trim(),
+            context: {
+              page: week,
+              schoolYear: schoolYear.label,
+              userAgent: navigator.userAgent,
+              sentAt: new Date().toISOString()
+            },
+            status: "new"
+          };
+          const response = await fetch(feedbackEndpoint(), {
+            method: "POST",
+            headers: cloudHeaders({ Prefer: "return=minimal" }),
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) throw new Error(await response.text());
+          requestMessage = "";
+          requestStatus = "Demande envoyee. Merci pour le retour.";
+        } catch (error) {
+          requestStatus = `Envoi impossible : ${error.message || "erreur inconnue"}`;
+        } finally {
+          requestSubmitting = false;
+          render();
+        }
+      }
+
+      function renderRequestView() {
+        const canSend = requestMessage.trim().length > 0 && cloudReady() && !requestSubmitting;
+        return `<section class="requestPage">
+          <div class="requestPanel">
+            <h2>Faire une requete</h2>
+            <p class="muted">Signalez un bug vu dans l'outil ou proposez une amelioration.</p>
+            <div class="eventField">
+              <label>Type</label>
+              <div class="choiceGrid">
+                <button class="choiceButton ${requestKind === "bug" ? "active" : ""}" data-request-kind="bug">Bug</button>
+                <button class="choiceButton ${requestKind === "improvement" ? "active" : ""}" data-request-kind="improvement">Amelioration</button>
+              </div>
+            </div>
+            <div class="requestField">
+              <label>Votre nom ou email</label>
+              <input id="requestAuthor" value="${requestAuthor}" placeholder="Facultatif" />
+            </div>
+            <div class="requestField">
+              <label>Message</label>
+              <textarea id="requestMessage" placeholder="Decrivez le bug, ce que vous vouliez faire, ou l'amelioration souhaitee.">${requestMessage}</textarea>
+            </div>
+            <div class="modalFooter">
+              <button class="ghostButton primaryWeekButton" id="sendFeedback" ${canSend ? "" : "disabled"}>${requestSubmitting ? "Envoi..." : "Envoyer la requete"}</button>
+            </div>
+            ${requestStatus ? `<div class="cloudStatus">${requestStatus}</div>` : ""}
+          </div>
+          <article class="alertHelp">
+            <strong>Note</strong>
+            <span>Les demandes sont enregistrees dans la table Supabase eps_feedback. Pour recevoir un mail a chaque bug, il faut ajouter une notification externe vers lisa.bernanose@gmail.com.</span>
+          </article>
+        </section>`;
+      }
+
       function renderAuthBox() {
         const authBox = document.getElementById("authBox");
         if (!authBox) return;
@@ -3423,7 +3574,7 @@ alter table public.eps_plannings disable row level security;`;
       }
 
       function render() {
-        if (!isAdmin() && (week === "build" || week === "alerts")) week = "current";
+        if (!isAdmin() && (week === "build" || week === "alerts" || week === "log")) week = "current";
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
@@ -3434,7 +3585,7 @@ alter table public.eps_plannings disable row level security;`;
         const schoolWeeks = schoolYearWeeks();
         const canNavigateWeeks = week === "current";
         const dateInfo = document.getElementById("dateInfo");
-        dateInfo.style.display = week === "build" || week === "cycle" || week === "alerts" ? "none" : "flex";
+        dateInfo.style.display = week === "build" || week === "cycle" || week === "alerts" || week === "log" ? "none" : "flex";
         dateInfo.innerHTML = `
           <div class="dateNav">
             ${canNavigateWeeks ? `<button class="weekArrow" id="prevWeek" title="Semaine precedente" ${weekInfo.rank <= 1 ? "disabled" : ""}>‹</button>` : ""}
@@ -3451,7 +3602,7 @@ alter table public.eps_plannings disable row level security;`;
           </div>`;
         const allSelected = allTeachersSelected();
         const legend = document.getElementById("legend");
-        const hideLegend = week === "build" || week === "alerts" || week === "cycle";
+        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle";
         legend.style.display = hideLegend ? "none" : "flex";
         legend.innerHTML = hideLegend ? "" : `<button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all"><span class="dot" style="background:#0f172a"></span>Tous</button>` + teachers.map((teacher) => {
             const selected = selectedTeacherIds.includes(teacher.id);
@@ -3461,6 +3612,8 @@ alter table public.eps_plannings disable row level security;`;
         else if (week === "cycle") root.innerHTML = renderCycleView();
         else if (week === "build") root.innerHTML = renderConstructionView();
         else if (week === "alerts") root.innerHTML = renderAlertsView();
+        else if (week === "log") root.innerHTML = renderBugFixLogView();
+        else if (week === "request") root.innerHTML = renderRequestView();
         else root.innerHTML = renderCalendar(cycle);
         const adminLoginForm = document.getElementById("adminLoginForm");
         if (adminLoginForm) {
@@ -3477,6 +3630,18 @@ alter table public.eps_plannings disable row level security;`;
         if (adminPasswordInput) adminPasswordInput.addEventListener("input", () => authPassword = adminPasswordInput.value);
         const logoutAdmin = document.getElementById("logoutAdmin");
         if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
+        document.querySelectorAll("[data-request-kind]").forEach((button) => {
+          button.addEventListener("click", () => {
+            requestKind = button.dataset.requestKind;
+            render();
+          });
+        });
+        const requestAuthorInput = document.getElementById("requestAuthor");
+        if (requestAuthorInput) requestAuthorInput.addEventListener("input", () => requestAuthor = requestAuthorInput.value);
+        const requestMessageInput = document.getElementById("requestMessage");
+        if (requestMessageInput) requestMessageInput.addEventListener("input", () => requestMessage = requestMessageInput.value);
+        const sendFeedback = document.getElementById("sendFeedback");
+        if (sendFeedback) sendFeedback.addEventListener("click", submitFeedback);
         document.querySelectorAll("[data-year-week-rank]").forEach((button) => {
           button.addEventListener("click", () => {
             selectedYearWeekRank = Number(button.dataset.yearWeekRank);
@@ -4231,7 +4396,7 @@ alter table public.eps_plannings disable row level security;`;
               events: Boolean(document.querySelector("[data-clear-option='events']")?.checked)
             };
             const selectedLabels = [
-              options.construction ? "la construction" : "",
+              options.construction ? "les creneaux prof" : "",
               options.as ? "l'AS" : "",
               options.events ? "les evenements sportifs" : ""
             ].filter(Boolean);
@@ -4265,7 +4430,7 @@ alter table public.eps_plannings disable row level security;`;
 
       document.querySelectorAll("[data-week]").forEach((button) => {
         button.addEventListener("click", () => {
-          if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts")) {
+          if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts" || button.dataset.week === "log")) {
             authStatus = "Connexion admin requise.";
             render();
             return;
