@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Dates : selection debut/fin via un seul calendrier pour cycles, evenements sportifs, AS et indisponibilites.
 - Annee scolaire : evenements sportifs abreges dans les cases et detail complet affiche au clic sur une case.
 - Construction : blocs AS sur une ligne et evenements sportifs simplifies avec resume des classes.
 - Evenements sportifs : ajout d'un choix de creneau precis dans la periode.

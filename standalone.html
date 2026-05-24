@@ -314,6 +314,19 @@
       .cycleRow label { align-items: center; color: #172033; display: flex; font-size: 12px; font-weight: 900; gap: 6px; }
       .cycleDates { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
       .cycleDates input { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 6px; width: 100%; }
+      .dateRangeField { position: relative; }
+      .dateRangeButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 36px; padding: 0 10px; text-align: left; width: 100%; }
+      .dateRangeButton:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+      .dateRangePicker { background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18); display: grid; gap: 8px; left: 0; min-width: 260px; padding: 10px; position: absolute; top: calc(100% + 6px); z-index: 40; }
+      .dateRangeHead { align-items: center; display: flex; justify-content: space-between; }
+      .dateRangeHead strong { color: #0f172a; font-size: 12px; text-transform: capitalize; }
+      .dateRangeHead button, .dateRangeDay { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 900; justify-content: center; min-height: 28px; }
+      .dateRangeGrid { display: grid; gap: 4px; grid-template-columns: repeat(7, 1fr); }
+      .dateRangeWeekday { color: #64748b; font-size: 10px; font-weight: 950; text-align: center; }
+      .dateRangeDay.blank { visibility: hidden; }
+      .dateRangeDay.selected { background: #0f172a; border-color: #0f172a; color: #fff; }
+      .dateRangeDay.inRange { background: #ccfbf1; border-color: #5eead4; color: #134e4a; }
+      .dateRangeHint { color: #64748b; font-size: 10px; font-weight: 850; }
       .constructionTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 0 0 12px; max-width: max-content; padding: 5px; }
       .constructionTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
       .constructionTabs button.active { background: #0f172a; color: #fff; }
@@ -678,6 +691,10 @@
       let requestMessage = "";
       let requestStatus = "";
       let requestSubmitting = false;
+      let activeDateRangePicker = "";
+      let dateRangeDraftStart = "";
+      let dateRangeDraftEnd = "";
+      let dateRangeMonth = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
       const BUILT_IN_CLOUD_CONFIG = {
         enabled: true,
@@ -1830,6 +1847,92 @@
 
       function formatDate(value) {
         return dateOnly(value).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      }
+
+      function monthKeyForDate(value) {
+        const date = value instanceof Date ? new Date(value) : value ? dateOnly(value) : new Date(schoolYear.start);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      }
+
+      function dateFromMonthKey(value) {
+        const [year, month] = (value || monthKeyForDate(schoolYear.start)).split("-").map(Number);
+        return new Date(year, month - 1, 1);
+      }
+
+      function shiftMonthKey(value, delta) {
+        const date = dateFromMonthKey(value);
+        date.setMonth(date.getMonth() + delta);
+        return monthKeyForDate(dateKey(date));
+      }
+
+      function dateRangeLabel(start, end) {
+        return start && end ? `${formatDate(start)} -> ${formatDate(end)}` : "Choisir une periode";
+      }
+
+      function renderDateRangePicker(id, start, end, disabled = false) {
+        const isOpen = activeDateRangePicker === id;
+        const monthDate = dateFromMonthKey(isOpen ? dateRangeMonth : monthKeyForDate(start || schoolYear.start));
+        const monthLabel = monthDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+        const firstDay = new Date(monthDate);
+        const startOffset = (firstDay.getDay() || 7) - 1;
+        const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+        const draftStart = isOpen ? dateRangeDraftStart : start;
+        const draftEnd = isOpen ? dateRangeDraftEnd : end;
+        const dayButtons = [
+          ...Array.from({ length: startOffset }, () => `<span class="dateRangeDay blank"></span>`),
+          ...Array.from({ length: daysInMonth }, (_, index) => {
+            const day = index + 1;
+            const value = dateKey(new Date(monthDate.getFullYear(), monthDate.getMonth(), day));
+            const selected = value === draftStart || value === draftEnd;
+            const inRange = draftStart && draftEnd && value > draftStart && value < draftEnd;
+            return `<button class="dateRangeDay ${selected ? "selected" : ""} ${inRange ? "inRange" : ""}" data-date-range-day="${value}">${day}</button>`;
+          })
+        ].join("");
+        return `<div class="dateRangeField">
+          <button class="dateRangeButton" data-open-date-range="${id}" data-range-start="${start || ""}" data-range-end="${end || ""}" ${disabled ? "disabled" : ""}>${dateRangeLabel(start, end)}</button>
+          ${isOpen ? `<div class="dateRangePicker">
+            <div class="dateRangeHead">
+              <button data-date-range-month="-">‹</button>
+              <strong>${monthLabel}</strong>
+              <button data-date-range-month="+">›</button>
+            </div>
+            <div class="dateRangeGrid">${["L", "M", "M", "J", "V", "S", "D"].map((day) => `<span class="dateRangeWeekday">${day}</span>`).join("")}${dayButtons}</div>
+            <span class="dateRangeHint">${dateRangeDraftStart && !dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de debut."}</span>
+          </div>` : ""}
+        </div>`;
+      }
+
+      function applyDateRangeSelection(id, start, end) {
+        if (!start || !end) return;
+        if (id === "event") {
+          eventStart = start;
+          eventEnd = end;
+          return;
+        }
+        if (id === "as") {
+          asStart = start;
+          asEnd = end;
+          return;
+        }
+        if (id === "unavailable") {
+          unavailableStart = start;
+          unavailableEnd = end;
+          return;
+        }
+        if (id.startsWith("cycle:")) {
+          const cycleId = id.replace("cycle:", "");
+          const cycle = activeCycles().find((item) => item.id === cycleId);
+          if (!cycle) return;
+          cycle.start = start;
+          cycle.end = end;
+          const cycleErrors = validateCycles(activeCycles());
+          if (cycleErrors.length) {
+            cycleSaveStatus = cycleErrors[0];
+            return;
+          }
+          saveCycles();
+          rebuildConstructionPlan();
+        }
       }
 
       function shortDate(value) {
@@ -3447,10 +3550,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <div class="cycleList">${shownCycles.map((cycle) => `
             <div class="cycleRow">
               <label>${cycle.name}</label>
-              <div class="cycleDates">
-                <input type="date" data-cycle-id="${cycle.id}" data-cycle-field="start" value="${cycle.start}" />
-                <input type="date" data-cycle-id="${cycle.id}" data-cycle-field="end" value="${cycle.end}" />
-              </div>
+              ${renderDateRangePicker(`cycle:${cycle.id}`, cycle.start, cycle.end)}
             </div>`).join("")}</div>
           ${cycleErrors.length ? `<div class="cycleErrorBox">${cycleErrors.map((message) => `<span>${message}</span>`).join("")}</div>` : ""}
           ${cycleSaveStatus ? `<div class="cloudStatus">${cycleSaveStatus}</div>` : ""}
@@ -3520,15 +3620,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <label>Nom</label>
               <input id="eventName" value="${eventName}" />
             </div>
-            <div class="cycleDates">
-              <div class="eventField">
-                <label>Début</label>
-                <input id="eventStart" type="date" value="${eventStart}" />
-              </div>
-              <div class="eventField">
-                <label>Fin</label>
-                <input id="eventEnd" type="date" value="${eventEnd}" />
-              </div>
+            <div class="eventField">
+              <label>Dates</label>
+              ${renderDateRangePicker("event", eventStart, eventEnd)}
             </div>
             <div class="eventField">
               <label>Période</label>
@@ -3586,15 +3680,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <label>Nom</label>
               <input id="asName" value="${asName}" />
             </div>
-            <div class="cycleDates">
-              <div class="eventField">
-                <label>Début</label>
-                <input id="asStart" type="date" value="${asStart}" />
-              </div>
-              <div class="eventField">
-                <label>Fin</label>
-                <input id="asEnd" type="date" value="${asEnd}" />
-              </div>
+            <div class="eventField">
+              <label>Dates</label>
+              ${renderDateRangePicker("as", asStart, asEnd)}
             </div>
             <div class="eventField">
               <label>Jours récurrents · 12h30-13h15, mercredi 12h30-15h</label>
@@ -3824,15 +3912,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>
               ${!cyclesAvailable ? `<span class="muted">Si vous voulez parametrer vos indispo sur des cycles, definissez les avant.</span>` : ""}
             </div>
-            <div class="cycleDates">
-              <div class="eventField">
-                <label>Début</label>
-                <input id="unavailableStart" type="date" value="${period.start}" ${unavailablePeriodMode === "cycles" ? "disabled" : ""} />
-              </div>
-              <div class="eventField">
-                <label>Fin</label>
-                <input id="unavailableEnd" type="date" value="${period.end}" ${unavailablePeriodMode === "cycles" ? "disabled" : ""} />
-              </div>
+            <div class="eventField">
+              <label>Dates</label>
+              ${renderDateRangePicker("unavailable", period.start, period.end, unavailablePeriodMode === "cycles")}
             </div>
             ${unavailablePeriodMode === "cycles" ? `<div class="eventField">
               <label>Cycles concernes</label>
@@ -4200,6 +4282,39 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (requestMessageInput) requestMessageInput.addEventListener("input", () => requestMessage = requestMessageInput.value);
         const sendFeedback = document.getElementById("sendFeedback");
         if (sendFeedback) sendFeedback.addEventListener("click", submitFeedback);
+        document.querySelectorAll("[data-open-date-range]").forEach((button) => {
+          button.addEventListener("click", () => {
+            activeDateRangePicker = button.dataset.openDateRange;
+            dateRangeDraftStart = button.dataset.rangeStart || "";
+            dateRangeDraftEnd = button.dataset.rangeEnd || "";
+            dateRangeMonth = monthKeyForDate(dateRangeDraftStart || schoolYear.start);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-date-range-month]").forEach((button) => {
+          button.addEventListener("click", () => {
+            dateRangeMonth = shiftMonthKey(dateRangeMonth, button.dataset.dateRangeMonth === "+" ? 1 : -1);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-date-range-day]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const value = button.dataset.dateRangeDay;
+            if (!dateRangeDraftStart || dateRangeDraftEnd) {
+              dateRangeDraftStart = value;
+              dateRangeDraftEnd = "";
+              render();
+              return;
+            }
+            const start = value < dateRangeDraftStart ? value : dateRangeDraftStart;
+            const end = value < dateRangeDraftStart ? dateRangeDraftStart : value;
+            applyDateRangeSelection(activeDateRangePicker, start, end);
+            activeDateRangePicker = "";
+            dateRangeDraftStart = "";
+            dateRangeDraftEnd = "";
+            render();
+          });
+        });
         document.querySelectorAll("[data-year-week-rank]").forEach((button) => {
           button.addEventListener("click", () => {
             selectedYearWeekRank = Number(button.dataset.yearWeekRank);
@@ -4597,11 +4712,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
         });
         const eventNameInput = document.getElementById("eventName");
-        const eventStartInput = document.getElementById("eventStart");
-        const eventEndInput = document.getElementById("eventEnd");
         if (eventNameInput) eventNameInput.addEventListener("input", () => eventName = eventNameInput.value);
-        if (eventStartInput) eventStartInput.addEventListener("change", () => eventStart = eventStartInput.value);
-        if (eventEndInput) eventEndInput.addEventListener("change", () => eventEnd = eventEndInput.value);
         document.querySelectorAll("[data-event-half-day]").forEach((button) => {
           button.addEventListener("click", () => {
             eventHalfDay = button.dataset.eventHalfDay;
@@ -4689,11 +4800,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
         });
         const asNameInput = document.getElementById("asName");
-        const asStartInput = document.getElementById("asStart");
-        const asEndInput = document.getElementById("asEnd");
         if (asNameInput) asNameInput.addEventListener("input", () => asName = asNameInput.value);
-        if (asStartInput) asStartInput.addEventListener("change", () => asStart = asStartInput.value);
-        if (asEndInput) asEndInput.addEventListener("change", () => asEnd = asEndInput.value);
         document.querySelectorAll("[data-as-day]").forEach((button) => {
           button.addEventListener("click", () => {
             const day = button.dataset.asDay;
@@ -4709,11 +4816,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
         });
         const unavailableNameInput = document.getElementById("unavailableName");
-        const unavailableStartInput = document.getElementById("unavailableStart");
-        const unavailableEndInput = document.getElementById("unavailableEnd");
         if (unavailableNameInput) unavailableNameInput.addEventListener("input", () => unavailableName = unavailableNameInput.value);
-        if (unavailableStartInput) unavailableStartInput.addEventListener("change", () => unavailableStart = unavailableStartInput.value);
-        if (unavailableEndInput) unavailableEndInput.addEventListener("change", () => unavailableEnd = unavailableEndInput.value);
         document.querySelectorAll("[data-unavailable-period-mode]").forEach((button) => {
           button.addEventListener("click", () => {
             if (button.disabled) return;
@@ -4921,22 +5024,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        document.querySelectorAll("[data-cycle-id]").forEach((input) => {
-          input.addEventListener("input", () => {
-            const cycle = activeCycles().find((item) => item.id === input.dataset.cycleId);
-            if (!cycle) return;
-            cycle[input.dataset.cycleField] = input.value;
-            const cycleErrors = validateCycles(activeCycles());
-            if (cycleErrors.length) {
-              cycleSaveStatus = cycleErrors[0];
-              render();
-              return;
-            }
-            saveCycles();
-            rebuildConstructionPlan();
-            render();
-          });
-        });
         document.querySelectorAll("[data-cycle-scope]").forEach((button) => {
           button.addEventListener("click", () => {
             activeCycleScope = button.dataset.cycleScope;
