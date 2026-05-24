@@ -212,9 +212,11 @@
       .selectedWeekInfo { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; display: grid; font-size: 13px; font-weight: 900; gap: 3px; margin: 0 0 10px; padding: 10px 12px; }
       .selectedWeekInfo strong { color: #7c2d12; font-size: 15px; }
       .selectedWeekInfo small { color: #9a3412; font-size: 11px; font-weight: 850; line-height: 1.25; }
-      .selectedCellInfo { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; display: grid; font-size: 12px; font-weight: 850; gap: 6px; margin: 0 0 10px; padding: 10px 12px; }
+      .selectedCellBackdrop { background: rgba(15,23,42,0.18); inset: 0; position: fixed; z-index: 80; }
+      .selectedCellInfo { background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.24); color: #334155; display: grid; font-size: 12px; font-weight: 850; gap: 6px; left: 50%; max-height: min(70vh, 520px); max-width: min(520px, calc(100vw - 28px)); overflow: auto; padding: 12px; position: fixed; top: 96px; transform: translateX(-50%); width: 520px; z-index: 81; }
       .selectedCellInfo strong { color: #0f172a; font-size: 14px; }
       .selectedCellInfo span { display: block; }
+      .selectedCellClose { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 950; justify-self: end; min-height: 28px; padding: 0 9px; }
       .selectedCellDetail { border-top: 1px solid #e2e8f0; display: grid; gap: 2px; padding-top: 6px; }
       .yearSubTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 10px 0 12px; max-width: max-content; padding: 5px; }
       .yearSubTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
@@ -3147,11 +3149,13 @@
         ];
         if (vacation) details.push(`<div class="selectedCellDetail"><strong>Vacances</strong><span>${vacation.name}</span></div>`);
         if (holiday) details.push(`<div class="selectedCellDetail"><strong>Ferie</strong><span>${holiday}</span></div>`);
-        return `<div class="selectedCellInfo">
-          <strong>${row.day} ${row.slot.label} · Semaine ${weekItem.rank}${weekItem.letter}</strong>
-          <span>${weekDateLabel(weekItem)}</span>
-          ${details.join("") || `<span>Aucun contenu sur cette case.</span>`}
-        </div>`;
+        return `<div class="selectedCellBackdrop" data-close-year-cell-detail></div>
+          <div class="selectedCellInfo" role="dialog" aria-label="Detail de la case selectionnee">
+            <button class="selectedCellClose" data-close-year-cell-detail>Fermer</button>
+            <strong>${row.day} ${row.slot.label} · Semaine ${weekItem.rank}${weekItem.letter}</strong>
+            <span>${weekDateLabel(weekItem)}</span>
+            ${details.join("") || `<span>Aucun contenu sur cette case.</span>`}
+          </div>`;
       }
 
       function renderYearView(cycle) {
@@ -4328,6 +4332,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           cell.addEventListener("click", () => {
             selectedYearCellKey = cell.dataset.yearCell;
             selectedYearWeekRank = parseYearCellKey(selectedYearCellKey).weekRank;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-close-year-cell-detail]").forEach((button) => {
+          button.addEventListener("click", () => {
+            selectedYearCellKey = "";
             render();
           });
         });
