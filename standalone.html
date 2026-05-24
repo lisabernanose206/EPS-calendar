@@ -368,7 +368,8 @@
       .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .compactCardGrid .eventCard { margin-top: 0; }
       .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
-      .unavailableGroup h4 { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; font-size: 11px; font-weight: 950; margin: 0; padding: 6px 8px; }
+      .unavailableGroup button { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; cursor: pointer; display: flex; font-size: 11px; font-weight: 950; justify-content: space-between; min-height: 30px; padding: 6px 8px; text-align: left; width: 100%; }
+      .unavailableGroup button.active { background: #0f172a; border-color: #0f172a; color: #fff; }
       .unavailableGrid { display: grid; gap: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .unavailableCard { border-left-width: 4px; gap: 3px; margin-top: 0; padding: 7px 8px; }
       .unavailableCard strong { font-size: 12px; line-height: 1.15; }
@@ -658,6 +659,7 @@
       let unavailableWeekdays = [];
       let unavailableSlotIds = [];
       let unavailableCells = [];
+      let expandedUnavailableGroup = "";
       let editingUnavailableId = null;
       let requestKind = "bug";
       let requestAuthor = "";
@@ -2308,9 +2310,13 @@
       function renderUnavailableGroup(label, type) {
         const items = facilityUnavailability.filter((item) => unavailableTypeForItem(item) === type);
         if (!items.length) return "";
+        const isOpen = expandedUnavailableGroup === type;
         return `<section class="unavailableGroup">
-          <h4>${label}</h4>
-          <div class="unavailableGrid">${items.map(renderUnavailableCard).join("")}</div>
+          <button class="${isOpen ? "active" : ""}" data-toggle-unavailable-group="${type}">
+            <span>${label}</span>
+            <span>${items.length} · ${isOpen ? "Masquer" : "Afficher"}</span>
+          </button>
+          ${isOpen ? `<div class="unavailableGrid">${items.map(renderUnavailableCard).join("")}</div>` : ""}
         </section>`;
       }
 
@@ -4653,6 +4659,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-unavailable-cell-day]").forEach((button) => {
           button.addEventListener("click", () => {
             toggleUnavailableGridCell(button.dataset.unavailableCellDay, button.dataset.unavailableCellSlot);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-unavailable-group]").forEach((button) => {
+          button.addEventListener("click", () => {
+            expandedUnavailableGroup = expandedUnavailableGroup === button.dataset.toggleUnavailableGroup ? "" : button.dataset.toggleUnavailableGroup;
             render();
           });
         });

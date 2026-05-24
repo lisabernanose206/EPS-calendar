@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Indisponibilites : groupes de contraintes existantes repliees par defaut avec ouverture au clic.
 - Navigation : ordre des onglets Admin remis selon l'ancien ordre Construction et listes Profs/Installations/Activites/Evenements en deux colonnes.
 - Indisponibilites : contraintes existantes affichees deux par ligne pour reduire la hauteur de la liste.
 - Navigation : les anciennes sous-rubriques de Construction deviennent des onglets Admin a gauche, Construction ne garde que le planning.
