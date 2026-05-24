@@ -153,12 +153,11 @@
       .constructionTable { border-collapse: separate; border-spacing: 0; }
       .constructionTable .rowHead { left: 0 !important; min-width: 74px !important; position: sticky; width: 74px !important; z-index: 16; }
       .constructionTable .timeHead { left: 74px !important; min-width: 82px !important; position: sticky; width: 82px !important; z-index: 16; }
-      .constructionTable thead .rowHead, .constructionTable thead .timeHead { z-index: 9; }
-      .constructionTable thead th { position: sticky; z-index: 8; }
-      .constructionTable thead tr:nth-child(1) th { top: 0; }
-      .constructionTable thead tr:nth-child(2) th { top: 28px; }
-      .constructionTable thead tr:nth-child(3) th { top: 56px; }
-      .constructionTable thead .rowHead, .constructionTable thead .timeHead { z-index: 10; }
+      .constructionTable thead th { background: #f1f5f9; height: 34px; position: sticky; z-index: 30; }
+      .constructionTable thead tr:nth-child(1) th { top: 0; z-index: 33; }
+      .constructionTable thead tr:nth-child(2) th { top: 34px; z-index: 32; }
+      .constructionTable thead tr:nth-child(3) th { top: 68px; z-index: 31; }
+      .constructionTable thead .rowHead, .constructionTable thead .timeHead { background: #fff; z-index: 42; }
       .consultationYearTable { min-width: 0; table-layout: fixed; }
       .consultationYearTable th, .consultationYearTable td { font-size: 9px; min-width: 0; padding: 3px 2px; }
       .consultationYearTable .rowHead { min-width: 62px; width: 62px; }
