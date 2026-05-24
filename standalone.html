@@ -578,6 +578,7 @@
       let cyclesByLevel = loadCyclesByLevel();
       let activeCycleScope = "default";
       let activeCycleId = cycles[0].id;
+      let cycleSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
       let blockExclusions = loadBlockExclusions();
@@ -1414,10 +1415,18 @@
         }
       }
 
-      function saveCycles() {
+      function saveCycles(saveCloudNow = false) {
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
-        scheduleCloudSave();
+        cycleSaveStatus = cloudReady() && isAdmin()
+          ? "Cycles sauvegardes localement. Sauvegarde cloud en cours."
+          : "Cycles sauvegardes localement.";
+        if (saveCloudNow && isAdmin() && cloudReady()) {
+          clearTimeout(cloudSaveTimer);
+          cloudSaveToRemote(false);
+        } else {
+          scheduleCloudSave();
+        }
       }
 
       function loadCloudConfig() {
@@ -3239,6 +3248,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <input type="date" data-cycle-id="${cycle.id}" data-cycle-field="end" value="${cycle.end}" />
               </div>
             </div>`).join("")}</div>
+          <div class="modalFooter">
+            <button class="ghostButton primaryWeekButton" id="saveCyclesNow">Enregistrer les cycles</button>
+          </div>
+          ${cycleSaveStatus ? `<div class="cloudStatus">${cycleSaveStatus}</div>` : ""}
           ${renderCycleCoverage(activeCycleScope)}`;
       }
 
@@ -4713,6 +4726,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        const saveCyclesNow = document.getElementById("saveCyclesNow");
+        if (saveCyclesNow) {
+          saveCyclesNow.addEventListener("click", () => {
+            saveCycles(true);
+            render();
+          });
+        }
         document.querySelectorAll("[data-cycle-scope]").forEach((button) => {
           button.addEventListener("click", () => {
             activeCycleScope = button.dataset.cycleScope;

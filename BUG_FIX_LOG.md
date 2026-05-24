@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Cycles : ajout d'un bouton explicite d'enregistrement et d'un message de confirmation de sauvegarde.
 - Choix de classes par groupe : ajout de Classe entiere, Demi-groupe A et Demi-groupe B dans les selections de classes.
 - Indisponibilites profs : ajout du type Prof pour bloquer les formations, indisponibilites personnelles et jours non travailles des enseignants.
 - Log Admin : wording vulgarise pour presenter l'historique des corrections sans mentionner la source technique.
