@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Legende profs : pastilles remplacees par des carres de couleur.
 - Emploi du temps et Annee scolaire : legende des profs rendue plus discrete et compacte.
 - Navigation : acces aux retours utilisateur simplifie avec un bouton direct Une question.
 - Emploi du temps : legende profs placee sous le bordereau et navigation semaine retablie.
