@@ -553,6 +553,11 @@
       let activities = loadActivities();
       const classLevels = ["6eme", "5eme", "4eme", "3eme"];
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
+      const classGroups = [
+        { id: "whole", label: "Classe entiere", short: "" },
+        { id: "A", label: "Demi-groupe A", short: "A" },
+        { id: "B", label: "Demi-groupe B", short: "B" }
+      ];
       const classes = classLevels.flatMap((level) =>
         Array.from({ length: 7 }, (_, index) => `${level} ${index + 1}`)
       );
@@ -1232,7 +1237,8 @@
       }
 
       function eventTouchesBlock(event, block) {
-        return teacherIdsForBlock(block).some((teacherId) => event.teacherIds.includes(teacherId)) || event.classes.includes(block.schoolClass);
+        return teacherIdsForBlock(block).some((teacherId) => event.teacherIds.includes(teacherId))
+          || (event.classes || []).some((schoolClass) => classesOverlap(schoolClass, block.schoolClass));
       }
 
       function eventsForCell(row, weekItem) {
@@ -1319,7 +1325,7 @@
         const unavailableItems = unavailableForCell(row, weekItem);
         const facilityBlocked = unavailableItems.find((item) => unavailableCoversFacility(item, block.facilityId));
         if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce creneau.`;
-        const classBlocked = unavailableItems.find((item) => (item.classIds || []).includes(block.schoolClass));
+        const classBlocked = unavailableItems.find((item) => classCollectionHasOverlap(item.classIds || [], block.schoolClass));
         if (classBlocked) return `${block.schoolClass || "Cette classe"} est indisponible sur ce creneau.`;
         const teacherBlocked = unavailableItems.find((item) => teacherIdsForBlock(block).some((teacherId) => (item.teacherIds || []).includes(teacherId)));
         if (teacherBlocked) return `${teacherLabelForBlock(block) || "Ce professeur"} est indisponible sur ce creneau.`;
@@ -1331,7 +1337,7 @@
         if (!row || !rule.block) return false;
         return unavailableForCell(row, weekItem).some((item) => {
           const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
-          const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
+          const classBlocked = classCollectionHasOverlap(item.classIds || [], rule.block.schoolClass);
           const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
           return facilityBlocked || classBlocked || teacherBlocked;
         });
@@ -1353,7 +1359,7 @@
             const shouldRemove = unavailableItems.some((item) => {
               if (!unavailableMatchesCell(item, row, weekItem)) return false;
               const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
-              const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
+              const classBlocked = classCollectionHasOverlap(item.classIds || [], rule.block.schoolClass);
               const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
               return facilityBlocked || classBlocked || teacherBlocked;
             });
@@ -1894,7 +1900,9 @@
       }
 
       function compactClassName(schoolClass) {
-        return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
+        const { level, number, group } = classParts(schoolClass);
+        if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
+        return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
       }
 
       function facilityShortLabel(facilityId, fallbackLabel = "") {
@@ -2051,21 +2059,18 @@
               items: teacherItems
             });
           });
-          const byClass = items.reduce((acc, item, index) => {
-            const schoolClass = item.schoolClass || "Sans classe";
-            if (!acc[schoolClass]) acc[schoolClass] = [];
-            acc[schoolClass].push({ ...item, index });
-            return acc;
-          }, {});
-          Object.entries(byClass).forEach(([schoolClass, classItems]) => {
-            if (classItems.length < 2) return;
+          items.forEach((item, index) => {
+            const classItems = items
+              .map((other, otherIndex) => ({ ...other, index: otherIndex }))
+              .filter((other) => other.index !== index && item.schoolClass && other.schoolClass && classesOverlap(item.schoolClass, other.schoolClass));
+            if (!classItems.length) return;
             conflicts.push({
               type: "class",
               key,
-              schoolClass,
+              schoolClass: item.schoolClass,
               row,
               weekItem,
-              items: classItems
+              items: [{ ...item, index }, ...classItems]
             });
           });
         });
@@ -2350,7 +2355,7 @@
           && item.schoolClass !== candidate.schoolClass
         );
         if (teacherConflict) return `Professeur deja pris avec ${teacherConflict.schoolClass || "une autre classe"}.`;
-        const classConflict = items.find((item) => item.schoolClass && candidate.schoolClass && item.schoolClass === candidate.schoolClass);
+        const classConflict = items.find((item) => item.schoolClass && candidate.schoolClass && classesOverlap(item.schoolClass, candidate.schoolClass));
         if (classConflict) return `Classe deja prise : ${candidate.schoolClass}.`;
         return "";
       }
@@ -2440,12 +2445,28 @@
       }
 
       function classParts(schoolClass) {
-        if (!schoolClass) return { level: blockClassLevel || "", number: "" };
-        const [level, number] = schoolClass.split(" ");
+        if (!schoolClass) return { level: blockClassLevel || "", number: "", group: "whole" };
+        const [level, number, group = "whole"] = schoolClass.split(" ");
         return {
           level: classLevels.includes(level) ? level : "",
-          number: classNumbers.includes(number) ? number : ""
+          number: classNumbers.includes(number) ? number : "",
+          group: classGroups.some((item) => item.id === group) ? group : "whole"
         };
+      }
+
+      function schoolClassLabel(level, number, group = "whole") {
+        return group === "whole" ? `${level} ${number}` : `${level} ${number} ${group}`;
+      }
+
+      function classesOverlap(firstClass, secondClass) {
+        const first = classParts(firstClass);
+        const second = classParts(secondClass);
+        if (!first.level || !second.level || first.level !== second.level || first.number !== second.number) return false;
+        return first.group === "whole" || second.group === "whole" || first.group === second.group;
+      }
+
+      function classCollectionHasOverlap(classItems, schoolClass) {
+        return [...classItems].some((item) => classesOverlap(item, schoolClass));
       }
 
       function updateBlockClass(part, value) {
@@ -2456,8 +2477,10 @@
           return;
         }
         const nextLevel = current.level || blockClassLevel;
-        if (!nextLevel) return;
-        blockClass = `${nextLevel} ${value}`;
+        const nextNumber = part === "number" ? value : current.number;
+        const nextGroup = part === "group" ? value : current.group;
+        if (!nextLevel || !nextNumber) return;
+        blockClass = schoolClassLabel(nextLevel, nextNumber, nextGroup);
       }
 
       function toggleUnavailableClass(schoolClass) {
@@ -3063,7 +3086,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const cellCycle = cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
-        const selectedClassUnavailable = occupied.classes.has(blockClass) || occupied.unavailableClasses.has(blockClass);
+        const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass);
         const selectedFacilityUnavailable = occupied.facilityIds.has(blockFacilityId) || occupied.unavailableFacilityIds.has(blockFacilityId);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
@@ -3119,20 +3142,26 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildField">
                 <label>Classe</label>
                 <div class="choiceGrid">${classLevels.map((level) => {
-                  const unavailable = classNumbers.every((number) => occupied.classes.has(`${level} ${number}`) || occupied.unavailableClasses.has(`${level} ${number}`));
+                  const unavailable = classNumbers.every((number) => classGroups.every((group) => {
+                    const schoolClass = schoolClassLabel(level, number, group.id);
+                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
+                  }));
                   const reason = unavailable ? `Toutes les classes de ${level} sont deja prises ou indisponibles sur ce creneau.` : `Filtrer les classes de ${level}.`;
                   return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
                 }).join("")}</div>
                 ${selectedClass.level ? `<div class="choiceGrid">${classNumbers.map((number) => {
-                  const schoolClass = `${selectedClass.level} ${number}`;
-                  const unavailable = occupied.classes.has(schoolClass) || occupied.unavailableClasses.has(schoolClass);
-                  const reason = occupied.classes.has(schoolClass)
-                    ? `${schoolClass} est deja prise sur ce creneau.`
-                    : occupied.unavailableClasses.has(schoolClass)
-                      ? `${schoolClass} est indisponible sur ce creneau.`
-                      : `${schoolClass} disponible.`;
+                  const unavailable = classGroups.every((group) => {
+                    const candidateClass = schoolClassLabel(selectedClass.level, number, group.id);
+                    return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass);
+                  });
+                  const reason = unavailable ? `${selectedClass.level} ${number} est deja prise ou indisponible sur ce creneau.` : `${selectedClass.level} ${number} disponible.`;
                   return `<button class="choiceButton ${number === selectedClass.number ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-number="${number}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${number}</button>`;
                 }).join("")}</div>` : `<span class="muted">Choisissez d'abord un niveau.</span>`}
+                ${selectedClass.level && selectedClass.number ? `<div class="choiceGrid">${classGroups.map((group) => {
+                  const schoolClass = schoolClassLabel(selectedClass.level, selectedClass.number, group.id);
+                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
+                  return `<button class="choiceButton ${selectedClass.group === group.id ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-group="${group.id}" ${unavailable ? "disabled" : ""}>${group.label}</button>`;
+                }).join("")}</div>` : ""}
               </div>
             </div>
             <div class="buildField" style="margin-top:10px">
@@ -3303,10 +3332,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="eventField">
               <label>Classes concernées</label>
               <div class="classMatrix">${classLevels.map((level) => `<div class="classMatrixRow">
-                <button class="classLevelLabel ${classNumbers.every((number) => eventClasses.includes(`${level} ${number}`)) ? "active" : ""}" data-event-class-level="${level}">${level}</button>
+                <button class="classLevelLabel ${classNumbers.every((number) => eventClasses.includes(schoolClassLabel(level, number))) ? "active" : ""}" data-event-class-level="${level}">${level}</button>
                 <div class="classNumberGrid">${classNumbers.map((number) => {
-                  const schoolClass = `${level} ${number}`;
-                  return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${number}</button>`;
+                  return classGroups.map((group) => {
+                    const schoolClass = schoolClassLabel(level, number, group.id);
+                    return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${number}${group.short}</button>`;
+                  }).join("");
                 }).join("")}</div>
               </div>`).join("")}</div>
               <span class="muted">${eventClasses.length ? `Classes sélectionnées : ${eventClasses.join(", ")}` : "Aucune classe sélectionnée"}</span>
@@ -3612,10 +3643,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             </div>` : unavailableType === "class" ? `<div class="eventField">
               <label>Contraintes classes</label>
               <div class="choiceGrid">${classLevels.map((level) => `<button class="choiceButton ${unavailableClassLevelFilter === level ? "active" : ""}" data-unavailable-class-level-filter="${level}">${level}</button>`).join("")}</div>
-              ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbers.map((number) => {
-                const schoolClass = `${unavailableClassLevelFilter} ${number}`;
-                return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class-number="${number}">${number}</button>`;
-              }).join("")}</div>` : `<span class="muted">Choisissez un niveau puis un numéro de classe.</span>`}
+              ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbers.map((number) => classGroups.map((group) => {
+                const schoolClass = schoolClassLabel(unavailableClassLevelFilter, number, group.id);
+                return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${number}${group.short}</button>`;
+              }).join("")).join("")}</div>` : `<span class="muted">Choisissez un niveau puis un numéro de classe.</span>`}
               <span class="muted">${unavailableClassIds.length ? `Classes sélectionnées : ${unavailableClassIds.join(", ")}` : "Aucune classe sélectionnée"}</span>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
@@ -4342,6 +4373,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-pick-class-group]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            updateBlockClass("group", button.dataset.pickClassGroup);
+            render();
+          });
+        });
         const eventNameInput = document.getElementById("eventName");
         const eventStartInput = document.getElementById("eventStart");
         const eventEndInput = document.getElementById("eventEnd");
@@ -4371,7 +4409,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-event-class-level]").forEach((button) => {
           button.addEventListener("click", () => {
             const level = button.dataset.eventClassLevel;
-            const levelClasses = classNumbers.map((number) => `${level} ${number}`);
+            const levelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
             const allSelected = levelClasses.every((schoolClass) => eventClasses.includes(schoolClass));
             eventClasses = allSelected
               ? eventClasses.filter((schoolClass) => !levelClasses.includes(schoolClass))
@@ -4515,9 +4553,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
-        document.querySelectorAll("[data-unavailable-class-number]").forEach((button) => {
+        document.querySelectorAll("[data-unavailable-class]").forEach((button) => {
           button.addEventListener("click", () => {
-            toggleUnavailableClass(`${unavailableClassLevelFilter} ${button.dataset.unavailableClassNumber}`);
+            toggleUnavailableClass(button.dataset.unavailableClass);
             render();
           });
         });
