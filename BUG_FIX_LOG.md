@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Annee scolaire : evenements sportifs abreges dans les cases et detail complet affiche au clic sur une case.
 - Construction : blocs AS sur une ligne et evenements sportifs simplifies avec resume des classes.
 - Evenements sportifs : ajout d'un choix de creneau precis dans la periode.
 - Evenements sportifs : suppression du nom pre-rempli dans le formulaire.
