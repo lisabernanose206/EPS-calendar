@@ -45,6 +45,7 @@
       .dateMain { display: grid; gap: 2px; }
       .dateMain span { color: #64748b; font-size: 12px; font-weight: 850; text-transform: uppercase; }
       .dateMain strong { color: #0f172a; font-size: 22px; line-height: 1.1; }
+      .dateMain small { color: #64748b; font-size: 11px; font-weight: 850; }
       .dateChips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .dateChip { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; color: #334155; display: inline-flex; font-size: 12px; font-weight: 900; gap: 5px; padding: 7px 10px; }
       .dateChip strong { color: #0f766e; }
@@ -54,17 +55,18 @@
       .legendItem.dimmed { filter: grayscale(1); opacity: 0.42; }
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 999px; display: inline-block; height: 16px; width: 16px; }
-      .workspace { align-items: start; display: grid; gap: 12px; grid-template-columns: 172px minmax(0, 1fr); margin-top: 12px; }
-      .sideNav { display: flex; flex-direction: column; position: sticky; top: 10px; }
-      .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: grid; gap: 3px; padding: 4px; }
-      .navGroup + .navGroup { margin-top: 7px; }
-      .navGroupLabel { color: #64748b; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0 0 3px 4px; text-transform: uppercase; }
-      .questionNavGroup { margin-top: 10px; opacity: 0.72; padding-top: 0; }
+      .workspace { display: block; margin-top: 10px; }
+      .sideNav { background: rgba(248,250,252,0.96); border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 5px; padding: 6px; position: sticky; top: 6px; z-index: 70; }
+      .navGroup { align-items: center; display: grid; gap: 8px; grid-template-columns: 76px minmax(0, 1fr); }
+      .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; }
+      .navGroup + .navGroup { margin-top: 0; }
+      .navGroupLabel { color: #64748b; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0; text-transform: uppercase; }
+      .questionNavGroup { justify-self: end; opacity: 0.68; }
       .questionNavGroup .navGroupLabel { font-size: 10px; font-weight: 850; text-transform: none; }
       .questionNavGroup .weeks { background: transparent; border: 1px solid #e2e8f0; }
-      .questionNavGroup .weeks button { color: #64748b; font-size: 11px; min-height: 26px; }
+      .questionNavGroup .weeks button { color: #64748b; font-size: 11px; min-height: 24px; }
       .tabs { margin-top: 10px; }
-      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; line-height: 1.1; min-height: 28px; padding: 0 8px; text-align: left; white-space: normal; width: 100%; }
+      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; line-height: 1.1; min-height: 28px; padding: 0 8px; text-align: center; white-space: nowrap; width: auto; }
       .tabs button { min-width: 0; }
       .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
       .weeks button.active { background: #0f766e; color: white; }
@@ -286,6 +288,10 @@
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
+      .homeTeacherLegend, .yearTeacherLegend { gap: 4px; margin-top: 6px; opacity: 0.78; }
+      .homeTeacherLegend .legendItem, .yearTeacherLegend .legendItem { background: #fff !important; border-color: #e2e8f0 !important; color: #64748b; font-size: 10px; gap: 5px; min-height: 24px; padding: 0 7px; }
+      .homeTeacherLegend .legendItem.selected, .yearTeacherLegend .legendItem.selected { box-shadow: inset 0 0 0 1px #94a3b8; color: #0f172a; }
+      .homeTeacherLegend .dot, .yearTeacherLegend .dot { height: 10px; width: 10px; }
       .buildDropCell { background: #fff; min-width: 120px; }
       .conflictCell { outline: 3px solid #dc2626 !important; outline-offset: -3px; }
       .conflictBadge { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; display: inline-flex; font-size: 10px; font-weight: 950; padding: 2px 6px; }
@@ -568,10 +574,10 @@
         .calendarWrap { overflow-x: auto; }
         .calendar { grid-template-columns: repeat(5, 210px); min-width: 1080px; }
         .metrics { grid-template-columns: repeat(2, 1fr); }
-        .workspace { grid-template-columns: 1fr; }
-        .sideNav { display: block; position: static; }
-        .questionNavGroup { margin-top: 10px; padding-top: 0; }
-        .weeks, .tabs { display: flex; overflow-x: auto; }
+        .sideNav { position: static; }
+        .navGroup { align-items: start; grid-template-columns: 1fr; }
+        .questionNavGroup { justify-self: stretch; }
+        .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
         .fiveCardGrid { grid-template-columns: 1fr; }
         .logGroupGrid { grid-template-columns: 1fr; }
@@ -626,9 +632,8 @@
           </section>
 
           <section class="navGroup questionNavGroup">
-            <span class="navGroupLabel">Une question ?</span>
             <section class="weeks">
-              <button data-week="request">Faire une requete</button>
+              <button data-week="request">Une question ?</button>
             </section>
           </section>
 
@@ -3082,6 +3087,27 @@
         ];
       }
 
+      function renderDateInfo() {
+        const weekInfo = displayedSchoolWeek();
+        const monthName = displayDateForSchoolWeek(weekInfo).toLocaleDateString("fr-FR", { month: "long" });
+        const schoolWeeks = schoolYearWeeks();
+        return `<section class="dateInfo">
+          <div class="dateNav">
+            <button class="weekArrow" id="prevWeek" title="Semaine precedente" ${weekInfo.rank <= 1 ? "disabled" : ""}>‹</button>
+            <div class="dateMain">
+              <span>Semaine selectionnee</span>
+              <strong>Semaine ${weekInfo.rank}${weekInfo.letter} - ${weekDateLabel(weekInfo)}</strong>
+              <small>${weekWorkingDaysLabel(weekInfo)}</small>
+            </div>
+            <button class="weekArrow" id="nextWeek" title="Semaine suivante" ${weekInfo.rank >= schoolWeeks.length ? "disabled" : ""}>›</button>
+          </div>
+          <div class="dateChips">
+            <span class="dateChip">Mois <strong>${monthName}</strong></span>
+            <span class="dateChip">Template <strong>${schoolYear.label}</strong></span>
+          </div>
+        </section>`;
+      }
+
       function renderCalendar(cycle) {
         const weekItem = displayedSchoolWeek();
         const rows = yearRows();
@@ -3092,7 +3118,7 @@
           slots[2],
           slots[3]
         ];
-        return `<div class="homeTimetableWrap"><table class="homeTimetable">
+        return `${renderDateInfo()}${renderTeacherLegend("homeTeacherLegend")}<div class="homeTimetableWrap"><table class="homeTimetable">
           <thead><tr><th class="timeColumn">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
           <tbody>${calendarSlots.map((slot) => `<tr>
             <th class="timeColumn">${slot.label}</th>
@@ -4527,7 +4553,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const requestStatusClass = requestSubmitting ? "pending" : requestStatus.startsWith("Votre requete") ? "success" : "error";
         return `<section class="requestPage">
           <div class="requestPanel">
-            <h2>Faire une requete</h2>
+            <h2>Une question ?</h2>
             <p class="muted">Signalez un bug vu dans l'outil ou proposez une amelioration.</p>
             <div class="eventField">
               <label>Type</label>
@@ -4592,29 +4618,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         updateNavigationActive();
         const cycle = generateCycle();
         const root = document.getElementById("root");
-        const weekInfo = displayedSchoolWeek();
-        const monthName = displayDateForSchoolWeek(weekInfo).toLocaleDateString("fr-FR", { month: "long" });
-        const schoolWeeks = schoolYearWeeks();
-        const canNavigateWeeks = week === "current";
         const dateInfo = document.getElementById("dateInfo");
-        dateInfo.style.display = week === "build" || week === "cycle" || week === "alerts" || week === "log" ? "none" : "flex";
-        dateInfo.innerHTML = `
-          <div class="dateNav">
-            ${canNavigateWeeks ? `<button class="weekArrow" id="prevWeek" title="Semaine precedente" ${weekInfo.rank <= 1 ? "disabled" : ""}>‹</button>` : ""}
-            <div class="dateMain">
-              <span>Annee scolaire ${schoolYear.label}</span>
-              <strong>Semaine ${weekInfo.rank}${weekInfo.letter}</strong>
-              <span>${weekDateLabel(weekInfo)}</span>
-            </div>
-            ${canNavigateWeeks ? `<button class="weekArrow" id="nextWeek" title="Semaine suivante" ${weekInfo.rank >= schoolWeeks.length ? "disabled" : ""}>›</button>` : ""}
-          </div>
-          <div class="dateChips">
-            <span class="dateChip">Mois <strong>${monthName}</strong></span>
-            <span class="dateChip">Template <strong>${schoolYear.label}</strong></span>
-          </div>`;
-        const allSelected = allTeachersSelected();
+        dateInfo.style.display = "none";
+        dateInfo.innerHTML = "";
         const legend = document.getElementById("legend");
-        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle" || week === "year";
+        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
         legend.style.display = hideLegend ? "none" : "flex";
         legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
         if (week === "year") root.innerHTML = renderYearView(cycle);
@@ -5619,4 +5627,3 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
     </script>
   </body>
 </html>
-

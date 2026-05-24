@@ -1,5 +1,11 @@
 # Log des corrections
 
+- Emploi du temps et Annee scolaire : legende des profs rendue plus discrete et compacte.
+- Navigation : acces aux retours utilisateur simplifie avec un bouton direct Une question.
+- Emploi du temps : legende profs placee sous le bordereau et navigation semaine retablie.
+- Navigation : menu lateral remplace par une navigation horizontale compacte Utilisateur/Admin.
+- Emploi du temps et Annee scolaire : bandeau semaine deplace dans l'onglet Emploi du temps et retire d'Annee scolaire.
+- Interface : favicon et titre EPS Loustic ajoutes aussi sur la page d'entree du site.
 - Interface : favicon chat noir deplace dans un fichier dedie pour mieux s'afficher dans l'onglet.
 - Interface : en-tete visible reduit au logo chat noir discret.
 - Interface : titre de l'onglet navigateur renomme EPS Loustic.
