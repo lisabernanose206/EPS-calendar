@@ -1315,6 +1315,10 @@
         return teacherNamesFromIds(session.teacherIds || []).join(" + ") || "Prof";
       }
 
+      function asBlockLabel(session) {
+        return session.name && session.name !== "AS" ? `AS ${session.name}` : "AS";
+      }
+
       function unavailableForCell(row, weekItem) {
         if (row.isAs) return [];
         return facilityUnavailability.filter((item) => unavailableMatchesCell(item, row, weekItem));
@@ -1974,6 +1978,23 @@
         const { level, number, group } = classParts(schoolClass);
         if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
+      }
+
+      function eventClassSummary(event) {
+        const selectedClasses = [...new Set(event.classes || [])];
+        if (!selectedClasses.length) return "Classes";
+        const labels = [];
+        classLevels.forEach((level) => {
+          const wholeLevelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+          if (wholeLevelClasses.every((schoolClass) => selectedClasses.includes(schoolClass))) labels.push(level);
+        });
+        selectedClasses.forEach((schoolClass) => {
+          const { level } = classParts(schoolClass);
+          const wholeLevelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+          if (level && wholeLevelClasses.every((item) => selectedClasses.includes(item))) return;
+          labels.push(compactClassName(schoolClass));
+        });
+        return labels.join(", ");
       }
 
       function facilityShortLabel(facilityId, fallbackLabel = "") {
@@ -3700,13 +3721,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock">
             ${editable && row.slot.id === eventStartSlotId(event) ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
-            <strong>${event.name}</strong>
-            <span>${eventPeriodLabel(event)} · ${event.classes.length} classe(s) · ${event.teacherIds.length} prof(s)</span>
+            <strong>${event.name} : ${eventClassSummary(event)}</strong>
             ${eventTeacherDots(event)}
           </div>`).join("")}${asItems.map((session) => `
           <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
-            <strong>${session.name}</strong>
-            <span>AS</span>
+            <strong>${asBlockLabel(session)}</strong>
           </div>`).join("")}</div>`;
       }
 
@@ -3852,8 +3871,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   return `<td rowspan="${eventRowSpan(event, group.rows)}">
                     <div class="buildBlock eventBlock">
                       ${editable ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
-                      <strong>${event.name}</strong>
-                      <span>${eventPeriodLabel(event)} · ${event.classes.length} classe(s) · ${event.teacherIds.length} prof(s)</span>
+                      <strong>${event.name} : ${eventClassSummary(event)}</strong>
                       ${eventTeacherDots(event)}
                     </div>
                   </td>`;
