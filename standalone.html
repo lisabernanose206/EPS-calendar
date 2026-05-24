@@ -3670,7 +3670,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <article class="eventCard">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
-                <span>${event.teacherIds.length} prof(s), ${event.classes.length} classe(s)</span>
+                <span>Classes : ${eventClassSummary(event)}</span>
+                <span>${event.teacherIds.length} prof(s)</span>
                 <button class="ghostButton" data-edit-event="${event.id}">Modifier</button>
                 <button class="ghostButton" data-delete-event="${event.id}">Supprimer</button>
               </article>`).join("")}</div>`}
