@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : niveaux de classe deselectionnables par un second clic.
 - Service : cartes profs non etirees quand une carte affiche ses classes.
 - Service : classes d'un niveau affichees sur une meme ligne compacte.
 - Service : choix des classes en deux etapes, niveau puis classe, avant affichage du champ d'heures.

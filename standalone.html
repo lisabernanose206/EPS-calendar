@@ -4680,7 +4680,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         });
         document.querySelectorAll("[data-service-level]").forEach((button) => {
           button.addEventListener("click", () => {
-            serviceLevelByTeacher = { ...serviceLevelByTeacher, [button.dataset.serviceLevel]: button.dataset.serviceLevelValue };
+            const teacherId = button.dataset.serviceLevel;
+            const nextLevel = serviceLevelByTeacher[teacherId] === button.dataset.serviceLevelValue ? "" : button.dataset.serviceLevelValue;
+            serviceLevelByTeacher = { ...serviceLevelByTeacher, [teacherId]: nextLevel };
             serviceClassByTeacher = { ...serviceClassByTeacher, [button.dataset.serviceLevel]: "" };
             render();
           });
