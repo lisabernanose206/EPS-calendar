@@ -1,5 +1,6 @@
 # Log des corrections
 
+- AS : blocs visuels compactes avec hauteur adaptee au texte.
 - Dates : selection debut/fin via un seul calendrier pour cycles, evenements sportifs, AS et indisponibilites.
 - Annee scolaire : evenements sportifs abreges dans les cases et detail complet affiche au clic sur une case.
 - Construction : blocs AS sur une ligne et evenements sportifs simplifies avec resume des classes.
