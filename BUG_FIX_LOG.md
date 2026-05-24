@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : sections renommees Service theorique/Service reel et classes de Construction limitees au service theorique des profs.
 - Service : niveaux de classe deselectionnables par un second clic.
 - Service : cartes profs non etirees quand une carte affiche ses classes.
 - Service : classes d'un niveau affichees sur une meme ligne compacte.

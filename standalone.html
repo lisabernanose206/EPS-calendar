@@ -2857,6 +2857,24 @@
         saveServiceAssignments();
       }
 
+      function serviceAllowsClassForTeacher(teacherId, schoolClass) {
+        const rows = serviceRowsForTeacher(teacherId);
+        if (!rows.length) return true;
+        return rows.some((row) => classesOverlap(row.classId, schoolClass));
+      }
+
+      function serviceAllowsClassForTeachers(teacherIds, schoolClass) {
+        if (!teacherIds.length || !schoolClass) return true;
+        return teacherIds.every((teacherId) => serviceAllowsClassForTeacher(teacherId, schoolClass));
+      }
+
+      function serviceClassRestrictionMessage(teacherIds, schoolClass) {
+        const restrictedTeachers = teacherIds
+          .filter((teacherId) => !serviceAllowsClassForTeacher(teacherId, schoolClass))
+          .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)?.name || teacherId);
+        return restrictedTeachers.length ? `${schoolClass} n'est pas affectee a ${restrictedTeachers.join(", ")} dans le service theorique.` : "";
+      }
+
       function buildModalAvailability() {
         const occupied = { teacherIds: new Set(), facilityIds: new Set(), classes: new Set() };
         (constructionPlan[activeBuildCell] || []).forEach((item) => {
@@ -3257,7 +3275,7 @@
             ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${item.schoolClass} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
           </div>
           <div class="servicePanel">
-            <h3>Affectation des classes</h3>
+            <h3>Service theorique</h3>
             <div class="serviceTeachers">${teachers.map((teacher) => {
               const teacherRows = serviceRowsForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
@@ -3287,7 +3305,7 @@
             }).join("")}</div>
           </div>
           <div class="servicePanel">
-            <h3>Bilan des heures construites</h3>
+            <h3>Service reel</h3>
             <p class="muted">Calcul selon le volume théorique du cycle complet, rapporté en moyenne hebdomadaire annuelle. Les événements sportifs sont ignorés : ils ne sont ni ajoutés, ni soustraits.</p>
           </div>
           <div class="hoursBalanceGrid">${teachers.map((teacher) => {
@@ -3636,7 +3654,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const cellCycle = cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
-        const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass);
+        const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass) || !serviceAllowsClassForTeachers(blockTeacherIds, blockClass);
         const selectedFacilityUnavailable = occupied.facilityIds.has(blockFacilityId) || occupied.unavailableFacilityIds.has(blockFacilityId);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
@@ -3697,23 +3715,27 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <div class="choiceGrid">${classLevels.map((level) => {
                   const unavailable = classNumbers.every((number) => classGroups.every((group) => {
                     const schoolClass = schoolClassLabel(level, number, group.id);
-                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
+                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
                   }));
-                  const reason = unavailable ? `Toutes les classes de ${level} sont deja prises ou indisponibles sur ce creneau.` : `Filtrer les classes de ${level}.`;
+                  const reason = unavailable ? `Toutes les classes de ${level} sont deja prises, indisponibles ou hors service theorique sur ce creneau.` : `Filtrer les classes de ${level}.`;
                   return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
                 }).join("")}</div>
                 ${selectedClass.level ? `<div class="choiceGrid">${classNumbers.map((number) => {
                   const unavailable = classGroups.every((group) => {
                     const candidateClass = schoolClassLabel(selectedClass.level, number, group.id);
-                    return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass);
+                    return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass) || !serviceAllowsClassForTeachers(blockTeacherIds, candidateClass);
                   });
-                  const reason = unavailable ? `${selectedClass.level} ${number} est deja prise ou indisponible sur ce creneau.` : `${selectedClass.level} ${number} disponible.`;
+                  const baseClass = schoolClassLabel(selectedClass.level, number);
+                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, baseClass);
+                  const reason = unavailable ? serviceMessage || `${selectedClass.level} ${number} est deja prise, indisponible ou hors service theorique sur ce creneau.` : `${selectedClass.level} ${number} disponible.`;
                   return `<button class="choiceButton ${number === selectedClass.number ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-number="${number}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${number}</button>`;
                 }).join("")}</div>` : `<span class="muted">Choisissez d'abord un niveau.</span>`}
                 ${selectedClass.level && selectedClass.number ? `<div class="choiceGrid">${classGroups.map((group) => {
                   const schoolClass = schoolClassLabel(selectedClass.level, selectedClass.number, group.id);
-                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
-                  return `<button class="choiceButton ${selectedClass.group === group.id ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-group="${group.id}" ${unavailable ? "disabled" : ""}>${group.label}</button>`;
+                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
+                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
+                  const reason = unavailable ? serviceMessage || `${schoolClass} est deja prise ou indisponible sur ce creneau.` : `${schoolClass} disponible.`;
+                  return `<button class="choiceButton ${selectedClass.group === group.id ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-group="${group.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${group.label}</button>`;
                 }).join("")}</div>` : ""}
               </div>
             </div>
