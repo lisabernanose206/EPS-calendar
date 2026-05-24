@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : classes d'un niveau affichees sur une meme ligne compacte.
 - Service : choix des classes en deux etapes, niveau puis classe, avant affichage du champ d'heures.
 - Service : classes et heures masquees tant qu'un niveau n'est pas choisi pour le prof.
 - Construction : semaines de vacances resserrees davantage avec dates masquees dans ces colonnes.
