@@ -365,6 +365,8 @@
       .eventCard { border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; display: grid; gap: 5px; margin-top: 8px; padding: 10px; }
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .compactCardGrid .eventCard { margin-top: 0; }
       .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
       .unavailableGroup h4 { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; font-size: 11px; font-weight: 950; margin: 0; padding: 6px 8px; }
       .unavailableGrid { display: grid; gap: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -453,6 +455,7 @@
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .compactCardGrid { grid-template-columns: 1fr; }
         .unavailableGrid { grid-template-columns: 1fr; }
       }
       @media (max-width: 720px) {
@@ -509,7 +512,6 @@
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
-              <button data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="build" data-build-mode="team">Profs</button>
               <button data-week="build" data-build-mode="facilities">Installations</button>
               <button data-week="build" data-build-mode="activities">Activités</button>
@@ -518,6 +520,7 @@
               <button data-week="build" data-build-mode="as">AS</button>
               <button data-week="build" data-build-mode="events">Événements sportifs</button>
               <button data-week="build" data-build-mode="hours">Bilan heures</button>
+              <button data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="alerts">Alertes</button>
               <button data-week="log">Log</button>
             </section>
@@ -3461,14 +3464,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Événements existants</h3>
-            ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : sportEvents.map((event) => `
+            ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid">${sportEvents.map((event) => `
               <article class="eventCard">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${halfDayLabel(event.halfDay || "all")}</span>
                 <span>${event.teacherIds.length} prof(s), ${event.classes.length} classe(s)</span>
                 <button class="ghostButton" data-edit-event="${event.id}">Modifier</button>
                 <button class="ghostButton" data-delete-event="${event.id}">Supprimer</button>
-              </article>`).join("")}
+              </article>`).join("")}</div>`}
           </div>
         </section>`;
       }
@@ -3574,11 +3577,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Installations existantes</h3>
-            ${facilities.map((facility) => `<article class="eventCard">
+            ${facilities.length ? `<div class="compactCardGrid">${facilities.map((facility) => `<article class="eventCard">
               <strong>${facility.label}</strong>
               <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
-            </article>`).join("") || `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
           </div>
         </section>`;
       }
@@ -3598,10 +3601,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Activités existantes</h3>
-            ${activities.map((activity) => `<article class="eventCard">
+            ${activities.length ? `<div class="compactCardGrid">${activities.map((activity) => `<article class="eventCard">
               <strong>${activity.label}</strong>
               <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
-            </article>`).join("") || `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
           </div>
         </section>`;
       }
@@ -3637,7 +3640,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Équipe EPS</h3>
-            ${teachers.map((teacher) => `<article class="eventCard teamCard">
+            <div class="compactCardGrid">${teachers.map((teacher) => `<article class="eventCard teamCard">
               <div class="teamPreview" style="background:${teacher.color};border-color:${teacher.border}">
                 <input class="teamNameEdit" data-rename-teacher="${teacher.id}" value="${teacher.name}" aria-label="Prenom du professeur" />
                 <span>${teacher.weeklyReference}h cours classiques · 3h AS</span>
@@ -3653,7 +3656,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <input class="replacementEdit" data-teacher-replacement="${teacher.id}" placeholder="Ex. Nom du remplacant" value="${teacher.replacementName || ""}" />
               </div>
               <button class="ghostButton" data-delete-teacher="${teacher.id}">Supprimer</button>
-            </article>`).join("")}
+            </article>`).join("")}</div>
           </div>
         </section>`;
       }

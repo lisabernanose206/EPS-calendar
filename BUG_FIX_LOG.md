@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Navigation : ordre des onglets Admin remis selon l'ancien ordre Construction et listes Profs/Installations/Activites/Evenements en deux colonnes.
 - Indisponibilites : contraintes existantes affichees deux par ligne pour reduire la hauteur de la liste.
 - Navigation : les anciennes sous-rubriques de Construction deviennent des onglets Admin a gauche, Construction ne garde que le planning.
 - AS : dates par defaut ajustees de la troisieme semaine de septembre a la derniere semaine de mai incluse.
