@@ -640,6 +640,7 @@
       let constructionPlan = {};
       let constructionMode = "planning";
       let constructionZoom = 0.8;
+      let cycleViewZoom = 0.8;
       let clearConstructionPanelOpen = false;
       let activeHomeCycleId = null;
       let activeCycleLetter = "A";
@@ -1873,6 +1874,16 @@
         ];
       }
 
+      function userCycleChoices() {
+        const levelCycles = classLevels
+          .filter((level) => Array.isArray(cyclesByLevel[level]) && cyclesByLevel[level].length)
+          .flatMap((level) => cyclesByLevel[level].map((cycle) => ({ ...cycle, scope: level, displayName: `${cycle.name.replace("Cycle ", "C")} · ${level}` })));
+        return [
+          ...cycles.map((cycle) => ({ ...cycle, scope: "default", displayName: cycle.name.replace("Cycle ", "C") })),
+          ...levelCycles
+        ];
+      }
+
       function dateOnly(value) {
         return new Date(`${value}T00:00:00`);
       }
@@ -3011,19 +3022,25 @@
 
       function renderCycleView() {
         const displayedWeek = displayedSchoolWeek();
-        const currentCycle = cycleForWeek(displayedWeek) || cycles[0];
-        const selectedCycle = cycles.find((item) => item.id === (activeHomeCycleId || currentCycle?.id)) || currentCycle;
+        const cycleChoices = userCycleChoices();
+        const currentCycle = cycleChoices.find((cycle) => weeksForCycle(cycle).some((weekItem) => weekItem.rank === displayedWeek.rank)) || cycleChoices[0];
+        const selectedCycle = cycleChoices.find((item) => item.id === (activeHomeCycleId || currentCycle?.id)) || currentCycle;
         if (!selectedCycle) return `<section class="panel"><h2>Vue par cycle</h2><p class="muted">Aucun cycle defini.</p></section>`;
         return `<section class="panel" style="max-width:1180px">
           <div class="yearActions">
             <div>
               <h2>Cycle</h2>
-              <p class="muted">${selectedCycle.name} · du ${formatDate(selectedCycle.start)} au ${formatDate(selectedCycle.end)}</p>
+              <p class="muted">${selectedCycle.name}${selectedCycle.scope && selectedCycle.scope !== "default" ? ` · ${selectedCycle.scope}` : ""} · du ${formatDate(selectedCycle.start)} au ${formatDate(selectedCycle.end)}</p>
+            </div>
+            <div class="zoomControls">
+              <button class="ghostButton" data-cycle-view-zoom="-">-</button>
+              <button class="ghostButton" data-cycle-view-zoom-reset>${Math.round(cycleViewZoom * 100)}%</button>
+              <button class="ghostButton" data-cycle-view-zoom="+">+</button>
             </div>
           </div>
           <div class="cyclePickerRow">
             <div class="constructionTabs">
-              ${cycles.map((cycleItem) => `<button class="${cycleItem.id === selectedCycle.id ? "active" : ""}" data-home-cycle="${cycleItem.id}">${cycleItem.name.replace("Cycle ", "C")}</button>`).join("")}
+              ${cycleChoices.map((cycleItem) => `<button class="${cycleItem.id === selectedCycle.id ? "active" : ""}" data-home-cycle="${cycleItem.id}">${cycleItem.displayName}</button>`).join("")}
             </div>
             <div class="eventForm">
               <div class="eventField" style="margin-top:0">
@@ -3034,7 +3051,7 @@
               </div>
             </div>
           </div>
-          ${renderCycleTwoWeekTable(selectedCycle)}
+          <div class="constructionZoomWrap" style="zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
       }
 
@@ -4463,6 +4480,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-cycle-letter]").forEach((button) => {
           button.addEventListener("click", () => {
             activeCycleLetter = button.dataset.cycleLetter;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cycle-view-zoom]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const direction = button.dataset.cycleViewZoom;
+            cycleViewZoom = Math.min(1.5, Math.max(0.15, cycleViewZoom + (direction === "+" ? 0.1 : -0.1)));
+            cycleViewZoom = Math.round(cycleViewZoom * 100) / 100;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cycle-view-zoom-reset]").forEach((button) => {
+          button.addEventListener("click", () => {
+            cycleViewZoom = 0.8;
             render();
           });
         });
