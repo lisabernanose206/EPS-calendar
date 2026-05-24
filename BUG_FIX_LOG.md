@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Interface : largeur utile et marges globales optimisees pour utiliser toute la page.
 - Log Admin : corrections regroupees par categorie avec groupes masques par defaut.
 - Service : bloc des volumes par niveau rendu plus compact et discret.
 - Emploi du temps : ajout du creneau AS avec affichage des AS dans la semaine consultee.
