@@ -1914,7 +1914,8 @@
           .map(baseToken);
         let length = 1;
         while (length < currentBase.length && otherBases.some((base) => base.slice(0, length) === currentBase.slice(0, length))) length += 1;
-        return currentDisplay.slice(0, Math.max(1, length));
+        const shortLabel = currentDisplay.slice(0, Math.max(1, length));
+        return shortLabel ? shortLabel[0].toUpperCase() + shortLabel.slice(1) : "";
       }
 
       function groupedHeaderCells(weeks, labelForWeek, classForWeek) {
