@@ -1,5 +1,11 @@
 # Log des corrections
 
+- Annee scolaire : les trois lignes d'en-tete du tableau restent visibles sous le bordereau de semaine pendant le defilement.
+- Annee scolaire : bloc d'information de la semaine selectionnee fige dans la zone de defilement du tableau.
+- Legendes profs : carres de couleur rendus avec angles droits.
+- Admin : ajout de l'onglet Classes pour configurer les classes par niveau, nombre et format numerique ou alphabetique.
+- Construction et Resume cycle : hauteur des tableaux ajustee avec le zoom pour aller jusqu'en bas de page.
+- Service theorique : suppression d'une affectation classe/prof par clic avec confirmation.
 - Legende profs : pastilles remplacees par des carres de couleur.
 - Emploi du temps et Annee scolaire : legende des profs rendue plus discrete et compacte.
 - Navigation : acces aux retours utilisateur simplifie avec un bouton direct Une question.

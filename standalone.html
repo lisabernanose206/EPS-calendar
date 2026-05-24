@@ -54,7 +54,7 @@
       button.legendItem { cursor: pointer; font: inherit; }
       .legendItem.dimmed { filter: grayscale(1); opacity: 0.42; }
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
-      .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 3px; display: inline-block; height: 16px; width: 16px; }
+      .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
       .workspace { display: block; margin-top: 10px; }
       .sideNav { background: rgba(248,250,252,0.96); border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 5px; padding: 6px; position: sticky; top: 6px; z-index: 70; }
       .navGroup { align-items: center; display: grid; gap: 8px; grid-template-columns: 76px minmax(0, 1fr); }
@@ -166,7 +166,7 @@
       .constructionTable .rowHead, .constructionTable .timeHead { border-right: 3px solid #111827; }
       .constructionWeekHead { display: grid; gap: 2px; justify-items: center; line-height: 1.05; }
       .constructionWeekHead small { color: #475569; font-size: 9px; font-weight: 850; white-space: nowrap; }
-      .constructionZoomWrap .yearWrap { max-height: calc(100vh - 220px); overflow: auto; padding-bottom: 0; position: relative; width: 100%; }
+      .constructionZoomWrap .yearWrap { max-height: calc((100vh - var(--table-offset, 150px)) / var(--table-zoom, 1)); overflow: auto; padding-bottom: 0; position: relative; width: 100%; }
       .constructionTable { border-collapse: separate; border-spacing: 0; }
       .constructionTable .regularWeekCol { width: 120px; }
       .constructionTable .vacationWeekCol { width: 22px; }
@@ -219,9 +219,9 @@
       .consultationYearTable .rowHead { left: 0; min-width: 62px; width: 62px; z-index: 4; }
       .consultationYearTable .timeHead { left: 62px; min-width: 68px; width: 68px; z-index: 4; }
       .consultationYearTable thead th { position: sticky; z-index: 8; }
-      .consultationYearTable thead tr:nth-child(1) th { top: 0; }
-      .consultationYearTable thead tr:nth-child(2) th { top: 22px; }
-      .consultationYearTable thead tr:nth-child(3) th { top: 44px; }
+      .consultationYearTable thead tr:nth-child(1) th { top: var(--yearStickyInfoHeight, 76px); }
+      .consultationYearTable thead tr:nth-child(2) th { top: calc(var(--yearStickyInfoHeight, 76px) + 22px); }
+      .consultationYearTable thead tr:nth-child(3) th { top: calc(var(--yearStickyInfoHeight, 76px) + 44px); }
       .consultationYearTable thead .rowHead, .consultationYearTable thead .timeHead { z-index: 10; }
       .monthCell { background: #e5e7eb !important; color: #111827 !important; text-transform: capitalize; }
       .weekA { background: #f3f4f6; color: #374151; font-weight: 900; }
@@ -235,7 +235,7 @@
       .primaryWeekButton { background: #0f172a; border-color: #0f172a; color: #fff; font-size: 13px; min-height: 42px; padding: 0 14px; }
       .weekSelect { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: inherit; font-weight: 950; padding: 2px 4px; width: 100%; }
       .weekSelect.selected { background: #111827; border-radius: 5px; color: #fff; }
-      .selectedWeekInfo { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; display: grid; font-size: 13px; font-weight: 900; gap: 3px; margin: 0 0 10px; padding: 10px 12px; }
+      .selectedWeekInfo { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; display: grid; font-size: 13px; font-weight: 900; gap: 3px; margin: 0 0 8px; padding: 10px 12px; position: sticky; top: 0; z-index: 30; }
       .selectedWeekInfo strong { color: #7c2d12; font-size: 15px; }
       .selectedWeekInfo small { color: #9a3412; font-size: 11px; font-weight: 850; line-height: 1.25; }
       .selectedCellBackdrop { background: rgba(15,23,42,0.18); inset: 0; position: fixed; z-index: 80; }
@@ -286,7 +286,7 @@
       .clearConstructionOptions input { accent-color: #0f172a; }
       .clearConstructionFooter { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
-      .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
+      .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
       .homeTeacherLegend, .yearTeacherLegend { gap: 4px; margin-top: 6px; opacity: 0.78; }
       .homeTeacherLegend .legendItem, .yearTeacherLegend .legendItem { background: #fff !important; border-color: #e2e8f0 !important; color: #64748b; font-size: 10px; gap: 5px; min-height: 24px; padding: 0 7px; }
@@ -456,6 +456,15 @@
       .teacherColorSwatch.active { border-color: #0f172a; box-shadow: 0 0 0 2px #fff inset; }
       .teacherColorToggle { justify-self: start; }
       .replacementEdit { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; width: 100%; }
+      .classConfigGrid { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .classConfigCard { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 9px; padding: 10px; }
+      .classConfigCard h4 { margin: 0; }
+      .classConfigControls { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
+      .classConfigControls label { color: #64748b; display: grid; font-size: 10px; font-weight: 950; gap: 4px; text-transform: uppercase; }
+      .classConfigControls input, .classConfigControls select { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 12px; font-weight: 900; min-height: 32px; padding: 0 8px; width: 100%; }
+      .classConfigPills { display: flex; flex-wrap: wrap; gap: 5px; }
+      .classConfigPill { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 5px; min-height: 28px; padding: 0 7px; }
+      .classConfigPill button { background: transparent; border: 0; color: #991b1b; cursor: pointer; font-weight: 950; padding: 0; }
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
       .eventBlock button { background: rgba(255,255,255,0.18) !important; color: #fff !important; }
@@ -463,7 +472,7 @@
       .eventBlockControls .eventTeacherDots { flex: 1; margin-top: 0; }
       .eventBlockControls button { flex: 0 0 auto; }
       .eventTeacherDots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
-      .eventTeacherDot { border: 1px solid rgba(255,255,255,0.82); border-radius: 3px; display: inline-block; height: 10px; width: 10px; }
+      .eventTeacherDot { border: 1px solid rgba(255,255,255,0.82); border-radius: 0; display: inline-block; height: 10px; width: 10px; }
       .eventSpanFull { min-height: 210px; }
       .eventSpanHalf { min-height: 96px; }
       .asBlock { background: #e5e7eb !important; border-color: #9ca3af !important; gap: 0 !important; min-height: 0 !important; padding: 2px 4px !important; }
@@ -493,6 +502,8 @@
       .hoursDetail span { color: #64748b; font-size: 10px; }
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
+      button.classPill { cursor: pointer; font: inherit; }
+      button.classPill:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
       .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
       .servicePanel.compactServicePanel { gap: 6px; padding: 8px 10px; }
       .compactServicePanel h3 { color: #334155; font-size: 13px; margin: 0; }
@@ -563,7 +574,7 @@
         .cycleSummaryHeader { grid-template-columns: 1fr 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .compactCardGrid { grid-template-columns: 1fr; }
-        .fiveCardGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .fiveCardGrid, .classConfigGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .logGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .unavailableGrid { grid-template-columns: 1fr; }
       }
@@ -579,7 +590,7 @@
         .questionNavGroup { justify-self: stretch; }
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
-        .fiveCardGrid { grid-template-columns: 1fr; }
+        .fiveCardGrid, .classConfigGrid { grid-template-columns: 1fr; }
         .logGroupGrid { grid-template-columns: 1fr; }
         .weeks button, .tabs button { text-align: center; width: auto; }
         .miniWeek { grid-template-columns: 1fr; }
@@ -619,6 +630,7 @@
             <section class="weeks">
               <button class="primaryAdminTab" data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="build" data-build-mode="team">Profs</button>
+              <button data-week="build" data-build-mode="classes">Classes</button>
               <button data-week="build" data-build-mode="facilities">Installations</button>
               <button data-week="build" data-build-mode="activities">Activités</button>
               <button data-week="build" data-build-mode="unavailable">Indisponibilités</button>
@@ -684,14 +696,14 @@
       let activities = loadActivities();
       const classLevels = ["6eme", "5eme", "4eme", "3eme"];
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
+      const defaultClassConfig = Object.fromEntries(classLevels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
       const classGroups = [
         { id: "whole", label: "Classe entiere", short: "" },
         { id: "A", label: "Demi-groupe A", short: "A" },
         { id: "B", label: "Demi-groupe B", short: "B" }
       ];
-      const classes = classLevels.flatMap((level) =>
-        Array.from({ length: 7 }, (_, index) => `${level} ${index + 1}`)
-      );
+      let classConfig = loadClassConfig();
+      let classes = classesFromConfig();
       const defaultServiceHours = { "6eme": 4, "5eme": 3, "4eme": 3, "3eme": 3 };
       const schoolYear = {
         label: "2026/2027",
@@ -1133,6 +1145,79 @@
 
       function saveTeachers() {
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
+        scheduleCloudSave();
+      }
+
+      function generatedClassLabels(mode, count) {
+        return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => mode === "letter" ? String.fromCharCode(65 + index) : String(index + 1));
+      }
+
+      function normalizeClassConfig(config) {
+        return Object.fromEntries(classLevels.map((level) => {
+          const item = config?.[level] || defaultClassConfig[level];
+          const mode = item.mode === "letter" ? "letter" : "number";
+          const labels = Array.isArray(item.labels)
+            ? item.labels.map((label) => String(label).trim()).filter(Boolean)
+            : generatedClassLabels(mode, 7);
+          return [level, { mode, labels }];
+        }));
+      }
+
+      function loadClassConfig() {
+        try {
+          const saved = localStorage.getItem("planningEpsClassConfig2026");
+          return normalizeClassConfig(saved ? JSON.parse(saved) : defaultClassConfig);
+        } catch {
+          return normalizeClassConfig(defaultClassConfig);
+        }
+      }
+
+      function classesForLevel(level) {
+        return (classConfig[level]?.labels || []).map((label) => schoolClassLabel(level, label));
+      }
+
+      function classNumbersForLevel(level) {
+        return classConfig[level]?.labels || [];
+      }
+
+      function classesFromConfig() {
+        return classLevels.flatMap((level) => classesForLevel(level));
+      }
+
+      function validClassSet() {
+        return new Set(classes);
+      }
+
+      function baseClassFromGroupedClass(schoolClass) {
+        const parts = classParts(schoolClass);
+        return parts.level && parts.number ? schoolClassLabel(parts.level, parts.number) : schoolClass;
+      }
+
+      function pruneClassReferences() {
+        const valid = validClassSet();
+        serviceAssignments = Object.fromEntries(Object.entries(serviceAssignments).map(([teacherId, rows]) => [
+          teacherId,
+          Array.isArray(rows) ? rows.filter((row) => valid.has(row.classId)) : []
+        ]));
+        unavailableClassIds = unavailableClassIds.filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass)));
+        facilityUnavailability = facilityUnavailability.map((item) => ({ ...item, classIds: (item.classIds || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
+        sportEvents = sportEvents.map((event) => ({ ...event, classes: (event.classes || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
+        constructionRules = constructionRules.filter((rule) => valid.has(baseClassFromGroupedClass(rule.block?.schoolClass || "")));
+        constructionPlan = Object.fromEntries(Object.entries(constructionPlan).map(([key, items]) => [
+          key,
+          (items || []).filter((item) => valid.has(baseClassFromGroupedClass(item.schoolClass || "")))
+        ]));
+      }
+
+      function saveClassConfig() {
+        classes = classesFromConfig();
+        pruneClassReferences();
+        localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
+        saveServiceAssignments();
+        saveFacilityUnavailability();
+        saveSportEvents();
+        saveConstructionRules();
+        saveConstructionPlan();
         scheduleCloudSave();
       }
 
@@ -1777,6 +1862,7 @@
           savedAt: new Date().toISOString(),
           planningId: cloudConfig.planningId,
           teachers,
+          classConfig,
           facilities,
           activities,
           yearPlan,
@@ -1798,6 +1884,8 @@
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
+        classConfig = normalizeClassConfig(data.classConfig || classConfig);
+        classes = classesFromConfig();
         facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
         activities = Array.isArray(data.activities) ? data.activities : activities;
         yearPlan = data.yearPlan || yearPlan;
@@ -1813,12 +1901,14 @@
         facilityUnavailability = Array.isArray(data.facilityUnavailability) ? data.facilityUnavailability : facilityUnavailability;
         eventExclusions = data.eventExclusions || eventExclusions;
         asExclusions = data.asExclusions || asExclusions;
+        pruneClassReferences();
         purgeConstructionForUnavailableItems(facilityUnavailability);
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
         cycleTeacherIds = teachers.map((teacher) => teacher.id);
         cycleFacilityIds = facilities.map((facility) => facility.id);
         constructionPlan = buildConstructionPlanFromRules();
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
+        localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
@@ -2255,12 +2345,12 @@
         if (!selectedClasses.length) return "Classes";
         const labels = [];
         classLevels.forEach((level) => {
-          const wholeLevelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+          const wholeLevelClasses = classesForLevel(level);
           if (wholeLevelClasses.every((schoolClass) => selectedClasses.includes(schoolClass))) labels.push(level);
         });
         selectedClasses.forEach((schoolClass) => {
           const { level } = classParts(schoolClass);
-          const wholeLevelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+          const wholeLevelClasses = classesForLevel(level);
           if (level && wholeLevelClasses.every((item) => selectedClasses.includes(item))) return;
           labels.push(compactClassName(schoolClass));
         });
@@ -2933,6 +3023,13 @@
         saveServiceAssignments();
       }
 
+      function removeServiceAssignment(teacherId, schoolClass) {
+        const currentRows = serviceRowsForTeacher(teacherId).filter((row) => row.classId !== schoolClass);
+        serviceAssignments = { ...serviceAssignments, [teacherId]: currentRows };
+        if (serviceClassByTeacher[teacherId] === schoolClass) serviceClassByTeacher = { ...serviceClassByTeacher, [teacherId]: "" };
+        saveServiceAssignments();
+      }
+
       function serviceAllowsClassForTeacher(teacherId, schoolClass) {
         const rows = serviceRowsForTeacher(teacherId);
         if (!rows.length) return true;
@@ -2995,7 +3092,7 @@
         const [level, number, group = "whole"] = schoolClass.split(" ");
         return {
           level: classLevels.includes(level) ? level : "",
-          number: classNumbers.includes(number) ? number : "",
+          number: classNumbersForLevel(level).includes(number) ? number : "",
           group: classGroups.some((item) => item.id === group) ? group : "whole"
         };
       }
@@ -3027,7 +3124,7 @@
       }
 
       function toggleWholeLevelSelection(selectedClasses, level) {
-        const levelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+        const levelClasses = classesForLevel(level);
         const allWholeClassesSelected = levelClasses.every((schoolClass) => selectedClasses.includes(schoolClass));
         const outsideLevel = selectedClasses.filter((schoolClass) => !classBelongsToLevel(schoolClass, level));
         return allWholeClassesSelected ? outsideLevel : [...outsideLevel, ...levelClasses];
@@ -3062,7 +3159,7 @@
       }
 
       function selectedUnavailableClassNumbers() {
-        return classNumbers.filter((number) => unavailableClassIds.includes(`${unavailableClassLevelFilter} ${number}`));
+        return classNumbersForLevel(unavailableClassLevelFilter).filter((number) => unavailableClassIds.includes(`${unavailableClassLevelFilter} ${number}`));
       }
 
       function unavailableCellSelected(day, slotId) {
@@ -3276,7 +3373,7 @@
               <button class="ghostButton" data-cycle-view-zoom="+">+</button>
             </div>
           </div>
-          <div class="constructionZoomWrap" style="zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
+          <div class="constructionZoomWrap" style="--table-zoom:${cycleViewZoom};--table-offset:150px;zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
       }
 
@@ -3405,7 +3502,7 @@
                   <strong>${compactClassName(selectedClass)}</strong>
                   <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassAssignment ? selectedClassAssignment.hours : ""}" placeholder="${serviceClassTarget(selectedClass)}h" />
                 </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
-                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<span class="classPill">${compactClassName(row.classId)} · ${row.hours}h</span>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
+                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} · ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
                   </div>
                   <div class="serviceColumn">
                     <h4>Service reel</h4>
@@ -3510,9 +3607,10 @@
             </div>
           </div>
           <div class="calendarLegend">V = vacances · F = férié</div>
-          ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span><small>${weekWorkingDaysLabel(selectedWeekItem)}</small></div>` : ""}
           ${renderSelectedYearCellDetails()}
-          <div class="yearWrap consultationYearWrap"><table class="yearTable consultationYearTable">
+          <div class="yearWrap consultationYearWrap">
+          ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span><small>${weekWorkingDaysLabel(selectedWeekItem)}</small></div>` : ""}
+          <table class="yearTable consultationYearTable">
             <thead>
               <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${groupedHeaderCells(weeks, monthLabelForWeek, () => "monthCell")}</tr>
               <tr><th class="rowHead"></th><th class="timeHead">Cycle</th>${groupedHeaderCells(weeks, (weekItem) => {
@@ -3577,6 +3675,7 @@
         const cycleErrors = validateCycles(cycles);
         const hasServiceAssignments = teachers.some((teacher) => serviceRowsForTeacher(teacher.id).length > 0);
         if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours." });
+        if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes." });
         if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours." });
         if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode." });
         if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0] });
@@ -3591,6 +3690,37 @@
         const items = constructionReadinessItems();
         if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
         return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+      }
+
+      function renderClassesView() {
+        return `<section class="eventPage">
+          <div class="eventForm">
+            <h3>Classes</h3>
+            <p class="muted">Définissez les classes de l'établissement. Elles sont utilisées dans Construction, Service, Indisponibilités et Événements sportifs.</p>
+          </div>
+          <div class="eventList">
+            <h3>Classes existantes</h3>
+            <div class="classConfigGrid">${classLevels.map((level) => {
+              const config = classConfig[level];
+              return `<article class="classConfigCard">
+                <h4>${level}</h4>
+                <div class="classConfigControls">
+                  <label>Nombre
+                    <input type="number" min="0" max="26" value="${config.labels.length}" data-class-count="${level}" />
+                  </label>
+                  <label>Format
+                    <select data-class-mode="${level}">
+                      <option value="number" ${config.mode === "number" ? "selected" : ""}>1, 2, 3</option>
+                      <option value="letter" ${config.mode === "letter" ? "selected" : ""}>A, B, C</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="classConfigPills">${config.labels.length ? config.labels.map((label) => `<span class="classConfigPill">${compactClassName(schoolClassLabel(level, label))}<button data-remove-class-label="${level}" data-class-label="${label}" title="Supprimer cette classe">x</button></span>`).join("") : `<span class="muted">Aucune classe définie.</span>`}</div>
+                <button class="ghostButton" data-add-class-label="${level}">Ajouter une classe</button>
+              </article>`;
+            }).join("")}</div>
+          </div>
+        </section>`;
       }
 
       function renderConstructionView() {
@@ -3612,6 +3742,11 @@
         if (constructionMode === "team") {
           return `<section>
             ${renderTeamSettings()}
+          </section>`;
+        }
+        if (constructionMode === "classes") {
+          return `<section>
+            ${renderClassesView()}
           </section>`;
         }
         if (constructionMode === "unavailable") {
@@ -3661,7 +3796,7 @@
             <div class="calendarLegend">V = vacances · F = férié</div>
             ${renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
-            <div class="constructionZoomWrap" style="zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
+            <div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
@@ -3820,14 +3955,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildField">
                 <label>Classe</label>
                 <div class="choiceGrid">${classLevels.map((level) => {
-                  const unavailable = classNumbers.every((number) => classGroups.every((group) => {
+                  const levelNumbers = classNumbersForLevel(level);
+                  const unavailable = !levelNumbers.length || levelNumbers.every((number) => classGroups.every((group) => {
                     const schoolClass = schoolClassLabel(level, number, group.id);
                     return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
                   }));
                   const reason = unavailable ? `Toutes les classes de ${level} sont deja prises, indisponibles ou hors service theorique sur ce creneau.` : `Filtrer les classes de ${level}.`;
                   return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
                 }).join("")}</div>
-                ${selectedClass.level ? `<div class="choiceGrid">${classNumbers.map((number) => {
+                ${selectedClass.level ? `<div class="choiceGrid">${classNumbersForLevel(selectedClass.level).map((number) => {
                   const unavailable = classGroups.every((group) => {
                     const candidateClass = schoolClassLabel(selectedClass.level, number, group.id);
                     return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass) || !serviceAllowsClassForTeachers(blockTeacherIds, candidateClass);
@@ -4019,8 +4155,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="eventField">
               <label>Classes concernées</label>
               <div class="classMatrix">${classLevels.map((level) => `<div class="classMatrixRow">
-                <button class="classLevelLabel ${classNumbers.every((number) => eventClasses.includes(schoolClassLabel(level, number))) ? "active" : ""}" data-event-class-level="${level}">${level}</button>
-                <div class="classNumberGrid">${classNumbers.map((number) => {
+                <button class="classLevelLabel ${classesForLevel(level).length && classesForLevel(level).every((schoolClass) => eventClasses.includes(schoolClass)) ? "active" : ""}" data-event-class-level="${level}">${level}</button>
+                <div class="classNumberGrid">${classNumbersForLevel(level).map((number) => {
                   return classGroups.map((group) => {
                     const schoolClass = schoolClassLabel(level, number, group.id);
                     return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${number}${group.short}</button>`;
@@ -4320,7 +4456,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             </div>` : unavailableType === "class" ? `<div class="eventField">
               <label>Contraintes classes</label>
               <div class="choiceGrid">${classLevels.map((level) => `<button class="choiceButton ${unavailableClassLevelFilter === level ? "active" : ""}" data-unavailable-class-level-filter="${level}">${level}</button>`).join("")}</div>
-              ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbers.map((number) => classGroups.map((group) => {
+              ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbersForLevel(unavailableClassLevelFilter).map((number) => classGroups.map((group) => {
                 const schoolClass = schoolClassLabel(unavailableClassLevelFilter, number, group.id);
                 return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${number}${group.short}</button>`;
               }).join("")).join("")}</div>` : `<span class="muted">Choisissez un niveau puis un numéro de classe.</span>`}
@@ -4790,6 +4926,44 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-class-count]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const level = input.dataset.classCount;
+            const mode = classConfig[level]?.mode || "number";
+            classConfig = { ...classConfig, [level]: { mode, labels: generatedClassLabels(mode, Math.min(26, Math.max(0, Number(input.value) || 0))) } };
+            saveClassConfig();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-class-mode]").forEach((select) => {
+          select.addEventListener("change", () => {
+            const level = select.dataset.classMode;
+            const mode = select.value === "letter" ? "letter" : "number";
+            classConfig = { ...classConfig, [level]: { mode, labels: generatedClassLabels(mode, classConfig[level]?.labels.length || 0) } };
+            saveClassConfig();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-add-class-label]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const level = button.dataset.addClassLabel;
+            const current = classConfig[level] || defaultClassConfig[level];
+            classConfig = { ...classConfig, [level]: { ...current, labels: generatedClassLabels(current.mode, current.labels.length + 1) } };
+            saveClassConfig();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-remove-class-label]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const level = button.dataset.removeClassLabel;
+            const label = button.dataset.classLabel;
+            const current = classConfig[level] || defaultClassConfig[level];
+            if (!window.confirm(`Supprimer la classe ${compactClassName(schoolClassLabel(level, label))} ?`)) return;
+            classConfig = { ...classConfig, [level]: { ...current, labels: current.labels.filter((item) => item !== label) } };
+            saveClassConfig();
+            render();
+          });
+        });
         document.querySelectorAll("[data-service-class-toggle]").forEach((button) => {
           button.addEventListener("click", () => {
             const teacherId = button.dataset.serviceClassToggle;
@@ -4810,6 +4984,16 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-service-class-hours]").forEach((input) => {
           input.addEventListener("change", () => {
             setServiceAssignment(input.dataset.serviceClassHours, input.dataset.serviceClass, input.value);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-assignment-delete]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacherId = button.dataset.serviceAssignmentDelete;
+            const schoolClass = button.dataset.serviceAssignmentClass;
+            const teacherName = teachers.find((teacher) => teacher.id === teacherId)?.name || "ce prof";
+            if (!window.confirm(`Supprimer l'affectation ${compactClassName(schoolClass)} pour ${teacherName} ?`)) return;
+            removeServiceAssignment(teacherId, schoolClass);
             render();
           });
         });
