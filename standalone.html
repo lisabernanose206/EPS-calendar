@@ -410,6 +410,10 @@
       .cloudField input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 36px; padding: 0 10px; }
       .cloudActions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
       .cloudStatus { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 12px; font-weight: 850; padding: 10px; }
+      .requestStatus { border-radius: 8px; font-size: 13px; font-weight: 950; margin-top: 8px; padding: 12px; }
+      .requestStatus.success { background: #ecfdf5; border: 1px solid #34d399; color: #047857; }
+      .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
+      .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2 { background: #fff; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA3 .top, body.printA2 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA3 .builderActions, body.printA2 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA3 .legend, body.printA2 .legend { display: none !important; }
@@ -3784,7 +3788,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
           if (!response.ok) throw new Error(await response.text());
           requestMessage = "";
-          requestStatus = "Demande envoyee. Merci pour le retour.";
+          requestStatus = "Votre requete a bien ete envoyee. Merci pour votre retour.";
         } catch (error) {
           requestStatus = `Envoi impossible : ${error.message || "erreur inconnue"}`;
         } finally {
@@ -3795,6 +3799,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderRequestView() {
         const canSend = requestMessage.trim().length > 0 && !requestSubmitting;
+        const requestStatusClass = requestSubmitting ? "pending" : requestStatus.startsWith("Votre requete") ? "success" : "error";
         return `<section class="requestPage">
           <div class="requestPanel">
             <h2>Faire une requete</h2>
@@ -3817,7 +3822,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="modalFooter">
               <button class="ghostButton primaryWeekButton" id="sendFeedback" ${canSend ? "" : "disabled"}>${requestSubmitting ? "Envoi..." : "Envoyer la requete"}</button>
             </div>
-            ${requestStatus ? `<div class="cloudStatus">${requestStatus}</div>` : ""}
+            ${requestStatus ? `<div class="requestStatus ${requestStatusClass}">${requestStatus}</div>` : ""}
           </div>
         </section>`;
       }
