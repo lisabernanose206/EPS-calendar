@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : classes et heures masquees tant qu'un niveau n'est pas choisi pour le prof.
 - Construction : semaines de vacances resserrees davantage avec dates masquees dans ces colonnes.
 - Service : affectation des classes par prof organisee par boutons de niveau avant le choix des classes et heures.
 - Activites : affichage des activites existantes en quatre cartes par ligne.

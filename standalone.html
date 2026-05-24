@@ -2821,7 +2821,7 @@
       }
 
       function selectedServiceLevelForTeacher(teacherId) {
-        return classLevels.includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : classLevels[0];
+        return classLevels.includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
       }
 
       function serviceClassTotals() {
@@ -3265,14 +3265,14 @@
                 <div class="serviceLevelButtons">
                   ${classLevels.map((level) => `<button class="choiceButton ${selectedLevel === level ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="${level}">${level}</button>`).join("")}
                 </div>
-                <div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
+                ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
                   const active = Boolean(assignment);
                   return `<div class="serviceClassRow">
                     <button class="choiceButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}">${compactClassName(schoolClass)}</button>
                     <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${schoolClass}" type="number" min="0" step="0.5" value="${active ? assignment.hours : ""}" placeholder="${serviceClassTarget(schoolClass)}h" ${active ? "" : "disabled"} />
                   </div>`;
-                }).join("")}</div>
+                }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
                 <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<span class="classPill">${compactClassName(row.classId)} · ${row.hours}h</span>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
               </article>`;
             }).join("")}</div>
