@@ -151,6 +151,8 @@
       .constructionWeekHead small { color: #475569; font-size: 9px; font-weight: 850; white-space: nowrap; }
       .constructionZoomWrap .yearWrap { max-height: calc(100vh - 220px); overflow: auto; padding-bottom: 0; position: relative; width: 100%; }
       .constructionTable { border-collapse: separate; border-spacing: 0; }
+      .constructionTable .vacationWeekCol { width: 38px; }
+      .constructionTable .vacationWeekCell { min-width: 38px; width: 38px; }
       .constructionTable .rowHead { left: 0 !important; min-width: 74px !important; position: sticky; width: 74px !important; z-index: 16; }
       .constructionTable .timeHead { left: 74px !important; min-width: 82px !important; position: sticky; width: 82px !important; z-index: 16; }
       .constructionTable thead th { background: #f1f5f9; height: 34px; position: sticky; z-index: 30; }
@@ -4209,14 +4211,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           rows: rows.filter((row) => row.day === day)
         }));
         return `<div class="yearWrap"><table class="yearTable constructionTable">
+          <colgroup>
+            <col />
+            <col />
+            ${weeks.map((weekItem) => `<col class="${vacationForWeek(weekItem) ? "vacationWeekCol" : ""}" />`).join("")}
+          </colgroup>
           <thead>
-            <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${monthLabels.map((month) => `<th class="monthCell">${month}</th>`).join("")}</tr>
+            <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${monthLabels.map((month, index) => `<th class="monthCell ${vacationForWeek(weeks[index]) ? "vacationWeekCell" : ""}">${month}</th>`).join("")}</tr>
             <tr><th class="rowHead"></th><th class="timeHead">Cycle</th>${weeks.map((weekItem) => {
               const vacation = vacationForWeek(weekItem);
               const cycle = cycleForWeek(weekItem);
-              return `<th class="${vacation ? "vacationHeader" : "cycleHeader"}">${vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "-"}</th>`;
+              return `<th class="${vacation ? "vacationHeader vacationWeekCell" : "cycleHeader"}">${vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "-"}</th>`;
             }).join("")}</tr>
-            <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th><span class="constructionWeekHead"><strong>${weekItem.rank}${weekItem.letter}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
+            <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th class="${vacationForWeek(weekItem) ? "vacationWeekCell" : ""}"><span class="constructionWeekHead"><strong>${weekItem.rank}${weekItem.letter}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
           </thead>
           <tbody>
             ${rowsByDay.map((group) => group.rows.map((row, rowIndex) => {
@@ -4228,8 +4235,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <th class="timeHead">${row.slot.label}</th>${weeks.map((weekItem) => {
                 const key = yearCellKey(row.id, weekItem.rank);
                 const dayOff = dayOffFor(group.day, weekItem);
+                const isVacationWeek = Boolean(vacationForWeek(weekItem));
                 if (dayOff && rowIndex > 0) return "";
-                if (dayOff) return `<td rowspan="${group.rows.length}" title="${dayOff.title}" class="mergedOff ${dayOff.className}">${dayOff.label}</td>`;
+                if (dayOff) return `<td rowspan="${group.rows.length}" title="${dayOff.title}" class="mergedOff ${dayOff.className} ${isVacationWeek ? "vacationWeekCell" : ""}">${dayOff.label}</td>`;
                 const continuedEvent = eventForContinuation(row, weekItem);
                 if (!editable && continuedEvent && (!filterSelection || eventMatchesTeacherSelection(continuedEvent)) && canMergeEventCell(continuedEvent, group.rows, weekItem)) return "";
                 const mergeableEvents = editable ? [] : eventsForCell(row, weekItem).filter((event) => (!filterSelection || eventMatchesTeacherSelection(event)) && canMergeEventCell(event, group.rows, weekItem));
@@ -4250,7 +4258,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
                 const blocked = vacation || holiday;
-              return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}" ${editable && !blocked ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
+              return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" ${editable && !blocked ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
                 ${vacation ? `<span class="muted">V</span>` : ""}
                 ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
                 ${renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds)}
