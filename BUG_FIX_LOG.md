@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Interface : favicon chat noir deplace dans un fichier dedie pour mieux s'afficher dans l'onglet.
 - Interface : en-tete visible reduit au logo chat noir discret.
 - Interface : titre de l'onglet navigateur renomme EPS Loustic.
 - Interface : surtitre retire et titre renomme EPS Loustic.
