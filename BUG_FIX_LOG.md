@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Construction : suppression d'une AS sur un creneau limitee a une confirmation OK/Annuler.
 - Cycle utilisateur : selection du cycle remplacee par un menu deroulant pour eviter trop de boutons.
 - Construction : suppression AS/evenement sportif sur un creneau confirmee sans champ de saisie parasite.
 - Construction : popup replacee au premier plan devant les lignes d'en-tete figees.

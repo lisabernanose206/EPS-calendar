@@ -2338,7 +2338,7 @@
 
       function excludeAsFromSlot(sessionId, key) {
         const session = asSessions.find((item) => item.id === sessionId);
-        if (!session || !confirmSlotItemDeletion(`l'AS ${session.name || ""}`.trim())) return;
+        if (!session || !window.confirm(`Supprimer l'AS ${session.name || ""} uniquement sur ce creneau ?`.trim())) return;
         const existing = asExclusions[sessionId] || [];
         if (!existing.includes(key)) asExclusions[sessionId] = [...existing, key];
         saveAsExclusions();
