@@ -365,6 +365,12 @@
       .eventCard { border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; display: grid; gap: 5px; margin-top: 8px; padding: 10px; }
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
+      .unavailableGroup h4 { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; font-size: 11px; font-weight: 950; margin: 0; padding: 6px 8px; }
+      .unavailableCard { border-left-width: 4px; gap: 3px; margin-top: 0; padding: 7px 8px; }
+      .unavailableCard strong { font-size: 12px; line-height: 1.15; }
+      .unavailableCard span { font-size: 10px; line-height: 1.2; }
+      .unavailableCard .ghostButton { font-size: 10px; min-height: 26px; padding: 0 7px; }
       .eventNameEdit { border: 1px solid #fed7aa; border-radius: 7px; color: #9a3412; font-size: 13px; font-weight: 950; min-height: 32px; padding: 0 8px; width: 100%; }
       .teacherColorPalette { display: flex; flex-wrap: wrap; gap: 7px; }
       .teacherColorSwatch { border: 2px solid transparent; border-radius: 999px; cursor: pointer; height: 30px; width: 30px; }
@@ -2262,6 +2268,39 @@
           .join(", ");
       }
 
+      function unavailableTypeForItem(item) {
+        if ((item.type || "") === "teacher" || (item.teacherIds || []).length) return "teacher";
+        if ((item.type || "") === "class" || (item.classIds || []).length) return "class";
+        return "facility";
+      }
+
+      function unavailableTitle(item) {
+        const type = unavailableTypeForItem(item);
+        if (type === "teacher") return teacherNamesFromIds(item.teacherIds || []).join(", ") || "Prof indisponible";
+        if (type === "class") return (item.classIds || []).join(", ") || "Classe indisponible";
+        return (item.facilityIds || []).map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ") || item.name;
+      }
+
+      function renderUnavailableCard(item) {
+        return `<article class="eventCard unavailableCard">
+          <strong>${unavailableTitle(item)}</strong>
+          ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map((id) => cycles.find((cycle) => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
+          <span>${item.start} -> ${item.end} · ${(item.weekdays || []).join(", ")}</span>
+          <span>${unavailableCellSummary(item)}</span>
+          <button class="ghostButton" data-edit-unavailable="${item.id}">Modifier</button>
+          <button class="ghostButton" data-delete-unavailable="${item.id}">Supprimer</button>
+        </article>`;
+      }
+
+      function renderUnavailableGroup(label, type) {
+        const items = facilityUnavailability.filter((item) => unavailableTypeForItem(item) === type);
+        if (!items.length) return "";
+        return `<section class="unavailableGroup">
+          <h4>${label}</h4>
+          ${items.map(renderUnavailableCard).join("")}
+        </section>`;
+      }
+
       function saveFacilityUnavailableFromForm() {
         const facilityLabel = unavailableFacilityIds.map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ");
         const selectedCells = unavailableCells.length
@@ -3764,18 +3803,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Contraintes existantes</h3>
-            ${facilityUnavailability.length === 0 ? `<div class="alertEmpty">Aucune contrainte ajoutée.</div>` : facilityUnavailability.map((item) => `
-              <article class="eventCard">
-                <strong>${(item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility")) === "class" ? `Classe(s) indisponible(s)` : (item.type === "teacher" || (item.teacherIds || []).length) ? `Prof(s) indisponible(s)` : ((item.facilityIds || []).map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ") || item.name)}</strong>
-                <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility")) === "class" ? "Classes" : (item.type === "teacher" || (item.teacherIds || []).length) ? "Profs" : "Installations"}</span>
-                ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map((id) => cycles.find((cycle) => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
-                <span>${item.start} → ${item.end} · ${(item.weekdays || []).join(", ")}</span>
-                <span>Créneau(x) : ${unavailableCellSummary(item)}</span>
-                <span>Classe(s) concernée(s) : ${(item.classIds || []).length ? item.classIds.join(", ") : "aucune"}</span>
-                <span>Prof(s) concernes : ${(item.teacherIds || []).length ? teacherNamesFromIds(item.teacherIds).join(", ") : "aucun"}</span>
-                <button class="ghostButton" data-edit-unavailable="${item.id}">Modifier</button>
-                <button class="ghostButton" data-delete-unavailable="${item.id}">Supprimer</button>
-              </article>`).join("")}
+            ${facilityUnavailability.length === 0 ? `<div class="alertEmpty">Aucune contrainte ajoutée.</div>` : [
+              renderUnavailableGroup("Profs", "teacher"),
+              renderUnavailableGroup("Classes", "class"),
+              renderUnavailableGroup("Installations", "facility")
+            ].join("")}
           </div>
         </section>`;
       }
