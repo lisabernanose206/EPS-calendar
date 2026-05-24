@@ -541,6 +541,7 @@
         { id: "basketball", label: "Basketball", type: "internal" }
       ];
       let facilities = loadFacilities();
+      let activities = loadActivities();
       const classLevels = ["6eme", "5eme", "4eme", "3eme"];
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
       const classes = classLevels.flatMap((level) =>
@@ -577,9 +578,11 @@
       let blockClass = "";
       let blockClassLevel = "";
       let blockFacilityId = "";
+      let blockActivityId = "";
       let blockWeekLetter = "all";
       let facilityDraftName = "";
       let facilityDraftType = "";
+      let activityDraftName = "";
       let teacherDraftName = "";
       let teacherDraftColor = teacherPalette[0].color;
       let teacherDraftStatus = "certifie";
@@ -1133,6 +1136,21 @@
         scheduleCloudSave();
       }
 
+      function loadActivities() {
+        try {
+          const saved = localStorage.getItem("planningEpsActivities2026");
+          const parsed = saved ? JSON.parse(saved) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveActivities() {
+        localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
+        scheduleCloudSave();
+      }
+
       function loadFacilityUnavailability() {
         try {
           const saved = localStorage.getItem("planningEpsFacilityUnavailability2026");
@@ -1510,6 +1528,7 @@
           planningId: cloudConfig.planningId,
           teachers,
           facilities,
+          activities,
           yearPlan,
           cycles,
           cyclesByLevel,
@@ -1527,6 +1546,7 @@
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
         facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
+        activities = Array.isArray(data.activities) ? data.activities : activities;
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
         cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
@@ -1543,6 +1563,7 @@
         constructionPlan = buildConstructionPlanFromRules();
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
+        localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
@@ -2350,6 +2371,7 @@
           .filter(Boolean);
         const primaryTeacher = selectedTeachers[0];
         const facility = facilities.find((item) => item.id === blockFacilityId);
+        const activity = activities.find((item) => item.id === blockActivityId);
         return {
           teacherIds: selectedTeachers.map((teacher) => teacher.id),
           teacherNames: selectedTeachers.map((teacher) => teacher.name).join(" + "),
@@ -2359,7 +2381,9 @@
           border: primaryTeacher?.border || "#cbd5e1",
           schoolClass: blockClass,
           facilityId: facility?.id || "",
-          facilityLabel: facility?.label || ""
+          facilityLabel: facility?.label || "",
+          activityId: activity?.id || "",
+          activityLabel: activity?.label || ""
         };
       }
 
@@ -2802,6 +2826,12 @@
             ${renderFacilitiesSettings()}
           </section>`;
         }
+        if (constructionMode === "activities") {
+          return `<section>
+            ${renderConstructionTabs()}
+            ${renderActivitiesSettings()}
+          </section>`;
+        }
         if (constructionMode === "team") {
           return `<section>
             ${renderConstructionTabs()}
@@ -2886,6 +2916,7 @@
         return `<div class="constructionTabs">
           <button class="${constructionMode === "team" ? "active" : ""}" data-construction-mode="team">Équipe EPS</button>
           <button class="${constructionMode === "facilities" ? "active" : ""}" data-construction-mode="facilities">Installations</button>
+          <button class="${constructionMode === "activities" ? "active" : ""}" data-construction-mode="activities">Activités</button>
           <button class="${constructionMode === "unavailable" ? "active" : ""}" data-construction-mode="unavailable">Indisponibilites</button>
           <button class="${constructionMode === "cycles" ? "active" : ""}" data-construction-mode="cycles">Définition des cycles</button>
           <button class="${constructionMode === "as" ? "active" : ""}" data-construction-mode="as">AS</button>
@@ -3015,6 +3046,11 @@ alter table public.eps_feedback disable row level security;`;
                 }).join("")}</div>
               </div>
               <div class="buildField">
+                <label>Activité</label>
+                <div class="choiceGrid">${activities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">Aucune activité ajoutée.</span>`}</div>
+                <span class="muted">Optionnel : recliquez sur l'activité sélectionnée pour l'enlever.</span>
+              </div>
+              <div class="buildField">
                 <label>Classe</label>
                 <div class="choiceGrid">${classLevels.map((level) => {
                   const unavailable = classNumbers.every((number) => occupied.classes.has(`${level} ${number}`) || occupied.unavailableClasses.has(`${level} ${number}`));
@@ -3044,6 +3080,7 @@ alter table public.eps_feedback disable row level security;`;
             <div class="buildPreview" style="background:${block.color};border-color:${block.border}">
               <strong>${block.schoolClass || "Classe a selectionner"}</strong>
               <span>${block.facilityLabel || "Installation a selectionner"}</span>
+              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}
               <span>${block.teacherNames || "Professeur a selectionner"}</span>
             </div>
             ${conflictMessage ? `<div class="conflictNotice">${conflictMessage}</div>` : ""}
@@ -3289,6 +3326,22 @@ alter table public.eps_feedback disable row level security;`;
         return id;
       }
 
+      function activityIdFromName(name) {
+        const base = name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "") || "activite";
+        let id = base;
+        let index = 2;
+        while (activities.some((activity) => activity.id === id)) {
+          id = `${base}-${index}`;
+          index += 1;
+        }
+        return id;
+      }
+
       function renderFacilitiesSettings() {
         const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType);
         return `<section class="eventPage">
@@ -3317,6 +3370,29 @@ alter table public.eps_feedback disable row level security;`;
               <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
             </article>`).join("") || `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
+          </div>
+        </section>`;
+      }
+
+      function renderActivitiesSettings() {
+        const canAddActivity = activityDraftName.trim().length > 0;
+        return `<section class="eventPage">
+          <div class="eventForm">
+            <h3>Ajouter une activité</h3>
+            <div class="eventField">
+              <label>Nom</label>
+              <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${activityDraftName}" />
+            </div>
+            <div class="modalFooter">
+              <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activité</button>
+            </div>
+          </div>
+          <div class="eventList">
+            <h3>Activités existantes</h3>
+            ${activities.map((activity) => `<article class="eventCard">
+              <strong>${activity.label}</strong>
+              <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
+            </article>`).join("") || `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
           </div>
         </section>`;
       }
@@ -3384,6 +3460,7 @@ alter table public.eps_feedback disable row level security;`;
                 <button data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
+                ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
                 <span>${teacherLabelForBlock(item)}</span>
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
@@ -3391,6 +3468,7 @@ alter table public.eps_feedback disable row level security;`;
               <div class="buildBlock" style="background:${item.color};border-color:${item.border}">
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
+                ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
                 <span>${teacherLabelForBlock(item)}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
@@ -3925,6 +4003,8 @@ alter table public.eps_feedback disable row level security;`;
         });
         const facilityDraftNameInput = document.getElementById("facilityDraftName");
         if (facilityDraftNameInput) facilityDraftNameInput.addEventListener("input", () => facilityDraftName = facilityDraftNameInput.value);
+        const activityDraftNameInput = document.getElementById("activityDraftName");
+        if (activityDraftNameInput) activityDraftNameInput.addEventListener("input", () => activityDraftName = activityDraftNameInput.value);
         const teacherDraftNameInput = document.getElementById("teacherDraftName");
         if (teacherDraftNameInput) teacherDraftNameInput.addEventListener("input", () => teacherDraftName = teacherDraftNameInput.value);
         document.querySelectorAll("[data-teacher-draft-color]").forEach((button) => {
@@ -4093,6 +4173,31 @@ alter table public.eps_feedback disable row level security;`;
             render();
           });
         });
+        const addActivity = document.getElementById("addActivity");
+        if (addActivity) {
+          addActivity.addEventListener("click", () => {
+            const label = activityDraftName.trim();
+            if (!label) return;
+            activities = [...activities, { id: activityIdFromName(label), label }];
+            activityDraftName = "";
+            saveActivities();
+            render();
+          });
+        }
+        document.querySelectorAll("[data-delete-activity]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const deletedId = button.dataset.deleteActivity;
+            activities = activities.filter((activity) => activity.id !== deletedId);
+            if (blockActivityId === deletedId) blockActivityId = "";
+            constructionRules = constructionRules.map((rule) => rule.block?.activityId === deletedId ? {
+              ...rule,
+              block: { ...rule.block, activityId: "", activityLabel: "" }
+            } : rule);
+            saveActivities();
+            rebuildConstructionPlan();
+            render();
+          });
+        });
         document.querySelectorAll("[data-pick-teacher]").forEach((button) => {
           button.addEventListener("click", () => {
             if (button.disabled) return;
@@ -4109,6 +4214,12 @@ alter table public.eps_feedback disable row level security;`;
           button.addEventListener("click", () => {
             if (button.disabled) return;
             blockFacilityId = button.dataset.pickFacility;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pick-activity]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockActivityId = blockActivityId === button.dataset.pickActivity ? "" : button.dataset.pickActivity;
             render();
           });
         });
@@ -4466,6 +4577,7 @@ alter table public.eps_feedback disable row level security;`;
             editingBuildBlock = null;
             blockTeacherIds = [];
             blockFacilityId = "";
+            blockActivityId = "";
             blockClass = "";
             blockClassLevel = "";
             blockWeekLetter = "all";
@@ -4480,6 +4592,7 @@ alter table public.eps_feedback disable row level security;`;
             if (!item) return;
             blockTeacherIds = teacherIdsForBlock(item);
             blockFacilityId = item.facilityId;
+            blockActivityId = item.activityId || "";
             blockClass = item.schoolClass;
             blockClassLevel = classParts(item.schoolClass).level;
             blockWeekLetter = item.weekLetter || "all";
