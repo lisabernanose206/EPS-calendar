@@ -1,9 +1,8 @@
 # Log des corrections
 
+- Sauvegarde automatique : retrait des boutons d'enregistrement manuel pour cycles, installations, activites et indisponibilites.
 - Cycles : dates de debut/fin limitees aux jours travailles et cycles non superposables.
 - Groupes de classes : selection exclusive entre classe entiere, demi-groupe A et demi-groupe B pour une meme classe.
-- Sauvegarde explicite : ajout de boutons d'enregistrement pour installations, activites et indisponibilites.
-- Cycles : ajout d'un bouton explicite d'enregistrement et d'un message de confirmation de sauvegarde.
 - Choix de classes par groupe : ajout de Classe entiere, Demi-groupe A et Demi-groupe B dans les selections de classes.
 - Indisponibilites profs : ajout du type Prof pour bloquer les formations, indisponibilites personnelles et jours non travailles des enseignants.
 - Log Admin : wording vulgarise pour presenter l'historique des corrections sans mentionner la source technique.

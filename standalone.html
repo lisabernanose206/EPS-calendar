@@ -580,7 +580,6 @@
       let activeCycleScope = "default";
       let activeCycleId = cycles[0].id;
       let cycleSaveStatus = "";
-      let settingsSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
       let blockExclusions = loadBlockExclusions();
@@ -1135,26 +1134,9 @@
         }
       }
 
-      function saveSettingsWithStatus(message) {
-        settingsSaveStatus = cloudReady() && isAdmin()
-          ? `${message} Sauvegarde cloud en cours.`
-          : message;
-        if (isAdmin() && cloudReady()) {
-          clearTimeout(cloudSaveTimer);
-          cloudSaveToRemote(false);
-        } else {
-          scheduleCloudSave();
-        }
-      }
-
       function saveFacilities() {
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         scheduleCloudSave();
-      }
-
-      function saveFacilitiesNow() {
-        localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
-        saveSettingsWithStatus("Installations sauvegardees localement.");
       }
 
       function loadActivities() {
@@ -1172,11 +1154,6 @@
         scheduleCloudSave();
       }
 
-      function saveActivitiesNow() {
-        localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
-        saveSettingsWithStatus("Activites sauvegardees localement.");
-      }
-
       function loadFacilityUnavailability() {
         try {
           const saved = localStorage.getItem("planningEpsFacilityUnavailability2026");
@@ -1189,11 +1166,6 @@
       function saveFacilityUnavailability() {
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
         scheduleCloudSave();
-      }
-
-      function saveFacilityUnavailabilityNow() {
-        localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
-        saveSettingsWithStatus("Indisponibilites sauvegardees localement.");
       }
 
       function loadEventExclusions() {
@@ -3318,9 +3290,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <input type="date" data-cycle-id="${cycle.id}" data-cycle-field="end" value="${cycle.end}" />
               </div>
             </div>`).join("")}</div>
-          <div class="modalFooter">
-            <button class="ghostButton primaryWeekButton" id="saveCyclesNow" ${cycleErrors.length ? "disabled" : ""}>Enregistrer les cycles</button>
-          </div>
           ${cycleErrors.length ? `<div class="cycleErrorBox">${cycleErrors.map((message) => `<span>${message}</span>`).join("")}</div>` : ""}
           ${cycleSaveStatus ? `<div class="cloudStatus">${cycleSaveStatus}</div>` : ""}
           ${renderCycleCoverage(activeCycleScope)}`;
@@ -3543,10 +3512,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="modalFooter">
               <button class="addButton" id="addFacility" ${canAddFacility ? "" : "disabled"}>Ajouter l'installation</button>
             </div>
-            <div class="modalFooter">
-              <button class="ghostButton primaryWeekButton" id="saveFacilitiesNow">Enregistrer les installations</button>
-            </div>
-            ${settingsSaveStatus ? `<div class="cloudStatus">${settingsSaveStatus}</div>` : ""}
           </div>
           <div class="eventList">
             <h3>Installations existantes</h3>
@@ -3571,10 +3536,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="modalFooter">
               <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activité</button>
             </div>
-            <div class="modalFooter">
-              <button class="ghostButton primaryWeekButton" id="saveActivitiesNow">Enregistrer les activités</button>
-            </div>
-            ${settingsSaveStatus ? `<div class="cloudStatus">${settingsSaveStatus}</div>` : ""}
           </div>
           <div class="eventList">
             <h3>Activités existantes</h3>
@@ -3767,10 +3728,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ${editingUnavailableId ? `<button class="ghostButton" id="cancelUnavailableEdit">Annuler</button>` : ""}
               <button class="addButton" id="addFacilityUnavailable" ${canSaveUnavailable ? "" : "disabled"}>${editingUnavailableId ? "Enregistrer les modifications" : "Ajouter la contrainte"}</button>
             </div>
-            <div class="modalFooter">
-              <button class="ghostButton primaryWeekButton" id="saveUnavailableNow">Enregistrer les indisponibilités</button>
-            </div>
-            ${settingsSaveStatus ? `<div class="cloudStatus">${settingsSaveStatus}</div>` : ""}
           </div>
           <div class="eventList">
             <h3>Contraintes existantes</h3>
@@ -4387,13 +4344,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        const saveFacilitiesNowButton = document.getElementById("saveFacilitiesNow");
-        if (saveFacilitiesNowButton) {
-          saveFacilitiesNowButton.addEventListener("click", () => {
-            saveFacilitiesNow();
-            render();
-          });
-        }
         document.querySelectorAll("[data-delete-facility]").forEach((button) => {
           button.addEventListener("click", () => {
             facilities = facilities.filter((facility) => facility.id !== button.dataset.deleteFacility);
@@ -4420,13 +4370,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             activities = [...activities, { id: activityIdFromName(label), label }];
             activityDraftName = "";
             saveActivities();
-            render();
-          });
-        }
-        const saveActivitiesNowButton = document.getElementById("saveActivitiesNow");
-        if (saveActivitiesNowButton) {
-          saveActivitiesNowButton.addEventListener("click", () => {
-            saveActivitiesNow();
             render();
           });
         }
@@ -4682,13 +4625,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        const saveUnavailableNow = document.getElementById("saveUnavailableNow");
-        if (saveUnavailableNow) {
-          saveUnavailableNow.addEventListener("click", () => {
-            saveFacilityUnavailabilityNow();
-            render();
-          });
-        }
         const cancelUnavailableEdit = document.getElementById("cancelUnavailableEdit");
         if (cancelUnavailableEdit) {
           cancelUnavailableEdit.addEventListener("click", () => {
@@ -4824,12 +4760,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           input.addEventListener("input", () => {
             const cycle = activeCycles().find((item) => item.id === input.dataset.cycleId);
             if (!cycle) return;
-            const previousValue = cycle[input.dataset.cycleField];
             cycle[input.dataset.cycleField] = input.value;
-            const error = validateCycle(cycle, activeCycles());
-            if (error) {
-              cycle[input.dataset.cycleField] = previousValue;
-              cycleSaveStatus = error;
+            const cycleErrors = validateCycles(activeCycles());
+            if (cycleErrors.length) {
+              cycleSaveStatus = cycleErrors[0];
               render();
               return;
             }
@@ -4838,19 +4772,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
-        const saveCyclesNow = document.getElementById("saveCyclesNow");
-        if (saveCyclesNow) {
-          saveCyclesNow.addEventListener("click", () => {
-            const cycleErrors = validateCycles(activeCycles());
-            if (cycleErrors.length) {
-              cycleSaveStatus = cycleErrors[0];
-              render();
-              return;
-            }
-            saveCycles(true);
-            render();
-          });
-        }
         document.querySelectorAll("[data-cycle-scope]").forEach((button) => {
           button.addEventListener("click", () => {
             activeCycleScope = button.dataset.cycleScope;
