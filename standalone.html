@@ -367,6 +367,12 @@
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
       .logPage { display: grid; gap: 10px; margin-top: 16px; max-width: 980px; }
+      .logGroup { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; overflow: hidden; }
+      .logGroup summary { align-items: center; color: #1e3a8a; cursor: pointer; display: flex; font-weight: 950; gap: 8px; justify-content: space-between; list-style: none; padding: 10px 12px; }
+      .logGroup summary::-webkit-details-marker { display: none; }
+      .logGroup summary span { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 999px; color: #1d4ed8; font-size: 11px; padding: 2px 7px; }
+      .logEntries { border-top: 1px solid #dbeafe; display: grid; gap: 6px; padding: 8px 12px 10px; }
+      .logEntry { color: #475569; font-size: 12px; font-weight: 850; margin: 0; }
       .logCard { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; display: grid; gap: 5px; padding: 12px; }
       .logCard strong { color: #1e3a8a; }
       .logCard span { color: #475569; font-size: 12px; font-weight: 850; }
@@ -4386,18 +4392,26 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ? { title: text.slice(0, separator), details: text.slice(separator + 3) }
               : { title: text, details: "" };
           });
+        const groups = entries.reduce((items, entry) => {
+          const title = entry.title || "General";
+          if (!items[title]) items[title] = [];
+          items[title].push(entry.details || entry.title);
+          return items;
+        }, {});
         return `<section class="logPage">
           <h2>Log des corrections</h2>
           <article class="alertHelp">
             <strong>Historique simple</strong>
             <span>Liste des corrections et ameliorations apportees au logiciel au fil des mises a jour.</span>
           </article>
-          ${entries.map((entry) => `
-            <article class="logCard">
-              <strong>${entry.title}</strong>
-              <span>${entry.details}</span>
-            </article>
-          `).join("") || `<div class="alertEmpty">Aucune entree dans BUG_FIX_LOG.md.</div>`}
+          ${Object.entries(groups).map(([title, items]) => `
+            <details class="logGroup">
+              <summary>${title}<span>${items.length}</span></summary>
+              <div class="logEntries">
+                ${items.map((item) => `<p class="logEntry">${item}</p>`).join("")}
+              </div>
+            </details>
+          `).join("") || `<div class="alertEmpty">Aucune entree pour le moment.</div>`}
         </section>`;
       }
 
