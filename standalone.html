@@ -161,6 +161,10 @@
       .consultationYearTable .yearLesson { border-radius: 4px; gap: 1px; padding: 3px; }
       .consultationYearTable .yearLesson strong { font-size: 8px; }
       .consultationYearTable .yearLesson span { font-size: 7px; }
+      .consultationYearTable td.selectedWeekColumn { background: #fff7ed; }
+      .consultationYearTable .selectedWeekColumn .yearLesson { border-width: 2px; box-shadow: 0 2px 7px rgba(15, 23, 42, 0.22); padding: 4px; }
+      .consultationYearTable .selectedWeekColumn .yearLesson strong { font-size: 9px; font-weight: 950; }
+      .consultationYearTable .selectedWeekColumn .yearLesson span { color: #0f172a; font-size: 8px; font-weight: 950; }
       .cycleTwoWeekTable { min-width: 0; table-layout: fixed; }
       .cycleTwoWeekTable th, .cycleTwoWeekTable td { border: 2px solid #111827; font-size: 10px; padding: 3px; vertical-align: top; }
       .cycleTwoWeekTable thead th { background: #334155 !important; color: #fff !important; font-size: 12px; font-weight: 950; line-height: 1.1; padding: 6px 4px; text-align: center; }
@@ -1828,6 +1832,33 @@
         return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
       }
 
+      function facilityShortLabel(facilityId, fallbackLabel = "") {
+        const stopWords = new Set(["salle", "de", "du", "des", "la", "le", "les", "l", "d", "municipal", "municipale", "interne", "externe"]);
+        const simplify = (value) => (value || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9 ]/g, " ")
+          .trim();
+        const baseToken = (facility) => {
+          const words = simplify(facility.label || facility.id).split(/\s+/).filter(Boolean);
+          return words.find((word) => !stopWords.has(word)) || words[0] || simplify(facility.id) || "inst";
+        };
+        const tokenForDisplay = (facility) => {
+          const words = (facility.label || facility.id || "").replace(/[-_]/g, " ").split(/\s+/).filter(Boolean);
+          return words.find((word) => !stopWords.has(simplify(word))) || words[0] || facility.id || fallbackLabel || "Inst";
+        };
+        const current = facilities.find((facility) => facility.id === facilityId) || { id: facilityId, label: fallbackLabel };
+        const currentBase = baseToken(current);
+        const currentDisplay = tokenForDisplay(current);
+        const otherBases = facilities
+          .filter((facility) => facility.id !== current.id)
+          .map(baseToken);
+        let length = 1;
+        while (length < currentBase.length && otherBases.some((base) => base.slice(0, length) === currentBase.slice(0, length))) length += 1;
+        return currentDisplay.slice(0, Math.max(1, length));
+      }
+
       function groupedHeaderCells(weeks, labelForWeek, classForWeek) {
         const groups = [];
         weeks.forEach((weekItem) => {
@@ -2684,7 +2715,8 @@
           rows: rows.filter((row) => row.day === day)
         }));
         const conflicts = conflictMap();
-        const selectedWeekItem = weeks.find((item) => item.rank === selectedYearWeekRank);
+        const effectiveSelectedWeekRank = selectedYearWeekRank || current.rank;
+        const selectedWeekItem = weeks.find((item) => item.rank === effectiveSelectedWeekRank);
         return `<section class="panel" style="max-width:1180px">
           <h2>Emploi du temps global ${schoolYear.label}</h2>
           <p class="muted yearNote">Vue consultation du planning construit sur l'annee scolaire.</p>
@@ -2703,7 +2735,7 @@
                 const cycle = cycleForWeek(weekItem);
                 return vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "-";
               }, (weekItem) => vacationForWeek(weekItem) ? "vacationHeader" : "cycleHeader")}</tr>
-              <tr><th class="rowHead"></th><th class="timeHead"></th>${weeks.map((weekItem) => `<th class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${selectedYearWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekTop" : ""}"><button class="weekSelect ${selectedYearWeekRank === weekItem.rank ? "selected" : ""}" data-year-week-rank="${weekItem.rank}">${weekItem.rank}${weekItem.letter}</button></th>`).join("")}</tr>
+              <tr><th class="rowHead"></th><th class="timeHead"></th>${weeks.map((weekItem) => `<th class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekTop" : ""}"><button class="weekSelect ${effectiveSelectedWeekRank === weekItem.rank ? "selected" : ""}" data-year-week-rank="${weekItem.rank}">${weekItem.rank}${weekItem.letter}</button></th>`).join("")}</tr>
             </thead>
             <tbody>
               ${rowsByDay.map((group) => group.rows.map((row, rowIndex) => `<tr>
@@ -2712,13 +2744,13 @@
                 const key = yearCellKey(row.id, weekItem.rank);
                 const dayOff = dayOffFor(group.day, weekItem);
                 if (dayOff && rowIndex > 0) return "";
-                if (dayOff) return `<td rowspan="${group.rows.length}" title="${dayOff.title}" class="mergedOff ${dayOff.className} ${weekItem.rank === current.rank ? "currentWeek" : ""} ${selectedYearWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekMiddle" : ""}">${dayOff.label}</td>`;
+                if (dayOff) return `<td rowspan="${group.rows.length}" title="${dayOff.title}" class="mergedOff ${dayOff.className} ${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekMiddle" : ""}">${dayOff.label}</td>`;
                 const continuedEvent = eventForContinuation(row, weekItem);
                 if (continuedEvent && eventMatchesTeacherSelection(continuedEvent) && canMergeEventCell(continuedEvent, group.rows, weekItem)) return "";
                 const mergeableEvents = eventsForCell(row, weekItem).filter((event) => eventMatchesTeacherSelection(event) && canMergeEventCell(event, group.rows, weekItem));
                 if (mergeableEvents.length) {
                   const event = mergeableEvents[0];
-                  return `<td rowspan="${eventRowSpan(event, group.rows)}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${selectedYearWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekMiddle" : ""}">
+                  return `<td rowspan="${eventRowSpan(event, group.rows)}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekMiddle" : ""}">
                     <div class="yearLesson eventBlock">
                       <strong>${event.name}</strong>
                       <span>${eventPeriodLabel(event)} · ${event.classes.length} classe(s) · ${event.teacherIds.length} prof(s)</span>
@@ -2728,7 +2760,7 @@
                 }
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
-                return `<td title="${holiday || vacation?.name || ""}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${selectedYearWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">Vacances</span>` : holiday ? `<span class="muted">Jour férié</span>` : renderYearCell(cycle, weekItem, row)}</td>`;
+                return `<td title="${holiday || vacation?.name || ""}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">Vacances</span>` : holiday ? `<span class="muted">Jour férié</span>` : renderYearCell(cycle, weekItem, row)}</td>`;
               }).join("")}</tr>`).join("")).join("")}
             </tbody>
           </table></div>
@@ -2745,7 +2777,7 @@
         return `<div class="yearLessonStack">${builtItems.map((item) => `
           <div class="yearLesson" style="background:${item.color};border-color:${item.border}">
             <strong>${compactClassName(item.schoolClass) || item.label || "Bloc"}</strong>
-            <span>${item.facilityLabel || item.type || ""}</span>
+            <span>${facilityShortLabel(item.facilityId, item.facilityLabel || item.type || "")}</span>
           </div>`).join("")}${events.map((event) => `
           <div class="yearLesson eventBlock">
             <strong>${event.name}</strong>
@@ -3758,7 +3790,7 @@ alter table public.eps_feedback disable row level security;`;
         const showSelectedWeek = document.getElementById("showSelectedWeek");
         if (showSelectedWeek) {
           showSelectedWeek.addEventListener("click", () => {
-            displayedCurrentWeekRank = selectedYearWeekRank;
+            displayedCurrentWeekRank = selectedYearWeekRank || currentSchoolWeek().rank;
             week = "current";
             document.querySelectorAll("[data-week]").forEach((item) => item.classList.toggle("active", item.dataset.week === week));
             render();
