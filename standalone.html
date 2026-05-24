@@ -555,6 +555,7 @@
         start: new Date(2026, 8, 1),
         end: new Date(2027, 6, 31)
       };
+      const calendarDisplayEnd = new Date(2027, 6, 11);
       let seed = 0;
       let view = "calendar";
       let week = "current";
@@ -826,7 +827,7 @@
         const firstMonday = mondayOnOrBefore(schoolYear.start);
         let cursor = new Date(firstMonday);
         let rank = 1;
-        while (cursor <= schoolYear.end) {
+        while (cursor <= calendarDisplayEnd) {
           const end = new Date(cursor);
           end.setDate(cursor.getDate() + 6);
           const info = getIsoWeekInfo(cursor);
@@ -915,8 +916,8 @@
         const rowDate = rowDateForWeek({ day }, weekItem);
         const vacation = schoolVacations().find((item) => rowDate >= dateOnly(item.start) && rowDate <= dateOnly(item.end));
         const holiday = schoolYearHolidays().get(dateKey(rowDate));
-        if (vacation) return { label: "Vacances", title: vacation.name, className: "vacationCell" };
-        if (holiday) return { label: "Jour férié", title: holiday, className: "holidayCell" };
+        if (vacation) return { label: "V", title: vacation.name, className: "vacationCell" };
+        if (holiday) return { label: "F", title: holiday, className: "holidayCell" };
         return null;
       }
 
@@ -2665,7 +2666,7 @@
                 return `<article class="slot">
                   <div class="slotHead"><strong>${row.slot.label}</strong><span class="muted">${row.slot.hours}h</span></div>
                   <div class="lessons">
-                    ${blocked ? `<div class="emptyLesson">${vacationForCell(row, weekItem)?.name || "Jour férié"}</div>` : ""}
+                    ${blocked ? `<div class="emptyLesson">${vacationForCell(row, weekItem) ? "V" : "F"}</div>` : ""}
                     ${items.map((item) => `<div class="lesson" style="background:${item.color};border-color:${item.border}">
                       <div class="lessonTop"><strong>${teacherLabelForBlock(item)}</strong></div>
                       <div class="lessonMeta"><span class="muted">${item.schoolClass} · ${item.facilityLabel}</span></div>
@@ -2799,7 +2800,7 @@
               <tr><th class="rowHead"></th><th class="timeHead">Cycle</th>${groupedHeaderCells(weeks, (weekItem) => {
                 const vacation = vacationForWeek(weekItem);
                 const cycle = cycleForWeek(weekItem);
-                return vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "-";
+                return vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "-";
               }, (weekItem) => vacationForWeek(weekItem) ? "vacationHeader" : "cycleHeader")}</tr>
               <tr><th class="rowHead"></th><th class="timeHead"></th>${weeks.map((weekItem) => `<th class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? "selectedWeekColumn selectedWeekTop" : ""}"><button class="weekSelect ${effectiveSelectedWeekRank === weekItem.rank ? "selected" : ""}" data-year-week-rank="${weekItem.rank}">${weekItem.rank}${weekItem.letter}</button></th>`).join("")}</tr>
             </thead>
@@ -2826,7 +2827,7 @@
                 }
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
-                return `<td title="${holiday || vacation?.name || ""}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">Vacances</span>` : holiday ? `<span class="muted">Jour férié</span>` : renderYearCell(cycle, weekItem, row)}</td>`;
+                return `<td title="${holiday || vacation?.name || ""}" class="${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">V</span>` : holiday ? `<span class="muted">F</span>` : renderYearCell(cycle, weekItem, row)}</td>`;
               }).join("")}</tr>`).join("")).join("")}
             </tbody>
           </table></div>
@@ -3205,7 +3206,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           weeks.forEach((weekItem) => {
             const vacation = vacationForWeek(weekItem);
             const cycle = shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
-            const label = vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "";
+            const label = vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "";
             const className = vacation ? "vacationCell" : cycle ? "coveredCell" : "gapCell";
             const style = cycle && !vacation ? cycleStyle(cycle) : "";
             const title = vacation?.name || (cycle ? `${cycle.start} - ${cycle.end}` : "Aucun cycle");
@@ -3232,7 +3233,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <tr><th class="timeHead">Cycle</th>${groupedHeaderCells(weeks, (weekItem) => {
                 const vacation = vacationForWeek(weekItem);
                 const cycle = shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
-                return vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "";
+                return vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "";
               }, (weekItem) => vacationForWeek(weekItem) ? "vacationHeader" : shownCycles.find((item) => weeksForCycle(item).some((cycleWeek) => cycleWeek.rank === weekItem.rank)) ? "cycleHeader" : "gapCell")}</tr>
               <tr><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th>${weekItem.rank}${weekItem.letter}</th>`).join("")}</tr>
             </thead>
@@ -3634,7 +3635,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <tr><th class="rowHead"></th><th class="timeHead">Cycle</th>${weeks.map((weekItem) => {
               const vacation = vacationForWeek(weekItem);
               const cycle = cycleForWeek(weekItem);
-              return `<th class="${vacation ? "vacationHeader" : "cycleHeader"}">${vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "-"}</th>`;
+              return `<th class="${vacation ? "vacationHeader" : "cycleHeader"}">${vacation ? "V" : cycle ? cycle.name.replace("Cycle ", "C") : "-"}</th>`;
             }).join("")}</tr>
             <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th><span class="constructionWeekHead"><strong>${weekItem.rank}${weekItem.letter}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
           </thead>
@@ -3671,8 +3672,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const vacation = vacationForCell(row, weekItem);
                 const blocked = vacation || holiday;
               return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked && !row.isAs ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}" ${editable && !blocked && !row.isAs ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
-                ${vacation ? `<span class="muted">Vacances</span>` : ""}
-                ${!vacation && holiday ? `<span class="muted">Jour férié</span>` : ""}
+                ${vacation ? `<span class="muted">V</span>` : ""}
+                ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
                 ${renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds)}
                 ${conflicts.has(key) ? `<span class="conflictBadge">Conflit</span>` : ""}
               </td>`;
