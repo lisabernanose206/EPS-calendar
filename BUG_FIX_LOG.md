@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Cycles : dates de debut/fin limitees aux jours travailles et cycles non superposables.
 - Groupes de classes : selection exclusive entre classe entiere, demi-groupe A et demi-groupe B pour une meme classe.
 - Sauvegarde explicite : ajout de boutons d'enregistrement pour installations, activites et indisponibilites.
 - Cycles : ajout d'un bouton explicite d'enregistrement et d'un message de confirmation de sauvegarde.

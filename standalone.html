@@ -410,6 +410,7 @@
       .cloudField input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 36px; padding: 0 10px; }
       .cloudActions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
       .cloudStatus { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 12px; font-weight: 850; padding: 10px; }
+      .cycleErrorBox { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; color: #991b1b; display: grid; font-size: 12px; font-weight: 900; gap: 4px; padding: 10px; }
       .requestStatus { border-radius: 8px; font-size: 13px; font-weight: 950; margin-top: 8px; padding: 12px; }
       .requestStatus.success { background: #ecfdf5; border: 1px solid #34d399; color: #047857; }
       .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
@@ -1410,11 +1411,11 @@
           "2027-05-04"
         ];
         const endDates = [
-          "2026-10-18",
-          "2026-12-20",
-          "2027-02-21",
-          "2027-04-25",
-          "2027-07-04"
+          "2026-10-16",
+          "2026-12-18",
+          "2027-02-19",
+          "2027-04-23",
+          "2027-07-02"
         ];
         return Array.from({ length: count }, (_, index) => ({
           id: `cycle-${index + 1}`,
@@ -1764,6 +1765,37 @@
       function setActiveCycles(nextCycles) {
         if (activeCycleScope === "default") cycles = nextCycles;
         else cyclesByLevel[activeCycleScope] = nextCycles;
+      }
+
+      function isWorkdayDate(value) {
+        const day = dateOnly(value).getDay();
+        return day >= 1 && day <= 5;
+      }
+
+      function cycleDateRange(cycle) {
+        return {
+          start: dateOnly(cycle.start),
+          end: dateOnly(cycle.end)
+        };
+      }
+
+      function cyclesOverlap(firstCycle, secondCycle) {
+        const first = cycleDateRange(firstCycle);
+        const second = cycleDateRange(secondCycle);
+        return first.start <= second.end && second.start <= first.end;
+      }
+
+      function validateCycle(cycle, cycleList = activeCycles()) {
+        if (!cycle.start || !cycle.end) return `${cycle.name} : renseignez une date de debut et une date de fin.`;
+        if (cycleDateRange(cycle).start > cycleDateRange(cycle).end) return `${cycle.name} : la date de fin doit etre apres la date de debut.`;
+        if (!isWorkdayDate(cycle.start) || !isWorkdayDate(cycle.end)) return `${cycle.name} : les dates doivent commencer et finir un jour travaille, du lundi au vendredi.`;
+        const overlapping = cycleList.find((item) => item.id !== cycle.id && cyclesOverlap(cycle, item));
+        if (overlapping) return `${cycle.name} se superpose avec ${overlapping.name}.`;
+        return "";
+      }
+
+      function validateCycles(cycleList = activeCycles()) {
+        return cycleList.map((cycle) => validateCycle(cycle, cycleList)).filter(Boolean);
       }
 
       function cyclesForClassLevel(level) {
@@ -3267,6 +3299,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderCycleDefinition() {
         const shownCycles = activeCycles();
+        const cycleErrors = validateCycles(shownCycles);
         return `<h3>Définition des cycles</h3>
           <div class="constructionTabs">
             <button class="${activeCycleScope === "default" ? "active" : ""}" data-cycle-scope="default">Tous niveaux</button>
@@ -3286,8 +3319,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>
             </div>`).join("")}</div>
           <div class="modalFooter">
-            <button class="ghostButton primaryWeekButton" id="saveCyclesNow">Enregistrer les cycles</button>
+            <button class="ghostButton primaryWeekButton" id="saveCyclesNow" ${cycleErrors.length ? "disabled" : ""}>Enregistrer les cycles</button>
           </div>
+          ${cycleErrors.length ? `<div class="cycleErrorBox">${cycleErrors.map((message) => `<span>${message}</span>`).join("")}</div>` : ""}
           ${cycleSaveStatus ? `<div class="cloudStatus">${cycleSaveStatus}</div>` : ""}
           ${renderCycleCoverage(activeCycleScope)}`;
       }
@@ -4790,7 +4824,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           input.addEventListener("input", () => {
             const cycle = activeCycles().find((item) => item.id === input.dataset.cycleId);
             if (!cycle) return;
+            const previousValue = cycle[input.dataset.cycleField];
             cycle[input.dataset.cycleField] = input.value;
+            const error = validateCycle(cycle, activeCycles());
+            if (error) {
+              cycle[input.dataset.cycleField] = previousValue;
+              cycleSaveStatus = error;
+              render();
+              return;
+            }
             saveCycles();
             rebuildConstructionPlan();
             render();
@@ -4799,6 +4841,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const saveCyclesNow = document.getElementById("saveCyclesNow");
         if (saveCyclesNow) {
           saveCyclesNow.addEventListener("click", () => {
+            const cycleErrors = validateCycles(activeCycles());
+            if (cycleErrors.length) {
+              cycleSaveStatus = cycleErrors[0];
+              render();
+              return;
+            }
             saveCycles(true);
             render();
           });
