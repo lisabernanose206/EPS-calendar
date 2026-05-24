@@ -1,5 +1,7 @@
 # Log des corrections
 
+- Indisponibilites : resume des creneaux par journee, matin ou apres-midi quand une contrainte couvre tout le bloc.
+- AS : dates par defaut alignees sur l'annee scolaire, du 1er septembre au 2 juillet.
 - Indisponibilites : date de fin par defaut etendue au 2 juillet pour couvrir toute la derniere semaine travaillee.
 - Vacances scolaires : calendrier base sur la zone B pour l'annee 2026-2027.
 - Selection des classes : le choix d'un niveau complet remplace les demi-groupes du niveau par les classes entieres.

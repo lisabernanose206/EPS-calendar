@@ -618,8 +618,8 @@
       let eventClassLevelFilter = "";
       let editingEventId = null;
       let asName = "";
-      let asStart = "";
-      let asEnd = "";
+      let asStart = "2026-09-01";
+      let asEnd = "2027-07-02";
       let asWeekdays = [];
       let asTeacherIds = [];
       let editingAsId = null;
@@ -2186,8 +2186,8 @@
       function resetAsForm() {
         editingAsId = null;
         asName = "";
-        asStart = "";
-        asEnd = "";
+        asStart = "2026-09-01";
+        asEnd = "2027-07-02";
         asWeekdays = [];
         asTeacherIds = [];
       }
@@ -2238,6 +2238,28 @@
         const starts = selectedCycles.map((cycle) => cycle.start).sort();
         const ends = selectedCycles.map((cycle) => cycle.end).sort();
         return { start: starts[0], end: ends[ends.length - 1] };
+      }
+
+      function unavailableCellSummary(item) {
+        const cells = (item.cells || []).length
+          ? item.cells
+          : (item.weekdays || []).flatMap((day) => (item.slotIds || []).map((slotId) => ({ day, slotId })));
+        if (!cells.length) return "aucun";
+        const morning = ["8", "10"];
+        const afternoon = ["13", "15"];
+        return days
+          .map((day) => {
+            const daySlotIds = cells.filter((cell) => cell.day === day).map((cell) => cell.slotId);
+            if (!daySlotIds.length) return "";
+            const uniqueSlotIds = [...new Set(daySlotIds)];
+            const hasSameSlots = (expected) => uniqueSlotIds.length === expected.length && expected.every((slotId) => uniqueSlotIds.includes(slotId));
+            if (hasSameSlots(slots.map((slot) => slot.id))) return `${day} toute la journee`;
+            if (hasSameSlots(morning)) return `${day} matin`;
+            if (hasSameSlots(afternoon)) return `${day} apres-midi`;
+            return uniqueSlotIds.map((slotId) => `${day} ${slots.find((slot) => slot.id === slotId)?.label || slotId}`).join(", ");
+          })
+          .filter(Boolean)
+          .join(", ");
       }
 
       function saveFacilityUnavailableFromForm() {
@@ -3748,7 +3770,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility")) === "class" ? "Classes" : (item.type === "teacher" || (item.teacherIds || []).length) ? "Profs" : "Installations"}</span>
                 ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map((id) => cycles.find((cycle) => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
                 <span>${item.start} → ${item.end} · ${(item.weekdays || []).join(", ")}</span>
-                <span>Créneau(x) : ${(item.cells || []).length ? item.cells.map((cell) => `${cell.day} ${slots.find((slot) => slot.id === cell.slotId)?.label || cell.slotId}`).join(", ") : (item.slotIds || []).map((id) => slots.find((slot) => slot.id === id)?.label || id).join(", ")}</span>
+                <span>Créneau(x) : ${unavailableCellSummary(item)}</span>
                 <span>Classe(s) concernée(s) : ${(item.classIds || []).length ? item.classIds.join(", ") : "aucune"}</span>
                 <span>Prof(s) concernes : ${(item.teacherIds || []).length ? teacherNamesFromIds(item.teacherIds).join(", ") : "aucun"}</span>
                 <button class="ghostButton" data-edit-unavailable="${item.id}">Modifier</button>
