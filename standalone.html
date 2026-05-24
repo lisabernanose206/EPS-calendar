@@ -199,6 +199,7 @@
       .weekOff { background: #f8fafc; color: #94a3b8; font-weight: 900; }
       .yearActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin: 8px 0 12px; }
       .yearActionsRight { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .calendarLegend { color: #64748b; font-size: 10px; font-weight: 850; margin: -4px 0 8px; text-align: right; }
       .ghostButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 34px; padding: 0 10px; }
       .primaryWeekButton { background: #0f172a; border-color: #0f172a; color: #fff; font-size: 13px; min-height: 42px; padding: 0 14px; }
       .weekSelect { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: inherit; font-weight: 950; padding: 2px 4px; width: 100%; }
@@ -2793,6 +2794,7 @@
               ${selectedWeekItem ? `<button class="ghostButton primaryWeekButton" id="showSelectedWeek">Afficher la semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</button>` : ""}
             </div>
           </div>
+          <div class="calendarLegend">V = vacances · F = férié</div>
           ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span></div>` : ""}
           <div class="yearWrap consultationYearWrap"><table class="yearTable consultationYearTable">
             <thead>
@@ -2931,6 +2933,7 @@
               <button class="ghostButton" data-print-format="A2">Exporter A2</button>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
+            <div class="calendarLegend">V = vacances · F = férié</div>
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             <div class="constructionZoomWrap" style="zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
           </div>
