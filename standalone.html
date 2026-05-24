@@ -607,6 +607,7 @@
       let asTeacherIds = [];
       let editingAsId = null;
       let facilityUnavailability = loadFacilityUnavailability();
+      let unavailablePurgeOnLoad = purgeConstructionForUnavailableItems(facilityUnavailability);
       constructionPlan = buildConstructionPlanFromRules();
       let unavailableName = "Installation occupée";
       let unavailableType = "facility";
@@ -675,6 +676,10 @@
       asSessions = normalizePlanningItems(asSessions);
       localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
       localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
+      if (unavailablePurgeOnLoad) {
+        saveBlockExclusions();
+        saveConstructionPlan();
+      }
 
       function emptyStats() {
         return Object.fromEntries(teachers.map((teacher) => [teacher.id, {
@@ -1075,7 +1080,6 @@
             const key = yearCellKey(rule.rowId, weekItem.rank);
             if (isBlockExcluded(rule.id, key)) return;
             if (isRuleExcluded(rule.id, key)) return;
-            if (ruleBlockedByUnavailable(rule, weekItem)) return;
             if (!plan[key]) plan[key] = [];
             plan[key].push({ ...rule.block, ruleId: rule.id, cycleId: cycle.id, cycleName: cycle.name, weekLetter: rule.weekLetter || "all" });
           });
@@ -1283,20 +1287,23 @@
 
       function unavailableForCell(row, weekItem) {
         if (row.isAs) return [];
+        return facilityUnavailability.filter((item) => unavailableMatchesCell(item, row, weekItem));
+      }
+
+      function unavailableMatchesCell(item, row, weekItem) {
+        if (!item || !row || !weekItem || row.isAs) return false;
         const rowDate = rowDateForWeek(row, weekItem);
-        return facilityUnavailability.filter((item) => {
-          const matchesPeriod = item.periodMode === "cycles" && (item.cycleIds || []).length
-            ? (item.cycleIds || []).some((cycleId) => {
-              const cycle = cycles.find((entry) => entry.id === cycleId);
-              return cycle && weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank);
-            })
-            : rowDate >= dateOnly(item.start) && rowDate <= dateOnly(item.end);
-          const cells = item.cells || [];
-          const matchesCell = cells.length
-            ? cells.some((cell) => cell.day === row.day && cell.slotId === row.slot.id)
-            : (item.weekdays || []).includes(row.day) && (item.slotIds || []).includes(row.slot.id);
-          return matchesPeriod && matchesCell;
-        });
+        const matchesPeriod = item.periodMode === "cycles" && (item.cycleIds || []).length
+          ? (item.cycleIds || []).some((cycleId) => {
+            const cycle = cycles.find((entry) => entry.id === cycleId);
+            return cycle && weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank);
+          })
+          : rowDate >= dateOnly(item.start) && rowDate <= dateOnly(item.end);
+        const cells = item.cells || [];
+        const matchesCell = cells.length
+          ? cells.some((cell) => cell.day === row.day && cell.slotId === row.slot.id)
+          : (item.weekdays || []).includes(row.day) && (item.slotIds || []).includes(row.slot.id);
+        return matchesPeriod && matchesCell;
       }
 
       function unavailableCoversFacility(item, facilityId) {
@@ -1329,6 +1336,34 @@
           const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
           return facilityBlocked || classBlocked;
         });
+      }
+
+      function purgeConstructionForUnavailableItems(items) {
+        const unavailableItems = Array.isArray(items) ? items : [items].filter(Boolean);
+        if (!unavailableItems.length) return false;
+        const rows = yearRows();
+        let changed = false;
+        constructionRules.forEach((rule) => {
+          const row = rows.find((item) => item.id === rule.rowId);
+          const cycle = findCycleForRule(rule);
+          if (!row || !cycle || !rule.block) return;
+          weeksForCycle(cycle).forEach((weekItem) => {
+            if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
+            const key = yearCellKey(rule.rowId, weekItem.rank);
+            if (isBlockExcluded(rule.id, key)) return;
+            const shouldRemove = unavailableItems.some((item) => {
+              if (!unavailableMatchesCell(item, row, weekItem)) return false;
+              const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
+              const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
+              return facilityBlocked || classBlocked;
+            });
+            if (!shouldRemove) return;
+            const existing = blockExclusions[rule.id] || [];
+            blockExclusions[rule.id] = [...existing, key];
+            changed = true;
+          });
+        });
+        return changed;
       }
 
       function defaultCycles(count = 5) {
@@ -1557,6 +1592,7 @@
         asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
         facilityUnavailability = Array.isArray(data.facilityUnavailability) ? data.facilityUnavailability : facilityUnavailability;
         eventExclusions = data.eventExclusions || eventExclusions;
+        purgeConstructionForUnavailableItems(facilityUnavailability);
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
         cycleTeacherIds = teachers.map((teacher) => teacher.id);
         cycleFacilityIds = facilities.map((facility) => facility.id);
@@ -2174,6 +2210,8 @@
         };
         if (editingUnavailableId) facilityUnavailability = facilityUnavailability.map((entry) => entry.id === editingUnavailableId ? item : entry);
         else facilityUnavailability.push(item);
+        purgeConstructionForUnavailableItems([item]);
+        saveBlockExclusions();
         saveFacilityUnavailability();
         rebuildConstructionPlan();
         resetFacilityUnavailableForm();
