@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Sauvegarde explicite : ajout de boutons d'enregistrement pour installations, activites et indisponibilites.
 - Cycles : ajout d'un bouton explicite d'enregistrement et d'un message de confirmation de sauvegarde.
 - Choix de classes par groupe : ajout de Classe entiere, Demi-groupe A et Demi-groupe B dans les selections de classes.
 - Indisponibilites profs : ajout du type Prof pour bloquer les formations, indisponibilites personnelles et jours non travailles des enseignants.
