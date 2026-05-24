@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Groupes de classes : selection exclusive entre classe entiere, demi-groupe A et demi-groupe B pour une meme classe.
 - Sauvegarde explicite : ajout de boutons d'enregistrement pour installations, activites et indisponibilites.
 - Cycles : ajout d'un bouton explicite d'enregistrement et d'un message de confirmation de sauvegarde.
 - Choix de classes par groupe : ajout de Classe entiere, Demi-groupe A et Demi-groupe B dans les selections de classes.

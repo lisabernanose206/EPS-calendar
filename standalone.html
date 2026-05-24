@@ -2502,6 +2502,17 @@
         return first.group === "whole" || second.group === "whole" || first.group === second.group;
       }
 
+      function classSameBase(firstClass, secondClass) {
+        const first = classParts(firstClass);
+        const second = classParts(secondClass);
+        return Boolean(first.level && second.level && first.level === second.level && first.number === second.number);
+      }
+
+      function toggleExclusiveClassSelection(selectedClasses, schoolClass) {
+        if (selectedClasses.includes(schoolClass)) return selectedClasses.filter((item) => item !== schoolClass);
+        return [...selectedClasses.filter((item) => !classSameBase(item, schoolClass)), schoolClass];
+      }
+
       function classCollectionHasOverlap(classItems, schoolClass) {
         return [...classItems].some((item) => classesOverlap(item, schoolClass));
       }
@@ -2521,9 +2532,7 @@
       }
 
       function toggleUnavailableClass(schoolClass) {
-        unavailableClassIds = unavailableClassIds.includes(schoolClass)
-          ? unavailableClassIds.filter((item) => item !== schoolClass)
-          : [...unavailableClassIds, schoolClass];
+        unavailableClassIds = toggleExclusiveClassSelection(unavailableClassIds, schoolClass);
       }
 
       function toggleUnavailableTeacher(teacherId) {
@@ -4469,7 +4478,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-event-class]").forEach((button) => {
           button.addEventListener("click", () => {
             const schoolClass = button.dataset.eventClass;
-            eventClasses = eventClasses.includes(schoolClass) ? eventClasses.filter((item) => item !== schoolClass) : [...eventClasses, schoolClass];
+            eventClasses = toggleExclusiveClassSelection(eventClasses, schoolClass);
             render();
           });
         });
