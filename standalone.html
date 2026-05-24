@@ -671,6 +671,7 @@
       let serviceHoursByLevel = loadServiceHoursByLevel();
       let serviceAssignments = loadServiceAssignments();
       let serviceLevelByTeacher = {};
+      let serviceClassByTeacher = {};
       let blockTeacherIds = [];
       let blockClass = "";
       let blockClassLevel = "";
@@ -2824,6 +2825,10 @@
         return classLevels.includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
       }
 
+      function selectedServiceClassForTeacher(teacherId) {
+        return classes.includes(serviceClassByTeacher[teacherId]) ? serviceClassByTeacher[teacherId] : "";
+      }
+
       function serviceClassTotals() {
         const totals = Object.fromEntries(classes.map((schoolClass) => [schoolClass, 0]));
         Object.values(serviceAssignments).forEach((rows) => {
@@ -3256,6 +3261,8 @@
               const teacherRows = serviceRowsForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
               const visibleClasses = classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
+              const selectedClass = selectedServiceClassForTeacher(teacher.id);
+              const selectedClassAssignment = selectedClass ? serviceAssignmentFor(teacher.id, selectedClass) : null;
               const total = teacherRows.reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
               return `<article class="serviceTeacher" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop">
@@ -3267,12 +3274,16 @@
                 </div>
                 ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
-                  const active = Boolean(assignment);
+                  const active = selectedClass === schoolClass;
                   return `<div class="serviceClassRow">
                     <button class="choiceButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}">${compactClassName(schoolClass)}</button>
-                    <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${schoolClass}" type="number" min="0" step="0.5" value="${active ? assignment.hours : ""}" placeholder="${serviceClassTarget(schoolClass)}h" ${active ? "" : "disabled"} />
+                    <span class="muted">${assignment ? `${assignment.hours}h` : ""}</span>
                   </div>`;
-                }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
+                }).join("")}</div>
+                ${selectedClass ? `<div class="serviceClassRow">
+                  <strong>${compactClassName(selectedClass)}</strong>
+                  <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassAssignment ? selectedClassAssignment.hours : ""}" placeholder="${serviceClassTarget(selectedClass)}h" />
+                </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
                 <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<span class="classPill">${compactClassName(row.classId)} · ${row.hours}h</span>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
               </article>`;
             }).join("")}</div>
@@ -4665,14 +4676,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             const teacherId = button.dataset.serviceClassToggle;
             const schoolClass = button.dataset.serviceClass;
-            const existing = serviceAssignmentFor(teacherId, schoolClass);
-            setServiceAssignment(teacherId, schoolClass, existing ? 0 : serviceClassTarget(schoolClass));
+            serviceClassByTeacher = { ...serviceClassByTeacher, [teacherId]: serviceClassByTeacher[teacherId] === schoolClass ? "" : schoolClass };
             render();
           });
         });
         document.querySelectorAll("[data-service-level]").forEach((button) => {
           button.addEventListener("click", () => {
             serviceLevelByTeacher = { ...serviceLevelByTeacher, [button.dataset.serviceLevel]: button.dataset.serviceLevelValue };
+            serviceClassByTeacher = { ...serviceClassByTeacher, [button.dataset.serviceLevel]: "" };
             render();
           });
         });
