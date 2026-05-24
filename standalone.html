@@ -635,6 +635,7 @@
       let cycleSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
+      let asExclusions = loadAsExclusions();
       let blockExclusions = loadBlockExclusions();
       let constructionPlan = {};
       let constructionMode = "planning";
@@ -1240,6 +1241,24 @@
         scheduleCloudSave();
       }
 
+      function loadAsExclusions() {
+        try {
+          const saved = localStorage.getItem("planningEpsAsExclusions2026");
+          return saved ? JSON.parse(saved) : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveAsExclusions() {
+        localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
+        scheduleCloudSave();
+      }
+
+      function itemExcludedForCell(exclusions, itemId, key) {
+        return Array.isArray(exclusions[itemId]) && exclusions[itemId].includes(key);
+      }
+
       function isRuleExcluded(ruleId, key) {
         return Object.values(eventExclusions).some((items) =>
           Array.isArray(items) && items.some((item) => item.ruleId === ruleId && item.key === key)
@@ -1288,10 +1307,11 @@
 
       function eventsForPeriod(row, weekItem) {
         const rowDate = rowDateForWeek(row, weekItem);
+        const key = yearCellKey(row.id, weekItem.rank);
         return sportEvents.filter((event) => {
           const start = dateOnly(event.start);
           const end = dateOnly(event.end);
-          return rowDate >= start && rowDate <= end && rowMatchesEventHalfDay(row, event);
+          return rowDate >= start && rowDate <= end && rowMatchesEventHalfDay(row, event) && !itemExcludedForCell(eventExclusions, event.id, key);
         });
       }
 
@@ -1327,10 +1347,11 @@
       function asSessionsForCell(row, weekItem) {
         if (!row.isAs) return [];
         const rowDate = rowDateForWeek(row, weekItem);
+        const key = yearCellKey(row.id, weekItem.rank);
         return asSessions.filter((session) => {
           const start = dateOnly(session.start);
           const end = dateOnly(session.end);
-          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day);
+          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && !itemExcludedForCell(asExclusions, session.id, key);
         });
       }
 
@@ -1655,7 +1676,8 @@
           sportEvents: normalizePlanningItems(sportEvents),
           asSessions: normalizePlanningItems(asSessions),
           facilityUnavailability,
-          eventExclusions
+          eventExclusions,
+          asExclusions
         };
       }
 
@@ -1674,6 +1696,7 @@
         asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
         facilityUnavailability = Array.isArray(data.facilityUnavailability) ? data.facilityUnavailability : facilityUnavailability;
         eventExclusions = data.eventExclusions || eventExclusions;
+        asExclusions = data.asExclusions || asExclusions;
         purgeConstructionForUnavailableItems(facilityUnavailability);
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
         cycleTeacherIds = teachers.map((teacher) => teacher.id);
@@ -1692,6 +1715,7 @@
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
+        localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
       }
 
       function scheduleCloudSave() {
@@ -2237,6 +2261,30 @@
         if (scope === "slot") removeBlockFromSingleSlot(key, block);
       }
 
+      function confirmSlotItemDeletion(label) {
+        const firstConfirm = window.confirm(`Supprimer ${label} uniquement sur ce creneau ?`);
+        if (!firstConfirm) return false;
+        return window.prompt("Deuxieme validation : tapez SUPPRIMER pour confirmer.") === "SUPPRIMER";
+      }
+
+      function excludeEventFromSlot(eventId, key) {
+        const event = sportEvents.find((item) => item.id === eventId);
+        if (!event || !confirmSlotItemDeletion(`l'evenement ${event.name || "sportif"}`)) return;
+        const existing = eventExclusions[eventId] || [];
+        if (!existing.includes(key)) eventExclusions[eventId] = [...existing, key];
+        saveEventExclusions();
+        render();
+      }
+
+      function excludeAsFromSlot(sessionId, key) {
+        const session = asSessions.find((item) => item.id === sessionId);
+        if (!session || !confirmSlotItemDeletion(`l'AS ${session.name || ""}`.trim())) return;
+        const existing = asExclusions[sessionId] || [];
+        if (!existing.includes(key)) asExclusions[sessionId] = [...existing, key];
+        saveAsExclusions();
+        render();
+      }
+
       function detectConflicts() {
         const conflicts = [];
         const rows = yearRows();
@@ -2571,8 +2619,10 @@
         }
         if (options.as) {
           asSessions = [];
+          asExclusions = {};
           resetAsForm();
           saveAsSessions();
+          saveAsExclusions();
         }
         clearConstructionPanelOpen = false;
       }
@@ -3422,6 +3472,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && blockClass && blockFacilityId && !selectedClassUnavailable && !selectedFacilityUnavailable && !selectedTeachersUnavailable && !conflictMessage);
         const items = constructionPlan[activeBuildCell] || [];
+        const events = eventsForPeriod(row, weekItem);
+        const asItems = asSessionsForCell(row, weekItem);
+        const presentCount = items.length + events.length + asItems.length;
         const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
         return `<div class="modalBackdrop">
           <section class="modal">
@@ -3433,7 +3486,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
             </div>
-            <div class="modalGrid">
+            ${!row.isAs ? `<div class="modalGrid">
               <div class="buildField">
                 <label>Professeur(s)</label>
                 <div class="choiceGrid">${teachers.map((teacher) => {
@@ -3507,17 +3560,27 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="modalFooter">
               <button class="ghostButton" id="closeBuildModalFooter">Annuler</button>
               <button class="addButton" id="addBuiltBlock" ${canSaveBlock ? "" : "disabled"}>${editingBuildBlock ? "Enregistrer le bloc" : `Ajouter au ${cellCycle ? cellCycle.name : "cycle"}`}</button>
-            </div>
+            </div>` : ""}
             <div class="existingBlocks">
               <h3>Blocs presents sur ce creneau</h3>
-              <div class="buildCellStack">${items.length ? items.map((item, index) => `
+              <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
                 <div class="buildBlock" data-edit-built-block="${index}" style="background:${item.color};border-color:${item.border}">
                   <button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>
                   <strong>${item.schoolClass || "Bloc"}</strong>
                   <span>${item.facilityLabel || ""}</span>
                   <span>${teacherLabelForBlock(item)}</span>
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
-                </div>`).join("") : `<span class="muted">Aucun bloc pour cette case.</span>`}</div>
+                </div>`).join("")}${events.map((event) => `
+                <div class="buildBlock eventBlock">
+                  <button data-delete-cell-event="${event.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce creneau">x</button>
+                  <strong>${event.name} : ${eventClassSummary(event)}</strong>
+                  ${eventTeacherDots(event)}
+                </div>`).join("")}${asItems.map((session) => `
+                <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
+                  <button data-delete-cell-as="${session.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce creneau">x</button>
+                  <strong>${asBlockLabel(session)}</strong>
+                  <span>${asSessionTeacherLabel(session)}</span>
+                </div>`).join("")}` : `<span class="muted">Aucun bloc pour cette case.</span>`}</div>
             </div>
           </section>
         </div>`;
@@ -3886,7 +3949,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <strong>${event.name} : ${eventClassSummary(event)}</strong>
             <div class="eventBlockControls">
               ${eventTeacherDots(event)}
-              ${editable && row.slot.id === eventStartSlotId(event) ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
             </div>
           </div>`).join("")}${asItems.map((session) => `
           <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
@@ -4032,7 +4094,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                       <strong>${event.name} : ${eventClassSummary(event)}</strong>
                       <div class="eventBlockControls">
                         ${eventTeacherDots(event)}
-                        ${editable ? `<button data-delete-event="${event.id}" title="Supprimer">x</button>` : ""}
                       </div>
                     </div>
                   </td>`;
@@ -4043,7 +4104,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
                 const blocked = vacation || holiday;
-              return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked && !row.isAs ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}" ${editable && !blocked && !row.isAs ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
+              return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}" ${editable && !blocked ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
                 ${vacation ? `<span class="muted">V</span>` : ""}
                 ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
                 ${renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds)}
@@ -4984,8 +5045,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-delete-as]").forEach((button) => {
           button.addEventListener("click", () => {
             asSessions = asSessions.filter((session) => session.id !== button.dataset.deleteAs);
+            delete asExclusions[button.dataset.deleteAs];
             if (editingAsId === button.dataset.deleteAs) resetAsForm();
             saveAsSessions();
+            saveAsExclusions();
             render();
           });
         });
@@ -5090,6 +5153,18 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const index = Number(button.dataset.removeIndex);
             removeConstructionBlock(key, index);
             render();
+          });
+        });
+        document.querySelectorAll("[data-delete-cell-event]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            excludeEventFromSlot(button.dataset.deleteCellEvent, button.dataset.deleteCellKey);
+          });
+        });
+        document.querySelectorAll("[data-delete-cell-as]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            excludeAsFromSlot(button.dataset.deleteCellAs, button.dataset.deleteCellKey);
           });
         });
         const deleteWholeCycle = document.getElementById("deleteWholeCycle");

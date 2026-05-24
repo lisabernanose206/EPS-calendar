@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Construction : suppression des evenements sportifs et AS deplacee dans la popup du creneau avec double validation et retrait seulement sur la case choisie.
 - Construction : gel renforce des trois lignes d'en-tete Mois, Cycle et Semaine pendant le defilement.
 - AS : libelle du formulaire d'ajout aligne sur le creneau du mercredi 12h30-15h30.
 - Construction : colonnes Jour/Horaire figees dans le tableau et suppression des evenements sportifs alignee avec les carres de couleur.
