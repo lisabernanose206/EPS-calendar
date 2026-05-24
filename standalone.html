@@ -395,6 +395,7 @@
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .compactCardGrid .eventCard { margin-top: 0; }
+      .activityCardGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
       .unavailableGroup button { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; cursor: pointer; display: flex; font-size: 11px; font-weight: 950; justify-content: space-between; min-height: 30px; padding: 6px 8px; text-align: left; width: 100%; }
       .unavailableGroup button.active { background: #0f172a; border-color: #0f172a; color: #fff; }
@@ -4012,7 +4013,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Activités existantes</h3>
-            ${activities.length ? `<div class="compactCardGrid">${activities.map((activity) => `<article class="eventCard">
+            ${activities.length ? `<div class="compactCardGrid activityCardGrid">${activities.map((activity) => `<article class="eventCard">
               <strong>${activity.label}</strong>
               <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}

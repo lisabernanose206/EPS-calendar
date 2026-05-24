@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Activites : affichage des activites existantes en quatre cartes par ligne.
 - Construction : colonnes des semaines de vacances reduites car aucune saisie n'y est possible.
 - Construction : suppression d'une AS sur un creneau limitee a une confirmation OK/Annuler.
 - Cycle utilisateur : selection du cycle remplacee par un menu deroulant pour eviter trop de boutons.
