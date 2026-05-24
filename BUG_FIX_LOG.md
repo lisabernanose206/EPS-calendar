@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Tableaux Annee/Construction : retrait des noms de profs dans les cases et en-tete Construction fige sur trois lignes.
 - AS : liste des AS existantes affichee deux par ligne.
 - Indisponibilites : groupes de contraintes existantes repliees par defaut avec ouverture au clic.
 - Navigation : ordre des onglets Admin remis selon l'ancien ordre Construction et listes Profs/Installations/Activites/Evenements en deux colonnes.

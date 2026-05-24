@@ -153,6 +153,11 @@
       .constructionTable .rowHead { left: 0; min-width: 74px; position: sticky; width: 74px; z-index: 6; }
       .constructionTable .timeHead { left: 74px; min-width: 82px; position: sticky; width: 82px; z-index: 6; }
       .constructionTable thead .rowHead, .constructionTable thead .timeHead { z-index: 9; }
+      .constructionTable thead th { position: sticky; z-index: 8; }
+      .constructionTable thead tr:nth-child(1) th { top: 0; }
+      .constructionTable thead tr:nth-child(2) th { top: 28px; }
+      .constructionTable thead tr:nth-child(3) th { top: 56px; }
+      .constructionTable thead .rowHead, .constructionTable thead .timeHead { z-index: 10; }
       .consultationYearTable { min-width: 0; table-layout: fixed; }
       .consultationYearTable th, .consultationYearTable td { font-size: 9px; min-width: 0; padding: 3px 2px; }
       .consultationYearTable .rowHead { min-width: 62px; width: 62px; }
@@ -3033,7 +3038,7 @@
           </div>`).join("")}${asItems.map((session) => `
           <div class="yearLesson asBlock" style="${asSessionStyle(session)}">
             <strong>${session.name}</strong>
-            <span>AS · ${asSessionTeacherLabel(session)}</span>
+            <span>AS</span>
           </div>`).join("")}${hasConflict ? `<span class="conflictBadge">Conflit</span>` : ""}</div>`;
       }
 
@@ -3679,7 +3684,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
                 ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
-                <span>${teacherLabelForBlock(item)}</span>
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
@@ -3687,7 +3691,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
                 ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
-                <span>${teacherLabelForBlock(item)}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock">
@@ -3698,7 +3701,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>`).join("")}${asItems.map((session) => `
           <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
             <strong>${session.name}</strong>
-            <span>AS · ${asSessionTeacherLabel(session)}</span>
+            <span>AS</span>
           </div>`).join("")}</div>`;
       }
 
