@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Indisponibilites : date de fin par defaut etendue au 2 juillet pour couvrir toute la derniere semaine travaillee.
 - Vacances scolaires : calendrier base sur la zone B pour l'annee 2026-2027.
 - Selection des classes : le choix d'un niveau complet remplace les demi-groupes du niveau par les classes entieres.
 - Sauvegarde automatique : retrait des boutons d'enregistrement manuel pour cycles, installations, activites et indisponibilites.
