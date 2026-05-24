@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Indisponibilites : contraintes existantes affichees deux par ligne pour reduire la hauteur de la liste.
 - Navigation : les anciennes sous-rubriques de Construction deviennent des onglets Admin a gauche, Construction ne garde que le planning.
 - AS : dates par defaut ajustees de la troisieme semaine de septembre a la derniere semaine de mai incluse.
 - Indisponibilites : contraintes existantes regroupees par profs, classes et installations avec affichage plus compact.

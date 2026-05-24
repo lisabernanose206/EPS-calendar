@@ -367,6 +367,7 @@
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
       .unavailableGroup h4 { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; font-size: 11px; font-weight: 950; margin: 0; padding: 6px 8px; }
+      .unavailableGrid { display: grid; gap: 6px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .unavailableCard { border-left-width: 4px; gap: 3px; margin-top: 0; padding: 7px 8px; }
       .unavailableCard strong { font-size: 12px; line-height: 1.15; }
       .unavailableCard span { font-size: 10px; line-height: 1.2; }
@@ -452,6 +453,7 @@
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .unavailableGrid { grid-template-columns: 1fr; }
       }
       @media (max-width: 720px) {
         .app { padding: 14px; }
@@ -2305,7 +2307,7 @@
         if (!items.length) return "";
         return `<section class="unavailableGroup">
           <h4>${label}</h4>
-          ${items.map(renderUnavailableCard).join("")}
+          <div class="unavailableGrid">${items.map(renderUnavailableCard).join("")}</div>
         </section>`;
       }
 
