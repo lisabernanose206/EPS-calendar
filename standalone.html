@@ -2517,6 +2517,17 @@
         return [...selectedClasses.filter((item) => !classSameBase(item, schoolClass)), schoolClass];
       }
 
+      function classBelongsToLevel(schoolClass, level) {
+        return classParts(schoolClass).level === level;
+      }
+
+      function toggleWholeLevelSelection(selectedClasses, level) {
+        const levelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
+        const allWholeClassesSelected = levelClasses.every((schoolClass) => selectedClasses.includes(schoolClass));
+        const outsideLevel = selectedClasses.filter((schoolClass) => !classBelongsToLevel(schoolClass, level));
+        return allWholeClassesSelected ? outsideLevel : [...outsideLevel, ...levelClasses];
+      }
+
       function classCollectionHasOverlap(classItems, schoolClass) {
         return [...classItems].some((item) => classesOverlap(item, schoolClass));
       }
@@ -4462,11 +4473,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-event-class-level]").forEach((button) => {
           button.addEventListener("click", () => {
             const level = button.dataset.eventClassLevel;
-            const levelClasses = classNumbers.map((number) => schoolClassLabel(level, number));
-            const allSelected = levelClasses.every((schoolClass) => eventClasses.includes(schoolClass));
-            eventClasses = allSelected
-              ? eventClasses.filter((schoolClass) => !levelClasses.includes(schoolClass))
-              : [...new Set([...eventClasses, ...levelClasses])];
+            eventClasses = toggleWholeLevelSelection(eventClasses, level);
             render();
           });
         });
