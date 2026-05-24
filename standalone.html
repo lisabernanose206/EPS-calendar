@@ -221,6 +221,12 @@
       .paletteList { display: flex; flex-wrap: wrap; gap: 6px; }
       .paletteItem { cursor: grab; user-select: none; }
       .builderActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
+      .clearConstructionPanel { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 10px; margin: 0 0 10px; max-width: 640px; padding: 12px; }
+      .clearConstructionPanel h3 { color: #0f172a; font-size: 14px; margin: 0; }
+      .clearConstructionOptions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .clearConstructionOptions label { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; display: flex; font-size: 12px; font-weight: 900; gap: 7px; min-height: 34px; padding: 0 10px; }
+      .clearConstructionOptions input { accent-color: #0f172a; }
+      .clearConstructionFooter { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .buildDropCell { background: #fff; min-width: 120px; }
@@ -335,6 +341,10 @@
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .eventNameEdit { border: 1px solid #fed7aa; border-radius: 7px; color: #9a3412; font-size: 13px; font-weight: 950; min-height: 32px; padding: 0 8px; width: 100%; }
+      .teacherColorPalette { display: flex; flex-wrap: wrap; gap: 7px; }
+      .teacherColorSwatch { border: 2px solid transparent; border-radius: 999px; cursor: pointer; height: 30px; width: 30px; }
+      .teacherColorSwatch.active { border-color: #0f172a; box-shadow: 0 0 0 2px #fff inset; }
+      .replacementEdit { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; width: 100%; }
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
       .eventBlock button { background: rgba(255,255,255,0.18) !important; color: #fff !important; }
@@ -472,6 +482,18 @@
         { id: "p4", name: "Prof D", color: "#ddd6fe", border: "#a78bfa", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
         { id: "p5", name: "Prof E agrege", color: "#fde68a", border: "#f59e0b", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
       ];
+      const teacherPalette = [
+        { color: "#bfdbfe", border: "#3b82f6" },
+        { color: "#bbf7d0", border: "#22c55e" },
+        { color: "#fecaca", border: "#ef4444" },
+        { color: "#ddd6fe", border: "#8b5cf6" },
+        { color: "#fde68a", border: "#f59e0b" },
+        { color: "#fbcfe8", border: "#ec4899" },
+        { color: "#a7f3d0", border: "#10b981" },
+        { color: "#bae6fd", border: "#0ea5e9" },
+        { color: "#fed7aa", border: "#f97316" },
+        { color: "#c7d2fe", border: "#6366f1" }
+      ];
       let teachers = loadTeachers();
       const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
       const slots = [
@@ -515,6 +537,7 @@
       let constructionPlan = {};
       let constructionMode = "planning";
       let constructionZoom = 0.8;
+      let clearConstructionPanelOpen = false;
       let activeHomeCycleId = null;
       let activeCycleLetter = "A";
       let cycleTeacherIds = teachers.map((teacher) => teacher.id);
@@ -525,9 +548,9 @@
       let blockFacilityId = "";
       let blockWeekLetter = "all";
       let facilityDraftName = "";
-      let facilityDraftType = "external";
+      let facilityDraftType = "";
       let teacherDraftName = "";
-      let teacherDraftColor = "#bfdbfe";
+      let teacherDraftColor = teacherPalette[0].color;
       let teacherDraftStatus = "certifie";
       let activeBuildCell = null;
       let editingBuildBlock = null;
@@ -555,6 +578,8 @@
       let unavailableFacilityIds = [];
       let unavailableClassIds = [];
       let unavailableClassLevelFilter = "";
+      let unavailablePeriodMode = "dates";
+      let unavailableCycleIds = [];
       let unavailableStart = "2026-09-01";
       let unavailableEnd = "2027-06-30";
       let unavailableWeekdays = [];
@@ -580,6 +605,10 @@
       let authEmail = ADMIN_EMAIL;
       let authPassword = "";
       let authStatus = adminSession ? "Mode admin actif." : "";
+      sportEvents = normalizePlanningItems(sportEvents);
+      asSessions = normalizePlanningItems(asSessions);
+      localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
+      localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
 
       function emptyStats() {
         return Object.fromEntries(teachers.map((teacher) => [teacher.id, {
@@ -879,7 +908,11 @@
         try {
           const saved = localStorage.getItem("planningEpsTeachers2026");
           const parsed = saved ? JSON.parse(saved) : null;
-          return Array.isArray(parsed) && parsed.length ? parsed : [...defaultTeachers];
+          if (!Array.isArray(parsed) || !parsed.length) return [...defaultTeachers];
+          return parsed.map((teacher, index) => {
+            const paletteItem = teacherPalette.find((item) => item.color === teacher.color) || teacherPalette[index % teacherPalette.length];
+            return { ...teacher, color: paletteItem.color, border: paletteItem.border };
+          });
         } catch {
           return [...defaultTeachers];
         }
@@ -1000,6 +1033,7 @@
       }
 
       function saveSportEvents() {
+        sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
         scheduleCloudSave();
       }
@@ -1014,6 +1048,7 @@
       }
 
       function saveAsSessions() {
+        asSessions = normalizePlanningItems(asSessions);
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
         scheduleCloudSave();
       }
@@ -1022,11 +1057,8 @@
         try {
           const saved = localStorage.getItem("planningEpsFacilities2026");
           const parsed = saved ? JSON.parse(saved) : null;
-          if (!Array.isArray(parsed) || !parsed.length) return [...defaultFacilities];
+          if (!Array.isArray(parsed)) return [...defaultFacilities];
           const withMissingDefaults = [...parsed];
-          defaultFacilities.forEach((facility) => {
-            if (!withMissingDefaults.some((item) => item.id === facility.id)) withMissingDefaults.push(facility);
-          });
           return withMissingDefaults;
         } catch {
           return [...defaultFacilities];
@@ -1172,16 +1204,22 @@
         if (row.isAs) return [];
         const rowDate = rowDateForWeek(row, weekItem);
         return facilityUnavailability.filter((item) => {
-          const start = dateOnly(item.start);
-          const end = dateOnly(item.end);
+          const matchesPeriod = item.periodMode === "cycles" && (item.cycleIds || []).length
+            ? (item.cycleIds || []).some((cycleId) => {
+              const cycle = cycles.find((entry) => entry.id === cycleId);
+              return cycle && rowDate >= dateOnly(cycle.start) && rowDate <= dateOnly(cycle.end);
+            })
+            : rowDate >= dateOnly(item.start) && rowDate <= dateOnly(item.end);
           const cells = item.cells || [];
           const matchesCell = cells.length
             ? cells.some((cell) => cell.day === row.day && cell.slotId === row.slot.id)
             : (item.weekdays || []).includes(row.day) && (item.slotIds || []).includes(row.slot.id);
-          return rowDate >= start
-            && rowDate <= end
-            && matchesCell;
+          return matchesPeriod && matchesCell;
         });
+      }
+
+      function unavailableCoversFacility(item, facilityId) {
+        return (item.facilityIds || []).includes(facilityId);
       }
 
       function unavailableFacilitiesForCell(row, weekItem) {
@@ -1195,7 +1233,7 @@
       function blockUnavailableMessage(row, weekItem, block) {
         if (!row || !weekItem || !block) return "";
         const unavailableItems = unavailableForCell(row, weekItem);
-        const facilityBlocked = unavailableItems.find((item) => (item.facilityIds || []).includes(block.facilityId));
+        const facilityBlocked = unavailableItems.find((item) => unavailableCoversFacility(item, block.facilityId));
         if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce creneau.`;
         const classBlocked = unavailableItems.find((item) => (item.classIds || []).includes(block.schoolClass));
         if (classBlocked) return `${block.schoolClass || "Cette classe"} est indisponible sur ce creneau.`;
@@ -1206,7 +1244,7 @@
         const row = yearRows().find((item) => item.id === rule.rowId);
         if (!row || !rule.block) return false;
         return unavailableForCell(row, weekItem).some((item) => {
-          const facilityBlocked = (item.facilityIds || []).includes(rule.block.facilityId);
+          const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
           const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
           return facilityBlocked || classBlocked;
         });
@@ -1378,10 +1416,19 @@
         render();
       }
 
+      function withCurrentPlanningId(item) {
+        return { ...item, planningId: cloudConfig.planningId };
+      }
+
+      function normalizePlanningItems(items) {
+        return Array.isArray(items) ? items.map(withCurrentPlanningId) : [];
+      }
+
       function collectPlanningData() {
         return {
           version: 1,
           savedAt: new Date().toISOString(),
+          planningId: cloudConfig.planningId,
           teachers,
           facilities,
           yearPlan,
@@ -1389,8 +1436,8 @@
           constructionRules,
           constructionPlan,
           blockExclusions,
-          sportEvents,
-          asSessions,
+          sportEvents: normalizePlanningItems(sportEvents),
+          asSessions: normalizePlanningItems(asSessions),
           facilityUnavailability,
           eventExclusions
         };
@@ -1399,14 +1446,14 @@
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
-        facilities = Array.isArray(data.facilities) && data.facilities.length ? data.facilities : facilities;
+        facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
-        sportEvents = Array.isArray(data.sportEvents) ? data.sportEvents : sportEvents;
-        asSessions = Array.isArray(data.asSessions) ? data.asSessions : asSessions;
+        sportEvents = Array.isArray(data.sportEvents) ? normalizePlanningItems(data.sportEvents) : normalizePlanningItems(sportEvents);
+        asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
         facilityUnavailability = Array.isArray(data.facilityUnavailability) ? data.facilityUnavailability : facilityUnavailability;
         eventExclusions = data.eventExclusions || eventExclusions;
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
@@ -1860,6 +1907,7 @@
       function saveAsSessionFromForm() {
         const session = {
           id: editingAsId || `as-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          planningId: cloudConfig.planningId,
           name: asName || "AS",
           start: asStart,
           end: asEnd,
@@ -1879,11 +1927,28 @@
         unavailableFacilityIds = [];
         unavailableClassIds = [];
         unavailableClassLevelFilter = "";
+        unavailablePeriodMode = "dates";
+        unavailableCycleIds = [];
         unavailableStart = "2026-09-01";
         unavailableEnd = "2027-06-30";
         unavailableWeekdays = [];
         unavailableSlotIds = [];
         unavailableCells = [];
+      }
+
+      function unavailableSelectedCycles() {
+        return unavailableCycleIds
+          .map((id) => cycles.find((cycle) => cycle.id === id))
+          .filter(Boolean);
+      }
+
+      function unavailableDateRange() {
+        if (unavailablePeriodMode !== "cycles") return { start: unavailableStart, end: unavailableEnd };
+        const selectedCycles = unavailableSelectedCycles();
+        if (!selectedCycles.length) return { start: unavailableStart, end: unavailableEnd };
+        const starts = selectedCycles.map((cycle) => cycle.start).sort();
+        const ends = selectedCycles.map((cycle) => cycle.end).sort();
+        return { start: starts[0], end: ends[ends.length - 1] };
       }
 
       function saveFacilityUnavailableFromForm() {
@@ -1892,6 +1957,7 @@
           ? unavailableCells
           : unavailableWeekdays.flatMap((day) => unavailableSlotIds.map((slotId) => ({ day, slotId })));
         const slotLabel = selectedCells.map((cell) => `${cell.day} ${slots.find((slot) => slot.id === cell.slotId)?.label || cell.slotId}`).join(", ");
+        const period = unavailableDateRange();
         const generatedName = unavailableType === "class"
           ? `Classe indisponible : ${unavailableClassIds.join(", ")}`
           : `${facilityLabel} · ${slotLabel}`;
@@ -1901,8 +1967,10 @@
           type: unavailableType,
           facilityIds: unavailableType === "facility" ? [...unavailableFacilityIds] : [],
           classIds: unavailableType === "class" ? [...unavailableClassIds] : [],
-          start: unavailableStart,
-          end: unavailableEnd,
+          periodMode: unavailablePeriodMode,
+          cycleIds: unavailablePeriodMode === "cycles" ? [...unavailableCycleIds] : [],
+          start: period.start,
+          end: period.end,
           weekdays: [...new Set(selectedCells.map((cell) => cell.day))],
           slotIds: [...new Set(selectedCells.map((cell) => cell.slotId))],
           cells: [...selectedCells]
@@ -1934,6 +2002,7 @@
       function saveSportEventFromForm() {
         const event = {
           id: editingEventId || `event-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          planningId: cloudConfig.planningId,
           name: eventName || "Événement sportif",
           start: eventStart,
           end: eventEnd,
@@ -1946,6 +2015,31 @@
         if (!confirmSportEventCleanup(exclusions, isEditing)) return;
         applySportEventChange(event, exclusions, isEditing);
         resetEventForm();
+      }
+
+      function clearPlanningParts(options) {
+        if (options.construction) {
+          constructionRules = [];
+          constructionPlan = {};
+          blockExclusions = {};
+          saveConstructionRules();
+          saveBlockExclusions();
+          saveConstructionPlan();
+        }
+        if (options.events) {
+          sportEvents = [];
+          eventExclusions = {};
+          resetEventForm();
+          saveSportEvents();
+          saveEventExclusions();
+          rebuildConstructionPlan();
+        }
+        if (options.as) {
+          asSessions = [];
+          resetAsForm();
+          saveAsSessions();
+        }
+        clearConstructionPanelOpen = false;
       }
 
       function conflictMap() {
@@ -1976,6 +2070,28 @@
 
       function teacherLabelForBlock(block) {
         return block.teacherNames || teacherNamesForBlock(block).join(" + ") || block.teacherName || "Prof";
+      }
+
+      function teacherBorderForColor(color) {
+        return teacherPalette.find((item) => item.color === color)?.border || shadeColor(color, -80);
+      }
+
+      function syncConstructionRulesForTeacher(teacherId) {
+        constructionRules = constructionRules.map((rule) => {
+          const ids = teacherIdsForBlock(rule.block);
+          if (!ids.includes(teacherId)) return rule;
+          const primaryTeacher = teachers.find((teacher) => teacher.id === ids[0]);
+          return {
+            ...rule,
+            block: {
+              ...rule.block,
+              color: primaryTeacher?.color || rule.block.color,
+              border: primaryTeacher?.border || rule.block.border,
+              teacherName: primaryTeacher?.name || rule.block.teacherName,
+              teacherNames: teacherNamesForBlock({ ...rule.block, teacherIds: ids }).join(" + ")
+            }
+          };
+        });
       }
 
       function blockConflictMessageForItems(items, candidate) {
@@ -2159,7 +2275,7 @@
                     const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
                     const key = row ? yearCellKey(row.id, weekItem.rank) : "";
                     const facilityLessons = row ? (constructionPlan[key] || []).filter((item) => item.facilityId === facility.id) : [];
-                    const unavailableItems = row ? unavailableForCell(row, weekItem).filter((item) => (item.facilityIds || []).includes(facility.id)) : [];
+                    const unavailableItems = row ? unavailableForCell(row, weekItem).filter((item) => unavailableCoversFacility(item, facility.id)) : [];
                     const isBusy = facilityLessons.length > 0;
                     const isUnavailable = unavailableItems.length > 0;
                     return `<td><div class="facilityCell ${isBusy ? "occupied" : isUnavailable ? "unavailable" : "free"}">
@@ -2194,7 +2310,7 @@
         const seen = new Set();
         return cycleWeeksByLetter(cycle, letter).flatMap((weekItem) => unavailableForCell(row, weekItem)).filter((item) => {
           const itemFacilities = item.facilityIds || [];
-          if (facilityId && itemFacilities.length && !itemFacilities.includes(facilityId)) return false;
+          if (facilityId && itemFacilities.length && !unavailableCoversFacility(item, facilityId)) return false;
           const signature = item.id || `${item.type}|${(item.facilityIds || []).join("+")}|${(item.classIds || []).join("+")}`;
           if (seen.has(signature)) return false;
           seen.add(signature);
@@ -2551,11 +2667,28 @@
               <button class="ghostButton" data-print-format="A2">Exporter A2</button>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
+            ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             <div class="constructionZoomWrap" style="zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
         </section>`;
+      }
+
+      function renderClearConstructionPanel() {
+        return `<div class="clearConstructionPanel">
+          <h3>Vider les elements selectionnes</h3>
+          <div class="clearConstructionOptions">
+            <label><input type="checkbox" data-clear-option="all" /> Tout</label>
+            <label><input type="checkbox" data-clear-option="construction" checked /> Construction</label>
+            <label><input type="checkbox" data-clear-option="as" /> AS</label>
+            <label><input type="checkbox" data-clear-option="events" /> Evenements sportifs</label>
+          </div>
+          <div class="clearConstructionFooter">
+            <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
+            <button class="ghostButton" id="confirmClearConstruction">Supprimer la selection</button>
+          </div>
+        </div>`;
       }
 
       function renderConstructionTabs() {
@@ -2577,6 +2710,10 @@
   data jsonb not null,
   updated_at timestamptz not null default now()
 );
+
+-- AS et evenements sportifs sont rattaches au planning dans data :
+-- data->'asSessions' et data->'sportEvents'.
+-- Chaque entree contient planningId = eps_plannings.id.
 
 alter table public.eps_plannings disable row level security;`;
         return `<section class="cloudPage">
@@ -2940,7 +3077,7 @@ alter table public.eps_plannings disable row level security;`;
       }
 
       function renderFacilitiesSettings() {
-        const canAddFacility = facilityDraftName.trim().length > 0;
+        const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType);
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Ajouter une installation</h3>
@@ -2951,9 +3088,10 @@ alter table public.eps_plannings disable row level security;`;
             <div class="eventField">
               <label>Type</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Exterieure</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interieure</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne</button>
               </div>
+              ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre etablissement.</span>` : ""}
             </div>
             <div class="modalFooter">
               <button class="addButton" id="addFacility" ${canAddFacility ? "" : "disabled"}>Ajouter l'installation</button>
@@ -2963,9 +3101,9 @@ alter table public.eps_plannings disable row level security;`;
             <h3>Installations existantes</h3>
             ${facilities.map((facility) => `<article class="eventCard">
               <strong>${facility.label}</strong>
-              <span>${facility.type === "external" ? "Exterieure a l'etablissement" : "Interieure a l'etablissement"}</span>
-              <button class="ghostButton" data-delete-facility="${facility.id}" ${facilities.length <= 1 ? "disabled" : ""}>Supprimer</button>
-            </article>`).join("")}
+              <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
+              <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
+            </article>`).join("") || `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
           </div>
         </section>`;
       }
@@ -2982,7 +3120,7 @@ alter table public.eps_plannings disable row level security;`;
             </div>
             <div class="eventField">
               <label>Couleur</label>
-              <input id="teacherDraftColor" type="color" value="${teacherDraftColor}" />
+              <div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>
             </div>
             <div class="eventField">
               <label>Statut</label>
@@ -2991,7 +3129,7 @@ alter table public.eps_plannings disable row level security;`;
                 <button class="choiceButton ${teacherDraftStatus === "agrege" ? "active" : ""}" data-teacher-status="agrege">Agrégé · 14h</button>
               </div>
             </div>
-            <div class="teamPreview" style="background:${teacherDraftColor};border-color:${shadeColor(teacherDraftColor, -80)}">
+            <div class="teamPreview" style="background:${teacherDraftColor};border-color:${teacherBorderForColor(teacherDraftColor)}">
               <strong>${teacherDraftName.trim() || "Nouveau prof"}</strong>
               <span class="muted">Cours classiques : ${teacherDraftHours}h · AS : 3h</span>
             </div>
@@ -3005,8 +3143,17 @@ alter table public.eps_plannings disable row level security;`;
               <div class="teamPreview" style="background:${teacher.color};border-color:${teacher.border}">
                 <input class="teamNameEdit" data-rename-teacher="${teacher.id}" value="${teacher.name}" aria-label="Prenom du professeur" />
                 <span>${teacher.weeklyReference}h cours classiques · 3h AS</span>
+                ${teacher.replacementName ? `<span>Remplacant : ${teacher.replacementName}</span>` : ""}
               </div>
-              <button class="ghostButton" data-delete-teacher="${teacher.id}" ${teachers.length <= 1 ? "disabled" : ""}>Supprimer</button>
+              <div class="eventField">
+                <label>Couleur</label>
+                <div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>
+              </div>
+              <div class="eventField">
+                <label>Remplacant</label>
+                <input class="replacementEdit" data-teacher-replacement="${teacher.id}" placeholder="Ex. Nom du remplacant" value="${teacher.replacementName || ""}" />
+              </div>
+              <button class="ghostButton" data-delete-teacher="${teacher.id}">Supprimer</button>
             </article>`).join("")}
           </div>
         </section>`;
@@ -3046,34 +3193,52 @@ alter table public.eps_plannings disable row level security;`;
       }
 
       function renderFacilityUnavailabilityView() {
-        const externalFacilities = facilities.filter((facility) => facility.type === "external");
         const hasUnavailableTime = unavailableCells.length;
+        const cyclesAvailable = cycles.length > 0;
+        const selectedCycles = unavailableSelectedCycles();
+        const period = unavailableDateRange();
+        const hasPeriod = unavailablePeriodMode === "cycles" ? cyclesAvailable && unavailableCycleIds.length > 0 : unavailableStart && unavailableEnd;
         const canSaveUnavailable = hasUnavailableTime && (
           unavailableType === "facility" ? unavailableFacilityIds.length : unavailableClassIds.length
-        );
+        ) && hasPeriod;
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>${editingUnavailableId ? "Modifier la contrainte" : "Ajouter une contrainte"}</h3>
             <div class="eventField">
               <label>Type de contrainte</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${unavailableType === "facility" ? "active" : ""}" data-unavailable-type="facility">Installations extérieures</button>
+                <button class="choiceButton ${unavailableType === "facility" ? "active" : ""}" data-unavailable-type="facility">Installations</button>
                 <button class="choiceButton ${unavailableType === "class" ? "active" : ""}" data-unavailable-type="class">Classes</button>
               </div>
+            </div>
+            <div class="eventField">
+              <label>Periode</label>
+              <div class="choiceGrid">
+                <button class="choiceButton ${unavailablePeriodMode === "dates" ? "active" : ""}" data-unavailable-period-mode="dates">Dates</button>
+                <button class="choiceButton ${unavailablePeriodMode === "cycles" ? "active" : ""}" data-unavailable-period-mode="cycles" ${cyclesAvailable ? "" : "disabled"}>Cycles</button>
+              </div>
+              ${!cyclesAvailable ? `<span class="muted">Si vous voulez parametrer vos indispo sur des cycles, definissez les avant.</span>` : ""}
             </div>
             <div class="cycleDates">
               <div class="eventField">
                 <label>Début</label>
-                <input id="unavailableStart" type="date" value="${unavailableStart}" />
+                <input id="unavailableStart" type="date" value="${period.start}" ${unavailablePeriodMode === "cycles" ? "disabled" : ""} />
               </div>
               <div class="eventField">
                 <label>Fin</label>
-                <input id="unavailableEnd" type="date" value="${unavailableEnd}" />
+                <input id="unavailableEnd" type="date" value="${period.end}" ${unavailablePeriodMode === "cycles" ? "disabled" : ""} />
               </div>
             </div>
+            ${unavailablePeriodMode === "cycles" ? `<div class="eventField">
+              <label>Cycles concernes</label>
+              ${cyclesAvailable ? `<div class="choiceGrid">${cycles.map((cycle) => `<button class="choiceButton ${unavailableCycleIds.includes(cycle.id) ? "active" : ""}" data-unavailable-cycle="${cycle.id}">${cycle.name}</button>`).join("")}</div>
+              <span class="muted">${selectedCycles.length ? `Dates appliquees : ${period.start} -> ${period.end}` : "Selectionnez un ou plusieurs cycles."}</span>` : `<span class="muted">Si vous voulez parametrer vos indispo sur des cycles, definissez les avant.</span>`}
+            </div>` : ""}
             ${unavailableType === "facility" ? `<div class="eventField">
-              <label>Contraintes installations extérieures</label>
-              <div class="choiceGrid">${externalFacilities.map((facility) => `<button class="choiceButton ${unavailableFacilityIds.includes(facility.id) ? "active" : ""}" data-unavailable-facility="${facility.id}">${facility.label}</button>`).join("")}</div>
+              <label>Contraintes installations</label>
+              <div class="choiceGrid">
+                ${facilities.map((facility) => `<button class="choiceButton ${unavailableFacilityIds.includes(facility.id) ? "active" : ""}" data-unavailable-facility="${facility.id}">${facility.label}</button>`).join("") || `<span class="muted">Aucune installation disponible.</span>`}
+              </div>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
@@ -3109,7 +3274,8 @@ alter table public.eps_plannings disable row level security;`;
             ${facilityUnavailability.length === 0 ? `<div class="alertEmpty">Aucune contrainte ajoutée.</div>` : facilityUnavailability.map((item) => `
               <article class="eventCard">
                 <strong>${(item.type || ((item.classIds || []).length ? "class" : "facility")) === "class" ? `Classe(s) indisponible(s)` : ((item.facilityIds || []).map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ") || item.name)}</strong>
-                <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : "facility")) === "class" ? "Classes" : "Installations extérieures"}</span>
+                <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : "facility")) === "class" ? "Classes" : "Installations"}</span>
+                ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map((id) => cycles.find((cycle) => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
                 <span>${item.start} → ${item.end} · ${(item.weekdays || []).join(", ")}</span>
                 <span>Créneau(x) : ${(item.cells || []).length ? item.cells.map((cell) => `${cell.day} ${slots.find((slot) => slot.id === cell.slotId)?.label || cell.slotId}`).join(", ") : (item.slotIds || []).map((id) => slots.find((slot) => slot.id === id)?.label || id).join(", ")}</span>
                 <span>Classe(s) concernée(s) : ${(item.classIds || []).length ? item.classIds.join(", ") : "aucune"}</span>
@@ -3443,10 +3609,11 @@ alter table public.eps_plannings disable row level security;`;
         if (facilityDraftNameInput) facilityDraftNameInput.addEventListener("input", () => facilityDraftName = facilityDraftNameInput.value);
         const teacherDraftNameInput = document.getElementById("teacherDraftName");
         if (teacherDraftNameInput) teacherDraftNameInput.addEventListener("input", () => teacherDraftName = teacherDraftNameInput.value);
-        const teacherDraftColorInput = document.getElementById("teacherDraftColor");
-        if (teacherDraftColorInput) teacherDraftColorInput.addEventListener("input", () => {
-          teacherDraftColor = teacherDraftColorInput.value;
-          render();
+        document.querySelectorAll("[data-teacher-draft-color]").forEach((button) => {
+          button.addEventListener("click", () => {
+            teacherDraftColor = button.dataset.teacherDraftColor;
+            render();
+          });
         });
         document.querySelectorAll("[data-teacher-status]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -3465,7 +3632,7 @@ alter table public.eps_plannings disable row level security;`;
               id,
               name,
               color: teacherDraftColor,
-              border: shadeColor(teacherDraftColor, -80),
+              border: teacherBorderForColor(teacherDraftColor),
               monthlyTarget: weeklyReference * 4,
               weeklyReference,
               weekTargets: { A: weeklyReference, B: weeklyReference }
@@ -3474,6 +3641,7 @@ alter table public.eps_plannings disable row level security;`;
             selectedTeacherIds = [...selectedTeacherIds, id];
             cycleTeacherIds = [...cycleTeacherIds, id];
             teacherDraftName = "";
+            teacherDraftColor = teacherPalette[teachers.length % teacherPalette.length].color;
             teacherDraftStatus = "certifie";
             saveTeachers();
             render();
@@ -3481,7 +3649,6 @@ alter table public.eps_plannings disable row level security;`;
         }
         document.querySelectorAll("[data-delete-teacher]").forEach((button) => {
           button.addEventListener("click", () => {
-            if (button.disabled || teachers.length <= 1) return;
             const id = button.dataset.deleteTeacher;
             teachers = teachers.filter((teacher) => teacher.id !== id);
             selectedTeacherIds = selectedTeacherIds.filter((teacherId) => teacherId !== id);
@@ -3490,32 +3657,52 @@ alter table public.eps_plannings disable row level security;`;
             blockTeacherIds = blockTeacherIds.filter((teacherId) => teacherId !== id);
             eventTeacherIds = eventTeacherIds.filter((teacherId) => teacherId !== id);
             asTeacherIds = asTeacherIds.filter((teacherId) => teacherId !== id);
-            constructionRules = constructionRules.map((rule) => ({
-              ...rule,
-              block: (() => {
-                const remainingTeacherIds = teacherIdsForBlock(rule.block).filter((teacherId) => teacherId !== id);
-                return {
-                  ...rule.block,
-                  teacherIds: remainingTeacherIds,
-                  teacherId: remainingTeacherIds[0] || "",
-                  teacherName: teachers.find((teacher) => teacher.id === remainingTeacherIds[0])?.name || ""
-                };
-              })()
-            })).filter((rule) => teacherIdsForBlock(rule.block).length);
+            const removedRuleIds = new Set(constructionRules.filter((rule) => teacherIdsForBlock(rule.block).includes(id)).map((rule) => rule.id));
+            constructionRules = constructionRules.filter((rule) => !removedRuleIds.has(rule.id));
+            Object.keys(blockExclusions).forEach((ruleId) => {
+              if (removedRuleIds.has(ruleId)) delete blockExclusions[ruleId];
+            });
             sportEvents = sportEvents.map((event) => ({
               ...event,
               teacherIds: (event.teacherIds || []).filter((teacherId) => teacherId !== id)
-            })).filter((event) => event.teacherIds.length);
-            asSessions = asSessions.map((session) => ({
-              ...session,
-              teacherIds: (session.teacherIds || []).filter((teacherId) => teacherId !== id)
-            })).filter((session) => session.teacherIds.length);
+            }));
+            eventExclusions = {};
+            sportEvents.forEach((event) => {
+              const exclusions = eventExclusionsFor(event);
+              if (exclusions.length) eventExclusions[event.id] = exclusions;
+            });
+            asSessions = asSessions.filter((session) => !(session.teacherIds || []).includes(id));
             saveTeachers();
             saveSportEvents();
+            saveEventExclusions();
             saveAsSessions();
+            saveBlockExclusions();
             rebuildConstructionPlan();
             render();
           });
+        });
+        document.querySelectorAll("[data-update-teacher-color]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacher = teachers.find((item) => item.id === button.dataset.updateTeacherColor);
+            if (!teacher) return;
+            teacher.color = button.dataset.color;
+            teacher.border = teacherBorderForColor(teacher.color);
+            syncConstructionRulesForTeacher(teacher.id);
+            saveTeachers();
+            rebuildConstructionPlan();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-teacher-replacement]").forEach((input) => {
+          const saveReplacement = () => {
+            const teacher = teachers.find((item) => item.id === input.dataset.teacherReplacement);
+            if (!teacher) return;
+            teacher.replacementName = input.value.trim();
+            saveTeachers();
+            render();
+          };
+          input.addEventListener("change", saveReplacement);
+          input.addEventListener("blur", saveReplacement);
         });
         document.querySelectorAll("[data-rename-teacher]").forEach((input) => {
           const saveRename = () => {
@@ -3553,18 +3740,18 @@ alter table public.eps_plannings disable row level security;`;
         if (addFacility) {
           addFacility.addEventListener("click", () => {
             const label = facilityDraftName.trim();
-            if (!label) return;
+            if (!label || !facilityDraftType) return;
             const facility = { id: facilityIdFromName(label), label, type: facilityDraftType };
             facilities = [...facilities, facility];
             cycleFacilityIds = [...cycleFacilityIds, facility.id];
             facilityDraftName = "";
+            facilityDraftType = "";
             saveFacilities();
             render();
           });
         }
         document.querySelectorAll("[data-delete-facility]").forEach((button) => {
           button.addEventListener("click", () => {
-            if (button.disabled || facilities.length <= 1) return;
             facilities = facilities.filter((facility) => facility.id !== button.dataset.deleteFacility);
             if (!facilities.some((facility) => facility.id === blockFacilityId)) blockFacilityId = "";
             cycleFacilityIds = cycleFacilityIds.filter((id) => facilities.some((facility) => facility.id === id));
@@ -3736,6 +3923,22 @@ alter table public.eps_plannings disable row level security;`;
         if (unavailableNameInput) unavailableNameInput.addEventListener("input", () => unavailableName = unavailableNameInput.value);
         if (unavailableStartInput) unavailableStartInput.addEventListener("change", () => unavailableStart = unavailableStartInput.value);
         if (unavailableEndInput) unavailableEndInput.addEventListener("change", () => unavailableEnd = unavailableEndInput.value);
+        document.querySelectorAll("[data-unavailable-period-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            unavailablePeriodMode = button.dataset.unavailablePeriodMode;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-unavailable-cycle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.unavailableCycle;
+            unavailableCycleIds = unavailableCycleIds.includes(id)
+              ? unavailableCycleIds.filter((item) => item !== id)
+              : [...unavailableCycleIds, id];
+            render();
+          });
+        });
         document.querySelectorAll("[data-unavailable-type]").forEach((button) => {
           button.addEventListener("click", () => {
             unavailableType = button.dataset.unavailableType;
@@ -3747,7 +3950,9 @@ alter table public.eps_plannings disable row level security;`;
         document.querySelectorAll("[data-unavailable-facility]").forEach((button) => {
           button.addEventListener("click", () => {
             const id = button.dataset.unavailableFacility;
-            unavailableFacilityIds = unavailableFacilityIds.includes(id) ? unavailableFacilityIds.filter((item) => item !== id) : [...unavailableFacilityIds, id];
+            unavailableFacilityIds = unavailableFacilityIds.includes(id)
+              ? unavailableFacilityIds.filter((item) => item !== id)
+              : [...unavailableFacilityIds, id];
             render();
           });
         });
@@ -3773,7 +3978,10 @@ alter table public.eps_plannings disable row level security;`;
         if (addFacilityUnavailable) {
           addFacilityUnavailable.addEventListener("click", () => {
             const hasTime = unavailableCells.length;
-            if ((!unavailableFacilityIds.length && !unavailableClassIds.length) || !hasTime) return;
+            if (!hasTime) return;
+            if (unavailablePeriodMode === "cycles" && !unavailableCycleIds.length) return;
+            if (unavailableType === "facility" && !unavailableFacilityIds.length) return;
+            if (unavailableType === "class" && !unavailableClassIds.length) return;
             saveFacilityUnavailableFromForm();
             render();
           });
@@ -3795,6 +4003,8 @@ alter table public.eps_plannings disable row level security;`;
             unavailableFacilityIds = [...(item.facilityIds || [])];
             unavailableClassIds = [...(item.classIds || [])];
             unavailableClassLevelFilter = unavailableClassIds[0] ? classParts(unavailableClassIds[0]).level : "";
+            unavailablePeriodMode = item.periodMode || ((item.cycleIds || []).length ? "cycles" : "dates");
+            unavailableCycleIds = [...(item.cycleIds || [])];
             unavailableStart = item.start;
             unavailableEnd = item.end;
             unavailableWeekdays = [...(item.weekdays || [])];
@@ -3972,16 +4182,51 @@ alter table public.eps_plannings disable row level security;`;
         const clearConstruction = document.getElementById("clearConstruction");
         if (clearConstruction) {
           clearConstruction.addEventListener("click", () => {
-            const firstConfirm = window.confirm("Vider toute la construction de l'emploi du temps ?\n\nCette action supprime tous les blocs construits et les suppressions de créneaux associées.");
+            clearConstructionPanelOpen = !clearConstructionPanelOpen;
+            render();
+          });
+        }
+        const cancelClearConstruction = document.getElementById("cancelClearConstruction");
+        if (cancelClearConstruction) {
+          cancelClearConstruction.addEventListener("click", () => {
+            clearConstructionPanelOpen = false;
+            render();
+          });
+        }
+        const allClearOption = document.querySelector("[data-clear-option='all']");
+        document.querySelectorAll("[data-clear-option]").forEach((input) => {
+          input.addEventListener("change", () => {
+            if (input.dataset.clearOption === "all") {
+              document.querySelectorAll("[data-clear-option]:not([data-clear-option='all'])").forEach((option) => {
+                option.checked = input.checked;
+              });
+              return;
+            }
+            if (allClearOption) {
+              const options = [...document.querySelectorAll("[data-clear-option]:not([data-clear-option='all'])")];
+              allClearOption.checked = options.every((option) => option.checked);
+            }
+          });
+        });
+        const confirmClearConstruction = document.getElementById("confirmClearConstruction");
+        if (confirmClearConstruction) {
+          confirmClearConstruction.addEventListener("click", () => {
+            const options = {
+              construction: Boolean(document.querySelector("[data-clear-option='construction']")?.checked),
+              as: Boolean(document.querySelector("[data-clear-option='as']")?.checked),
+              events: Boolean(document.querySelector("[data-clear-option='events']")?.checked)
+            };
+            const selectedLabels = [
+              options.construction ? "la construction" : "",
+              options.as ? "l'AS" : "",
+              options.events ? "les evenements sportifs" : ""
+            ].filter(Boolean);
+            if (!selectedLabels.length) return;
+            const firstConfirm = window.confirm(`Supprimer ${selectedLabels.join(", ")} ?\n\nCette action est definitive sur ce planning.`);
             if (!firstConfirm) return;
-            const typedConfirm = window.prompt("Deuxième validation : tapez VIDER pour confirmer la suppression complète.");
+            const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
             if (typedConfirm !== "VIDER") return;
-            constructionRules = [];
-            constructionPlan = {};
-            blockExclusions = {};
-            saveConstructionRules();
-            saveBlockExclusions();
-            saveConstructionPlan();
+            clearPlanningParts(options);
             render();
           });
         }
