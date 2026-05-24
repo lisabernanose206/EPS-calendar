@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Cycle utilisateur : selection du cycle remplacee par un menu deroulant pour eviter trop de boutons.
 - Construction : suppression AS/evenement sportif sur un creneau confirmee sans champ de saisie parasite.
 - Construction : popup replacee au premier plan devant les lignes d'en-tete figees.
 - Service : onglet renomme avec affectation classes/profs, volumes hebdomadaires par niveau et alertes de depassement par classe.

@@ -377,7 +377,7 @@
       .eventForm h3, .eventList h3 { margin: 0 0 10px; }
       .eventField { display: grid; gap: 6px; margin-top: 10px; }
       .eventField label { color: #64748b; font-size: 12px; font-weight: 900; }
-      .eventField input { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 38px; padding: 0 9px; width: 100%; }
+      .eventField input, .eventField select { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 38px; padding: 0 9px; width: 100%; }
       .eventField input[type="color"] { min-height: 42px; padding: 3px; }
       .teamCard { align-items: center; display: grid; gap: 10px; grid-template-columns: 1fr auto; }
       .teamPreview { border: 1px solid transparent; border-radius: 8px; display: grid; gap: 3px; padding: 10px; }
@@ -3128,8 +3128,13 @@
             </div>
           </div>
           <div class="cyclePickerRow">
-            <div class="constructionTabs">
-              ${cycleChoices.map((cycleItem) => `<button class="${cycleItem.id === selectedCycle.id ? "active" : ""}" data-home-cycle="${cycleItem.id}">${cycleItem.displayName}</button>`).join("")}
+            <div class="eventForm">
+              <div class="eventField" style="margin-top:0">
+                <label>Cycle</label>
+                <select id="homeCycleSelect">
+                  ${cycleChoices.map((cycleItem) => `<option value="${cycleItem.id}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${cycleItem.displayName}</option>`).join("")}
+                </select>
+              </div>
             </div>
             <div class="eventForm">
               <div class="eventField" style="margin-top:0">
@@ -4595,12 +4600,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        document.querySelectorAll("[data-home-cycle]").forEach((button) => {
-          button.addEventListener("click", () => {
-            activeHomeCycleId = button.dataset.homeCycle;
+        const homeCycleSelect = document.getElementById("homeCycleSelect");
+        if (homeCycleSelect) {
+          homeCycleSelect.addEventListener("change", () => {
+            activeHomeCycleId = homeCycleSelect.value;
             render();
           });
-        });
+        }
         document.querySelectorAll("[data-cycle-letter]").forEach((button) => {
           button.addEventListener("click", () => {
             activeCycleLetter = button.dataset.cycleLetter;
