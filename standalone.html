@@ -623,6 +623,7 @@
       let unavailableType = "facility";
       let unavailableFacilityIds = [];
       let unavailableClassIds = [];
+      let unavailableTeacherIds = [];
       let unavailableClassLevelFilter = "";
       let unavailablePeriodMode = "dates";
       let unavailableCycleIds = [];
@@ -1309,6 +1310,10 @@
         return new Set(unavailableForCell(row, weekItem).flatMap((item) => item.classIds || []));
       }
 
+      function unavailableTeachersForCell(row, weekItem) {
+        return new Set(unavailableForCell(row, weekItem).flatMap((item) => item.teacherIds || []));
+      }
+
       function blockUnavailableMessage(row, weekItem, block) {
         if (!row || !weekItem || !block) return "";
         const unavailableItems = unavailableForCell(row, weekItem);
@@ -1316,6 +1321,8 @@
         if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce creneau.`;
         const classBlocked = unavailableItems.find((item) => (item.classIds || []).includes(block.schoolClass));
         if (classBlocked) return `${block.schoolClass || "Cette classe"} est indisponible sur ce creneau.`;
+        const teacherBlocked = unavailableItems.find((item) => teacherIdsForBlock(block).some((teacherId) => (item.teacherIds || []).includes(teacherId)));
+        if (teacherBlocked) return `${teacherLabelForBlock(block) || "Ce professeur"} est indisponible sur ce creneau.`;
         return "";
       }
 
@@ -1325,7 +1332,8 @@
         return unavailableForCell(row, weekItem).some((item) => {
           const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
           const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
-          return facilityBlocked || classBlocked;
+          const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
+          return facilityBlocked || classBlocked || teacherBlocked;
         });
       }
 
@@ -1346,7 +1354,8 @@
               if (!unavailableMatchesCell(item, row, weekItem)) return false;
               const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
               const classBlocked = (item.classIds || []).includes(rule.block.schoolClass);
-              return facilityBlocked || classBlocked;
+              const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
+              return facilityBlocked || classBlocked || teacherBlocked;
             });
             if (!shouldRemove) return;
             const existing = blockExclusions[rule.id] || [];
@@ -2159,6 +2168,7 @@
         unavailableType = "facility";
         unavailableFacilityIds = [];
         unavailableClassIds = [];
+        unavailableTeacherIds = [];
         unavailableClassLevelFilter = "";
         unavailablePeriodMode = "dates";
         unavailableCycleIds = [];
@@ -2193,13 +2203,16 @@
         const period = unavailableDateRange();
         const generatedName = unavailableType === "class"
           ? `Classe indisponible : ${unavailableClassIds.join(", ")}`
-          : `${facilityLabel} · ${slotLabel}`;
+          : unavailableType === "teacher"
+            ? `Prof indisponible : ${teacherNamesFromIds(unavailableTeacherIds).join(", ")}`
+            : `${facilityLabel} · ${slotLabel}`;
         const item = {
           id: editingUnavailableId || `unavailable-${Date.now()}-${Math.random().toString(16).slice(2)}`,
           name: generatedName,
           type: unavailableType,
           facilityIds: unavailableType === "facility" ? [...unavailableFacilityIds] : [],
           classIds: unavailableType === "class" ? [...unavailableClassIds] : [],
+          teacherIds: unavailableType === "teacher" ? [...unavailableTeacherIds] : [],
           periodMode: unavailablePeriodMode,
           cycleIds: unavailablePeriodMode === "cycles" ? [...unavailableCycleIds] : [],
           start: period.start,
@@ -2400,6 +2413,7 @@
         const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
         occupied.unavailableFacilityIds = row && weekItem ? unavailableFacilitiesForCell(row, weekItem) : new Set();
         occupied.unavailableClasses = row && weekItem ? unavailableClassesForCell(row, weekItem) : new Set();
+        occupied.unavailableTeacherIds = row && weekItem ? unavailableTeachersForCell(row, weekItem) : new Set();
         return occupied;
       }
 
@@ -2450,6 +2464,12 @@
         unavailableClassIds = unavailableClassIds.includes(schoolClass)
           ? unavailableClassIds.filter((item) => item !== schoolClass)
           : [...unavailableClassIds, schoolClass];
+      }
+
+      function toggleUnavailableTeacher(teacherId) {
+        unavailableTeacherIds = unavailableTeacherIds.includes(teacherId)
+          ? unavailableTeacherIds.filter((item) => item !== teacherId)
+          : [...unavailableTeacherIds, teacherId];
       }
 
       function selectedUnavailableClassNumbers() {
@@ -3045,7 +3065,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const occupied = buildModalAvailability();
         const selectedClassUnavailable = occupied.classes.has(blockClass) || occupied.unavailableClasses.has(blockClass);
         const selectedFacilityUnavailable = occupied.facilityIds.has(blockFacilityId) || occupied.unavailableFacilityIds.has(blockFacilityId);
-        const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId));
+        const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
         const unavailableMessage = blockUnavailableMessage(row, weekItem, block);
         const cycleUnavailableMessage = cellCycle ? blockCycleUnavailableMessage(row.id, cellCycle.id, block, blockWeekLetter) : "";
@@ -3069,8 +3089,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildField">
                 <label>Professeur(s)</label>
                 <div class="choiceGrid">${teachers.map((teacher) => {
-                  const unavailable = occupied.teacherIds.has(teacher.id);
-                  const reason = unavailable ? `${teacher.name} est deja pris sur ce creneau.` : `${teacher.name} disponible.`;
+                  const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id);
+                  const reason = occupied.teacherIds.has(teacher.id)
+                    ? `${teacher.name} est deja pris sur ce creneau.`
+                    : occupied.unavailableTeacherIds.has(teacher.id)
+                      ? `${teacher.name} est indisponible sur ce creneau.`
+                      : `${teacher.name} disponible.`;
                   return `<button class="choiceButton ${blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${teacher.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
                 }).join("")}</div>
                 <span class="muted">Jusqu'à 2 profs pour un cours conjoint.</span>
@@ -3532,9 +3556,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const selectedCycles = unavailableSelectedCycles();
         const period = unavailableDateRange();
         const hasPeriod = unavailablePeriodMode === "cycles" ? cyclesAvailable && unavailableCycleIds.length > 0 : unavailableStart && unavailableEnd;
-        const canSaveUnavailable = hasUnavailableTime && (
-          unavailableType === "facility" ? unavailableFacilityIds.length : unavailableClassIds.length
-        ) && hasPeriod;
+        const unavailableSelectionCount = unavailableType === "facility"
+          ? unavailableFacilityIds.length
+          : unavailableType === "class"
+            ? unavailableClassIds.length
+            : unavailableTeacherIds.length;
+        const canSaveUnavailable = hasUnavailableTime && unavailableSelectionCount && hasPeriod;
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>${editingUnavailableId ? "Modifier la contrainte" : "Ajouter une contrainte"}</h3>
@@ -3543,6 +3570,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="choiceGrid">
                 <button class="choiceButton ${unavailableType === "facility" ? "active" : ""}" data-unavailable-type="facility">Installations</button>
                 <button class="choiceButton ${unavailableType === "class" ? "active" : ""}" data-unavailable-type="class">Classes</button>
+                <button class="choiceButton ${unavailableType === "teacher" ? "active" : ""}" data-unavailable-type="teacher">Prof</button>
               </div>
             </div>
             <div class="eventField">
@@ -3581,7 +3609,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   ${days.map((day) => `<td><button class="choiceButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
                 </tr>`).join("")}</tbody>
               </table>
-            </div>` : `<div class="eventField">
+            </div>` : unavailableType === "class" ? `<div class="eventField">
               <label>Contraintes classes</label>
               <div class="choiceGrid">${classLevels.map((level) => `<button class="choiceButton ${unavailableClassLevelFilter === level ? "active" : ""}" data-unavailable-class-level-filter="${level}">${level}</button>`).join("")}</div>
               ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbers.map((number) => {
@@ -3597,6 +3625,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   ${days.map((day) => `<td><button class="choiceButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
                 </tr>`).join("")}</tbody>
               </table>
+            </div>` : `<div class="eventField">
+              <label>Contraintes profs</label>
+              <div class="choiceGrid">
+                ${teachers.map((teacher) => `<button class="choiceButton ${unavailableTeacherIds.includes(teacher.id) ? "active" : ""}" data-unavailable-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("") || `<span class="muted">Aucun prof disponible.</span>`}
+              </div>
+              <span class="muted">${unavailableTeacherIds.length ? `Profs selectionnes : ${teacherNamesFromIds(unavailableTeacherIds).join(", ")}` : "Aucun prof selectionne"}</span>
+              <label>CrÃ©neaux indisponibles</label>
+              <table class="availabilityGrid">
+                <thead><tr><th>CrÃ©neau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
+                <tbody>${slots.map((slot) => `<tr>
+                  <th>${slot.label}</th>
+                  ${days.map((day) => `<td><button class="choiceButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
+                </tr>`).join("")}</tbody>
+              </table>
             </div>`}
             <div class="modalFooter">
               ${editingUnavailableId ? `<button class="ghostButton" id="cancelUnavailableEdit">Annuler</button>` : ""}
@@ -3607,12 +3649,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <h3>Contraintes existantes</h3>
             ${facilityUnavailability.length === 0 ? `<div class="alertEmpty">Aucune contrainte ajoutée.</div>` : facilityUnavailability.map((item) => `
               <article class="eventCard">
-                <strong>${(item.type || ((item.classIds || []).length ? "class" : "facility")) === "class" ? `Classe(s) indisponible(s)` : ((item.facilityIds || []).map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ") || item.name)}</strong>
-                <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : "facility")) === "class" ? "Classes" : "Installations"}</span>
+                <strong>${(item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility")) === "class" ? `Classe(s) indisponible(s)` : (item.type === "teacher" || (item.teacherIds || []).length) ? `Prof(s) indisponible(s)` : ((item.facilityIds || []).map((id) => facilities.find((facility) => facility.id === id)?.label || id).join(", ") || item.name)}</strong>
+                <span>Type : ${(item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility")) === "class" ? "Classes" : (item.type === "teacher" || (item.teacherIds || []).length) ? "Profs" : "Installations"}</span>
                 ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map((id) => cycles.find((cycle) => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
                 <span>${item.start} → ${item.end} · ${(item.weekdays || []).join(", ")}</span>
                 <span>Créneau(x) : ${(item.cells || []).length ? item.cells.map((cell) => `${cell.day} ${slots.find((slot) => slot.id === cell.slotId)?.label || cell.slotId}`).join(", ") : (item.slotIds || []).map((id) => slots.find((slot) => slot.id === id)?.label || id).join(", ")}</span>
                 <span>Classe(s) concernée(s) : ${(item.classIds || []).length ? item.classIds.join(", ") : "aucune"}</span>
+                <span>Prof(s) concernes : ${(item.teacherIds || []).length ? teacherNamesFromIds(item.teacherIds).join(", ") : "aucun"}</span>
                 <button class="ghostButton" data-edit-unavailable="${item.id}">Modifier</button>
                 <button class="ghostButton" data-delete-unavailable="${item.id}">Supprimer</button>
               </article>`).join("")}
@@ -4111,6 +4154,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockTeacherIds = blockTeacherIds.filter((teacherId) => teacherId !== id);
             eventTeacherIds = eventTeacherIds.filter((teacherId) => teacherId !== id);
             asTeacherIds = asTeacherIds.filter((teacherId) => teacherId !== id);
+            unavailableTeacherIds = unavailableTeacherIds.filter((teacherId) => teacherId !== id);
             const removedRuleIds = new Set(constructionRules.filter((rule) => teacherIdsForBlock(rule.block).includes(id)).map((rule) => rule.id));
             constructionRules = constructionRules.filter((rule) => !removedRuleIds.has(rule.id));
             Object.keys(blockExclusions).forEach((ruleId) => {
@@ -4126,7 +4170,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               if (exclusions.length) eventExclusions[event.id] = exclusions;
             });
             asSessions = asSessions.filter((session) => !(session.teacherIds || []).includes(id));
+            facilityUnavailability = facilityUnavailability.map((item) => ({
+              ...item,
+              teacherIds: (item.teacherIds || []).filter((teacherId) => teacherId !== id)
+            })).filter((item) => item.type !== "teacher" || (item.teacherIds || []).length);
             saveTeachers();
+            saveFacilityUnavailability();
             saveSportEvents();
             saveEventExclusions();
             saveAsSessions();
@@ -4448,6 +4497,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-unavailable-teacher]").forEach((button) => {
+          button.addEventListener("click", () => {
+            toggleUnavailableTeacher(button.dataset.unavailableTeacher);
+            render();
+          });
+        });
         document.querySelectorAll("[data-unavailable-cell-day]").forEach((button) => {
           button.addEventListener("click", () => {
             toggleUnavailableGridCell(button.dataset.unavailableCellDay, button.dataset.unavailableCellSlot);
@@ -4474,6 +4529,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (unavailablePeriodMode === "cycles" && !unavailableCycleIds.length) return;
             if (unavailableType === "facility" && !unavailableFacilityIds.length) return;
             if (unavailableType === "class" && !unavailableClassIds.length) return;
+            if (unavailableType === "teacher" && !unavailableTeacherIds.length) return;
             saveFacilityUnavailableFromForm();
             render();
           });
@@ -4491,9 +4547,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (!item) return;
             editingUnavailableId = item.id;
             unavailableName = item.name;
-            unavailableType = item.type || ((item.classIds || []).length ? "class" : "facility");
+            unavailableType = item.type || ((item.classIds || []).length ? "class" : (item.teacherIds || []).length ? "teacher" : "facility");
             unavailableFacilityIds = [...(item.facilityIds || [])];
             unavailableClassIds = [...(item.classIds || [])];
+            unavailableTeacherIds = [...(item.teacherIds || [])];
             unavailableClassLevelFilter = unavailableClassIds[0] ? classParts(unavailableClassIds[0]).level : "";
             unavailablePeriodMode = item.periodMode || ((item.cycleIds || []).length ? "cycles" : "dates");
             unavailableCycleIds = [...(item.cycleIds || [])];

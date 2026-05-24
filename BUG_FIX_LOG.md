@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Indisponibilites profs : ajout du type Prof pour bloquer les formations, indisponibilites personnelles et jours non travailles des enseignants.
 - Log Admin : wording vulgarise pour presenter l'historique des corrections sans mentionner la source technique.
 - Log Admin : affichage automatique des entrees du fichier `BUG_FIX_LOG.md` dans l'application.
 - Vidage selectif de la construction : construction, AS, evenements sportifs, ou plusieurs elements a la fois.
