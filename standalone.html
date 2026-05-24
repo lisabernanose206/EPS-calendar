@@ -151,8 +151,13 @@
       .constructionWeekHead small { color: #475569; font-size: 9px; font-weight: 850; white-space: nowrap; }
       .constructionZoomWrap .yearWrap { max-height: calc(100vh - 220px); overflow: auto; padding-bottom: 0; position: relative; width: 100%; }
       .constructionTable { border-collapse: separate; border-spacing: 0; }
-      .constructionTable .vacationWeekCol { width: 38px; }
-      .constructionTable .vacationWeekCell { min-width: 38px; width: 38px; }
+      .constructionTable .regularWeekCol { width: 120px; }
+      .constructionTable .vacationWeekCol { width: 22px; }
+      .constructionTable .vacationWeekCell { max-width: 22px !important; min-width: 22px !important; overflow: hidden; padding-left: 1px !important; padding-right: 1px !important; width: 22px !important; }
+      .constructionTable .vacationWeekCell.monthCell { font-size: 0; }
+      .constructionTable .vacationWeekCell .constructionWeekHead { gap: 0; }
+      .constructionTable .vacationWeekCell .constructionWeekHead small { display: none; }
+      .constructionTable .vacationWeekCell .constructionWeekHead strong { font-size: 8px; }
       .constructionTable .rowHead { left: 0 !important; min-width: 74px !important; position: sticky; width: 74px !important; z-index: 16; }
       .constructionTable .timeHead { left: 74px !important; min-width: 82px !important; position: sticky; width: 82px !important; z-index: 16; }
       .constructionTable thead th { background: #f1f5f9; height: 34px; position: sticky; z-index: 30; }
@@ -4227,7 +4232,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <colgroup>
             <col />
             <col />
-            ${weeks.map((weekItem) => `<col class="${vacationForWeek(weekItem) ? "vacationWeekCol" : ""}" />`).join("")}
+            ${weeks.map((weekItem) => `<col class="${vacationForWeek(weekItem) ? "vacationWeekCol" : "regularWeekCol"}" />`).join("")}
           </colgroup>
           <thead>
             <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${monthLabels.map((month, index) => `<th class="monthCell ${vacationForWeek(weeks[index]) ? "vacationWeekCell" : ""}">${month}</th>`).join("")}</tr>
