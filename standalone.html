@@ -206,6 +206,7 @@
       .weekSelect.selected { background: #111827; border-radius: 5px; color: #fff; }
       .selectedWeekInfo { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; display: grid; font-size: 13px; font-weight: 900; gap: 3px; margin: 0 0 10px; padding: 10px 12px; }
       .selectedWeekInfo strong { color: #7c2d12; font-size: 15px; }
+      .selectedWeekInfo small { color: #9a3412; font-size: 11px; font-weight: 850; line-height: 1.25; }
       .yearSubTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 10px 0 12px; max-width: max-content; padding: 5px; }
       .yearSubTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
       .yearSubTabs button.active { background: #0f172a; color: #fff; }
@@ -1767,6 +1768,14 @@
         return `du ${shortDate(weekDisplayStart(weekItem))} au ${shortDate(weekDisplayEnd(weekItem))}`;
       }
 
+      function weekWorkingDaysLabel(weekItem) {
+        return days.map((day, index) => {
+          const date = new Date(weekItem.start);
+          date.setDate(weekItem.start.getDate() + index);
+          return date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+        }).join(", ");
+      }
+
       function weeksForCycle(cycle) {
         const start = dateOnly(cycle.start);
         const end = dateOnly(cycle.end);
@@ -2795,7 +2804,7 @@
             </div>
           </div>
           <div class="calendarLegend">V = vacances · F = férié</div>
-          ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span></div>` : ""}
+          ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span><small>${weekWorkingDaysLabel(selectedWeekItem)}</small></div>` : ""}
           <div class="yearWrap consultationYearWrap"><table class="yearTable consultationYearTable">
             <thead>
               <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${groupedHeaderCells(weeks, monthLabelForWeek, () => "monthCell")}</tr>
