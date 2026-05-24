@@ -453,10 +453,16 @@
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
       .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
+      .servicePanel.compactServicePanel { gap: 6px; padding: 8px 10px; }
+      .compactServicePanel h3 { color: #334155; font-size: 13px; margin: 0; }
       .serviceTargets { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .compactServicePanel .serviceTargets { gap: 6px; max-width: 520px; }
       .serviceTarget { display: grid; gap: 5px; }
       .serviceTarget label, .serviceTeacher label { color: #64748b; font-size: 11px; font-weight: 950; }
       .serviceTarget input, .serviceHoursInput { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 12px; font-weight: 900; min-height: 32px; padding: 0 8px; width: 100%; }
+      .compactServicePanel .serviceTarget { gap: 3px; }
+      .compactServicePanel .serviceTarget label { font-size: 10px; }
+      .compactServicePanel .serviceTarget input { font-size: 11px; min-height: 26px; padding: 0 6px; }
       .serviceTeachers { align-items: start; display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .serviceTeacher { align-self: start; border: 1px solid transparent; border-radius: 8px; display: grid; gap: 8px; padding: 10px; }
       .serviceCompare { align-items: start; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
@@ -469,6 +475,7 @@
       .serviceClassButton { min-width: 44px; padding: 0 7px; }
       .serviceAlerts { display: grid; gap: 6px; }
       .serviceAlert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 12px; font-weight: 900; padding: 8px 10px; }
+      .compactServicePanel .serviceAlert, .compactServicePanel .alertEmpty { font-size: 10px; padding: 6px 8px; }
       .cloudPage { display: grid; gap: 12px; margin-top: 16px; max-width: 980px; }
       .cloudPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 14px; }
       .cloudGrid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3277,7 +3284,7 @@
               <p class="muted">Affectez les classes aux profs et indiquez le nombre d'heures hebdomadaires prévues. Une alerte s'affiche si une classe dépasse son volume autorisé.</p>
             </div>
           </div>
-          <div class="servicePanel">
+          <div class="servicePanel compactServicePanel">
             <h3>Volumes EPS hebdomadaires par niveau</h3>
             <div class="serviceTargets">${classLevels.map((level) => `
               <div class="serviceTarget">

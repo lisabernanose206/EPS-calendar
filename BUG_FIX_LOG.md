@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Service : bloc des volumes par niveau rendu plus compact et discret.
 - Emploi du temps : ajout du creneau AS avec affichage des AS dans la semaine consultee.
 - Service : comparaison du service theorique et du service reel affichee cote a cote pour chaque prof.
 - Service : sections renommees Service theorique/Service reel et classes de Construction limitees au service theorique des profs.
