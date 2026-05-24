@@ -157,15 +157,17 @@
       .consultationYearTable th, .consultationYearTable td { font-size: 9px; min-width: 0; padding: 3px 2px; }
       .consultationYearTable .rowHead { min-width: 62px; width: 62px; }
       .consultationYearTable .timeHead { left: 62px; min-width: 68px; width: 68px; }
-      .consultationYearTable .yearLessonStack { gap: 2px; min-width: 0; width: 100%; }
-      .consultationYearTable .yearLesson { border-radius: 4px; box-sizing: border-box; gap: 1px; max-width: 100%; overflow: hidden; padding: 2px; }
-      .consultationYearTable .yearLesson strong { font-size: 7px; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
-      .consultationYearTable .yearLesson span { font-size: 6px; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .consultationYearTable .yearLessonStack { gap: 1px; min-width: 0; width: 100%; }
+      .consultationYearTable .yearLesson { border-radius: 3px; box-sizing: border-box; gap: 0; max-width: 100%; overflow: hidden; padding: 1px; }
+      .consultationYearTable .yearLesson strong,
+      .consultationYearTable .yearLesson span { display: block; line-height: 0.95; max-width: 100%; overflow-wrap: anywhere; white-space: normal; word-break: break-word; }
+      .consultationYearTable .yearLesson strong { font-size: 5px; }
+      .consultationYearTable .yearLesson span { font-size: 4.5px; }
       .consultationYearTable th.selectedWeekColumn { position: sticky; z-index: 12; }
       .consultationYearTable td.selectedWeekColumn { background: #fff7ed; overflow: hidden; position: relative; z-index: 6; }
-      .consultationYearTable .selectedWeekColumn .yearLesson { border-width: 1px; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.16); padding: 2px; position: relative; z-index: 14; }
-      .consultationYearTable .selectedWeekColumn .yearLesson strong { font-size: 7px; font-weight: 950; }
-      .consultationYearTable .selectedWeekColumn .yearLesson span { color: #0f172a; font-size: 6px; font-weight: 950; }
+      .consultationYearTable .selectedWeekColumn .yearLesson { border-width: 1px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14); padding: 1px; position: relative; z-index: 14; }
+      .consultationYearTable .selectedWeekColumn .yearLesson strong { font-size: 5px; font-weight: 950; }
+      .consultationYearTable .selectedWeekColumn .yearLesson span { color: #0f172a; font-size: 4.5px; font-weight: 950; }
       .cycleTwoWeekTable { min-width: 0; table-layout: fixed; }
       .cycleTwoWeekTable th, .cycleTwoWeekTable td { border: 2px solid #111827; font-size: 10px; padding: 3px; vertical-align: top; }
       .cycleTwoWeekTable thead th { background: #334155 !important; color: #fff !important; font-size: 12px; font-weight: 950; line-height: 1.1; padding: 6px 4px; text-align: center; }
