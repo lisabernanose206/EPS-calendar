@@ -648,32 +648,13 @@
       };
       const AUTH_SESSION_KEY = "planningEpsAdminSession2026";
       const ADMIN_EMAIL = "eps@lm.com";
-      const bugFixLogEntries = [
-        {
-          title: "Vidage selectif de la construction",
-          details: "Le bouton permet maintenant de vider la construction, l'AS, les evenements sportifs, ou plusieurs elements a la fois."
-        },
-        {
-          title: "AS et evenements sportifs rattaches au planning",
-          details: "Les AS et evenements sportifs sont sauvegardes dans eps_plannings.data avec le planningId courant."
-        },
-        {
-          title: "Installations sans selection par defaut",
-          details: "Le type d'installation doit etre choisi explicitement, et toutes les installations peuvent etre supprimees."
-        },
-        {
-          title: "Gestion des professeurs",
-          details: "Palette pastel imposee, couleur modifiable, remplacant possible, suppression coherente des cours, AS et evenements sportifs."
-        },
-        {
-          title: "Indisponibilites ameliorees",
-          details: "Les indisponibilites acceptent toutes les installations, les dates libres ou les cycles selectionnes."
-        },
-        {
-          title: "Dates de semaines visibles",
-          details: "Les bandeaux et tableaux affichent les dates des semaines uniquement sur les jours travailles."
-        }
-      ];
+      const fallbackBugFixLog = `# Log des corrections
+
+- Vidage selectif de la construction : construction, AS, evenements sportifs, ou plusieurs elements a la fois.
+- AS et evenements sportifs rattaches au planning courant dans eps_plannings.data avec planningId.
+- Installations : plus de type coche par defaut, libelles Externe/Interne, suppression possible de toutes les installations.
+- Profs : palette pastel imposee, couleur modifiable, remplacant possible.
+- Indisponibilites : choix de n'importe quelle installation, dates libres ou cycles selectionnes.`;
       let cloudConfig = loadCloudConfig();
       let cloudStatus = cloudReady() ? "Cloud configuré. Chargement automatique activé." : "Cloud non configuré.";
       let cloudSaveTimer = null;
@@ -3741,18 +3722,30 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderBugFixLogView() {
+        const source = window.__EPS_BUG_FIX_LOG__ || fallbackBugFixLog;
+        const entries = source
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.startsWith("- "))
+          .map((line) => {
+            const text = line.slice(2).replace(/`/g, "");
+            const separator = text.indexOf(" : ");
+            return separator >= 0
+              ? { title: text.slice(0, separator), details: text.slice(separator + 3) }
+              : { title: text, details: "" };
+          });
         return `<section class="logPage">
           <h2>Log des corrections</h2>
           <article class="alertHelp">
             <strong>Historique simple</strong>
-            <span>Liste des bugs et ajustements corriges dans cette version du planning.</span>
+            <span>Liste issue du fichier BUG_FIX_LOG.md, a mettre a jour a chaque modification.</span>
           </article>
-          ${bugFixLogEntries.map((entry) => `
+          ${entries.map((entry) => `
             <article class="logCard">
               <strong>${entry.title}</strong>
               <span>${entry.details}</span>
             </article>
-          `).join("")}
+          `).join("") || `<div class="alertEmpty">Aucune entree dans BUG_FIX_LOG.md.</div>`}
         </section>`;
       }
 

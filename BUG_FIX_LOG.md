@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Log Admin : affichage automatique des entrees du fichier `BUG_FIX_LOG.md` dans l'application.
 - Vidage selectif de la construction : construction, AS, evenements sportifs, ou plusieurs elements a la fois.
 - AS et evenements sportifs rattaches au planning courant dans `eps_plannings.data` avec `planningId`.
 - Installations : plus de type coche par defaut, libelles Externe/Interne, suppression possible de toutes les installations.

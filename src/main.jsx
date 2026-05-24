@@ -1,4 +1,5 @@
 import standaloneHtml from "../standalone.html?raw";
+import bugFixLog from "../BUG_FIX_LOG.md?raw";
 
 function extractFirst(pattern, source, fallback = "") {
   return source.match(pattern)?.[1] ?? fallback;
@@ -28,5 +29,7 @@ window.__EPS_CLOUD_CONFIG__ = {
   enabled: import.meta.env.VITE_SUPABASE_ENABLED ? import.meta.env.VITE_SUPABASE_ENABLED === "true" : true,
   autoLoad: import.meta.env.VITE_SUPABASE_AUTO_LOAD ? import.meta.env.VITE_SUPABASE_AUTO_LOAD === "true" : true
 };
+
+window.__EPS_BUG_FIX_LOG__ = bugFixLog;
 
 new Function(script)();
