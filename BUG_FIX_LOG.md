@@ -1,5 +1,6 @@
 # Log des corrections
 
+- AS : dates par defaut ajustees de la troisieme semaine de septembre a la derniere semaine de mai incluse.
 - Indisponibilites : contraintes existantes regroupees par profs, classes et installations avec affichage plus compact.
 - Indisponibilites : resume des creneaux par journee, matin ou apres-midi quand une contrainte couvre tout le bloc.
 - AS : dates par defaut alignees sur l'annee scolaire, du 1er septembre au 2 juillet.
