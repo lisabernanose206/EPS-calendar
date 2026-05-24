@@ -444,6 +444,18 @@
       .hoursDetail span { color: #64748b; font-size: 10px; }
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
+      .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
+      .serviceTargets { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .serviceTarget { display: grid; gap: 5px; }
+      .serviceTarget label, .serviceTeacher label { color: #64748b; font-size: 11px; font-weight: 950; }
+      .serviceTarget input, .serviceHoursInput { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 12px; font-weight: 900; min-height: 32px; padding: 0 8px; width: 100%; }
+      .serviceTeachers { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .serviceTeacher { border: 1px solid transparent; border-radius: 8px; display: grid; gap: 8px; padding: 10px; }
+      .serviceClassRows { display: grid; gap: 5px; max-height: 220px; overflow: auto; padding-right: 2px; }
+      .serviceClassRow { align-items: center; display: grid; gap: 6px; grid-template-columns: 1fr 68px; }
+      .serviceClassRow .choiceButton { border-radius: 7px; justify-content: flex-start; min-height: 28px; text-align: left; }
+      .serviceAlerts { display: grid; gap: 6px; }
+      .serviceAlert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 12px; font-weight: 900; padding: 8px 10px; }
       .cloudPage { display: grid; gap: 12px; margin-top: 16px; max-width: 980px; }
       .cloudPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 14px; }
       .cloudGrid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -552,7 +564,7 @@
               <button data-week="build" data-build-mode="cycles">Cycles</button>
               <button data-week="build" data-build-mode="as">AS</button>
               <button data-week="build" data-build-mode="events">Événements sportifs</button>
-              <button data-week="build" data-build-mode="hours">Bilan heures</button>
+              <button data-week="build" data-build-mode="hours">Service</button>
               <button data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="alerts">Alertes</button>
               <button data-week="log">Log</button>
@@ -614,6 +626,7 @@
       const classes = classLevels.flatMap((level) =>
         Array.from({ length: 7 }, (_, index) => `${level} ${index + 1}`)
       );
+      const defaultServiceHours = { "6eme": 4, "5eme": 3, "4eme": 3, "3eme": 3 };
       const schoolYear = {
         label: "2026/2027",
         start: new Date(2026, 8, 1),
@@ -646,6 +659,8 @@
       let activeCycleLetter = "A";
       let cycleTeacherIds = teachers.map((teacher) => teacher.id);
       let cycleFacilityIds = facilities.map((facility) => facility.id);
+      let serviceHoursByLevel = loadServiceHoursByLevel();
+      let serviceAssignments = loadServiceAssignments();
       let blockTeacherIds = [];
       let blockClass = "";
       let blockClassLevel = "";
@@ -1050,6 +1065,34 @@
 
       function saveTeachers() {
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
+        scheduleCloudSave();
+      }
+
+      function loadServiceHoursByLevel() {
+        try {
+          const saved = localStorage.getItem("planningEpsServiceHoursByLevel2026");
+          return { ...defaultServiceHours, ...(saved ? JSON.parse(saved) : {}) };
+        } catch {
+          return { ...defaultServiceHours };
+        }
+      }
+
+      function saveServiceHoursByLevel() {
+        localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
+        scheduleCloudSave();
+      }
+
+      function loadServiceAssignments() {
+        try {
+          const saved = localStorage.getItem("planningEpsServiceAssignments2026");
+          return saved ? JSON.parse(saved) : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveServiceAssignments() {
+        localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         scheduleCloudSave();
       }
 
@@ -1671,6 +1714,8 @@
           yearPlan,
           cycles,
           cyclesByLevel,
+          serviceHoursByLevel,
+          serviceAssignments,
           constructionRules,
           constructionPlan,
           blockExclusions,
@@ -1690,6 +1735,8 @@
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
         cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
+        serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
+        serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
@@ -1709,6 +1756,8 @@
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
+        localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
+        localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
@@ -2748,6 +2797,46 @@
         return teacherSelectionMatches(session.teacherIds || []);
       }
 
+      function serviceRowsForTeacher(teacherId) {
+        return Array.isArray(serviceAssignments[teacherId]) ? serviceAssignments[teacherId] : [];
+      }
+
+      function serviceAssignmentFor(teacherId, schoolClass) {
+        return serviceRowsForTeacher(teacherId).find((item) => item.classId === schoolClass);
+      }
+
+      function serviceClassTarget(schoolClass) {
+        const level = classParts(schoolClass).level;
+        return Number(serviceHoursByLevel[level] ?? defaultServiceHours[level] ?? 0);
+      }
+
+      function serviceClassTotals() {
+        const totals = Object.fromEntries(classes.map((schoolClass) => [schoolClass, 0]));
+        Object.values(serviceAssignments).forEach((rows) => {
+          if (!Array.isArray(rows)) return;
+          rows.forEach((row) => {
+            if (!classes.includes(row.classId)) return;
+            totals[row.classId] += Number(row.hours) || 0;
+          });
+        });
+        return totals;
+      }
+
+      function serviceAlerts() {
+        const totals = serviceClassTotals();
+        return classes
+          .map((schoolClass) => ({ schoolClass, total: totals[schoolClass], target: serviceClassTarget(schoolClass) }))
+          .filter((item) => item.total > item.target);
+      }
+
+      function setServiceAssignment(teacherId, schoolClass, hours) {
+        const currentRows = serviceRowsForTeacher(teacherId).filter((row) => row.classId !== schoolClass);
+        const value = Math.max(0, Number(hours) || 0);
+        if (value > 0) currentRows.push({ classId: schoolClass, hours: value });
+        serviceAssignments = { ...serviceAssignments, [teacherId]: currentRows };
+        saveServiceAssignments();
+      }
+
       function buildModalAvailability() {
         const occupied = { teacherIds: new Set(), facilityIds: new Set(), classes: new Set() };
         (constructionPlan[activeBuildCell] || []).forEach((item) => {
@@ -3125,12 +3214,47 @@
         const yearWeeks = workingSchoolWeeks();
         const cycleStats = completeCycleCourseAverages();
         const yearAsStats = asHoursForWeeks(yearWeeks);
+        const alerts = serviceAlerts();
         return `<section class="hoursBalancePage">
           <div class="hoursBalanceHeader">
             <div>
-              <h2>Bilan des heures affectées à la semaine</h2>
-              <p class="muted">Calcul selon le volume théorique du cycle complet, rapporté en moyenne hebdomadaire annuelle. Les événements sportifs sont ignorés : ils ne sont ni ajoutés, ni soustraits.</p>
+              <h2>Service</h2>
+              <p class="muted">Affectez les classes aux profs et indiquez le nombre d'heures hebdomadaires prévues. Une alerte s'affiche si une classe dépasse son volume autorisé.</p>
             </div>
+          </div>
+          <div class="servicePanel">
+            <h3>Volumes EPS hebdomadaires par niveau</h3>
+            <div class="serviceTargets">${classLevels.map((level) => `
+              <div class="serviceTarget">
+                <label>${level}</label>
+                <input data-service-level-hours="${level}" type="number" min="0" step="0.5" value="${serviceHoursByLevel[level] ?? defaultServiceHours[level]}" />
+              </div>`).join("")}</div>
+            ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${item.schoolClass} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
+          </div>
+          <div class="servicePanel">
+            <h3>Affectation des classes</h3>
+            <div class="serviceTeachers">${teachers.map((teacher) => {
+              const teacherRows = serviceRowsForTeacher(teacher.id);
+              const total = teacherRows.reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
+              return `<article class="serviceTeacher" style="background:${teacher.color};border-color:${teacher.border}">
+                <div class="hoursCardTop">
+                  <strong>${teacher.name}</strong>
+                  <span class="hoursStatus ${hourStatus(total - teacher.weeklyReference).className}">${total}h / ${teacher.weeklyReference}h</span>
+                </div>
+                <div class="serviceClassRows">${classes.map((schoolClass) => {
+                  const assignment = serviceAssignmentFor(teacher.id, schoolClass);
+                  const active = Boolean(assignment);
+                  return `<div class="serviceClassRow">
+                    <button class="choiceButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}">${compactClassName(schoolClass)}</button>
+                    <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${schoolClass}" type="number" min="0" step="0.5" value="${active ? assignment.hours : ""}" placeholder="${serviceClassTarget(schoolClass)}h" ${active ? "" : "disabled"} />
+                  </div>`;
+                }).join("")}</div>
+              </article>`;
+            }).join("")}</div>
+          </div>
+          <div class="servicePanel">
+            <h3>Bilan des heures construites</h3>
+            <p class="muted">Calcul selon le volume théorique du cycle complet, rapporté en moyenne hebdomadaire annuelle. Les événements sportifs sont ignorés : ils ne sont ni ajoutés, ni soustraits.</p>
           </div>
           <div class="hoursBalanceGrid">${teachers.map((teacher) => {
             const courseTarget = teacher.weeklyReference;
@@ -4497,6 +4621,29 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-service-level-hours]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const level = input.dataset.serviceLevelHours;
+            serviceHoursByLevel = { ...serviceHoursByLevel, [level]: Math.max(0, Number(input.value) || 0) };
+            saveServiceHoursByLevel();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-class-toggle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacherId = button.dataset.serviceClassToggle;
+            const schoolClass = button.dataset.serviceClass;
+            const existing = serviceAssignmentFor(teacherId, schoolClass);
+            setServiceAssignment(teacherId, schoolClass, existing ? 0 : serviceClassTarget(schoolClass));
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-class-hours]").forEach((input) => {
+          input.addEventListener("change", () => {
+            setServiceAssignment(input.dataset.serviceClassHours, input.dataset.serviceClass, input.value);
+            render();
+          });
+        });
         document.querySelectorAll("[data-cycle-teacher]").forEach((button) => {
           button.addEventListener("click", () => {
             const id = button.dataset.cycleTeacher;
@@ -4630,6 +4777,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             eventTeacherIds = eventTeacherIds.filter((teacherId) => teacherId !== id);
             asTeacherIds = asTeacherIds.filter((teacherId) => teacherId !== id);
             unavailableTeacherIds = unavailableTeacherIds.filter((teacherId) => teacherId !== id);
+            delete serviceAssignments[id];
             const removedRuleIds = new Set(constructionRules.filter((rule) => teacherIdsForBlock(rule.block).includes(id)).map((rule) => rule.id));
             constructionRules = constructionRules.filter((rule) => !removedRuleIds.has(rule.id));
             Object.keys(blockExclusions).forEach((ruleId) => {
@@ -4655,6 +4803,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             saveEventExclusions();
             saveAsSessions();
             saveBlockExclusions();
+            saveServiceAssignments();
             rebuildConstructionPlan();
             render();
           });
