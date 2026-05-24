@@ -47,13 +47,13 @@
       .legendItem.dimmed { filter: grayscale(1); opacity: 0.42; }
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 999px; display: inline-block; height: 16px; width: 16px; }
-      .workspace { align-items: start; display: grid; gap: 14px; grid-template-columns: 150px minmax(0, 1fr); margin-top: 14px; }
+      .workspace { align-items: start; display: grid; gap: 14px; grid-template-columns: 185px minmax(0, 1fr); margin-top: 14px; }
       .sideNav { position: sticky; top: 12px; }
       .weeks, .tabs { background: #e2e8f0; border-radius: 10px; display: grid; gap: 5px; padding: 5px; }
       .navGroup + .navGroup { margin-top: 10px; }
       .navGroupLabel { color: #64748b; display: block; font-size: 11px; font-weight: 950; letter-spacing: 0; margin: 0 0 5px 4px; text-transform: uppercase; }
       .tabs { margin-top: 10px; }
-      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 14px; font-weight: 900; min-height: 42px; padding: 0 12px; text-align: left; white-space: nowrap; width: 100%; }
+      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 10px; text-align: left; white-space: normal; width: 100%; }
       .tabs button { min-width: 0; }
       .weeks button.active { background: #0f766e; color: white; }
       .navGroup.locked { display: none; }
@@ -507,7 +507,15 @@
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
-              <button data-week="build">Construction</button>
+              <button data-week="build" data-build-mode="planning">Construction</button>
+              <button data-week="build" data-build-mode="team">Profs</button>
+              <button data-week="build" data-build-mode="facilities">Installations</button>
+              <button data-week="build" data-build-mode="activities">Activités</button>
+              <button data-week="build" data-build-mode="unavailable">Indisponibilités</button>
+              <button data-week="build" data-build-mode="cycles">Cycles</button>
+              <button data-week="build" data-build-mode="as">AS</button>
+              <button data-week="build" data-build-mode="events">Événements sportifs</button>
+              <button data-week="build" data-build-mode="hours">Bilan heures</button>
               <button data-week="alerts">Alertes</button>
               <button data-week="log">Log</button>
             </section>
@@ -3026,31 +3034,26 @@
         const block = currentBlock();
         if (constructionMode === "facilities") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderFacilitiesSettings()}
           </section>`;
         }
         if (constructionMode === "activities") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderActivitiesSettings()}
           </section>`;
         }
         if (constructionMode === "team") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderTeamSettings()}
           </section>`;
         }
         if (constructionMode === "unavailable") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderFacilityUnavailabilityView()}
           </section>`;
         }
         if (constructionMode === "cycles") {
           return `<section>
-            ${renderConstructionTabs()}
             <section class="cycleDefinitionPage">
               <div class="cycleDefinitionPanel">
                 ${renderCycleDefinition()}
@@ -3060,25 +3063,21 @@
         }
         if (constructionMode === "events") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderEventsView()}
           </section>`;
         }
         if (constructionMode === "as") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderAsView()}
           </section>`;
         }
         if (constructionMode === "hours") {
           return `<section>
-            ${renderConstructionTabs()}
             ${renderHoursBalance()}
           </section>`;
         }
         return `<section class="builderPage">
           <div>
-            ${renderConstructionTabs()}
             <div class="builderActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}"><i class="dot" style="background:${teacher.border}"></i>${teacher.name}</span>`).join("")}
@@ -3114,20 +3113,6 @@
             <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
             <button class="ghostButton" id="confirmClearConstruction">Supprimer la selection</button>
           </div>
-        </div>`;
-      }
-
-      function renderConstructionTabs() {
-        return `<div class="constructionTabs">
-          <button class="${constructionMode === "team" ? "active" : ""}" data-construction-mode="team">Équipe EPS</button>
-          <button class="${constructionMode === "facilities" ? "active" : ""}" data-construction-mode="facilities">Installations</button>
-          <button class="${constructionMode === "activities" ? "active" : ""}" data-construction-mode="activities">Activités</button>
-          <button class="${constructionMode === "unavailable" ? "active" : ""}" data-construction-mode="unavailable">Indisponibilites</button>
-          <button class="${constructionMode === "cycles" ? "active" : ""}" data-construction-mode="cycles">Définition des cycles</button>
-          <button class="${constructionMode === "as" ? "active" : ""}" data-construction-mode="as">AS</button>
-          <button class="${constructionMode === "events" ? "active" : ""}" data-construction-mode="events">Événements sportifs</button>
-          <button class="${constructionMode === "hours" ? "active" : ""}" data-construction-mode="hours">Bilan heures</button>
-          <button class="${constructionMode === "planning" ? "active" : ""}" data-construction-mode="planning">Construction</button>
         </div>`;
       }
 
@@ -4034,11 +4019,22 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         `;
       }
 
+      function updateNavigationActive() {
+        document.querySelectorAll("[data-week]").forEach((item) => {
+          const buildMode = item.dataset.buildMode || "";
+          const isActive = buildMode
+            ? week === "build" && constructionMode === buildMode
+            : item.dataset.week === week && week !== "build";
+          item.classList.toggle("active", isActive);
+        });
+      }
+
       function render() {
         if (!isAdmin() && (week === "build" || week === "alerts" || week === "log")) week = "current";
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
+        updateNavigationActive();
         const cycle = generateCycle();
         const root = document.getElementById("root");
         const weekInfo = displayedSchoolWeek();
@@ -4114,7 +4110,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           showSelectedWeek.addEventListener("click", () => {
             displayedCurrentWeekRank = selectedYearWeekRank || currentSchoolWeek().rank;
             week = "current";
-            document.querySelectorAll("[data-week]").forEach((item) => item.classList.toggle("active", item.dataset.week === week));
+            updateNavigationActive();
             render();
           });
         }
@@ -4182,12 +4178,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             else if (cycleFacilityIds.length === facilities.length) cycleFacilityIds = [id];
             else if (cycleFacilityIds.includes(id)) cycleFacilityIds = cycleFacilityIds.filter((facilityId) => facilityId !== id);
             else cycleFacilityIds = [...cycleFacilityIds, id];
-            render();
-          });
-        });
-        document.querySelectorAll("[data-construction-mode]").forEach((button) => {
-          button.addEventListener("click", () => {
-            constructionMode = button.dataset.constructionMode;
             render();
           });
         });
@@ -4979,8 +4969,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           }
           week = button.dataset.week;
           if (week === "current") displayedCurrentWeekRank = null;
-          if (week === "build") constructionMode = "planning";
-          document.querySelectorAll("[data-week]").forEach((item) => item.classList.toggle("active", item.dataset.week === week));
+          if (week === "build") constructionMode = button.dataset.buildMode || "planning";
+          updateNavigationActive();
           render();
         });
       });
