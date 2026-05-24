@@ -147,6 +147,8 @@
       .yearTable th, .yearTable td { border: 1px solid #cbd5e1; font-size: 11px; min-width: 34px; padding: 5px 4px; text-align: center; vertical-align: top; }
       .constructionTable th, .constructionTable td { border: 2px solid #111827; }
       .constructionTable .rowHead, .constructionTable .timeHead { border-right: 3px solid #111827; }
+      .constructionWeekHead { display: grid; gap: 2px; justify-items: center; line-height: 1.05; }
+      .constructionWeekHead small { color: #475569; font-size: 9px; font-weight: 850; white-space: nowrap; }
       .constructionZoomWrap .yearWrap { overflow: visible; width: max-content; }
       .constructionTable .rowHead { left: 0; min-width: 74px; position: sticky; width: 74px; z-index: 6; }
       .constructionTable .timeHead { left: 74px; min-width: 82px; position: sticky; width: 82px; z-index: 6; }
@@ -191,8 +193,11 @@
       .yearActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin: 8px 0 12px; }
       .yearActionsRight { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .ghostButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 34px; padding: 0 10px; }
+      .primaryWeekButton { background: #0f172a; border-color: #0f172a; color: #fff; font-size: 13px; min-height: 42px; padding: 0 14px; }
       .weekSelect { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: inherit; font-weight: 950; padding: 2px 4px; width: 100%; }
       .weekSelect.selected { background: #111827; border-radius: 5px; color: #fff; }
+      .selectedWeekInfo { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; display: grid; font-size: 13px; font-weight: 900; gap: 3px; margin: 0 0 10px; padding: 10px 12px; }
+      .selectedWeekInfo strong { color: #7c2d12; font-size: 15px; }
       .yearSubTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 10px 0 12px; max-width: max-content; padding: 5px; }
       .yearSubTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
       .yearSubTabs button.active { background: #0f172a; color: #fff; }
@@ -1569,7 +1574,13 @@
       }
 
       function weekDisplayEnd(weekItem) {
-        return weekItem.end > schoolYear.end ? schoolYear.end : weekItem.end;
+        const friday = new Date(weekItem.start);
+        friday.setDate(weekItem.start.getDate() + 4);
+        return friday > schoolYear.end ? schoolYear.end : friday;
+      }
+
+      function weekDateLabel(weekItem) {
+        return `du ${shortDate(weekDisplayStart(weekItem))} au ${shortDate(weekDisplayEnd(weekItem))}`;
       }
 
       function weeksForCycle(cycle) {
@@ -2399,7 +2410,7 @@
         if (!weekItem) return "";
         const rows = yearRows().filter((row) => !row.isAs);
         return `<section class="panel" style="max-width:1180px">
-          <h2>Semaine ${weekItem.rank}${weekItem.letter}</h2>
+          <h2>Semaine ${weekItem.rank}${weekItem.letter} · ${weekDateLabel(weekItem)}</h2>
           <div class="calendarWrap"><div class="calendar">${days.map((day) => `
             <section class="dayColumn">
               <h2>${day}</h2>
@@ -2527,15 +2538,17 @@
           rows: rows.filter((row) => row.day === day)
         }));
         const conflicts = conflictMap();
+        const selectedWeekItem = weeks.find((item) => item.rank === selectedYearWeekRank);
         return `<section class="panel" style="max-width:1180px">
           <h2>Emploi du temps global ${schoolYear.label}</h2>
           <p class="muted yearNote">Vue consultation du planning construit sur l'annee scolaire.</p>
           <div class="yearActions">
             <span class="muted">Septembre 2026 a juillet 2027</span>
             <div class="yearActionsRight">
-              ${selectedYearWeekRank ? `<button class="ghostButton" id="showSelectedWeek">Afficher dans Emploi du temps : semaine ${weeks.find((item) => item.rank === selectedYearWeekRank)?.rank}${weeks.find((item) => item.rank === selectedYearWeekRank)?.letter}</button>` : ""}
+              ${selectedWeekItem ? `<button class="ghostButton primaryWeekButton" id="showSelectedWeek">Afficher la semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</button>` : ""}
             </div>
           </div>
+          ${selectedWeekItem ? `<div class="selectedWeekInfo"><strong>Semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</strong><span>${weekDateLabel(selectedWeekItem)}</span></div>` : ""}
           <div class="yearWrap consultationYearWrap"><table class="yearTable consultationYearTable">
             <thead>
               <tr><th class="rowHead">Jour</th><th class="timeHead">Horaire</th>${groupedHeaderCells(weeks, monthLabelForWeek, () => "monthCell")}</tr>
@@ -3300,7 +3313,7 @@ alter table public.eps_plannings disable row level security;`;
               const cycle = cycleForWeek(weekItem);
               return `<th class="${vacation ? "vacationHeader" : "cycleHeader"}">${vacation ? "Vacances" : cycle ? cycle.name.replace("Cycle ", "C") : "-"}</th>`;
             }).join("")}</tr>
-            <tr><th class="rowHead"></th><th class="timeHead"></th>${weeks.map((weekItem) => `<th>${weekItem.rank}${weekItem.letter}</th>`).join("")}</tr>
+            <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map((weekItem) => `<th><span class="constructionWeekHead"><strong>${weekItem.rank}${weekItem.letter}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
           </thead>
           <tbody>
             ${rowsByDay.map((group) => group.rows.map((row, rowIndex) => {
@@ -3428,6 +3441,7 @@ alter table public.eps_plannings disable row level security;`;
             <div class="dateMain">
               <span>Annee scolaire ${schoolYear.label}</span>
               <strong>Semaine ${weekInfo.rank}${weekInfo.letter}</strong>
+              <span>${weekDateLabel(weekInfo)}</span>
             </div>
             ${canNavigateWeeks ? `<button class="weekArrow" id="nextWeek" title="Semaine suivante" ${weekInfo.rank >= schoolWeeks.length ? "disabled" : ""}>›</button>` : ""}
           </div>
