@@ -1,5 +1,28 @@
 # Log des corrections
 
+- Interface : en-tete visible reduit au logo chat noir discret.
+- Interface : titre de l'onglet navigateur renomme EPS Loustic.
+- Interface : surtitre retire et titre renomme EPS Loustic.
+- Interface : logo chat noir ajoute comme icone d'onglet du navigateur.
+- Interface : logo ballon remplace par un chat noir.
+- Interface : titre principal remplace par Loustic avec un ballon.
+- Construction : ajout de messages d'alerte quand des parametres importants manquent.
+- Annee scolaire : texte d'en-tete retire pour garder seulement la legende et la semaine selectionnee.
+- Annee scolaire : legende couleur des profs deplacee sous la periode annuelle.
+- Emploi du temps : mercredi apres-midi hachure sans texte.
+- Resume cycle : onglet renomme et filtres places dans l'en-tete pour liberer de l'espace.
+- Cycle utilisateur : indisponibilites d'installation affichees par hachures sans texte.
+- Navigation Admin : etat selectionne de Construction rendu clairement visible.
+- Navigation Admin : onglet Construction place en premier et mis en avant en noir.
+- Cycle utilisateur : tableau restaure en une ligne par creneau et installation, avec indisponibilites limitees aux contraintes d'installation.
+- Activites : liste existante affichee en cinq cartes par ligne.
+- Navigation : menu lateral compacte pour tenir sans allonger la page.
+- Installations, AS et evenements sportifs : listes existantes affichees en cinq cartes par ligne.
+- Log Admin : categories affichees en grille compacte de cinq par ligne.
+- Navigation : section Une question deplacee en bas de page avec un affichage plus discret.
+- Service : badge total theorique deplace dans la colonne Service theorique.
+- Emploi du temps : mercredi apres-midi grise car non travaille.
+- Profs : couleurs deja utilisees retirees des palettes d'ajout et de modification.
 - Interface : largeur utile et marges globales optimisees pour utiliser toute la page.
 - Log Admin : corrections regroupees par categorie avec groupes masques par defaut.
 - Service : bloc des volumes par niveau rendu plus compact et discret.

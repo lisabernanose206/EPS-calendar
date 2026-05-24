@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Planning EPS</title>
+    <title>EPS Loustic</title>
+    <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Cpath fill="%230f172a" d="M12 28 17 8l13 13h4L47 8l5 20c4 4 6 9 6 15 0 12-10 19-26 19S6 55 6 43c0-6 2-11 6-15Z"/%3E%3Ccircle cx="24" cy="39" r="4" fill="%23f8fafc"/%3E%3Ccircle cx="40" cy="39" r="4" fill="%23f8fafc"/%3E%3Cpath fill="%23f8fafc" d="M29 49h6l-3 4z"/%3E%3C/svg%3E' />
     <style>
       :root {
         background: #f8fafc;
@@ -17,6 +18,12 @@
       .top, .metrics, .legend, .calendar, .panel, .dateInfo, .builderPage, .workspace { margin-left: auto; margin-right: auto; max-width: none; width: 100%; }
       .top { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
       .top p { color: #64748b; font-size: 12px; font-weight: 800; margin: 0 0 4px; text-transform: uppercase; }
+      .brandTitle { align-items: center; display: flex; gap: 10px; }
+      .brandCat { background: #0f172a; border-radius: 45% 45% 42% 42%; display: inline-block; height: 25px; opacity: 0.86; position: relative; width: 27px; }
+      .brandCat::before { border-bottom: 9px solid #0f172a; border-left: 5px solid transparent; border-right: 4px solid transparent; content: ""; left: 3px; position: absolute; top: -5px; transform: rotate(-18deg); }
+      .brandCat::after { border-bottom: 9px solid #0f172a; border-left: 4px solid transparent; border-right: 5px solid transparent; content: ""; position: absolute; right: 3px; top: -5px; transform: rotate(18deg); }
+      .brandCatEyes { display: flex; gap: 6px; left: 6px; position: absolute; top: 10px; }
+      .brandCatEyes i { background: #f8fafc; border-radius: 999px; display: block; height: 4px; width: 4px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
       .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
@@ -47,15 +54,21 @@
       .legendItem.dimmed { filter: grayscale(1); opacity: 0.42; }
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 999px; display: inline-block; height: 16px; width: 16px; }
-      .workspace { align-items: start; display: grid; gap: 14px; grid-template-columns: 185px minmax(0, 1fr); margin-top: 14px; }
-      .sideNav { position: sticky; top: 12px; }
-      .weeks, .tabs { background: #e2e8f0; border-radius: 10px; display: grid; gap: 5px; padding: 5px; }
-      .navGroup + .navGroup { margin-top: 10px; }
-      .navGroupLabel { color: #64748b; display: block; font-size: 11px; font-weight: 950; letter-spacing: 0; margin: 0 0 5px 4px; text-transform: uppercase; }
+      .workspace { align-items: start; display: grid; gap: 12px; grid-template-columns: 172px minmax(0, 1fr); margin-top: 12px; }
+      .sideNav { display: flex; flex-direction: column; position: sticky; top: 10px; }
+      .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: grid; gap: 3px; padding: 4px; }
+      .navGroup + .navGroup { margin-top: 7px; }
+      .navGroupLabel { color: #64748b; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0 0 3px 4px; text-transform: uppercase; }
+      .questionNavGroup { margin-top: 10px; opacity: 0.72; padding-top: 0; }
+      .questionNavGroup .navGroupLabel { font-size: 10px; font-weight: 850; text-transform: none; }
+      .questionNavGroup .weeks { background: transparent; border: 1px solid #e2e8f0; }
+      .questionNavGroup .weeks button { color: #64748b; font-size: 11px; min-height: 26px; }
       .tabs { margin-top: 10px; }
-      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 10px; text-align: left; white-space: normal; width: 100%; }
+      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; line-height: 1.1; min-height: 28px; padding: 0 8px; text-align: left; white-space: normal; width: 100%; }
       .tabs button { min-width: 0; }
+      .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
       .weeks button.active { background: #0f766e; color: white; }
+      .weeks button.primaryAdminTab.active { background: #000; color: #fff; box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000; }
       .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
       .mainContent { min-width: 0; }
@@ -72,6 +85,8 @@
       .homeTimetable .lessonMeta, .homeTimetable .lessonMeta .muted { font-size: 9px; line-height: 1.08; }
       .homeTimetable .badge { font-size: 8px; padding: 2px 4px; }
       .homeTimetable .emptyLesson { font-size: 10px; min-height: 48px; padding: 5px; }
+      .homeTimetable .nonWorkingCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #e2e8f0 6px, #e2e8f0 12px); color: #64748b; }
+      .homeTimetable .nonWorkingCell .emptyLesson { background: transparent; border-color: #cbd5e1; color: #64748b; }
       .teacherCalendar { grid-template-columns: repeat(5, 220px); min-width: 1140px; }
       .allTeachersGrid { display: grid; gap: 12px; margin-top: 12px; }
       .teacherMini { background: white; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
@@ -187,6 +202,7 @@
       .cycleTwoWeekTable tbody .timeHead { background: #f8fafc; font-size: 12px; line-height: 1.05; }
       .cycleTwoWeekTable .buildCellStack { gap: 2px; min-width: 0; }
       .cycleTwoWeekTable .buildBlock { border-radius: 4px; gap: 1px; min-height: 34px; padding: 3px; }
+      .cycleTwoWeekTable .cycleUnavailableCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #cbd5e1 6px, #cbd5e1 12px); }
       .cycleTwoWeekTable .buildBlock strong { font-size: 9px; line-height: 1; }
       .cycleTwoWeekTable .buildBlock span { font-size: 8px; line-height: 1; }
       .yearTable th { background: #f1f5f9; color: #334155; font-weight: 900; }
@@ -211,6 +227,7 @@
       .weekOff { background: #f8fafc; color: #94a3b8; font-weight: 900; }
       .yearActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin: 8px 0 12px; }
       .yearActionsRight { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .yearHeaderCompact { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; margin: 0 0 8px; }
       .calendarLegend { color: #64748b; font-size: 10px; font-weight: 850; margin: -4px 0 8px; text-align: right; }
       .ghostButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 34px; padding: 0 10px; }
       .primaryWeekButton { background: #0f172a; border-color: #0f172a; color: #fff; font-size: 13px; min-height: 42px; padding: 0 14px; }
@@ -255,6 +272,11 @@
       .paletteList { display: flex; flex-wrap: wrap; gap: 6px; }
       .paletteItem { cursor: grab; user-select: none; }
       .builderActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
+      .constructionWarningPanel { display: grid; gap: 6px; margin: 0 0 10px; }
+      .constructionWarning { background: #fff7ed; border: 1px solid #fdba74; border-left: 5px solid #f97316; border-radius: 8px; color: #9a3412; display: grid; font-size: 12px; font-weight: 900; gap: 2px; padding: 8px 10px; }
+      .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
+      .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
+      .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
       .clearConstructionPanel { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 10px; margin: 0 0 10px; max-width: 640px; padding: 12px; }
       .clearConstructionPanel h3 { color: #0f172a; font-size: 14px; margin: 0; }
       .clearConstructionOptions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -263,6 +285,7 @@
       .clearConstructionFooter { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
+      .yearTeacherLegend { margin-top: 6px; }
       .buildDropCell { background: #fff; min-width: 120px; }
       .conflictCell { outline: 3px solid #dc2626 !important; outline-offset: -3px; }
       .conflictBadge { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; display: inline-flex; font-size: 10px; font-weight: 950; padding: 2px 6px; }
@@ -367,12 +390,13 @@
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
       .logPage { display: grid; gap: 10px; margin-top: 16px; max-width: none; width: 100%; }
+      .logGroupGrid { align-items: start; display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .logGroup { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; overflow: hidden; }
-      .logGroup summary { align-items: center; color: #1e3a8a; cursor: pointer; display: flex; font-weight: 950; gap: 8px; justify-content: space-between; list-style: none; padding: 10px 12px; }
+      .logGroup summary { align-items: center; color: #1e3a8a; cursor: pointer; display: flex; font-size: 12px; font-weight: 950; gap: 8px; justify-content: space-between; line-height: 1.1; list-style: none; min-height: 42px; padding: 8px 9px; }
       .logGroup summary::-webkit-details-marker { display: none; }
       .logGroup summary span { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 999px; color: #1d4ed8; font-size: 11px; padding: 2px 7px; }
-      .logEntries { border-top: 1px solid #dbeafe; display: grid; gap: 6px; padding: 8px 12px 10px; }
-      .logEntry { color: #475569; font-size: 12px; font-weight: 850; margin: 0; }
+      .logEntries { border-top: 1px solid #dbeafe; display: grid; gap: 5px; padding: 7px 9px 9px; }
+      .logEntry { color: #475569; font-size: 11px; font-weight: 850; margin: 0; }
       .logCard { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; display: grid; gap: 5px; padding: 12px; }
       .logCard strong { color: #1e3a8a; }
       .logCard span { color: #475569; font-size: 12px; font-weight: 850; }
@@ -401,12 +425,17 @@
       .cyclePickerRow { align-items: end; display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
       .cyclePickerRow .constructionTabs, .cyclePickerRow .eventForm { margin: 0; }
       .cyclePickerRow .eventForm { padding: 10px 12px; }
+      .cycleSummaryHeader { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(190px, 1fr) minmax(220px, 300px) auto auto; margin-bottom: 10px; }
+      .cycleSummaryHeader h2 { margin: 0; }
+      .cycleSummaryControl { display: grid; gap: 4px; }
+      .cycleSummaryControl label { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
+      .cycleSummaryControl select { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-size: 12px; font-weight: 850; min-height: 34px; padding: 0 8px; width: 100%; }
       .eventCard { border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; display: grid; gap: 5px; margin-top: 8px; padding: 10px; }
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .compactCardGrid .eventCard { margin-top: 0; }
-      .activityCardGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .fiveCardGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .unavailableGroup { display: grid; gap: 6px; margin-top: 10px; }
       .unavailableGroup button { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #334155; cursor: pointer; display: flex; font-size: 11px; font-weight: 950; justify-content: space-between; min-height: 30px; padding: 6px 8px; text-align: left; width: 100%; }
       .unavailableGroup button.active { background: #0f172a; border-color: #0f172a; color: #fff; }
@@ -525,8 +554,11 @@
       }
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
+        .cycleSummaryHeader { grid-template-columns: 1fr 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .compactCardGrid { grid-template-columns: 1fr; }
+        .fiveCardGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .logGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .unavailableGrid { grid-template-columns: 1fr; }
       }
       @media (max-width: 720px) {
@@ -537,8 +569,12 @@
         .calendar { grid-template-columns: repeat(5, 210px); min-width: 1080px; }
         .metrics { grid-template-columns: repeat(2, 1fr); }
         .workspace { grid-template-columns: 1fr; }
-        .sideNav { position: static; }
+        .sideNav { display: block; position: static; }
+        .questionNavGroup { margin-top: 10px; padding-top: 0; }
         .weeks, .tabs { display: flex; overflow-x: auto; }
+        .cycleSummaryHeader { grid-template-columns: 1fr; }
+        .fiveCardGrid { grid-template-columns: 1fr; }
+        .logGroupGrid { grid-template-columns: 1fr; }
         .weeks button, .tabs button { text-align: center; width: auto; }
         .miniWeek { grid-template-columns: 1fr; }
         .miniDay + .miniDay { border-left: 0; }
@@ -552,8 +588,7 @@
     <main class="app">
       <header class="top">
         <div>
-          <p>EPS · equipe de 5</p>
-          <h1>Emploi du temps EPS</h1>
+          <h1 class="brandTitle" aria-label="EPS Loustic"><span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span></h1>
         </div>
         <div class="authBox" id="authBox"></div>
       </header>
@@ -569,20 +604,14 @@
             <section class="weeks">
               <button class="active" data-week="current">Emploi du temps</button>
               <button data-week="year">Année scolaire</button>
-              <button data-week="cycle">Cycle</button>
-            </section>
-          </section>
-
-          <section class="navGroup">
-            <span class="navGroupLabel">Une question ?</span>
-            <section class="weeks">
-              <button data-week="request">Faire une requete</button>
+              <button data-week="cycle">Résumé cycle</button>
             </section>
           </section>
 
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
+              <button class="primaryAdminTab" data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="build" data-build-mode="team">Profs</button>
               <button data-week="build" data-build-mode="facilities">Installations</button>
               <button data-week="build" data-build-mode="activities">Activités</button>
@@ -591,9 +620,15 @@
               <button data-week="build" data-build-mode="as">AS</button>
               <button data-week="build" data-build-mode="events">Événements sportifs</button>
               <button data-week="build" data-build-mode="hours">Service</button>
-              <button data-week="build" data-build-mode="planning">Construction</button>
               <button data-week="alerts">Alertes</button>
               <button data-week="log">Log</button>
+            </section>
+          </section>
+
+          <section class="navGroup questionNavGroup">
+            <span class="navGroupLabel">Une question ?</span>
+            <section class="weeks">
+              <button data-week="request">Faire une requete</button>
             </section>
           </section>
 
@@ -2749,6 +2784,26 @@
         return teacherPalette.find((item) => item.color === color)?.border || shadeColor(color, -80);
       }
 
+      function renderTeacherLegend(className = "") {
+        const allSelected = allTeachersSelected();
+        return `<div class="teacherColorLegend ${className}">
+          <button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all"><span class="dot" style="background:#0f172a"></span>Tous</button>
+          ${teachers.map((teacher) => {
+            const selected = selectedTeacherIds.includes(teacher.id);
+            return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}"><span class="dot" style="background:${teacher.border}"></span>${teacher.name}</button>`;
+          }).join("")}
+        </div>`;
+      }
+
+      function availableTeacherPalette(currentTeacherId = "") {
+        const usedColors = new Set(teachers.filter((teacher) => teacher.id !== currentTeacherId).map((teacher) => teacher.color));
+        return teacherPalette.filter((item) => !usedColors.has(item.color));
+      }
+
+      function firstAvailableTeacherColor(currentTeacherId = "") {
+        return availableTeacherPalette(currentTeacherId)[0]?.color || "";
+      }
+
       function syncConstructionRulesForTeacher(teacherId) {
         constructionRules = constructionRules.map((rule) => {
           const ids = teacherIdsForBlock(rule.block);
@@ -3043,7 +3098,8 @@
             <th class="timeColumn">${slot.label}</th>
             ${days.map((day) => {
               const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
-              if (!row) return `<td><div class="homeTimetableSlot"><div class="emptyLesson">Pas de cours</div></div></td>`;
+              const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
+              if (!row) return `<td class="${nonWorkingCell ? "nonWorkingCell" : ""}"><div class="homeTimetableSlot">${nonWorkingCell ? "" : `<div class="emptyLesson">Pas de cours</div>`}</div></td>`;
               const key = yearCellKey(row.id, weekItem.rank);
               const holiday = holidayFor(row, weekItem);
               const vacation = vacationForCell(row, weekItem);
@@ -3117,8 +3173,8 @@
       function unavailableForCycleLetter(row, cycle, letter, facilityId = "") {
         const seen = new Set();
         return cycleWeeksByLetter(cycle, letter).flatMap((weekItem) => unavailableForCell(row, weekItem)).filter((item) => {
-          const itemFacilities = item.facilityIds || [];
-          if (facilityId && itemFacilities.length && !unavailableCoversFacility(item, facilityId)) return false;
+          if (facilityId && !unavailableCoversFacility(item, facilityId)) return false;
+          if (!facilityId && !(item.facilityIds || []).length) return false;
           const signature = item.id || `${item.type}|${(item.facilityIds || []).join("+")}|${(item.classIds || []).join("+")}`;
           if (seen.has(signature)) return false;
           seen.add(signature);
@@ -3129,19 +3185,11 @@
       function renderCycleLetterCell(row, cycle, letter, facilityId = "") {
         const items = blocksForCycleLetter(row, cycle, letter, facilityId);
         const unavailableItems = unavailableForCycleLetter(row, cycle, letter, facilityId);
-        return `<td><div class="buildCellStack">
+        return `<td class="${unavailableItems.length ? "cycleUnavailableCell" : ""}"><div class="buildCellStack">
           ${items.map((item) => `<div class="buildBlock" style="background:${item.color};border-color:${item.border}">
             <strong>${item.schoolClass || "Classe"}</strong>
-            <span>${teacherLabelForBlock(item)}</span>
+            <span>${teacherLabelForBlock(item)}${item.facilityLabel ? ` · ${item.facilityLabel}` : ""}</span>
           </div>`).join("")}
-          ${unavailableItems.map((item) => {
-            const classLabels = item.classIds || [];
-            const detail = classLabels.length ? classLabels.join(" / ") : "Creneau indisponible";
-            return `<div class="buildBlock unavailableBlock">
-              <strong>Indisponibilite</strong>
-              <span>${detail}</span>
-            </div>`;
-          }).join("")}
           ${!items.length && !unavailableItems.length ? `<span class="muted">Libre</span>` : ""}
         </div></td>`;
       }
@@ -3177,35 +3225,29 @@
         const cycleChoices = userCycleChoices();
         const currentCycle = cycleChoices.find((cycle) => weeksForCycle(cycle).some((weekItem) => weekItem.rank === displayedWeek.rank)) || cycleChoices[0];
         const selectedCycle = cycleChoices.find((item) => item.id === (activeHomeCycleId || currentCycle?.id)) || currentCycle;
-        if (!selectedCycle) return `<section class="panel"><h2>Vue par cycle</h2><p class="muted">Aucun cycle defini.</p></section>`;
+        if (!selectedCycle) return `<section class="panel"><h2>Résumé cycle</h2><p class="muted">Aucun cycle defini.</p></section>`;
         return `<section class="panel">
-          <div class="yearActions">
+          <div class="cycleSummaryHeader">
             <div>
-              <h2>Cycle</h2>
+              <h2>Résumé cycle</h2>
               <p class="muted">${selectedCycle.name}${selectedCycle.scope && selectedCycle.scope !== "default" ? ` · ${selectedCycle.scope}` : ""} · du ${formatDate(selectedCycle.start)} au ${formatDate(selectedCycle.end)}</p>
+            </div>
+            <div class="cycleSummaryControl">
+              <label>Cycle</label>
+              <select id="homeCycleSelect">
+                ${cycleChoices.map((cycleItem) => `<option value="${cycleItem.id}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${cycleItem.displayName}</option>`).join("")}
+              </select>
+            </div>
+            <div class="cycleSummaryControl">
+              <label>Semaine</label>
+              <div class="choiceGrid">
+                ${["A", "B"].map((letter) => `<button class="choiceButton ${activeCycleLetter === letter ? "active" : ""}" data-cycle-letter="${letter}">${letter}</button>`).join("")}
+              </div>
             </div>
             <div class="zoomControls">
               <button class="ghostButton" data-cycle-view-zoom="-">-</button>
               <button class="ghostButton" data-cycle-view-zoom-reset>${Math.round(cycleViewZoom * 100)}%</button>
               <button class="ghostButton" data-cycle-view-zoom="+">+</button>
-            </div>
-          </div>
-          <div class="cyclePickerRow">
-            <div class="eventForm">
-              <div class="eventField" style="margin-top:0">
-                <label>Cycle</label>
-                <select id="homeCycleSelect">
-                  ${cycleChoices.map((cycleItem) => `<option value="${cycleItem.id}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${cycleItem.displayName}</option>`).join("")}
-                </select>
-              </div>
-            </div>
-            <div class="eventForm">
-              <div class="eventField" style="margin-top:0">
-                <label>Type de semaine</label>
-                <div class="choiceGrid">
-                  ${["A", "B"].map((letter) => `<button class="choiceButton ${activeCycleLetter === letter ? "active" : ""}" data-cycle-letter="${letter}">Semaine ${letter}</button>`).join("")}
-                </div>
-              </div>
             </div>
           </div>
           <div class="constructionZoomWrap" style="zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
@@ -3320,11 +3362,11 @@
               return `<article class="serviceTeacher" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop">
                   <strong>${teacher.name}</strong>
-                  <span class="hoursStatus ${hourStatus(total - teacher.weeklyReference).className}">${total}h / ${teacher.weeklyReference}h</span>
                 </div>
                 <div class="serviceCompare">
                   <div class="serviceColumn">
                     <h4>Service theorique</h4>
+                    <span class="hoursStatus ${hourStatus(total - teacher.weeklyReference).className}">${total}h / ${teacher.weeklyReference}h</span>
                 <div class="serviceLevelButtons">
                   ${classLevels.map((level) => `<button class="choiceButton ${selectedLevel === level ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="${level}">${level}</button>`).join("")}
                 </div>
@@ -3435,10 +3477,8 @@
         const effectiveSelectedWeekRank = selectedYearWeekRank || current.rank;
         const selectedWeekItem = weeks.find((item) => item.rank === effectiveSelectedWeekRank);
         return `<section class="panel">
-          <h2>Emploi du temps global ${schoolYear.label}</h2>
-          <p class="muted yearNote">Vue consultation du planning construit sur l'annee scolaire.</p>
-          <div class="yearActions">
-            <span class="muted">Septembre 2026 a juillet 2027</span>
+          <div class="yearHeaderCompact">
+            ${renderTeacherLegend("yearTeacherLegend")}
             <div class="yearActionsRight">
               ${selectedWeekItem ? `<button class="ghostButton primaryWeekButton" id="showSelectedWeek">Afficher la semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</button>` : ""}
             </div>
@@ -3504,6 +3544,27 @@
             <strong>${session.name}</strong>
             <span>AS</span>
           </div>`).join("")}${hasConflict ? `<span class="conflictBadge">Conflit</span>` : ""}</div>`;
+      }
+
+      function constructionReadinessItems() {
+        const items = [];
+        const cycleErrors = validateCycles(cycles);
+        const hasServiceAssignments = teachers.some((teacher) => serviceRowsForTeacher(teacher.id).length > 0);
+        if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours." });
+        if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours." });
+        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode." });
+        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0] });
+        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction." });
+        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent." });
+        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning." });
+        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes." });
+        return items;
+      }
+
+      function renderConstructionWarnings() {
+        const items = constructionReadinessItems();
+        if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
+        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
       function renderConstructionView() {
@@ -3572,6 +3633,7 @@
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
             <div class="calendarLegend">V = vacances · F = férié</div>
+            ${renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             <div class="constructionZoomWrap" style="zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
           </div>
@@ -3948,7 +4010,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Événements existants</h3>
-            ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid">${sportEvents.map((event) => `
+            ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid fiveCardGrid">${sportEvents.map((event) => `
               <article class="eventCard">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
@@ -3989,7 +4051,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>AS existantes</h3>
-            ${asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : `<div class="compactCardGrid">${asSessions.map((session) => `
+            ${asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : `<div class="compactCardGrid fiveCardGrid">${asSessions.map((session) => `
               <article class="eventCard">
                 <strong>${session.name}</strong>
                 <span>${session.start} → ${session.end} · ${session.weekdays.join(", ")} · AS midi</span>
@@ -4056,7 +4118,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Installations existantes</h3>
-            ${facilities.length ? `<div class="compactCardGrid">${facilities.map((facility) => `<article class="eventCard">
+            ${facilities.length ? `<div class="compactCardGrid fiveCardGrid">${facilities.map((facility) => `<article class="eventCard">
               <strong>${facility.label}</strong>
               <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
@@ -4080,7 +4142,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>Activités existantes</h3>
-            ${activities.length ? `<div class="compactCardGrid activityCardGrid">${activities.map((activity) => `<article class="eventCard">
+            ${activities.length ? `<div class="compactCardGrid fiveCardGrid">${activities.map((activity) => `<article class="eventCard">
               <strong>${activity.label}</strong>
               <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
@@ -4089,7 +4151,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderTeamSettings() {
-        const canAddTeacher = teacherDraftName.trim().length > 0;
+        const draftPalette = availableTeacherPalette();
+        if (teacherDraftColor && !draftPalette.some((item) => item.color === teacherDraftColor)) {
+          teacherDraftColor = firstAvailableTeacherColor();
+        }
+        const canAddTeacher = teacherDraftName.trim().length > 0 && Boolean(teacherDraftColor);
         const teacherDraftHours = teacherDraftStatus === "agrege" ? 14 : 17;
         return `<section class="eventPage">
           <div class="eventForm">
@@ -4100,7 +4166,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             </div>
             <div class="eventField">
               <label>Couleur</label>
-              <div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>
+              <div class="teacherColorPalette">${draftPalette.map((item) => `<button class="teacherColorSwatch ${teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("") || `<span class="muted">Toutes les couleurs sont deja utilisees.</span>`}</div>
             </div>
             <div class="eventField">
               <label>Statut</label>
@@ -4109,7 +4175,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <button class="choiceButton ${teacherDraftStatus === "agrege" ? "active" : ""}" data-teacher-status="agrege">Agrégé · 14h</button>
               </div>
             </div>
-            <div class="teamPreview" style="background:${teacherDraftColor};border-color:${teacherBorderForColor(teacherDraftColor)}">
+            <div class="teamPreview" style="background:${teacherDraftColor || "#f8fafc"};border-color:${teacherDraftColor ? teacherBorderForColor(teacherDraftColor) : "#cbd5e1"}">
               <strong>${teacherDraftName.trim() || "Nouveau prof"}</strong>
               <span class="muted">Cours classiques : ${teacherDraftHours}h · AS : 3h</span>
             </div>
@@ -4128,7 +4194,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="eventField">
                 <label>Couleur</label>
                 <button class="ghostButton teacherColorToggle" data-toggle-teacher-color="${teacher.id}">${expandedTeacherColorId === teacher.id ? "Masquer les couleurs" : "Changer la couleur"}</button>
-                ${expandedTeacherColorId === teacher.id ? `<div class="teacherColorPalette">${teacherPalette.map((item) => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>` : ""}
+                ${expandedTeacherColorId === teacher.id ? `<div class="teacherColorPalette">${availableTeacherPalette(teacher.id).map((item) => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>` : ""}
               </div>
               <div class="eventField">
                 <label>Remplacant</label>
@@ -4404,14 +4470,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <strong>Historique simple</strong>
             <span>Liste des corrections et ameliorations apportees au logiciel au fil des mises a jour.</span>
           </article>
-          ${Object.entries(groups).map(([title, items]) => `
-            <details class="logGroup">
-              <summary>${title}<span>${items.length}</span></summary>
-              <div class="logEntries">
-                ${items.map((item) => `<p class="logEntry">${item}</p>`).join("")}
-              </div>
-            </details>
-          `).join("") || `<div class="alertEmpty">Aucune entree pour le moment.</div>`}
+          ${Object.keys(groups).length ? `<div class="logGroupGrid">${Object.entries(groups).map(([title, items]) => `
+              <details class="logGroup">
+                <summary>${title}<span>${items.length}</span></summary>
+                <div class="logEntries">
+                  ${items.map((item) => `<p class="logEntry">${item}</p>`).join("")}
+                </div>
+              </details>
+            `).join("")}</div>` : `<div class="alertEmpty">Aucune entree pour le moment.</div>`}
         </section>`;
       }
 
@@ -4548,12 +4614,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>`;
         const allSelected = allTeachersSelected();
         const legend = document.getElementById("legend");
-        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle";
+        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle" || week === "year";
         legend.style.display = hideLegend ? "none" : "flex";
-        legend.innerHTML = hideLegend ? "" : `<button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all"><span class="dot" style="background:#0f172a"></span>Tous</button>` + teachers.map((teacher) => {
-            const selected = selectedTeacherIds.includes(teacher.id);
-            return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}"><span class="dot" style="background:${teacher.border}"></span>${teacher.name}</button>`;
-          }).join("");
+        legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
         if (week === "year") root.innerHTML = renderYearView(cycle);
         else if (week === "cycle") root.innerHTML = renderCycleView();
         else if (week === "build") root.innerHTML = renderConstructionView();
@@ -4842,7 +4905,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (addTeacher) {
           addTeacher.addEventListener("click", () => {
             const name = teacherDraftName.trim();
-            if (!name) return;
+            if (!name || !teacherDraftColor) return;
             const id = `p-${Date.now()}-${Math.random().toString(16).slice(2)}`;
             const weeklyReference = teacherDraftStatus === "agrege" ? 14 : 17;
             const teacher = {
@@ -4858,7 +4921,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             selectedTeacherIds = [...selectedTeacherIds, id];
             cycleTeacherIds = [...cycleTeacherIds, id];
             teacherDraftName = "";
-            teacherDraftColor = teacherPalette[teachers.length % teacherPalette.length].color;
+            teacherDraftColor = firstAvailableTeacherColor();
             teacherDraftStatus = "certifie";
             saveTeachers();
             render();
