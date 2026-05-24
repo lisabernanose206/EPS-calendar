@@ -3516,14 +3516,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           </div>
           <div class="eventList">
             <h3>AS existantes</h3>
-            ${asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : asSessions.map((session) => `
+            ${asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : `<div class="compactCardGrid">${asSessions.map((session) => `
               <article class="eventCard">
                 <strong>${session.name}</strong>
                 <span>${session.start} → ${session.end} · ${session.weekdays.join(", ")} · AS midi</span>
                 <span>${asSessionTeacherLabel(session)}</span>
                 <button class="ghostButton" data-edit-as="${session.id}">Modifier</button>
                 <button class="ghostButton" data-delete-as="${session.id}">Supprimer</button>
-              </article>`).join("")}
+              </article>`).join("")}</div>`}
           </div>
         </section>`;
       }

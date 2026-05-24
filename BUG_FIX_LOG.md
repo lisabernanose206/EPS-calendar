@@ -1,5 +1,6 @@
 # Log des corrections
 
+- AS : liste des AS existantes affichee deux par ligne.
 - Indisponibilites : groupes de contraintes existantes repliees par defaut avec ouverture au clic.
 - Navigation : ordre des onglets Admin remis selon l'ancien ordre Construction et listes Profs/Installations/Activites/Evenements en deux colonnes.
 - Indisponibilites : contraintes existantes affichees deux par ligne pour reduire la hauteur de la liste.
