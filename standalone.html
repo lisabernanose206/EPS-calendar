@@ -1223,16 +1223,20 @@
       function halfDayLabel(value) {
         if (value === "morning") return "Matin";
         if (value === "afternoon") return "Après-midi";
+        if ((value || "").startsWith("slot-")) return slots.find((slot) => slot.id === value.replace("slot-", ""))?.label || "Créneau";
         return "Journée";
       }
 
       function rowMatchesEventHalfDay(row, event) {
         const halfDay = event.halfDay || "all";
+        if (halfDay.startsWith("slot-")) return row.slot.id === halfDay.replace("slot-", "");
         return halfDay === "all" || halfDayForSlot(row.slot.id) === halfDay;
       }
 
       function eventStartSlotId(event) {
-        return (event.halfDay || "all") === "afternoon" ? "13" : "8";
+        const halfDay = event.halfDay || "all";
+        if (halfDay.startsWith("slot-")) return halfDay.replace("slot-", "");
+        return halfDay === "afternoon" ? "13" : "8";
       }
 
       function eventPeriodLabel(event) {
@@ -3447,7 +3451,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 ${[
                   { id: "all", label: "Journée" },
                   { id: "morning", label: "Matin" },
-                  { id: "afternoon", label: "Après-midi" }
+                  { id: "afternoon", label: "Après-midi" },
+                  ...slots.map((slot) => ({ id: `slot-${slot.id}`, label: slot.label }))
                 ].map((period) => `<button class="choiceButton ${eventHalfDay === period.id ? "active" : ""}" data-event-half-day="${period.id}">${period.label}</button>`).join("")}
               </div>
             </div>
@@ -3478,7 +3483,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid">${sportEvents.map((event) => `
               <article class="eventCard">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
-                <span>${event.start} → ${event.end} · ${halfDayLabel(event.halfDay || "all")}</span>
+                <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
                 <span>${event.teacherIds.length} prof(s), ${event.classes.length} classe(s)</span>
                 <button class="ghostButton" data-edit-event="${event.id}">Modifier</button>
                 <button class="ghostButton" data-delete-event="${event.id}">Supprimer</button>

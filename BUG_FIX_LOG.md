@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Evenements sportifs : ajout d'un choix de creneau precis dans la periode.
 - Evenements sportifs : suppression du nom pre-rempli dans le formulaire.
 - Tableaux Annee/Construction : retrait des noms de profs dans les cases et en-tete Construction fige sur trois lignes.
 - AS : liste des AS existantes affichee deux par ligne.
