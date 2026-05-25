@@ -1,5 +1,10 @@
 # Log des corrections
 
+- Profs : palette pastel elargie et legende couleur remise en cases pleinement colorees.
+- Annee scolaire et Resume cycle : boutons d'export A2/A3 ajoutes.
+- Admin : onglet Construction verrouille tant que les prerequis bloquants ne sont pas remplis et mode d'emploi ajoute.
+- Service theorique : mention de la contrainte de 24h minimum entre deux cours d'une meme classe.
+- Creneaux a deux profs : blocs affiches en deux couleurs partagees moitie/moitie.
 - Annee scolaire : les trois lignes d'en-tete du tableau restent visibles sous le bordereau de semaine pendant le defilement.
 - Annee scolaire : bloc d'information de la semaine selectionnee fige dans la zone de defilement du tableau.
 - Legendes profs : carres de couleur rendus avec angles droits.

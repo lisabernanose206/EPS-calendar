@@ -279,6 +279,11 @@
       .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
+      .adminGuide { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; display: grid; gap: 6px; margin: 0 0 10px; padding: 10px; }
+      .adminGuide strong { color: #0f172a; font-size: 13px; }
+      .adminGuide ol { display: flex; flex-wrap: wrap; gap: 5px; list-style: none; margin: 0; padding: 0; }
+      .adminGuide li { background: #fff; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 11px; font-weight: 900; padding: 5px 8px; }
+      .weeks button:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.45; }
       .clearConstructionPanel { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 10px; margin: 0 0 10px; max-width: 640px; padding: 12px; }
       .clearConstructionPanel h3 { color: #0f172a; font-size: 14px; margin: 0; }
       .clearConstructionOptions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -288,10 +293,8 @@
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
-      .homeTeacherLegend, .yearTeacherLegend { gap: 4px; margin-top: 6px; opacity: 0.78; }
-      .homeTeacherLegend .legendItem, .yearTeacherLegend .legendItem { background: #fff !important; border-color: #e2e8f0 !important; color: #64748b; font-size: 10px; gap: 5px; min-height: 24px; padding: 0 7px; }
-      .homeTeacherLegend .legendItem.selected, .yearTeacherLegend .legendItem.selected { box-shadow: inset 0 0 0 1px #94a3b8; color: #0f172a; }
-      .homeTeacherLegend .dot, .yearTeacherLegend .dot { height: 10px; width: 10px; }
+      .homeTeacherLegend, .yearTeacherLegend { gap: 6px; margin-top: 8px; }
+      .homeTeacherLegend .legendItem, .yearTeacherLegend .legendItem { color: #172033; font-size: 12px; font-weight: 950; min-height: 32px; padding: 0 9px; }
       .buildDropCell { background: #fff; min-width: 120px; }
       .conflictCell { outline: 3px solid #dc2626 !important; outline-offset: -3px; }
       .conflictBadge { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; display: inline-flex; font-size: 10px; font-weight: 950; padding: 2px 6px; }
@@ -543,7 +546,7 @@
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2 { background: #fff; }
-      body.printA3 .sideNav, body.printA2 .sideNav, body.printA3 .top, body.printA2 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA3 .builderActions, body.printA2 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA3 .legend, body.printA2 .legend { display: none !important; }
+      body.printA3 .sideNav, body.printA2 .sideNav, body.printA3 .top, body.printA2 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA3 .legend, body.printA2 .legend { display: none !important; }
       body.printA3 .app, body.printA2 .app { padding: 0; }
       body.printA3 .workspace, body.printA2 .workspace { display: block; }
       body.printA3 .panel, body.printA2 .panel { max-width: none !important; padding: 0; }
@@ -673,7 +676,27 @@
         { color: "#99f6e4", border: "#0f766e" },
         { color: "#fed7aa", border: "#ea580c" },
         { color: "#cbd5e1", border: "#475569" },
-        { color: "#e7d3b2", border: "#92400e" }
+        { color: "#e7d3b2", border: "#92400e" },
+        { color: "#bae6fd", border: "#0284c7" },
+        { color: "#a7f3d0", border: "#059669" },
+        { color: "#f0abfc", border: "#c026d3" },
+        { color: "#c4b5fd", border: "#6d28d9" },
+        { color: "#fef08a", border: "#ca8a04" },
+        { color: "#fecdd3", border: "#e11d48" },
+        { color: "#a5f3fc", border: "#0891b2" },
+        { color: "#d9f99d", border: "#65a30d" },
+        { color: "#fdba74", border: "#c2410c" },
+        { color: "#e9d5ff", border: "#9333ea" },
+        { color: "#f5d0fe", border: "#a21caf" },
+        { color: "#bcf0da", border: "#047857" },
+        { color: "#dbeafe", border: "#1d4ed8" },
+        { color: "#fce7f3", border: "#be185d" },
+        { color: "#e0f2fe", border: "#0369a1" },
+        { color: "#dcfce7", border: "#15803d" },
+        { color: "#ffedd5", border: "#ea580c" },
+        { color: "#ede9fe", border: "#5b21b6" },
+        { color: "#f1f5f9", border: "#334155" },
+        { color: "#ccfbf1", border: "#0d9488" }
       ];
       let teachers = loadTeachers();
       const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
@@ -2875,6 +2898,18 @@
         return block.teacherNames || teacherNamesForBlock(block).join(" + ") || block.teacherName || "Prof";
       }
 
+      function blockTeacherStyle(block) {
+        const blockTeachers = teacherIdsForBlock(block)
+          .map((id) => teachers.find((teacher) => teacher.id === id))
+          .filter(Boolean);
+        if (blockTeachers.length >= 2) {
+          const first = blockTeachers[0];
+          const second = blockTeachers[1];
+          return `background:linear-gradient(90deg, ${first.color} 0 50%, ${second.color} 50% 100%);border-color:${first.border}`;
+        }
+        return `background:${block.color};border-color:${block.border}`;
+      }
+
       function teacherBorderForColor(color) {
         return teacherPalette.find((item) => item.color === color)?.border || shadeColor(color, -80);
       }
@@ -3233,7 +3268,7 @@
                 ${vacation ? `<div class="emptyLesson">${vacation.name}</div>` : ""}
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
                 ${lessons.map((lesson) => `
-                  <div class="lesson" style="background:${lesson.color};border-color:${lesson.border}">
+                  <div class="lesson" style="${blockTeacherStyle(lesson)}">
                     <div class="lessonTop"><strong>${teacherLabelForBlock(lesson)}</strong>${facilityBadge(facilities.find((facility) => facility.id === lesson.facilityId)?.type || "internal")}</div>
                     <div class="lessonMeta"><span class="muted">${lesson.schoolClass} · ${lesson.facilityLabel}</span></div>
                   </div>`).join("")}
@@ -3309,7 +3344,7 @@
         const items = blocksForCycleLetter(row, cycle, letter, facilityId);
         const unavailableItems = unavailableForCycleLetter(row, cycle, letter, facilityId);
         return `<td class="${unavailableItems.length ? "cycleUnavailableCell" : ""}"><div class="buildCellStack">
-          ${items.map((item) => `<div class="buildBlock" style="background:${item.color};border-color:${item.border}">
+          ${items.map((item) => `<div class="buildBlock" style="${blockTeacherStyle(item)}">
             <strong>${item.schoolClass || "Classe"}</strong>
             <span>${teacherLabelForBlock(item)}${item.facilityLabel ? ` · ${item.facilityLabel}` : ""}</span>
           </div>`).join("")}
@@ -3372,6 +3407,10 @@
               <button class="ghostButton" data-cycle-view-zoom-reset>${Math.round(cycleViewZoom * 100)}%</button>
               <button class="ghostButton" data-cycle-view-zoom="+">+</button>
             </div>
+            <div class="yearActionsRight">
+              <button class="ghostButton" data-print-format="A3">Exporter A3</button>
+              <button class="ghostButton" data-print-format="A2">Exporter A2</button>
+            </div>
           </div>
           <div class="constructionZoomWrap" style="--table-zoom:${cycleViewZoom};--table-offset:150px;zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
@@ -3396,7 +3435,7 @@
                   <div class="slotHead"><strong>${row.slot.label}</strong><span class="muted">${row.slot.hours}h</span></div>
                   <div class="lessons">
                     ${blocked ? `<div class="emptyLesson">${vacationForCell(row, weekItem) ? "V" : "F"}</div>` : ""}
-                    ${items.map((item) => `<div class="lesson" style="background:${item.color};border-color:${item.border}">
+                    ${items.map((item) => `<div class="lesson" style="${blockTeacherStyle(item)}">
                       <div class="lessonTop"><strong>${teacherLabelForBlock(item)}</strong></div>
                       <div class="lessonMeta"><span class="muted">${item.schoolClass} · ${item.facilityLabel}</span></div>
                     </div>`).join("")}
@@ -3462,6 +3501,7 @@
                 <label>${level}</label>
                 <input data-service-level-hours="${level}" type="number" min="0" step="0.5" value="${serviceHoursByLevel[level] ?? defaultServiceHours[level]}" />
               </div>`).join("")}</div>
+            <div class="alertHelp"><strong>Contrainte de construction</strong><span>Il faut minimum 24h d'intervalle pour refaire cours avec la même classe, peu importe le prof. Cette contrainte sera intégrée lors de la construction des emplois du temps.</span></div>
             ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${item.schoolClass} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
           </div>
           <div class="servicePanel">
@@ -3604,6 +3644,8 @@
             ${renderTeacherLegend("yearTeacherLegend")}
             <div class="yearActionsRight">
               ${selectedWeekItem ? `<button class="ghostButton primaryWeekButton" id="showSelectedWeek">Afficher la semaine ${selectedWeekItem.rank}${selectedWeekItem.letter}</button>` : ""}
+              <button class="ghostButton" data-print-format="A3">Exporter A3</button>
+              <button class="ghostButton" data-print-format="A2">Exporter A2</button>
             </div>
           </div>
           <div class="calendarLegend">V = vacances · F = férié</div>
@@ -3657,7 +3699,7 @@
         if (!builtItems.length && !events.length && !asItems.length) return `<span class="muted">-</span>`;
         const hasConflict = conflictMap().has(key);
         return `<div class="yearLessonStack">${builtItems.map((item) => `
-          <div class="yearLesson" style="background:${item.color};border-color:${item.border}">
+          <div class="yearLesson" style="${blockTeacherStyle(item)}">
             <strong>${compactClassName(item.schoolClass) || item.label || "Bloc"}</strong>
             <span>${facilityShortLabel(item.facilityId, item.facilityLabel || item.type || "")}</span>
           </div>`).join("")}${events.map((event) => `
@@ -3684,6 +3726,32 @@
         if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning." });
         if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes." });
         return items;
+      }
+
+      function constructionBlockingItems() {
+        return constructionReadinessItems().filter((item) => item.level === "blocking");
+      }
+
+      function canAccessConstructionPlanning() {
+        return constructionBlockingItems().length === 0;
+      }
+
+      function renderAdminGuide() {
+        return `<article class="adminGuide">
+          <strong>Mode d'emploi conseille</strong>
+          <ol>
+            <li>1. Profs</li>
+            <li>2. Classes</li>
+            <li>3. Installations</li>
+            <li>4. Activites</li>
+            <li>5. Indisponibilites</li>
+            <li>6. Cycles</li>
+            <li>7. AS</li>
+            <li>8. Evenements sportifs</li>
+            <li>9. Service</li>
+            <li>10. Construction</li>
+          </ol>
+        </article>`;
       }
 
       function renderConstructionWarnings() {
@@ -3729,33 +3797,40 @@
         const monthLabels = weeks.map((weekItem) => monthLabelForWeek(weekItem));
         const rows = yearRows();
         const block = currentBlock();
+        const guide = renderAdminGuide();
         if (constructionMode === "facilities") {
           return `<section>
+            ${guide}
             ${renderFacilitiesSettings()}
           </section>`;
         }
         if (constructionMode === "activities") {
           return `<section>
+            ${guide}
             ${renderActivitiesSettings()}
           </section>`;
         }
         if (constructionMode === "team") {
           return `<section>
+            ${guide}
             ${renderTeamSettings()}
           </section>`;
         }
         if (constructionMode === "classes") {
           return `<section>
+            ${guide}
             ${renderClassesView()}
           </section>`;
         }
         if (constructionMode === "unavailable") {
           return `<section>
+            ${guide}
             ${renderFacilityUnavailabilityView()}
           </section>`;
         }
         if (constructionMode === "cycles") {
           return `<section>
+            ${guide}
             <section class="cycleDefinitionPage">
               <div class="cycleDefinitionPanel">
                 ${renderCycleDefinition()}
@@ -3765,21 +3840,34 @@
         }
         if (constructionMode === "events") {
           return `<section>
+            ${guide}
             ${renderEventsView()}
           </section>`;
         }
         if (constructionMode === "as") {
           return `<section>
+            ${guide}
             ${renderAsView()}
           </section>`;
         }
         if (constructionMode === "hours") {
           return `<section>
+            ${guide}
             ${renderHoursBalance()}
+          </section>`;
+        }
+        if (!canAccessConstructionPlanning()) {
+          return `<section class="builderPage">
+            ${guide}
+            <div class="constructionWarningPanel">
+              <div class="constructionWarning blocking"><strong>Construction verrouillee</strong><span>Completez d'abord les prerequis ci-dessous, puis revenez sur Construction.</span></div>
+            </div>
+            ${renderConstructionWarnings()}
           </section>`;
         }
         return `<section class="builderPage">
           <div>
+            ${guide}
             <div class="builderActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}"><i class="dot" style="background:${teacher.border}"></i>${teacher.name}</span>`).join("")}
@@ -3990,7 +4078,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <button class="choiceButton ${blockWeekLetter === "B" ? "active" : ""} ${weekItem.letter !== "B" ? "unavailable" : ""}" data-pick-week-letter="B" title="${weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" aria-label="${weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" ${weekItem.letter !== "B" ? "disabled" : ""}>Quinzaine B</button>
               </div>
             </div>
-            <div class="buildPreview" style="background:${block.color};border-color:${block.border}">
+            <div class="buildPreview" style="${blockTeacherStyle(block)}">
               <strong>${block.schoolClass || "Classe a selectionner"}</strong>
               <span>${block.facilityLabel || "Installation a selectionner"}</span>
               ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}
@@ -4004,7 +4092,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="existingBlocks">
               <h3>Blocs presents sur ce creneau</h3>
               <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
-                <div class="buildBlock" data-edit-built-block="${index}" style="background:${item.color};border-color:${item.border}">
+                <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
                   <button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>
                   <strong>${item.schoolClass || "Bloc"}</strong>
                   <span>${item.facilityLabel || ""}</span>
@@ -4375,7 +4463,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           ? orderedTeacherIds.map((teacherId) => {
             const matches = indexedItems.filter(({ item }) => teacherIdsForBlock(item)[0] === teacherId);
             return `<div class="buildFacilitySlot">${matches.map(({ item, index }) => `
-              <div class="buildBlock" style="background:${item.color};border-color:${item.border}">
+              <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <button data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
@@ -4383,7 +4471,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
-              <div class="buildBlock" style="background:${item.color};border-color:${item.border}">
+              <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${item.facilityLabel || item.type || ""}</span>
                 ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
@@ -4743,6 +4831,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ? week === "build" && constructionMode === buildMode
             : item.dataset.week === week && week !== "build";
           item.classList.toggle("active", isActive);
+          if (buildMode === "planning") {
+            const locked = !canAccessConstructionPlanning();
+            item.disabled = locked;
+            item.title = locked ? "Completez les prerequis avant d'acceder a Construction." : "";
+          }
         });
       }
 
@@ -5792,6 +5885,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       document.querySelectorAll("[data-week]").forEach((button) => {
         button.addEventListener("click", () => {
+          if (button.disabled) return;
           if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts" || button.dataset.week === "log")) {
             authStatus = "Connexion admin requise.";
             render();
