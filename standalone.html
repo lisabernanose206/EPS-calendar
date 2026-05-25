@@ -608,18 +608,22 @@
       body.printConstructionTrimesters .printOnly strong { font-size: 16px; }
       body.printConstructionTrimesters .printOnly span { color: #475569; font-size: 10px; font-weight: 850; }
       body.printConstructionTrimesters .calendarLegend, body.printConstructionTrimesters .constructionWarningPanel { display: none !important; }
-      body.printConstructionTrimesters .constructionPrintSection { break-after: page; page-break-after: always; }
+      body.printConstructionTrimesters .constructionPrintSection { break-after: page; min-height: calc(100vh - 8mm); page-break-after: always; }
       body.printConstructionTrimesters .constructionPrintSection:last-child { break-after: auto; page-break-after: auto; }
-      body.printConstructionTrimesters .constructionTable th, body.printConstructionTrimesters .constructionTable td { font-size: 7px; padding: 2px; }
-      body.printConstructionTrimesters .constructionTable .rowHead { width: 42px !important; }
-      body.printConstructionTrimesters .constructionTable .timeHead { width: 50px !important; }
-      body.printConstructionTrimesters .buildBlock { border-radius: 2px; min-height: 22px; padding: 2px; }
+      body.printConstructionTrimesters .constructionPrintSection .constructionZoomWrap { display: flex; height: calc(100vh - 23mm); width: 100%; }
+      body.printConstructionTrimesters .constructionPrintSection .yearWrap { display: flex; height: 100%; width: 100%; }
+      body.printConstructionTrimesters .constructionTable { height: 100%; width: 100%; }
+      body.printConstructionTrimesters .constructionTable th, body.printConstructionTrimesters .constructionTable td { font-size: 7.4px; padding: 2px; }
+      body.printConstructionTrimesters .constructionTable .rowHead { width: 46px !important; }
+      body.printConstructionTrimesters .constructionTable .timeHead { width: 54px !important; }
+      body.printConstructionTrimesters .buildBlock { border-radius: 2px; min-height: 24px; padding: 2px; }
       body.printConstructionTrimesters .buildBlock strong, body.printConstructionTrimesters .buildBlock span { font-size: 6px; line-height: 1.05; }
       @page { size: A3 landscape; margin: 8mm; }
       @media print {
         body.printA3 { zoom: 0.48; }
         body.printA2 { zoom: 0.64; }
         body.printA4 { zoom: 0.86; }
+        body.printConstructionTrimesters { zoom: 1 !important; }
       }
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }

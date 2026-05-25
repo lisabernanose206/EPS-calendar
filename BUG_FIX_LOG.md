@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Exports Construction : tableaux trimestriels forces a occuper toute la largeur et la hauteur utile de la page.
 - Mode d'emploi : parcours Admin explicite et section Professeur ajoutee pour les trois onglets de consultation.
 - Construction : export simplifie par trimestres automatiques, sans selection de cycle, avec une page par periode.
 - Mode d'emploi : 10 etapes alignees sur une seule ligne et fleche finale retiree.
