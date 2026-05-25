@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EPS Loustic</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
     <style>
       :root {
         background: #f8fafc;
@@ -56,21 +58,31 @@
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
       .workspace { display: block; margin-top: 10px; }
-      .sideNav { background: rgba(248,250,252,0.96); border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 5px; padding: 6px; position: sticky; top: 6px; z-index: 70; }
+      .sideNav { background: rgba(248,250,252,0.96); border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 5px; overflow-x: auto; padding: 6px; position: sticky; top: 6px; z-index: 70; }
       .navGroup { align-items: center; display: grid; gap: 8px; grid-template-columns: 76px minmax(0, 1fr); }
       .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; }
       .navGroup + .navGroup { margin-top: 0; }
       .navGroupLabel { color: #64748b; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0; text-transform: uppercase; }
-      .questionNavGroup { justify-self: end; opacity: 0.68; }
+      .questionNavGroup { justify-self: start; opacity: 0.68; }
       .questionNavGroup .navGroupLabel { font-size: 10px; font-weight: 850; text-transform: none; }
-      .questionNavGroup .weeks { background: transparent; border: 1px solid #e2e8f0; }
+      .questionNavGroup .weeks { background: transparent; border: 0; flex-wrap: nowrap; overflow: visible; padding-left: 0; }
       .questionNavGroup .weeks button { color: #64748b; font-size: 11px; min-height: 24px; }
       .tabs { margin-top: 10px; }
       .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; line-height: 1.1; min-height: 28px; padding: 0 8px; text-align: center; white-space: nowrap; width: auto; }
+      .stepNav { align-items: center; display: inline-flex; gap: 5px; }
+      .stepBadge { align-items: center; background: #000; border-radius: 999px; color: #fff; display: inline-flex; font-size: 10px; font-weight: 950; height: 18px; justify-content: center; min-width: 18px; padding: 0 5px; }
+      .stepStatus { align-items: center; border-radius: 4px; color: #fff; display: inline-flex; font-size: 11px; font-weight: 950; height: 18px; justify-content: center; width: 18px; }
+      .stepStatus::before { content: "x"; }
+      .weeks button.stepComplete .stepStatus { background: #16a34a; border: 1px solid #15803d; }
+      .weeks button.stepIncomplete .stepStatus { background: #dc2626; border: 1px solid #b91c1c; }
+      .weeks button.stepComplete .stepStatus::before { content: "✓"; }
+      .weeks button.stepComplete .stepDone { display: inline-flex; }
       .tabs button { min-width: 0; }
       .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
       .weeks button.active { background: #0f766e; color: white; }
       .weeks button.primaryAdminTab.active { background: #000; color: #fff; box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000; }
+      .adminBuildNav { align-items: start; }
+      .adminBuildNav .weeks { display: grid; grid-template-columns: 1fr; }
       .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
       .mainContent { min-width: 0; }
@@ -279,10 +291,6 @@
       .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
-      .adminGuide { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; display: grid; gap: 6px; margin: 0 0 10px; padding: 10px; }
-      .adminGuide strong { color: #0f172a; font-size: 13px; }
-      .adminGuide ol { display: flex; flex-wrap: wrap; gap: 5px; list-style: none; margin: 0; padding: 0; }
-      .adminGuide li { background: #fff; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 11px; font-weight: 900; padding: 5px 8px; }
       .weeks button:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.45; }
       .clearConstructionPanel { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 10px; margin: 0 0 10px; max-width: 640px; padding: 12px; }
       .clearConstructionPanel h3 { color: #0f172a; font-size: 14px; margin: 0; }
@@ -620,7 +628,7 @@
       <section class="workspace">
         <aside class="sideNav">
           <section class="navGroup">
-            <span class="navGroupLabel">Utilisateur</span>
+            <span class="navGroupLabel">Professeur</span>
             <section class="weeks">
               <button class="active" data-week="current">Emploi du temps</button>
               <button data-week="year">Année scolaire</button>
@@ -631,23 +639,28 @@
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
-              <button class="primaryAdminTab" data-week="build" data-build-mode="planning">Construction</button>
-              <button data-week="build" data-build-mode="team">Profs</button>
-              <button data-week="build" data-build-mode="classes">Classes</button>
-              <button data-week="build" data-build-mode="facilities">Installations</button>
-              <button data-week="build" data-build-mode="activities">Activités</button>
-              <button data-week="build" data-build-mode="unavailable">Indisponibilités</button>
-              <button data-week="build" data-build-mode="cycles">Cycles</button>
-              <button data-week="build" data-build-mode="as">AS</button>
-              <button data-week="build" data-build-mode="events">Événements sportifs</button>
-              <button data-week="build" data-build-mode="hours">Service</button>
-              <button data-week="alerts">Alertes</button>
-              <button data-week="log">Log</button>
+              <button data-week="build" data-build-mode="team"><span class="stepNav"><span class="stepBadge">1</span>Profs<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="classes"><span class="stepNav"><span class="stepBadge">2</span>Classes<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="facilities"><span class="stepNav"><span class="stepBadge">3</span>Installations<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="activities"><span class="stepNav"><span class="stepBadge">4</span>Activités<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="unavailable"><span class="stepNav"><span class="stepBadge">5</span>Indisponibilités<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="cycles"><span class="stepNav"><span class="stepBadge">6</span>Cycles<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="as"><span class="stepNav"><span class="stepBadge">7</span>AS<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="events"><span class="stepNav"><span class="stepBadge">8</span>Événements sportifs<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="hours"><span class="stepNav"><span class="stepBadge">9</span>Service<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+            </section>
+          </section>
+          <section class="navGroup adminBuildNav">
+            <span class="navGroupLabel"></span>
+            <section class="weeks">
+              <button class="primaryAdminTab" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">10</span>Construction</span></button>
             </section>
           </section>
 
           <section class="navGroup questionNavGroup">
             <section class="weeks">
+              <button data-week="alerts">Alertes</button>
+              <button data-week="log">Log</button>
               <button data-week="request">Une question ?</button>
             </section>
           </section>
@@ -667,36 +680,37 @@
         { id: "p5", name: "Prof E agrege", color: "#fde68a", border: "#d97706", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
       ];
       const teacherPalette = [
-        { color: "#bfdbfe", border: "#2563eb" },
-        { color: "#bbf7d0", border: "#16a34a" },
-        { color: "#fecaca", border: "#dc2626" },
-        { color: "#ddd6fe", border: "#7c3aed" },
-        { color: "#fde68a", border: "#d97706" },
-        { color: "#fbcfe8", border: "#db2777" },
-        { color: "#99f6e4", border: "#0f766e" },
-        { color: "#fed7aa", border: "#ea580c" },
-        { color: "#cbd5e1", border: "#475569" },
-        { color: "#e7d3b2", border: "#92400e" },
-        { color: "#bae6fd", border: "#0284c7" },
-        { color: "#a7f3d0", border: "#059669" },
-        { color: "#f0abfc", border: "#c026d3" },
+        { color: "#93c5fd", border: "#1d4ed8" },
+        { color: "#86efac", border: "#15803d" },
+        { color: "#fca5a5", border: "#b91c1c" },
         { color: "#c4b5fd", border: "#6d28d9" },
-        { color: "#fef08a", border: "#ca8a04" },
-        { color: "#fecdd3", border: "#e11d48" },
-        { color: "#a5f3fc", border: "#0891b2" },
-        { color: "#d9f99d", border: "#65a30d" },
+        { color: "#fcd34d", border: "#b45309" },
+        { color: "#f9a8d4", border: "#be185d" },
+        { color: "#5eead4", border: "#0f766e" },
         { color: "#fdba74", border: "#c2410c" },
-        { color: "#e9d5ff", border: "#9333ea" },
-        { color: "#f5d0fe", border: "#a21caf" },
-        { color: "#bcf0da", border: "#047857" },
-        { color: "#dbeafe", border: "#1d4ed8" },
-        { color: "#fce7f3", border: "#be185d" },
-        { color: "#e0f2fe", border: "#0369a1" },
-        { color: "#dcfce7", border: "#15803d" },
-        { color: "#ffedd5", border: "#ea580c" },
-        { color: "#ede9fe", border: "#5b21b6" },
-        { color: "#f1f5f9", border: "#334155" },
-        { color: "#ccfbf1", border: "#0d9488" }
+        { color: "#d6b47f", border: "#92400e" },
+        { color: "#7dd3fc", border: "#0369a1" },
+        { color: "#6ee7b7", border: "#047857" },
+        { color: "#e879f9", border: "#a21caf" },
+        { color: "#a78bfa", border: "#5b21b6" },
+        { color: "#fde047", border: "#a16207" },
+        { color: "#fda4af", border: "#be123c" },
+        { color: "#67e8f9", border: "#0e7490" },
+        { color: "#bef264", border: "#4d7c0f" },
+        { color: "#fb923c", border: "#9a3412" },
+        { color: "#d8b4fe", border: "#7e22ce" },
+        { color: "#f0abfc", border: "#86198f" },
+        { color: "#99f6e4", border: "#0f766e" },
+        { color: "#bfdbfe", border: "#1e40af" },
+        { color: "#fbcfe8", border: "#9d174d" },
+        { color: "#bae6fd", border: "#075985" },
+        { color: "#bbf7d0", border: "#166534" },
+        { color: "#fed7aa", border: "#c2410c" },
+        { color: "#ddd6fe", border: "#4c1d95" },
+        { color: "#fecdd3", border: "#be123c" },
+        { color: "#fde68a", border: "#92400e" },
+        { color: "#a7f3d0", border: "#047857" },
+        { color: "#f5d0fe", border: "#86198f" }
       ];
       let teachers = loadTeachers();
       const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
@@ -3736,22 +3750,25 @@
         return constructionBlockingItems().length === 0;
       }
 
-      function renderAdminGuide() {
-        return `<article class="adminGuide">
-          <strong>Mode d'emploi conseille</strong>
-          <ol>
-            <li>1. Profs</li>
-            <li>2. Classes</li>
-            <li>3. Installations</li>
-            <li>4. Activites</li>
-            <li>5. Indisponibilites</li>
-            <li>6. Cycles</li>
-            <li>7. AS</li>
-            <li>8. Evenements sportifs</li>
-            <li>9. Service</li>
-            <li>10. Construction</li>
-          </ol>
-        </article>`;
+      function serviceStepComplete() {
+        if (serviceAlerts().length) return false;
+        return teachers.every((teacher) => {
+          const total = serviceRowsForTeacher(teacher.id).reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
+          return total === teacher.weeklyReference;
+        });
+      }
+
+      function adminStepComplete(buildMode) {
+        if (buildMode === "team") return teachers.length > 0;
+        if (buildMode === "classes") return classes.length > 0;
+        if (buildMode === "facilities") return facilities.length > 0;
+        if (buildMode === "activities") return activities.length > 0;
+        if (buildMode === "unavailable") return facilityUnavailability.length > 0;
+        if (buildMode === "cycles") return cycles.length > 0 && !validateCycles(cycles).length;
+        if (buildMode === "as") return asSessions.length > 0;
+        if (buildMode === "events") return sportEvents.length > 0;
+        if (buildMode === "hours") return serviceStepComplete();
+        return false;
       }
 
       function renderConstructionWarnings() {
@@ -3797,40 +3814,33 @@
         const monthLabels = weeks.map((weekItem) => monthLabelForWeek(weekItem));
         const rows = yearRows();
         const block = currentBlock();
-        const guide = renderAdminGuide();
         if (constructionMode === "facilities") {
           return `<section>
-            ${guide}
             ${renderFacilitiesSettings()}
           </section>`;
         }
         if (constructionMode === "activities") {
           return `<section>
-            ${guide}
             ${renderActivitiesSettings()}
           </section>`;
         }
         if (constructionMode === "team") {
           return `<section>
-            ${guide}
             ${renderTeamSettings()}
           </section>`;
         }
         if (constructionMode === "classes") {
           return `<section>
-            ${guide}
             ${renderClassesView()}
           </section>`;
         }
         if (constructionMode === "unavailable") {
           return `<section>
-            ${guide}
             ${renderFacilityUnavailabilityView()}
           </section>`;
         }
         if (constructionMode === "cycles") {
           return `<section>
-            ${guide}
             <section class="cycleDefinitionPage">
               <div class="cycleDefinitionPanel">
                 ${renderCycleDefinition()}
@@ -3840,25 +3850,21 @@
         }
         if (constructionMode === "events") {
           return `<section>
-            ${guide}
             ${renderEventsView()}
           </section>`;
         }
         if (constructionMode === "as") {
           return `<section>
-            ${guide}
             ${renderAsView()}
           </section>`;
         }
         if (constructionMode === "hours") {
           return `<section>
-            ${guide}
             ${renderHoursBalance()}
           </section>`;
         }
         if (!canAccessConstructionPlanning()) {
           return `<section class="builderPage">
-            ${guide}
             <div class="constructionWarningPanel">
               <div class="constructionWarning blocking"><strong>Construction verrouillee</strong><span>Completez d'abord les prerequis ci-dessous, puis revenez sur Construction.</span></div>
             </div>
@@ -3867,7 +3873,6 @@
         }
         return `<section class="builderPage">
           <div>
-            ${guide}
             <div class="builderActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}"><i class="dot" style="background:${teacher.border}"></i>${teacher.name}</span>`).join("")}
@@ -4831,6 +4836,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ? week === "build" && constructionMode === buildMode
             : item.dataset.week === week && week !== "build";
           item.classList.toggle("active", isActive);
+          const tracksProgress = Boolean(buildMode && buildMode !== "planning");
+          const complete = tracksProgress && adminStepComplete(buildMode);
+          item.classList.toggle("stepComplete", complete);
+          item.classList.toggle("stepIncomplete", tracksProgress && !complete);
           if (buildMode === "planning") {
             const locked = !canAccessConstructionPlanning();
             item.disabled = locked;

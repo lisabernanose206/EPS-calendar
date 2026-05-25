@@ -1,5 +1,18 @@
 # Log des corrections
 
+- Navigation Admin : bouton Construction isole sur une ligne separee sous les prerequis.
+- Navigation Admin : croix rouge ajoutee sur les etapes absentes ou incompletes, avec controle strict du Service.
+- Navigation : groupe Alertes, Log et Une question repositionne pour rester visible.
+- Navigation Admin : coche de progression ajoutee sur les etapes deja renseignees.
+- Navigation : Alertes, Log et Une question alignes sur une seule ligne.
+- Navigation : contour du groupe Alertes, Log et Une question retire.
+- Navigation : section Utilisateur renommee Professeur.
+- Navigation : Alertes et Log deplaces pres de Une question pour un acces discret.
+- Navigation Admin : bouton Construction place apres les prerequis numerotes.
+- Profs : palette nettoyee, sans gris ni couleurs en double.
+- Navigation Admin : ordre d'utilisation integre directement dans les boutons avec badges numerotes.
+- Profs : palette couleur ajustee avec des tons doux mais plus lisibles.
+- Interface : icones PNG ajoutees pour ameliorer l'affichage du logo chat sur iPad et Safari.
 - Profs : palette pastel elargie et legende couleur remise en cases pleinement colorees.
 - Annee scolaire et Resume cycle : boutons d'export A2/A3 ajoutes.
 - Admin : onglet Construction verrouille tant que les prerequis bloquants ne sont pas remplis et mode d'emploi ajoute.
