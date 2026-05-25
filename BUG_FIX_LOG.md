@@ -1,5 +1,8 @@
 # Log des corrections
 
+- Mode d'emploi : parcours Admin explicite et section Professeur ajoutee pour les trois onglets de consultation.
+- Construction : export simplifie par trimestres automatiques, sans selection de cycle, avec une page par periode.
+- Mode d'emploi : 10 etapes alignees sur une seule ligne et fleche finale retiree.
 - Mode d'emploi : design revu en blocs visibles sur 4 colonnes avec fleches de progression.
 - Construction : exports prepares cycle par cycle avec tableau filtre sur les semaines du cycle et impression plus compacte.
 - Construction : alertes de prerequis rendues cliquables vers l'onglet concerne.
