@@ -286,8 +286,13 @@
       .paletteList { display: flex; flex-wrap: wrap; gap: 6px; }
       .paletteItem { cursor: grab; user-select: none; }
       .builderActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
+      .constructionExportControls { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+      .constructionExportControls select { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-size: 12px; font-weight: 850; min-height: 34px; padding: 0 8px; }
+      .printOnly { display: none; }
       .constructionWarningPanel { display: grid; gap: 6px; margin: 0 0 10px; }
       .constructionWarning { background: #fff7ed; border: 1px solid #fdba74; border-left: 5px solid #f97316; border-radius: 8px; color: #9a3412; display: grid; font-size: 12px; font-weight: 900; gap: 2px; padding: 8px 10px; }
+      .constructionWarning[data-warning-build-mode] { cursor: pointer; }
+      .constructionWarning[data-warning-build-mode]:hover { filter: brightness(0.98); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
       .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
@@ -406,6 +411,12 @@
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
+      .guidePage { display: grid; gap: 10px; margin-top: 16px; max-width: none; width: 100%; }
+      .guideGrid { align-items: stretch; display: grid; gap: 10px 24px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .guideCard { background: #fff; border: 2px solid #cbd5e1; border-top: 5px solid #0f172a; border-radius: 8px; display: grid; gap: 7px; min-height: 112px; padding: 12px; position: relative; }
+      .guideCard:not(:nth-child(4n))::after { color: #0f172a; content: ">>"; font-size: 18px; font-weight: 950; position: absolute; right: -19px; top: 50%; transform: translateY(-50%); }
+      .guideCard strong { color: #0f172a; font-size: 14px; line-height: 1.1; }
+      .guideCard span { color: #475569; font-size: 12px; font-weight: 850; line-height: 1.3; }
       .logPage { display: grid; gap: 10px; margin-top: 16px; max-width: none; width: 100%; }
       .logGroupGrid { align-items: start; display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .logGroup { background: #fff; border: 1px solid #dbeafe; border-left: 5px solid #2563eb; border-radius: 8px; overflow: hidden; }
@@ -553,11 +564,20 @@
       .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
-      body.printA3, body.printA2, body.printA4 { background: #fff; }
-      body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA4 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend { display: none !important; }
+      body.printA3, body.printA2, body.printA4 { background: #fff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .weekArrow, body.printA2 .weekArrow, body.printA4 .weekArrow, body.printA3 [data-print-format], body.printA2 [data-print-format], body.printA4 [data-print-format], body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend, body.printA3 .zoomControls, body.printA2 .zoomControls, body.printA4 .zoomControls, body.printA3 .cycleSummaryControl, body.printA2 .cycleSummaryControl, body.printA4 .cycleSummaryControl { display: none !important; }
       body.printA3 .app, body.printA2 .app, body.printA4 .app { padding: 0; }
       body.printA3 .workspace, body.printA2 .workspace, body.printA4 .workspace { display: block; }
-      body.printA3 .panel, body.printA2 .panel, body.printA4 .panel { max-width: none !important; padding: 0; }
+      body.printA3 .panel, body.printA2 .panel, body.printA4 .panel { border: 0; box-shadow: none; max-width: none !important; padding: 0; }
+      body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA4 .dateInfo { border: 0; border-bottom: 2px solid #0f172a; border-radius: 0; display: flex !important; margin: 0 0 6mm; min-height: 0; padding: 0 0 3mm; }
+      body.printA3 .dateMain span, body.printA2 .dateMain span, body.printA4 .dateMain span { font-size: 9px; }
+      body.printA3 .dateMain strong, body.printA2 .dateMain strong, body.printA4 .dateMain strong { font-size: 17px; }
+      body.printA3 .dateMain small, body.printA2 .dateMain small, body.printA4 .dateMain small { font-size: 9px; }
+      body.printA3 .dateChip, body.printA2 .dateChip, body.printA4 .dateChip { border-radius: 4px; font-size: 9px; padding: 4px 6px; }
+      body.printA3 .teacherColorLegend, body.printA2 .teacherColorLegend, body.printA4 .teacherColorLegend { gap: 3px; margin: 0 0 3mm; }
+      body.printA3 .teacherColorLegend .legendItem, body.printA2 .teacherColorLegend .legendItem, body.printA4 .teacherColorLegend .legendItem { border-radius: 3px; font-size: 8px; min-height: 20px; padding: 0 5px; }
+      body.printA3 .selectedWeekInfo, body.printA2 .selectedWeekInfo, body.printA4 .selectedWeekInfo { border-radius: 0; margin: 0 0 3mm; padding: 5px 7px; position: static; }
+      body.printA3 .consultationYearTable thead th, body.printA2 .consultationYearTable thead th, body.printA4 .consultationYearTable thead th { position: static !important; }
       body.printA3 .consultationYearWrap, body.printA2 .consultationYearWrap, body.printA4 .consultationYearWrap { max-height: none; overflow: visible; }
       body.printA3 .consultationYearTable, body.printA2 .consultationYearTable, body.printA4 .consultationYearTable { min-width: 0; width: 100%; }
       body.printA3 .consultationYearTable th, body.printA3 .consultationYearTable td { font-size: 7px; padding: 2px 1px; }
@@ -580,6 +600,15 @@
       body.printA4 .homeTimetable .lessonTop strong, body.printA4 .homeTimetable .lessonMeta, body.printA4 .homeTimetable .lessonMeta .muted { font-size: 6.5px; line-height: 1; }
       body.printA3 .buildFacilitySlot { min-height: 20px; }
       body.printA2 .buildFacilitySlot { min-height: 24px; }
+      body.printConstructionCycle .printOnly { border-bottom: 2px solid #0f172a; display: grid; gap: 2px; margin: 0 0 4mm; padding-bottom: 2mm; }
+      body.printConstructionCycle .printOnly strong { font-size: 16px; }
+      body.printConstructionCycle .printOnly span { color: #475569; font-size: 10px; font-weight: 850; }
+      body.printConstructionCycle .calendarLegend, body.printConstructionCycle .constructionWarningPanel { display: none !important; }
+      body.printConstructionCycle .constructionTable th, body.printConstructionCycle .constructionTable td { font-size: 7px; padding: 2px; }
+      body.printConstructionCycle .constructionTable .rowHead { width: 42px !important; }
+      body.printConstructionCycle .constructionTable .timeHead { width: 48px !important; }
+      body.printConstructionCycle .buildBlock { border-radius: 2px; min-height: 20px; padding: 2px; }
+      body.printConstructionCycle .buildBlock strong, body.printConstructionCycle .buildBlock span { font-size: 6px; line-height: 1; }
       @page { size: A3 landscape; margin: 8mm; }
       @media print {
         body.printA3 { zoom: 0.48; }
@@ -592,6 +621,8 @@
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .compactCardGrid { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .guideGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .guideCard:not(:nth-child(4n))::after { display: none; }
         .logGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .unavailableGrid { grid-template-columns: 1fr; }
       }
@@ -608,6 +639,7 @@
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: 1fr; }
+        .guideGrid { grid-template-columns: 1fr; }
         .logGroupGrid { grid-template-columns: 1fr; }
         .weeks button, .tabs button { text-align: center; width: auto; }
         .miniWeek { grid-template-columns: 1fr; }
@@ -665,6 +697,7 @@
 
           <section class="navGroup questionNavGroup">
             <section class="weeks">
+              <button data-week="guide">Mode d'emploi</button>
               <button data-week="alerts">Alertes</button>
               <button data-week="log">Log</button>
               <button data-week="request">Une question ?</button>
@@ -780,6 +813,8 @@
       let constructionPlan = {};
       let constructionMode = "planning";
       let constructionZoom = 0.8;
+      let constructionExportCycleId = "";
+      let constructionPrintCycleId = "";
       let cycleViewZoom = 0.8;
       let clearConstructionPanelOpen = false;
       let activeHomeCycleId = null;
@@ -3743,15 +3778,15 @@
         const items = [];
         const cycleErrors = validateCycles(cycles);
         const hasServiceAssignments = teachers.some((teacher) => serviceRowsForTeacher(teacher.id).length > 0);
-        if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours." });
-        if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes." });
-        if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours." });
-        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode." });
-        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0] });
-        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction." });
-        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent." });
-        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning." });
-        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes." });
+        if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours.", buildMode: "team" });
+        if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes.", buildMode: "classes" });
+        if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours.", buildMode: "facilities" });
+        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode.", buildMode: "cycles" });
+        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0], buildMode: "cycles" });
+        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "hours" });
+        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "unavailable" });
+        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning.", buildMode: "as" });
+        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes.", buildMode: "events" });
         return items;
       }
 
@@ -3787,7 +3822,7 @@
       function renderConstructionWarnings() {
         const items = constructionReadinessItems();
         if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
-        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
       function renderClassesView() {
@@ -3884,6 +3919,12 @@
             ${renderConstructionWarnings()}
           </section>`;
         }
+        const exportCycleChoices = userCycleChoices();
+        if (!exportCycleChoices.some((cycle) => cycle.id === constructionExportCycleId)) constructionExportCycleId = exportCycleChoices[0]?.id || "";
+        const printCycle = constructionPrintCycleId ? exportCycleChoices.find((cycle) => cycle.id === constructionPrintCycleId) : null;
+        let visibleWeeks = printCycle ? weeks.filter((weekItem) => weeksForCycle(printCycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank)) : weeks;
+        if (!visibleWeeks.length) visibleWeeks = weeks;
+        const visibleMonthLabels = visibleWeeks.map(monthLabelForWeek);
         return `<section class="builderPage">
           <div>
             <div class="builderActions">
@@ -3895,14 +3936,20 @@
                 <button class="ghostButton" data-construction-zoom-reset>${Math.round(constructionZoom * 100)}%</button>
                 <button class="ghostButton" data-construction-zoom="+">+</button>
               </div>
-              <button class="ghostButton" data-print-format="A3">Exporter A3</button>
-              <button class="ghostButton" data-print-format="A2">Exporter A2</button>
+              <div class="constructionExportControls">
+                <select id="constructionExportCycle">
+                  ${exportCycleChoices.map((cycle) => `<option value="${cycle.id}" ${cycle.id === constructionExportCycleId ? "selected" : ""}>${cycle.displayName}</option>`).join("")}
+                </select>
+                <button class="ghostButton" data-print-format="A3" data-print-cycle="construction">Exporter cycle A3</button>
+                <button class="ghostButton" data-print-format="A2" data-print-cycle="construction">Exporter cycle A2</button>
+              </div>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
             <div class="calendarLegend">V = vacances · F = férié</div>
+            ${printCycle ? `<div class="printOnly"><strong>Construction - ${printCycle.displayName}</strong><span>du ${formatDate(printCycle.start)} au ${formatDate(printCycle.end)}</span></div>` : ""}
             ${renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
-            <div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>
+            <div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionTable(visibleWeeks, current, visibleMonthLabels, rows, true)}</div>
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
@@ -4211,7 +4258,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<div class="cycleCoverage">
           <h3>Vue annuelle des cycles</h3>
           <div class="cycleLegend"><span class="cycleLegendSwatch"></span><span>Rouge fonce : trou dans les cycles</span></div>
-          <div class="yearWrap"><table class="yearTable consultationYearTable cycleCoverageTable">
+          <div class="yearWrap"><table class="yearTable cycleCoverageTable">
             <thead>
               <tr><th class="timeHead">Repère</th>${groupedHeaderCells(weeks, monthLabelForWeek, () => "monthCell")}</tr>
               <tr><th class="timeHead">Cycle</th>${groupedHeaderCells(weeks, (weekItem) => {
@@ -4713,6 +4760,31 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         </section>`;
       }
 
+      function renderGuideView() {
+        const steps = [
+          ["1. Profs", "Creez les professeurs, choisissez leur couleur et renseignez les remplacants si besoin."],
+          ["2. Classes", "Definissez les classes de l'etablissement et leur format de nommage."],
+          ["3. Installations", "Ajoutez les installations internes ou externes utilisables dans les cours."],
+          ["4. Activites", "Ajoutez les activites si vous voulez les preciser dans certains blocs."],
+          ["5. Indisponibilites", "Renseignez les contraintes des profs, classes et installations avant de construire."],
+          ["6. Cycles", "Creez les cycles par niveau quand ils different selon les classes."],
+          ["7. AS et evenements", "Ajoutez les AS et evenements sportifs qui doivent apparaitre dans le planning."],
+          ["8. Service", "Affectez les classes aux profs et verifiez l'ecart entre service theorique et reel."],
+          ["9. Construction", "Construisez les creneaux quand les etapes precedentes sont validees."],
+          ["10. Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
+        ];
+        return `<section class="guidePage">
+          <h2>Mode d'emploi</h2>
+          <article class="alertHelp">
+            <strong>Parcours conseille</strong>
+            <span>Suivez ces etapes dans l'ordre pour eviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
+          </article>
+          <div class="guideGrid">
+            ${steps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+          </div>
+        </section>`;
+      }
+
       function renderBugFixLogView() {
         const source = window.__EPS_BUG_FIX_LOG__ || fallbackBugFixLog;
         const entries = source
@@ -4873,12 +4945,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         dateInfo.style.display = "none";
         dateInfo.innerHTML = "";
         const legend = document.getElementById("legend");
-        const hideLegend = week === "build" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
+        const hideLegend = week === "build" || week === "guide" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
         legend.style.display = hideLegend ? "none" : "flex";
         legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
         if (week === "year") root.innerHTML = renderYearView(cycle);
         else if (week === "cycle") root.innerHTML = renderCycleView();
         else if (week === "build") root.innerHTML = renderConstructionView();
+        else if (week === "guide") root.innerHTML = renderGuideView();
         else if (week === "alerts") root.innerHTML = renderAlertsView();
         else if (week === "log") root.innerHTML = renderBugFixLogView();
         else if (week === "request") root.innerHTML = renderRequestView();
@@ -4898,6 +4971,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (adminPasswordInput) adminPasswordInput.addEventListener("input", () => authPassword = adminPasswordInput.value);
         const logoutAdmin = document.getElementById("logoutAdmin");
         if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
+        document.querySelectorAll("[data-warning-build-mode]").forEach((warning) => {
+          warning.addEventListener("click", () => {
+            week = "build";
+            constructionMode = warning.dataset.warningBuildMode || "planning";
+            render();
+          });
+        });
         document.querySelectorAll("[data-request-kind]").forEach((button) => {
           button.addEventListener("click", () => {
             requestKind = button.dataset.requestKind;
@@ -4910,6 +4990,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (requestMessageInput) requestMessageInput.addEventListener("input", () => requestMessage = requestMessageInput.value);
         const sendFeedback = document.getElementById("sendFeedback");
         if (sendFeedback) sendFeedback.addEventListener("click", submitFeedback);
+        const constructionExportCycle = document.getElementById("constructionExportCycle");
+        if (constructionExportCycle) {
+          constructionExportCycle.addEventListener("change", () => {
+            constructionExportCycleId = constructionExportCycle.value;
+          });
+        }
         document.querySelectorAll("[data-open-date-range]").forEach((button) => {
           button.addEventListener("click", () => {
             activeDateRangePicker = button.dataset.openDateRange;
@@ -4974,22 +5060,34 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-print-format]").forEach((button) => {
           button.addEventListener("click", () => {
             const format = button.dataset.printFormat;
-            const existingPrintStyle = document.getElementById("printPageStyle");
-            if (existingPrintStyle) existingPrintStyle.remove();
-            const printStyle = document.createElement("style");
-            printStyle.id = "printPageStyle";
-            printStyle.textContent = `@page { size: ${format} landscape; margin: 6mm; }`;
-            document.head.appendChild(printStyle);
-            document.body.classList.remove("printA3", "printA2", "printA4");
-            document.body.classList.add(`print${format}`);
+            const printCycle = button.dataset.printCycle === "construction";
+            if (printCycle) {
+              constructionPrintCycleId = constructionExportCycleId || userCycleChoices()[0]?.id || "";
+              render();
+            }
             setTimeout(() => {
-              window.print();
+              const existingPrintStyle = document.getElementById("printPageStyle");
+              if (existingPrintStyle) existingPrintStyle.remove();
+              const printStyle = document.createElement("style");
+              printStyle.id = "printPageStyle";
+              printStyle.textContent = `@page { size: ${format} landscape; margin: ${printCycle ? "4mm" : "6mm"}; }`;
+              document.head.appendChild(printStyle);
+              document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionCycle");
+              document.body.classList.add(`print${format}`);
+              if (printCycle) document.body.classList.add("printConstructionCycle");
               setTimeout(() => {
-                document.body.classList.remove("printA3", "printA2", "printA4");
-                const style = document.getElementById("printPageStyle");
-                if (style) style.remove();
-              }, 500);
-            }, 50);
+                window.print();
+                setTimeout(() => {
+                  document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionCycle");
+                  const style = document.getElementById("printPageStyle");
+                  if (style) style.remove();
+                  if (printCycle) {
+                    constructionPrintCycleId = "";
+                    render();
+                  }
+                }, 500);
+              }, 50);
+            }, printCycle ? 60 : 0);
           });
         });
         const prevWeek = document.getElementById("prevWeek");

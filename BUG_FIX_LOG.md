@@ -1,5 +1,11 @@
 # Log des corrections
 
+- Mode d'emploi : design revu en blocs visibles sur 4 colonnes avec fleches de progression.
+- Construction : exports prepares cycle par cycle avec tableau filtre sur les semaines du cycle et impression plus compacte.
+- Construction : alertes de prerequis rendues cliquables vers l'onglet concerne.
+- Cycles Admin : tableau recap annuel separe du style sticky de l'onglet Annee scolaire.
+- Mode d'emploi : nouvel onglet discret ajoute avant Alertes, Log et Une question.
+- Exports : mise en page d'impression nettoyee avec periode visible, controles masques et tableaux plus lisibles.
 - Legende profs : carre couleur retire, nom conserve sur fond colore et bouton Tous passe en beige fonce.
 - Resume cycle : bouton Exporter aligne avec le choix du cycle pour gagner une ligne.
 - Resume cycle : noms des profs retires des cases et legende couleur ajoutee au-dessus du tableau.
