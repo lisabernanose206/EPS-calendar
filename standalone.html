@@ -93,12 +93,16 @@
       .homeTimetable th, .homeTimetable td { border: 2px solid #111827; font-size: 11px; padding: 4px; vertical-align: top; }
       .homeTimetable thead th { background: #334155; color: #fff; font-size: 12px; font-weight: 950; line-height: 1.1; padding: 6px 4px; text-align: center; }
       .homeTimetable .timeColumn { background: #f1f5f9; color: #0f172a; font-weight: 950; line-height: 1.12; text-align: center; vertical-align: middle; width: 92px; }
-      .homeTimetableSlot { display: grid; gap: 3px; min-height: 70px; }
-      .homeTimetable .lesson { border-width: 1px; gap: 2px; min-height: 34px; padding: 4px; }
-      .homeTimetable .lessonTop strong { font-size: 10px; line-height: 1.08; }
-      .homeTimetable .lessonMeta, .homeTimetable .lessonMeta .muted { font-size: 9px; line-height: 1.08; }
+      .homeTimetableSlot { align-items: flex-start; display: flex; gap: 3px; min-height: 0; }
+      .homeTimetable .lesson { align-self: flex-start; border-width: 1px; flex: 1 1 0; gap: 1px; min-height: 0; min-width: 0; padding: 2px 3px; }
+      .homeTimetable .lesson:not(.eventBlock):not(.asBlock) { align-items: center; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+      .homeTimetable .lesson:not(.eventBlock):not(.asBlock) .lessonTop,
+      .homeTimetable .lesson:not(.eventBlock):not(.asBlock) .lessonMeta { justify-content: center; width: 100%; }
+      .homeTimetable .emptyLesson { grid-column: 1 / -1; }
+      .homeTimetable .lessonTop strong { font-size: 9px; line-height: 1; }
+      .homeTimetable .lessonMeta, .homeTimetable .lessonMeta .muted { font-size: 8px; line-height: 1; }
       .homeTimetable .badge { font-size: 8px; padding: 2px 4px; }
-      .homeTimetable .emptyLesson { font-size: 10px; min-height: 48px; padding: 5px; }
+      .homeTimetable .emptyLesson { align-self: flex-start; font-size: 9px; min-height: 0; padding: 3px 5px; }
       .homeTimetable .nonWorkingCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #e2e8f0 6px, #e2e8f0 12px); color: #64748b; }
       .homeTimetable .nonWorkingCell .emptyLesson { background: transparent; border-color: #cbd5e1; color: #64748b; }
       .teacherCalendar { grid-template-columns: repeat(5, 220px); min-width: 1140px; }
@@ -216,18 +220,26 @@
       .cycleTwoWeekTable tbody .timeHead { background: #f8fafc; font-size: 12px; line-height: 1.05; }
       .cycleTwoWeekTable .buildCellStack { gap: 2px; min-width: 0; }
       .cycleTwoWeekTable .buildBlock { border-radius: 4px; gap: 1px; min-height: 34px; padding: 3px; }
+      .cycleSummaryTableWrap { min-height: calc(100vh - 150px); }
+      .cycleSummaryTableWrap .yearWrap { min-height: calc(100vh - 150px); }
+      .cycleSummaryTableWrap .cycleTwoWeekTable { height: 100%; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable tbody tr { height: 64px; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable td { height: 64px; padding: 2px; }
+      .cycleSummaryTableWrap .buildCellStack { height: 100%; }
+      .cycleSummaryTableWrap .buildBlock { align-items: center; display: flex; height: 100%; justify-content: center; min-height: 100%; text-align: center; }
       .cycleTwoWeekTable .cycleUnavailableCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #cbd5e1 6px, #cbd5e1 12px); }
       .cycleTwoWeekTable .buildBlock strong { font-size: 9px; line-height: 1; }
       .cycleTwoWeekTable .buildBlock span { font-size: 8px; line-height: 1; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { display: block; font-size: clamp(8px, 0.9vw, 11px); line-height: 1; margin: 0 auto; max-width: 100%; overflow-wrap: anywhere; text-align: center; white-space: normal; word-break: normal; }
       .yearTable th { background: #f1f5f9; color: #334155; font-weight: 900; }
       .yearTable .rowHead { background: #ffffff; color: #0f172a; font-weight: 900; left: 0; min-width: 88px; position: sticky; text-align: left; z-index: 2; }
       .yearTable .timeHead { background: #ffffff; color: #0f172a; font-weight: 900; left: 88px; min-width: 96px; position: sticky; text-align: center; vertical-align: middle; z-index: 2; }
       .yearTable.cycleTwoWeekTable { min-width: 760px; table-layout: fixed; }
       .yearTable.cycleTwoWeekTable .timeHead, .yearTable.cycleTwoWeekTable .weekTypeHead { left: auto; position: static; z-index: auto; }
       .yearTable.cycleTwoWeekTable .timeHead { min-width: 70px; width: 70px; }
-      .yearTable.cycleTwoWeekTable .weekTypeHead { min-width: 120px; overflow-wrap: anywhere; width: 120px; }
+      .yearTable.cycleTwoWeekTable .weekTypeHead { min-width: 42px; overflow-wrap: anywhere; width: 42px; }
       .cycleTimeCol { width: 70px; }
-      .cycleFacilityCol { width: 120px; }
+      .cycleFacilityCol { width: 42px; }
       .consultationYearTable .rowHead { left: 0; min-width: 62px; width: 62px; z-index: 4; }
       .consultationYearTable .timeHead { left: 62px; min-width: 68px; width: 68px; z-index: 4; }
       .consultationYearTable thead th { position: sticky; z-index: 8; }
@@ -320,6 +332,15 @@
       .buildBlock strong { color: #172033; font-size: 10px; line-height: 1.1; }
       .buildBlock span { color: #475569; font-size: 9px; font-weight: 850; line-height: 1.1; }
       .buildBlock button { background: rgba(255,255,255,0.55); border: 0; border-radius: 999px; color: #334155; cursor: pointer; font-size: 10px; font-weight: 950; justify-self: end; padding: 1px 5px; }
+      .constructionTable .buildCellStack { gap: 2px; }
+      .constructionTable .buildFacilitySlot { gap: 2px; min-height: 0; }
+      .constructionTable .buildSlotSpacer { min-height: 0; }
+      .constructionTable .buildBlock { gap: 0; min-height: 0; padding: 2px 18px 2px 3px; position: relative; }
+      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { line-height: 1.05; }
+      .constructionTable .buildBlock button { position: absolute; right: 2px; top: 2px; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock { align-items: center !important; display: flex !important; justify-content: center !important; padding: 2px !important; text-align: center !important; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { margin: 0 auto !important; text-align: center !important; width: 100%; }
+      .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) th { background: #fff !important; color: #0f172a !important; }
       .zoomControls { align-items: center; display: inline-flex; gap: 6px; }
       .zoomControls .ghostButton { min-width: 34px; padding: 0 9px; text-align: center; }
       .constructionZoomWrap { background: #fff; border: 2px solid #111827; border-radius: 8px; max-width: 100%; overflow: hidden; transform-origin: top left; width: 100%; }
@@ -698,7 +719,7 @@
               <button data-week="build" data-build-mode="hours"><span class="stepNav"><span class="stepBadge">9</span>Service<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
             </section>
           </section>
-          <section class="navGroup adminBuildNav">
+          <section class="navGroup adminBuildNav" id="adminBuildNavGroup">
             <span class="navGroupLabel"></span>
             <section class="weeks">
               <button class="primaryAdminTab" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">10</span>Construction</span></button>
@@ -3328,7 +3349,7 @@
             ${days.map((day) => {
               const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
               const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
-              if (!row) return `<td class="${nonWorkingCell ? "nonWorkingCell" : ""}"><div class="homeTimetableSlot">${nonWorkingCell ? "" : `<div class="emptyLesson">Pas de cours</div>`}</div></td>`;
+              if (!row) return `<td class="${nonWorkingCell ? "nonWorkingCell" : ""}"><div class="homeTimetableSlot"></div></td>`;
               const key = yearCellKey(row.id, weekItem.rank);
               const holiday = holidayFor(row, weekItem);
               const vacation = vacationForCell(row, weekItem);
@@ -3340,12 +3361,12 @@
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
                 ${lessons.map((lesson) => `
                   <div class="lesson" style="${blockTeacherStyle(lesson)}">
-                    <div class="lessonTop"><strong>${teacherLabelForBlock(lesson)}</strong>${facilityBadge(facilities.find((facility) => facility.id === lesson.facilityId)?.type || "internal")}</div>
-                    <div class="lessonMeta"><span class="muted">${lesson.schoolClass} · ${lesson.facilityLabel}</span></div>
+                    <div class="lessonTop"><strong>${lesson.schoolClass}</strong></div>
+                    <div class="lessonMeta"><span class="muted">${lesson.facilityLabel}</span></div>
                   </div>`).join("")}
                 ${events.map((event) => `<div class="lesson eventBlock"><strong>${event.name}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
                 ${asItems.map((session) => `<div class="lesson asBlock" style="${asSessionStyle(session)}"><strong>${asBlockLabel(session)}</strong><span>${asSessionTeacherLabel(session)}</span></div>`).join("")}
-                ${!vacation && !holiday && !lessons.length && !events.length && !asItems.length ? `<div class="emptyLesson">Libre</div>` : ""}
+                ${!vacation && !holiday && !lessons.length && !events.length && !asItems.length ? "" : ""}
               </div></td>`;
             }).join("")}
           </tr>`).join("")}</tbody>
@@ -3416,10 +3437,8 @@
         const unavailableItems = unavailableForCycleLetter(row, cycle, letter, facilityId);
         return `<td class="${unavailableItems.length ? "cycleUnavailableCell" : ""}"><div class="buildCellStack">
           ${items.map((item) => `<div class="buildBlock" style="${blockTeacherStyle(item)}">
-            <strong>${item.schoolClass || "Classe"}</strong>
-            ${item.facilityLabel ? `<span>${item.facilityLabel}</span>` : ""}
+            <strong>${compactClassName(item.schoolClass) || "Classe"}</strong>
           </div>`).join("")}
-          ${!items.length && !unavailableItems.length ? `<span class="muted">Libre</span>` : ""}
         </div></td>`;
       }
 
@@ -3430,21 +3449,22 @@
         return `<div class="yearWrap"><table class="yearTable constructionTable cycleTwoWeekTable">
           <colgroup>
             <col class="cycleTimeCol" />
-            <col class="cycleFacilityCol" />
-            ${days.map(() => `<col />`).join("")}
+            ${days.flatMap(() => displayedFacilities.map(() => `<col class="cycleFacilityCol" />`)).join("")}
           </colgroup>
           <thead>
-            <tr><th class="timeHead">Créneau</th><th class="weekTypeHead">Installation</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr>
+            <tr><th class="timeHead" rowspan="2">Créneau</th>${days.map((day) => `<th colspan="${displayedFacilities.length}">${day}</th>`).join("")}</tr>
+            <tr>${days.flatMap(() => displayedFacilities.map((facility) => `<th class="weekTypeHead" title="${facility.label}">${facilityShortLabel(facility.id, facility.label)}</th>`)).join("")}</tr>
           </thead>
           <tbody>
-            ${cycleSlots.map((slot) => displayedFacilities.map((facility, facilityIndex) => `<tr>
-              ${facilityIndex === 0 ? `<th class="timeHead" rowspan="${displayedFacilities.length}">${slot.label}</th>` : ""}
-              <th class="weekTypeHead"><strong>${facility.label}</strong></th>
-              ${days.map((day) => {
+            ${cycleSlots.map((slot) => `<tr>
+              <th class="timeHead">${slot.label}</th>
+              ${days.flatMap((day) => displayedFacilities.map((facility) => {
                 const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
-                return row ? renderCycleLetterCell(row, cycle, activeCycleLetter, facility.id) : `<td><div class="buildCellStack"><span class="muted">Pas de cours</span></div></td>`;
-              }).join("")}
-            </tr>`).join("")).join("")}
+                const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
+                if (!row) return `<td class="${nonWorkingCell ? "holidayCell" : ""}"><div class="buildCellStack"></div></td>`;
+                return renderCycleLetterCell(row, cycle, activeCycleLetter, facility.id);
+              })).join("")}
+            </tr>`).join("")}
           </tbody>
         </table></div>`;
       }
@@ -3483,7 +3503,7 @@
             </div>
           </div>
           ${renderTeacherLegend("homeTeacherLegend")}
-          <div class="constructionZoomWrap" style="--table-zoom:${cycleViewZoom};--table-offset:150px;zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
+          <div class="constructionZoomWrap cycleSummaryTableWrap" style="--table-zoom:${cycleViewZoom};--table-offset:150px;zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
       }
 
@@ -4181,7 +4201,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   <button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>
                   <strong>${item.schoolClass || "Bloc"}</strong>
                   <span>${item.facilityLabel || ""}</span>
-                  <span>${teacherLabelForBlock(item)}</span>
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map((event) => `
                 <div class="buildBlock eventBlock">
@@ -4551,15 +4570,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <button data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
-                <span>${item.facilityLabel || item.type || ""}</span>
-                ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
+                <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
               <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
-                <span>${item.facilityLabel || item.type || ""}</span>
-                ${item.activityLabel ? `<span>${item.activityLabel}</span>` : ""}
+                <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock">
@@ -4790,7 +4807,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           ["6. Cycles", "Creez les cycles par niveau quand ils different selon les classes."],
           ["7. AS et evenements", "Ajoutez les AS et evenements sportifs qui doivent apparaitre dans le planning."],
           ["8. Service", "Affectez les classes aux profs et verifiez l'ecart entre service theorique et reel."],
-          ["9. Construction", "Construisez les creneaux quand les etapes precedentes sont validees."],
+          ["9. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les etapes precedentes sont validees."],
           ["10. Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
@@ -4810,6 +4827,45 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <article class="alertHelp">
             <strong>Vue Professeur</strong>
             <span>Ces trois onglets servent surtout a consulter le planning construit, sans modifier le parametrage Admin.</span>
+          </article>
+          <div class="guideGrid guideProfessorGrid">
+            ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+          </div>
+        </section>`;
+      }
+
+      function renderGuideView() {
+        const adminSteps = [
+          ["1. Profs", "Creez les professeurs, choisissez leur couleur et renseignez les remplacants si besoin."],
+          ["2. Classes", "Definissez les classes de l'etablissement et leur format de nommage."],
+          ["3. Installations", "Ajoutez les installations internes ou externes utilisables dans les cours."],
+          ["4. Activites", "Ajoutez les activites si vous voulez les preciser dans certains blocs."],
+          ["5. Indisponibilites", "Renseignez les contraintes des profs, classes et installations avant de construire."],
+          ["6. Cycles", "Creez les cycles par niveau quand ils different selon les classes."],
+          ["7. AS et evenements", "Ajoutez les AS et evenements sportifs qui doivent apparaitre dans le planning."],
+          ["8. Service", "Affectez les classes aux profs et verifiez l'ecart entre service theorique et reel."],
+          ["9. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les etapes precedentes sont validees."],
+          ["10. Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
+        ];
+        const professorSteps = [
+          ["Emploi du temps", "Consultez la semaine selectionnee avec les cours, AS et evenements visibles."],
+          ["Annee scolaire", "Visualisez toute l'annee, selectionnez une semaine et ouvrez le detail des cases."],
+          ["Resume cycle", "Controlez rapidement les cours d'un cycle par installation et par semaine A/B."]
+        ];
+        const adminGuide = isAdmin() ? `
+          <article class="alertHelp">
+            <strong>Parcours Admin conseille</strong>
+            <span>Les etapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour eviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
+          </article>
+          <div class="guideGrid">
+            ${adminSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+          </div>` : "";
+        return `<section class="guidePage">
+          <h2>Mode d'emploi</h2>
+          ${adminGuide}
+          <article class="alertHelp">
+            <strong>Vue Professeur</strong>
+            <span>${isAdmin() ? "Ces trois onglets servent surtout a consulter le planning construit, sans modifier le parametrage Admin." : "Vous voyez ici les onglets utiles pour consulter le planning construit."}</span>
           </article>
           <div class="guideGrid guideProfessorGrid">
             ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
@@ -4970,6 +5026,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
+        const adminBuildNavGroup = document.getElementById("adminBuildNavGroup");
+        if (adminBuildNavGroup) adminBuildNavGroup.classList.toggle("locked", !isAdmin());
         updateNavigationActive();
         const cycle = generateCycle();
         const root = document.getElementById("root");

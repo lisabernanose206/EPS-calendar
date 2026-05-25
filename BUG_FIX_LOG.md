@@ -1,5 +1,32 @@
 # Log des corrections
 
+- Emploi du temps : texte des blocs colores centre horizontalement et verticalement.
+- Resume cycle : en-tete de niveau 2 passe en fond blanc avec texte noir.
+- Resume cycle : centrage des blocs colores force apres les styles generiques du tableau.
+- Resume cycle : centrage horizontal et vertical des textes dans les blocs colores force.
+- Resume cycle : ellipses retirees dans les blocs pour afficher les classes en entier.
+- Resume cycle : taille des textes de blocs ajustee pour eviter les debordements.
+- Resume cycle : centrage et police des blocs colores renforces avec une priorite CSS correcte.
+- Resume cycle : texte des blocs centre et police agrandie avec ajustement responsive.
+- Resume cycle : tableau encore agrandi et blocs forces a remplir toute la case.
+- Resume cycle : tableau allonge pour mieux occuper la hauteur disponible.
+- Resume cycle : mercredi apres-midi grise et wording Pas de cours retire.
+- Emploi du temps : wording Libre retire des cases vides.
+- Resume cycle : nom de salle retire des blocs, deja visible dans la colonne.
+- Emploi du temps : hauteur des cases vides reduite pour eviter les grands trous dans les lignes.
+- Resume cycle : texte Libre retire, classes compactees et sous-colonnes installations reduites.
+- Emploi du temps : badge College/Ext retire, blocs compactes et alignes sur une meme ligne par creneau.
+- Resume cycle : jours conserves en niveau 1 et installations affichees en colonnes de niveau 2.
+- Emploi du temps : blocs de cours passes a trois cases par ligne dans chaque creneau.
+- Resume cycle : jours remis en colonnes et noms des installations abreges.
+- Emploi du temps : blocs de cours affiches en deux cases par ligne dans chaque creneau.
+- Resume cycle : tableau pivote pour afficher les installations en colonnes.
+- Emploi du temps : noms des profs retires des cases, code couleur conserve.
+- Construction : croix de suppression sortie du flux et installation/activite fusionnees sur une ligne.
+- Construction : blocs du tableau resserres pour limiter les lignes et hauteurs inutiles.
+- Mode d'emploi : contenu adapte selon la connexion admin, avec vue Professeur seule hors admin.
+- Navigation : onglet Construction masque tant que l'admin n'est pas connecte.
+- Construction : noms des profs retires des blocs et mode d'emploi precise la creation par clic sur une case.
 - Exports Construction : tableaux trimestriels forces a occuper toute la largeur et la hauteur utile de la page.
 - Mode d'emploi : parcours Admin explicite et section Professeur ajoutee pour les trois onglets de consultation.
 - Construction : export simplifie par trimestres automatiques, sans selection de cycle, avec une page par periode.
