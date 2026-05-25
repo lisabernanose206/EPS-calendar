@@ -1,5 +1,10 @@
 # Log des corrections
 
+- Legende profs : carre couleur retire, nom conserve sur fond colore et bouton Tous passe en beige fonce.
+- Resume cycle : bouton Exporter aligne avec le choix du cycle pour gagner une ligne.
+- Resume cycle : noms des profs retires des cases et legende couleur ajoutee au-dessus du tableau.
+- Profs : palette enrichie avec davantage de nuances rouges et bleues soutenues.
+- Export : A4 ajoute dans Emploi du temps et A2 retire de Resume cycle.
 - Navigation Admin : bouton Construction isole sur une ligne separee sous les prerequis.
 - Navigation Admin : croix rouge ajoutee sur les etapes absentes ou incompletes, avec controle strict du Service.
 - Navigation : groupe Alertes, Log et Une question repositionne pour rester visible.

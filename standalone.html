@@ -442,7 +442,7 @@
       .cyclePickerRow { align-items: end; display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
       .cyclePickerRow .constructionTabs, .cyclePickerRow .eventForm { margin: 0; }
       .cyclePickerRow .eventForm { padding: 10px 12px; }
-      .cycleSummaryHeader { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(190px, 1fr) minmax(220px, 300px) auto auto; margin-bottom: 10px; }
+      .cycleSummaryHeader { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(190px, 1fr) minmax(210px, 280px) auto auto auto; margin-bottom: 10px; }
       .cycleSummaryHeader h2 { margin: 0; }
       .cycleSummaryControl { display: grid; gap: 4px; }
       .cycleSummaryControl label { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
@@ -553,32 +553,38 @@
       .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
-      body.printA3, body.printA2 { background: #fff; }
-      body.printA3 .sideNav, body.printA2 .sideNav, body.printA3 .top, body.printA2 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA3 .legend, body.printA2 .legend { display: none !important; }
-      body.printA3 .app, body.printA2 .app { padding: 0; }
-      body.printA3 .workspace, body.printA2 .workspace { display: block; }
-      body.printA3 .panel, body.printA2 .panel { max-width: none !important; padding: 0; }
-      body.printA3 .consultationYearWrap, body.printA2 .consultationYearWrap { max-height: none; overflow: visible; }
-      body.printA3 .consultationYearTable, body.printA2 .consultationYearTable { min-width: 0; width: 100%; }
+      body.printA3, body.printA2, body.printA4 { background: #fff; }
+      body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .dateInfo, body.printA2 .dateInfo, body.printA4 .dateInfo, body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend { display: none !important; }
+      body.printA3 .app, body.printA2 .app, body.printA4 .app { padding: 0; }
+      body.printA3 .workspace, body.printA2 .workspace, body.printA4 .workspace { display: block; }
+      body.printA3 .panel, body.printA2 .panel, body.printA4 .panel { max-width: none !important; padding: 0; }
+      body.printA3 .consultationYearWrap, body.printA2 .consultationYearWrap, body.printA4 .consultationYearWrap { max-height: none; overflow: visible; }
+      body.printA3 .consultationYearTable, body.printA2 .consultationYearTable, body.printA4 .consultationYearTable { min-width: 0; width: 100%; }
       body.printA3 .consultationYearTable th, body.printA3 .consultationYearTable td { font-size: 7px; padding: 2px 1px; }
       body.printA2 .consultationYearTable th, body.printA2 .consultationYearTable td { font-size: 8px; padding: 2px; }
-      body.printA3 .constructionZoomWrap, body.printA2 .constructionZoomWrap { zoom: 1 !important; overflow: visible; width: 100%; }
-      body.printA3 .constructionTable, body.printA2 .constructionTable { min-width: 0; table-layout: fixed; width: 100%; }
+      body.printA3 .constructionZoomWrap, body.printA2 .constructionZoomWrap, body.printA4 .constructionZoomWrap { zoom: 1 !important; overflow: visible; width: 100%; }
+      body.printA3 .constructionTable, body.printA2 .constructionTable, body.printA4 .constructionTable { min-width: 0; table-layout: fixed; width: 100%; }
       body.printA3 .constructionTable th, body.printA3 .constructionTable td { border-width: 1px; font-size: 5px; padding: 1px; }
       body.printA2 .constructionTable th, body.printA2 .constructionTable td { border-width: 1px; font-size: 6px; padding: 1px; }
-      body.printA3 .constructionTable .rowHead, body.printA3 .constructionTable .timeHead, body.printA2 .constructionTable .rowHead, body.printA2 .constructionTable .timeHead { border-right-width: 1px; left: auto !important; min-width: 34px; position: static !important; width: 34px; z-index: auto !important; }
-      body.printA3 .buildCellStack, body.printA2 .buildCellStack { gap: 1px; min-width: 0; }
+      body.printA3 .constructionTable .rowHead, body.printA3 .constructionTable .timeHead, body.printA2 .constructionTable .rowHead, body.printA2 .constructionTable .timeHead, body.printA4 .constructionTable .rowHead, body.printA4 .constructionTable .timeHead { border-right-width: 1px; left: auto !important; min-width: 34px; position: static !important; width: 34px; z-index: auto !important; }
+      body.printA3 .buildCellStack, body.printA2 .buildCellStack, body.printA4 .buildCellStack { gap: 1px; min-width: 0; }
       body.printA3 .buildBlock { border-radius: 2px; gap: 0; height: 18px; min-height: 18px; overflow: hidden; padding: 1px; }
       body.printA2 .buildBlock { border-radius: 3px; gap: 0; height: 22px; min-height: 22px; overflow: hidden; padding: 2px; }
       body.printA3 .buildBlock strong, body.printA3 .buildBlock span { font-size: 4.8px; line-height: 1; }
       body.printA2 .buildBlock strong, body.printA2 .buildBlock span { font-size: 5.8px; line-height: 1; }
-      body.printA3 .buildBlock button, body.printA2 .buildBlock button { display: none !important; }
+      body.printA3 .buildBlock button, body.printA2 .buildBlock button, body.printA4 .buildBlock button { display: none !important; }
+      body.printA4 .homeTimetableWrap { margin-top: 0; overflow: visible; padding-bottom: 0; }
+      body.printA4 .homeTimetable { table-layout: fixed; width: 100%; }
+      body.printA4 .homeTimetable th, body.printA4 .homeTimetable td { border-width: 1px; font-size: 8px; padding: 2px; }
+      body.printA4 .homeTimetable .lesson { border-radius: 3px; min-height: 24px; padding: 2px; }
+      body.printA4 .homeTimetable .lessonTop strong, body.printA4 .homeTimetable .lessonMeta, body.printA4 .homeTimetable .lessonMeta .muted { font-size: 6.5px; line-height: 1; }
       body.printA3 .buildFacilitySlot { min-height: 20px; }
       body.printA2 .buildFacilitySlot { min-height: 24px; }
       @page { size: A3 landscape; margin: 8mm; }
       @media print {
         body.printA3 { zoom: 0.48; }
         body.printA2 { zoom: 0.64; }
+        body.printA4 { zoom: 0.86; }
       }
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
@@ -681,8 +687,14 @@
       ];
       const teacherPalette = [
         { color: "#93c5fd", border: "#1d4ed8" },
+        { color: "#60a5fa", border: "#1d4ed8" },
+        { color: "#38bdf8", border: "#0369a1" },
+        { color: "#818cf8", border: "#4338ca" },
         { color: "#86efac", border: "#15803d" },
         { color: "#fca5a5", border: "#b91c1c" },
+        { color: "#f87171", border: "#b91c1c" },
+        { color: "#fb7185", border: "#be123c" },
+        { color: "#f43f5e", border: "#9f1239" },
         { color: "#c4b5fd", border: "#6d28d9" },
         { color: "#fcd34d", border: "#b45309" },
         { color: "#f9a8d4", border: "#be185d" },
@@ -2931,10 +2943,10 @@
       function renderTeacherLegend(className = "") {
         const allSelected = allTeachersSelected();
         return `<div class="teacherColorLegend ${className}">
-          <button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all"><span class="dot" style="background:#0f172a"></span>Tous</button>
+          <button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all" style="background:#d6b98c;border-color:#a6783e;color:#172033;">Tous</button>
           ${teachers.map((teacher) => {
             const selected = selectedTeacherIds.includes(teacher.id);
-            return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}"><span class="dot" style="background:${teacher.border}"></span>${teacher.name}</button>`;
+            return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
           }).join("")}
         </div>`;
       }
@@ -3250,6 +3262,7 @@
           <div class="dateChips">
             <span class="dateChip">Mois <strong>${monthName}</strong></span>
             <span class="dateChip">Template <strong>${schoolYear.label}</strong></span>
+            <button class="ghostButton" data-print-format="A4">Exporter A4</button>
           </div>
         </section>`;
       }
@@ -3360,7 +3373,7 @@
         return `<td class="${unavailableItems.length ? "cycleUnavailableCell" : ""}"><div class="buildCellStack">
           ${items.map((item) => `<div class="buildBlock" style="${blockTeacherStyle(item)}">
             <strong>${item.schoolClass || "Classe"}</strong>
-            <span>${teacherLabelForBlock(item)}${item.facilityLabel ? ` · ${item.facilityLabel}` : ""}</span>
+            ${item.facilityLabel ? `<span>${item.facilityLabel}</span>` : ""}
           </div>`).join("")}
           ${!items.length && !unavailableItems.length ? `<span class="muted">Libre</span>` : ""}
         </div></td>`;
@@ -3423,9 +3436,9 @@
             </div>
             <div class="yearActionsRight">
               <button class="ghostButton" data-print-format="A3">Exporter A3</button>
-              <button class="ghostButton" data-print-format="A2">Exporter A2</button>
             </div>
           </div>
+          ${renderTeacherLegend("homeTeacherLegend")}
           <div class="constructionZoomWrap" style="--table-zoom:${cycleViewZoom};--table-offset:150px;zoom:${cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
       }
@@ -4967,12 +4980,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             printStyle.id = "printPageStyle";
             printStyle.textContent = `@page { size: ${format} landscape; margin: 6mm; }`;
             document.head.appendChild(printStyle);
-            document.body.classList.remove("printA3", "printA2");
-            document.body.classList.add(format === "A2" ? "printA2" : "printA3");
+            document.body.classList.remove("printA3", "printA2", "printA4");
+            document.body.classList.add(`print${format}`);
             setTimeout(() => {
               window.print();
               setTimeout(() => {
-                document.body.classList.remove("printA3", "printA2");
+                document.body.classList.remove("printA3", "printA2", "printA4");
                 const style = document.getElementById("printPageStyle");
                 if (style) style.remove();
               }, 500);
