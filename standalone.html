@@ -16,15 +16,16 @@
       * { box-sizing: border-box; }
       body { margin: 0; }
       button { font: inherit; }
-      .app { min-height: 100vh; padding: 10px 12px; }
+      .app { min-height: 100vh; padding: 6px 10px; }
       .top, .metrics, .legend, .calendar, .panel, .dateInfo, .builderPage, .workspace { margin-left: auto; margin-right: auto; max-width: none; width: 100%; }
-      .top { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
+      .top { align-items: center; display: grid; gap: 8px; grid-template-columns: auto minmax(0, 1fr) auto; }
       .top p { color: #64748b; font-size: 12px; font-weight: 800; margin: 0 0 4px; text-transform: uppercase; }
       .brandTitle { align-items: center; display: flex; gap: 10px; }
-      .brandCat { background: #0f172a; border-radius: 45% 45% 42% 42%; display: inline-block; height: 25px; opacity: 0.86; position: relative; width: 27px; }
+      .brandNavCluster { align-items: flex-start; display: grid; gap: 2px; justify-items: start; min-width: 0; }
+      .brandCat { background: #0f172a; border-radius: 45% 45% 42% 42%; display: inline-block; height: 23px; opacity: 0.86; position: relative; width: 25px; }
       .brandCat::before { border-bottom: 9px solid #0f172a; border-left: 5px solid transparent; border-right: 4px solid transparent; content: ""; left: 3px; position: absolute; top: -5px; transform: rotate(-18deg); }
       .brandCat::after { border-bottom: 9px solid #0f172a; border-left: 4px solid transparent; border-right: 5px solid transparent; content: ""; position: absolute; right: 3px; top: -5px; transform: rotate(18deg); }
-      .brandCatEyes { display: flex; gap: 6px; left: 6px; position: absolute; top: 10px; }
+      .brandCatEyes { display: flex; gap: 6px; left: 5px; position: absolute; top: 9px; }
       .brandCatEyes i { background: #f8fafc; border-radius: 999px; display: block; height: 4px; width: 4px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
       .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
@@ -40,35 +41,36 @@
       .metric { display: grid; gap: 3px; min-height: 82px; padding: 12px; }
       .metric strong { font-size: 24px; font-weight: 950; }
       .metric span, .muted { color: #64748b; font-size: 12px; font-weight: 800; }
-      .dateInfo { align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; gap: 14px; justify-content: space-between; margin-top: 12px; min-height: 64px; padding: 12px 14px; }
-      .dateNav { align-items: center; display: flex; gap: 10px; min-width: 0; }
-      .weekArrow { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #0f172a; cursor: pointer; display: inline-flex; font-size: 18px; font-weight: 950; height: 38px; justify-content: center; line-height: 1; width: 38px; }
+      .dateInfo { align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; gap: 10px; justify-content: space-between; margin-top: 6px; min-height: 42px; padding: 7px 10px; }
+      .dateNav { align-items: center; display: flex; gap: 7px; min-width: 0; }
+      .weekArrow { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #0f172a; cursor: pointer; display: inline-flex; font-size: 16px; font-weight: 950; height: 30px; justify-content: center; line-height: 1; width: 30px; }
       .weekArrow:disabled { color: #94a3b8; cursor: not-allowed; opacity: 0.55; }
       .dateMain { display: grid; gap: 2px; }
-      .dateMain span { color: #64748b; font-size: 12px; font-weight: 850; text-transform: uppercase; }
-      .dateMain strong { color: #0f172a; font-size: 22px; line-height: 1.1; }
-      .dateMain small { color: #64748b; font-size: 11px; font-weight: 850; }
-      .dateChips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-      .dateChip { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; color: #334155; display: inline-flex; font-size: 12px; font-weight: 900; gap: 5px; padding: 7px 10px; }
+      .dateMain span { color: #64748b; font-size: 10px; font-weight: 850; text-transform: uppercase; }
+      .dateMain strong { color: #0f172a; font-size: 18px; line-height: 1.05; }
+      .dateMain small { color: #64748b; font-size: 10px; font-weight: 850; }
+      .dateChips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+      .dateChip { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; color: #334155; display: inline-flex; font-size: 10px; font-weight: 900; gap: 4px; padding: 4px 8px; }
       .dateChip strong { color: #0f766e; }
+      .dateInfo .ghostButton { font-size: 10px; min-height: 26px; padding: 0 8px; }
       .legend { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; }
       .legendItem { align-items: center; display: inline-flex; flex: 0 0 auto; gap: 8px; min-height: 36px; padding: 0 10px; font-size: 13px; font-weight: 900; }
       button.legendItem { cursor: pointer; font: inherit; }
       .legendItem.dimmed { filter: grayscale(1); opacity: 0.42; }
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
-      .workspace { display: block; margin-top: 10px; }
-      .sideNav { background: rgba(248,250,252,0.96); border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 5px; overflow-x: auto; padding: 6px; position: sticky; top: 6px; z-index: 70; }
-      .navGroup { align-items: center; display: grid; gap: 8px; grid-template-columns: 76px minmax(0, 1fr); }
-      .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; }
+      .workspace { display: block; margin-top: 6px; }
+      .sideNav { align-items: center; background: transparent; border: 0; border-radius: 0; display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 0; position: static; z-index: 70; }
+      .navGroup { align-items: center; display: flex; flex: 0 0 auto; gap: 4px; min-width: 0; }
+      .weeks, .tabs { background: #e2e8f0; border-radius: 9px; display: flex; flex-wrap: nowrap; gap: 2px; overflow-x: auto; padding: 3px; }
       .navGroup + .navGroup { margin-top: 0; }
-      .navGroupLabel { color: #64748b; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0; text-transform: uppercase; }
+      .navGroupLabel { color: #0f172a; display: block; font-size: 10px; font-weight: 950; letter-spacing: 0; margin: 0; text-transform: uppercase; }
       .questionNavGroup { justify-self: start; opacity: 0.68; }
       .questionNavGroup .navGroupLabel { font-size: 10px; font-weight: 850; text-transform: none; }
       .questionNavGroup .weeks { background: transparent; border: 0; flex-wrap: nowrap; overflow: visible; padding-left: 0; }
-      .questionNavGroup .weeks button { color: #64748b; font-size: 11px; min-height: 24px; }
+      .questionNavGroup .weeks button { color: #64748b; font-size: 10px; min-height: 20px; padding: 0 5px; }
       .tabs { margin-top: 10px; }
-      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; line-height: 1.1; min-height: 28px; padding: 0 8px; text-align: center; white-space: nowrap; width: auto; }
+      .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 11px; font-weight: 900; line-height: 1.1; min-height: 26px; padding: 0 7px; text-align: center; white-space: nowrap; width: auto; }
       .stepNav { align-items: center; display: inline-flex; gap: 5px; }
       .stepBadge { align-items: center; background: #000; border-radius: 999px; color: #fff; display: inline-flex; font-size: 10px; font-weight: 950; height: 18px; justify-content: center; min-width: 18px; padding: 0 5px; }
       .stepStatus { align-items: center; border-radius: 4px; color: #fff; display: inline-flex; font-size: 11px; font-weight: 950; height: 18px; justify-content: center; width: 18px; }
@@ -85,9 +87,10 @@
       .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
       .mainContent { min-width: 0; }
+      .utilityNav { width: max-content; }
       .calendarWrap { margin: 16px auto 0; max-width: none; overflow-x: visible; padding-bottom: 18px; width: 100%; }
       .calendar { display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); min-width: 0; }
-      .homeTimetableWrap { margin: 16px auto 0; max-width: none; overflow-x: auto; padding-bottom: 18px; width: 100%; }
+      .homeTimetableWrap { margin: 8px auto 0; max-width: none; overflow-x: auto; padding-bottom: 12px; width: 100%; }
       .homeTimetable { background: #fff; border: 3px solid #111827; border-collapse: collapse; table-layout: fixed; width: 100%; }
       .homeTimetable th, .homeTimetable td { border: 2px solid #111827; font-size: 11px; padding: 4px; vertical-align: top; }
       .homeTimetable thead th { background: #334155; color: #fff; font-size: 12px; font-weight: 950; line-height: 1.1; padding: 6px 4px; text-align: center; }
@@ -395,6 +398,28 @@
       .schoolSlotGrid { display: grid; gap: 6px; grid-template-columns: 1fr 1fr auto; }
       .schoolSlotGrid label { grid-column: 1 / -1; }
       .schoolSlotGrid input[type="time"] { text-align: center; }
+      .establishmentSlotColumn .cycleRow { background: #f8fafc; border-color: #cbd5e1; box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03); }
+      .establishmentSlotColumn .cycleRow label { color: #0f172a; font-size: 13px; }
+      .establishmentSlotColumn > .ghostButton { background: #e0f2fe; border-color: #7dd3fc; color: #075985; font-weight: 950; }
+      .establishmentSlotColumn > .ghostButton:hover { background: #bae6fd; }
+      .asSlotGrid { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(360px, 1.6fr); }
+      .asSlotGrid input[type="time"] { text-align: center; }
+      .asSlotDays { align-items: center; display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow-x: auto; }
+      .asSlotDelete { margin-top: 2px; width: 100%; }
+      .establishmentSlotsGrid { display: grid; gap: 12px; grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.35fr); }
+      .establishmentSlotColumn { align-content: start; display: grid; gap: 8px; min-width: 0; }
+      .establishmentSlotColumn h3, .establishmentSlotColumn h4 { margin: 0; }
+      .establishmentSlotColumn .muted { margin: 0; }
+      .establishmentSlotColumn h3, .establishmentSlotColumn h4 { color: #172033; font-size: 13px; font-weight: 950; line-height: 1.2; }
+      .establishmentSlotColumn .cycleRow label { font-size: 12px; line-height: 1.2; }
+      .establishmentSlotColumn .choiceGrid { align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+      .establishmentSlotColumn .choiceButton { font-size: 11px; min-height: 30px; padding: 0 8px; }
+      @media (max-width: 980px) {
+        .establishmentSlotsGrid { grid-template-columns: 1fr; }
+        .establishmentSlotColumn .choiceGrid { flex-wrap: wrap; overflow-x: visible; }
+        .asSlotGrid { grid-template-columns: 1fr 1fr; }
+        .asSlotDays { grid-column: 1 / -1; flex-wrap: wrap; overflow-x: visible; }
+      }
       .cycleDates { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
       .cycleDates input { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 6px; width: 100%; }
       .dateRangeField { position: relative; }
@@ -484,6 +509,22 @@
       .prerequisitesPage { display: grid; gap: 16px; }
       .prerequisitesPage > .eventPage { margin-top: 0; }
       .prerequisitesPageTitle { color: #172033; font-size: 18px; margin: 0; }
+      .prerequisitesPage > .constructionTabs { max-width: max-content; width: auto; }
+      .prerequisitesPage > .constructionTabs button { align-items: center; display: grid; flex: 0 0 auto; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; justify-items: start; min-width: 150px; padding: 0 14px; text-align: left; }
+      .prerequisitesPage > .constructionTabs .subtabStatusStack { margin-left: 0; }
+      .prerequisitesHeader { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+      .prerequisitesLockRow { align-items: center; display: flex; justify-content: flex-start; margin-top: -10px; }
+      .lockToggle { align-items: center; color: #334155; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; gap: 8px; white-space: nowrap; }
+      .lockToggle input { display: none; }
+      .lockToggleTrack { background: #cbd5e1; border: 1px solid #94a3b8; border-radius: 999px; display: inline-flex; height: 22px; padding: 2px; transition: background 0.18s ease; width: 42px; }
+      .lockToggleTrack::before { background: #fff; border-radius: 999px; content: ""; display: block; height: 16px; transform: translateX(0); transition: transform 0.18s ease; width: 16px; }
+      .lockToggle input:checked + .lockToggleTrack { background: #0f172a; border-color: #0f172a; }
+      .lockToggle input:checked + .lockToggleTrack::before { transform: translateX(18px); }
+      .prerequisiteLockedBody.locked { opacity: 0.72; }
+      .lockNotice { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #475569; font-size: 12px; font-weight: 850; padding: 8px 10px; }
+      .subtabStatusStack { align-items: center; display: inline-flex; gap: 5px; height: 18px; justify-content: flex-end; margin-left: 8px; }
+      .subtabLockIcon { align-items: center; color: #fbbf24; display: none; font-size: 11px; height: 18px; justify-content: center; line-height: 1; width: 12px; }
+      .subtabLockIcon.locked { display: inline-flex; }
       .eventField { display: grid; gap: 6px; margin-top: 10px; }
       .eventField label { color: #64748b; font-size: 12px; font-weight: 900; }
       .eventField input, .eventField select { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 38px; padding: 0 9px; width: 100%; }
@@ -687,13 +728,14 @@
       }
       @media (max-width: 720px) {
         .app { padding: 8px; }
-        .top { align-items: stretch; flex-direction: column; }
+        .top { align-items: stretch; grid-template-columns: 1fr; }
+        .brandNavCluster { align-items: flex-start; }
         .primary { justify-content: center; width: 100%; }
         .calendarWrap { overflow-x: auto; }
         .calendar { grid-template-columns: repeat(5, 210px); min-width: 1080px; }
         .metrics { grid-template-columns: repeat(2, 1fr); }
         .sideNav { position: static; }
-        .navGroup { align-items: start; grid-template-columns: 1fr; }
+        .navGroup { align-items: center; }
         .questionNavGroup { justify-self: stretch; }
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
@@ -712,18 +754,18 @@
   <body>
     <main class="app">
       <header class="top">
-        <div>
+        <div class="brandNavCluster">
           <h1 class="brandTitle" aria-label="EPS Loustic"><span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span></h1>
+          <section class="navGroup questionNavGroup utilityNav">
+            <section class="weeks">
+              <button data-week="guide">Mode d'emploi</button>
+              <button data-week="alerts">Alertes</button>
+              <button data-week="log">Log</button>
+              <button data-week="request">Une question ?</button>
+            </section>
+          </section>
         </div>
-        <div class="authBox" id="authBox"></div>
-      </header>
-
-      <section class="dateInfo" id="dateInfo"></section>
-
-      <section class="legend" id="legend"></section>
-
-      <section class="workspace">
-        <aside class="sideNav">
+        <nav class="sideNav">
           <section class="navGroup">
             <span class="navGroupLabel">Professeur</span>
             <section class="weeks">
@@ -741,19 +783,15 @@
               <button class="primaryAdminTab adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction</span></button>
             </section>
           </section>
+        </nav>
+        <div class="authBox" id="authBox"></div>
+      </header>
 
+      <section class="dateInfo" id="dateInfo"></section>
 
-          <section class="navGroup questionNavGroup">
-            <section class="weeks">
-              <button data-week="guide">Mode d'emploi</button>
-              <button data-week="alerts">Alertes</button>
-              <button data-week="log">Log</button>
-              <button data-week="request">Une question ?</button>
-            </section>
-          </section>
+      <section class="legend" id="legend"></section>
 
-        </aside>
-
+      <section class="workspace">
         <section class="mainContent" id="root"></section>
       </section>
     </main>
@@ -877,6 +915,8 @@
       let constructionMode = "planning";
       let prerequisiteMode = "establishment";
       let yearPrerequisiteMode = "unavailable";
+      let prerequisiteLocks = {};
+      let yearPrerequisiteLocks = {};
       let constructionZoom = 0.8;
       let constructionPrintTrimesterExport = false;
       let cycleViewZoom = 0.8;
@@ -955,6 +995,13 @@
       let dateRangeMonth = "";
       let dateRangeSelectionError = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
+      const PREREQUISITES_LOCK_KEY = "planningEpsPrerequisitesLocked2026";
+      const PREREQUISITE_LOCKS_KEY = "planningEpsPrerequisiteLocks2026";
+      const YEAR_PREREQUISITE_LOCKS_KEY = "planningEpsYearPrerequisiteLocks2026";
+      const prerequisiteSubModes = ["establishment", "team", "classes", "facilities", "activities"];
+      const yearPrerequisiteSubModes = ["unavailable", "cycles", "as", "events", "hours"];
+      prerequisiteLocks = loadPrerequisiteLocks();
+      yearPrerequisiteLocks = loadYearPrerequisiteLocks();
       const BUILT_IN_CLOUD_CONFIG = {
         enabled: true,
         autoSave: true,
@@ -967,6 +1014,19 @@
       const ADMIN_EMAIL = "eps@lm.com";
       const fallbackBugFixLog = `# Log des corrections
 
+- Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
+- Navigation : liens Mode d'emploi, Alertes, Log et Une question placés sous l'icône chat.
+- Etablissement : colonne Créneaux AS élargie et typographie harmonisée avec les créneaux de cours.
+- Navigation : libellés Professeur et Admin passés en noir.
+- Navigation : liens Mode d'emploi, Alertes, Log et Une question rapprochés de l'icône chat.
+- Pré-requis établissement : verrous individuels par sous-onglet avec cadenas visible au-dessus de la coche ou croix.
+- Etablissement : bloc Application automatique retiré du sous-onglet.
+- Mode d'emploi : ajout de la mention des sous-onglets et du verrou des pré-requis établissement.
+- Etablissement : description sous Créneaux AS retirée.
+- Navigation : libelles Professeur/Admin rapproches de leurs onglets.
+- Pré-requis établissement : ajout d'un verrou de consultation pour empêcher les modifications tout en gardant les sous-onglets accessibles.
+- Navigation : blocs Professeur/Admin deplaces dans l'en-tete entre le logo chat et la connexion.
+- Etablissement : creneaux de cours et creneaux AS affiches cote a cote dans le sous-onglet.
 - Navigation Admin : espacement augmente entre le texte des sous-onglets et leur indicateur de validation.
 - HTML : correction de l'echappement des coches et des separateurs du Service libre.
 - Service libre : correction du symbole de validation et retour des indicateurs coche/croix dans les sous-onglets.
@@ -2114,6 +2174,67 @@
         localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
       }
 
+      function defaultPrerequisiteLocks(value = false) {
+        return Object.fromEntries(prerequisiteSubModes.map((mode) => [mode, value]));
+      }
+
+      function defaultYearPrerequisiteLocks(value = false) {
+        return Object.fromEntries(yearPrerequisiteSubModes.map((mode) => [mode, value]));
+      }
+
+      function loadPrerequisiteLocks() {
+        try {
+          const saved = localStorage.getItem(PREREQUISITE_LOCKS_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            return { ...defaultPrerequisiteLocks(false), ...parsed };
+          }
+          return defaultPrerequisiteLocks(localStorage.getItem(PREREQUISITES_LOCK_KEY) === "true");
+        } catch {
+          return defaultPrerequisiteLocks(false);
+        }
+      }
+
+      function prerequisiteLocked(mode = prerequisiteMode) {
+        return Boolean(prerequisiteLocks[mode]);
+      }
+
+      function loadYearPrerequisiteLocks() {
+        try {
+          const saved = localStorage.getItem(YEAR_PREREQUISITE_LOCKS_KEY);
+          const parsed = saved ? JSON.parse(saved) : {};
+          return { ...defaultYearPrerequisiteLocks(false), ...parsed };
+        } catch {
+          return defaultYearPrerequisiteLocks(false);
+        }
+      }
+
+      function yearPrerequisiteLocked(mode = yearPrerequisiteMode) {
+        return Boolean(yearPrerequisiteLocks[mode]);
+      }
+
+      function savePrerequisiteLocks() {
+        localStorage.setItem(PREREQUISITE_LOCKS_KEY, JSON.stringify({ ...defaultPrerequisiteLocks(false), ...prerequisiteLocks }));
+        localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
+        saveLocksToCloudNow();
+      }
+
+      function saveYearPrerequisiteLocks() {
+        localStorage.setItem(YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify({ ...defaultYearPrerequisiteLocks(false), ...yearPrerequisiteLocks }));
+        saveLocksToCloudNow();
+      }
+
+      function saveLocksToCloudNow() {
+        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
+        if (cloudSyncing) {
+          cloudSaveQueued = true;
+          return;
+        }
+        cloudSaveToRemote(false);
+      }
+
       function readCloudConfigInputs() {
         const urlInput = document.getElementById("cloudUrl");
         const anonKeyInput = document.getElementById("cloudAnonKey");
@@ -2233,6 +2354,8 @@
           serviceHoursByLevel,
           serviceAssignments,
           schoolConstraints,
+          prerequisiteLocks,
+          yearPrerequisiteLocks,
           constructionRules,
           constructionPlan,
           blockExclusions,
@@ -2257,6 +2380,14 @@
         serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
         serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
         schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
+        prerequisiteLocks = data.prerequisiteLocks && typeof data.prerequisiteLocks === "object"
+          ? { ...defaultPrerequisiteLocks(false), ...data.prerequisiteLocks }
+          : typeof data.prerequisitesLocked === "boolean"
+            ? defaultPrerequisiteLocks(data.prerequisitesLocked)
+            : prerequisiteLocks;
+        yearPrerequisiteLocks = data.yearPrerequisiteLocks && typeof data.yearPrerequisiteLocks === "object"
+          ? { ...defaultYearPrerequisiteLocks(false), ...data.yearPrerequisiteLocks }
+          : yearPrerequisiteLocks;
         slots = schoolConstraints.courseSlots;
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
@@ -2282,6 +2413,9 @@
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
+        localStorage.setItem(PREREQUISITE_LOCKS_KEY, JSON.stringify(prerequisiteLocks));
+        localStorage.setItem(YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify(yearPrerequisiteLocks));
+        localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
@@ -4288,11 +4422,12 @@
         return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
-      function renderPrerequisiteTabs(items, active, datasetName) {
+      function renderPrerequisiteTabs(items, active, datasetName, lockState = () => false) {
         return `<div class="constructionTabs">
           ${items.map((item) => {
             const complete = adminStepComplete(item.id);
-            return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="stepStatus" aria-label="${complete ? "Etape complete" : "Etape incomplete"}"></span></button>`;
+            const locked = lockState(item.id);
+            return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="subtabStatusStack"><span class="subtabLockIcon ${locked ? "locked" : ""}" aria-label="${locked ? "Verrouille" : "Deverrouille"}">&#128274;</span><span class="stepStatus" aria-label="${complete ? "Etape complete" : "Etape incomplete"}"></span></span></button>`;
           }).join("")}
         </div>`;
       }
@@ -4310,10 +4445,23 @@
             : prerequisiteMode === "facilities" ? renderFacilitiesSettings()
               : prerequisiteMode === "activities" ? renderActivitiesSettings()
                 : renderEstablishmentSettings();
+        const currentLocked = prerequisiteLocked(prerequisiteMode);
         return `<section class="prerequisitesPage">
-          <h2 class="prerequisitesPageTitle">Pré-requis établissement</h2>
-          ${renderPrerequisiteTabs(tabs, prerequisiteMode, "data-prerequisite-mode")}
-          ${content}
+          <div class="prerequisitesHeader">
+            <h2 class="prerequisitesPageTitle">Pré-requis établissement</h2>
+          </div>
+          ${renderPrerequisiteTabs(tabs, prerequisiteMode, "data-prerequisite-mode", prerequisiteLocked)}
+          <div class="prerequisitesLockRow">
+            <label class="lockToggle" title="Verrouiller les modifications de ce sous-onglet">
+              <input type="checkbox" data-prerequisites-lock="${prerequisiteMode}" ${currentLocked ? "checked" : ""} />
+              <span class="lockToggleTrack"></span>
+              <span>${currentLocked ? "Sous-onglet verrouill&eacute;" : "Verrouiller ce sous-onglet"}</span>
+            </label>
+          </div>
+          ${currentLocked ? `<div class="lockNotice">Sous-onglet verrouill&eacute; : vous pouvez consulter et naviguer, mais pas modifier cette partie.</div>` : ""}
+          <div class="prerequisiteLockedBody ${currentLocked ? "locked" : ""}">
+            ${content}
+          </div>
         </section>`;
       }
 
@@ -4338,8 +4486,18 @@
                 : renderFacilityUnavailabilityView();
         return `<section class="prerequisitesPage">
           <h2 class="prerequisitesPageTitle">Pré-requis année scolaire</h2>
-          ${renderPrerequisiteTabs(tabs, yearPrerequisiteMode, "data-year-prerequisite-mode")}
-          ${content}
+          ${renderPrerequisiteTabs(tabs, yearPrerequisiteMode, "data-year-prerequisite-mode", yearPrerequisiteLocked)}
+          <div class="prerequisitesLockRow">
+            <label class="lockToggle" title="Verrouiller les modifications de ce sous-onglet">
+              <input type="checkbox" data-year-prerequisites-lock="${yearPrerequisiteMode}" ${yearPrerequisiteLocked(yearPrerequisiteMode) ? "checked" : ""} />
+              <span class="lockToggleTrack"></span>
+              <span>${yearPrerequisiteLocked(yearPrerequisiteMode) ? "Sous-onglet verrouill&eacute;" : "Verrouiller ce sous-onglet"}</span>
+            </label>
+          </div>
+          ${yearPrerequisiteLocked(yearPrerequisiteMode) ? `<div class="lockNotice">Sous-onglet verrouill&eacute; : vous pouvez consulter et naviguer, mais pas modifier cette partie.</div>` : ""}
+          <div class="prerequisiteLockedBody ${yearPrerequisiteLocked(yearPrerequisiteMode) ? "locked" : ""}">
+            ${content}
+          </div>
         </section>`;
       }
 
@@ -4366,36 +4524,37 @@
               </div>
               <span class="muted">Changer la zone met automatiquement a jour les vacances scolaires dans les calendriers.</span>
             </div>
-            <div class="alertHelp">
-              <strong>Application automatique</strong>
-              <span>Les modifications sont sauvegardees automatiquement et reprises dans les tableaux, les indisponibilites et les evenements.</span>
-            </div>
           </div>
           <div class="eventList">
-            <h4>Créneaux de cours</h4>
-            <div class="cycleList">
-              ${slots.map((slot, index) => `<div class="cycleRow schoolSlotGrid">
-                <label>Cours ${index + 1}</label>
-                <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de debut" />
-                <input data-course-slot-end="${slot.id}" type="time" value="${slot.endTime}" aria-label="Heure de fin" />
-                <button class="ghostButton" data-delete-course-slot="${slot.id}" ${slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
-              </div>`).join("")}
-            </div>
-            <button class="ghostButton" id="addCourseSlot">Ajouter un créneau de cours</button>
-            <h3>Créneaux AS</h3>
-            <p class="muted">Ajoutez autant de créneaux AS que nécessaire. Cochez les jours concernés puis indiquez l'heure de debut et l'heure de fin.</p>
-            <div class="cycleList">
-              ${(schoolConstraints.asSlots || []).map((slot, index) => `<div class="cycleRow">
-                <label>AS ${index + 1}</label>
-                <div class="schoolSlotGrid">
-                  <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de debut AS" />
-                  <input data-as-slot-end="${index}" type="time" value="${slot.endTime}" aria-label="Heure de fin AS" />
+            <div class="establishmentSlotsGrid">
+              <section class="establishmentSlotColumn">
+                <h4>Créneaux de cours</h4>
+                <div class="cycleList">
+                  ${slots.map((slot, index) => `<div class="cycleRow schoolSlotGrid">
+                    <label>Cours ${index + 1}</label>
+                    <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de debut" />
+                    <input data-course-slot-end="${slot.id}" type="time" value="${slot.endTime}" aria-label="Heure de fin" />
+                    <button class="ghostButton" data-delete-course-slot="${slot.id}" ${slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
+                  </div>`).join("")}
                 </div>
-                <div class="choiceGrid">${days.map((day) => `<button class="choiceButton ${(slot.days || []).includes(day) ? "active" : ""}" data-as-slot-day="${index}" data-day="${day}">${day}</button>`).join("")}</div>
-                <button class="ghostButton" data-delete-as-slot="${index}" ${(schoolConstraints.asSlots || []).length <= 1 ? "disabled" : ""}>Supprimer</button>
-              </div>`).join("")}
+                <button class="ghostButton" id="addCourseSlot">Ajouter un créneau de cours</button>
+              </section>
+              <section class="establishmentSlotColumn">
+                <h3>Créneaux AS</h3>
+                <div class="cycleList">
+                  ${(schoolConstraints.asSlots || []).map((slot, index) => `<div class="cycleRow">
+                    <label>AS ${index + 1}</label>
+                    <div class="asSlotGrid">
+                      <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de debut AS" />
+                      <input data-as-slot-end="${index}" type="time" value="${slot.endTime}" aria-label="Heure de fin AS" />
+                      <div class="asSlotDays">${days.map((day) => `<button class="choiceButton ${(slot.days || []).includes(day) ? "active" : ""}" data-as-slot-day="${index}" data-day="${day}">${day}</button>`).join("")}</div>
+                    </div>
+                    <button class="ghostButton asSlotDelete" data-delete-as-slot="${index}" ${(schoolConstraints.asSlots || []).length <= 1 ? "disabled" : ""}>Supprimer</button>
+                  </div>`).join("")}
+                </div>
+                <button class="ghostButton" id="addAsSlot">Ajouter un créneau AS</button>
+              </section>
             </div>
-            <button class="ghostButton" id="addAsSlot">Ajouter un créneau AS</button>
           </div>
         </section>`;
       }
@@ -5356,9 +5515,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderGuideView() {
         const steps = [
-          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites."],
-          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service."],
-          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides."],
+          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites via les sous-onglets. Verrouillez cette partie une fois stabilisee."],
+          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service via les sous-onglets."],
+          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides et deverrouilles si besoin."],
           ["Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
@@ -5387,9 +5546,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderGuideView() {
         const adminSteps = [
-          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites."],
-          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service."],
-          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides."],
+          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites via les sous-onglets. Verrouillez cette partie une fois stabilisee."],
+          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service via les sous-onglets."],
+          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides et deverrouilles si besoin."],
           ["Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
@@ -5538,6 +5697,32 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return validationPopupMessage ? `<div class="validationPopup">${validationPopupMessage}</div>` : "";
       }
 
+      function renderAppError(error) {
+        const message = String(error?.message || error || "Erreur inconnue")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `
+          <section class="panel">
+            <h2>Affichage interrompu</h2>
+            <p class="muted">Une erreur bloque le chargement de cet onglet. Rechargez la page, ou envoyez une requete avec le message ci-dessous si le probleme revient.</p>
+            <div class="warningItem">${message}</div>
+          </section>`;
+      }
+
+      function applyPrerequisitesLockState() {
+        const locked = week === "build" && (
+          (constructionMode === "prerequisites" && prerequisiteLocked(prerequisiteMode))
+          || (constructionMode === "yearPrerequisites" && yearPrerequisiteLocked(yearPrerequisiteMode))
+        );
+        if (!locked) return;
+        const body = document.querySelector(".prerequisiteLockedBody");
+        if (!body) return;
+        body.querySelectorAll("input, select, textarea, button").forEach((control) => {
+          control.disabled = true;
+        });
+      }
+
       function renderAuthBox() {
         const authBox = document.getElementById("authBox");
         if (!authBox) return;
@@ -5581,28 +5766,37 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function render() {
         if (!isAdmin() && (week === "build" || week === "alerts" || week === "log")) week = "current";
+        const root = document.getElementById("root");
+        const dateInfo = document.getElementById("dateInfo");
+        const legend = document.getElementById("legend");
+        if (!root || !dateInfo || !legend) return;
+        dateInfo.style.display = "none";
+        dateInfo.innerHTML = "";
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
-        updateNavigationActive();
-        const cycle = generateCycle();
-        const root = document.getElementById("root");
-        const dateInfo = document.getElementById("dateInfo");
-        dateInfo.style.display = "none";
-        dateInfo.innerHTML = "";
-        const legend = document.getElementById("legend");
-        const hideLegend = week === "build" || week === "guide" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
-        legend.style.display = hideLegend ? "none" : "flex";
-        legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
-        if (week === "year") root.innerHTML = renderYearView(cycle);
-        else if (week === "cycle") root.innerHTML = renderCycleView();
-        else if (week === "build") root.innerHTML = renderConstructionView();
-        else if (week === "guide") root.innerHTML = renderGuideView();
-        else if (week === "alerts") root.innerHTML = renderAlertsView();
-        else if (week === "log") root.innerHTML = renderBugFixLogView();
-        else if (week === "request") root.innerHTML = renderRequestView();
-        else root.innerHTML = renderCalendar(cycle);
+        try {
+          updateNavigationActive();
+          const cycle = generateCycle();
+          const hideLegend = week === "build" || week === "guide" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
+          legend.style.display = hideLegend ? "none" : "flex";
+          legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
+          if (week === "year") root.innerHTML = renderYearView(cycle);
+          else if (week === "cycle") root.innerHTML = renderCycleView();
+          else if (week === "build") root.innerHTML = renderConstructionView();
+          else if (week === "guide") root.innerHTML = renderGuideView();
+          else if (week === "alerts") root.innerHTML = renderAlertsView();
+          else if (week === "log") root.innerHTML = renderBugFixLogView();
+          else if (week === "request") root.innerHTML = renderRequestView();
+          else root.innerHTML = renderCalendar(cycle);
+        } catch (error) {
+          console.error(error);
+          legend.style.display = "none";
+          legend.innerHTML = "";
+          root.innerHTML = renderAppError(error);
+        }
         root.insertAdjacentHTML("beforeend", renderValidationPopup());
+        applyPrerequisitesLockState();
         const adminLoginForm = document.getElementById("adminLoginForm");
         if (adminLoginForm) {
           adminLoginForm.addEventListener("submit", (event) => {
@@ -5796,6 +5990,24 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-year-prerequisite-mode]").forEach((button) => {
           button.addEventListener("click", () => {
             yearPrerequisiteMode = button.dataset.yearPrerequisiteMode;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-prerequisites-lock]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const mode = input.dataset.prerequisitesLock || prerequisiteMode;
+            prerequisiteLocks = { ...prerequisiteLocks, [mode]: input.checked };
+            savePrerequisiteLocks();
+            showValidationPopup(input.checked ? "Sous-onglet verrouille" : "Sous-onglet deverrouille");
+            render();
+          });
+        });
+        document.querySelectorAll("[data-year-prerequisites-lock]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const mode = input.dataset.yearPrerequisitesLock || yearPrerequisiteMode;
+            yearPrerequisiteLocks = { ...yearPrerequisiteLocks, [mode]: input.checked };
+            saveYearPrerequisiteLocks();
+            showValidationPopup(input.checked ? "Sous-onglet verrouille" : "Sous-onglet deverrouille");
             render();
           });
         });

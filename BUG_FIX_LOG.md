@@ -1,5 +1,29 @@
 # Log des corrections
 
+- Verrous : commande de verrouillage placée juste sous les sous-onglets dans les deux prérequis.
+- Verrous : texte corrigé et cadenas aligné sur la même ligne que la coche/croix.
+- Etablissement : blocs de créneaux et boutons d'ajout rendus plus visibles.
+- Verrous : sauvegarde immediate dans le cloud pour conserver l'etat a la reconnexion.
+- Pré-requis : barre de sous-onglets remise en largeur compacte avec indicateurs alignés.
+- Pré-requis année scolaire : ajout des verrous par sous-onglet avec cadenas et blocage des modifications.
+- Etablissement : jours des créneaux AS alignés sur la même ligne que les horaires.
+- Pré-requis : alignement des coches et cadenas dans les sous-onglets.
+- Démarrage : correction de l'initialisation des verrous qui bloquait le chargement de l'application.
+- Affichage : haut de page compacte et protection ajoutee pour eviter une page vide si un onglet rencontre une erreur.
+
+- Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
+- Navigation : liens Mode d'emploi, Alertes, Log et Une question placés sous l'icône chat.
+- Etablissement : colonne Créneaux AS élargie et typographie harmonisée avec les créneaux de cours.
+- Navigation : libellés Professeur et Admin passés en noir.
+- Navigation : liens Mode d'emploi, Alertes, Log et Une question rapprochés de l'icône chat.
+- Pré-requis établissement : verrous individuels par sous-onglet avec cadenas visible au-dessus de la coche ou croix.
+- Etablissement : bloc Application automatique retiré du sous-onglet.
+- Mode d'emploi : ajout de la mention des sous-onglets et du verrou des pré-requis établissement.
+- Etablissement : description sous Créneaux AS retirée.
+- Navigation : libelles Professeur/Admin rapproches de leurs onglets.
+- Pré-requis établissement : ajout d'un verrou de consultation pour empêcher les modifications tout en gardant les sous-onglets accessibles.
+- Navigation : blocs Professeur/Admin deplaces dans l'en-tete entre le logo chat et la connexion.
+- Etablissement : creneaux de cours et creneaux AS affiches cote a cote dans le sous-onglet.
 - Navigation Admin : espacement augmente entre le texte des sous-onglets et leur indicateur de validation.
 - HTML : correction de l'echappement des coches et des separateurs du Service libre.
 - Service libre : correction du symbole de validation et retour des indicateurs coche/croix dans les sous-onglets.
