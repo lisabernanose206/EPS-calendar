@@ -1,5 +1,8 @@
 # Log des corrections
 
+- Navigation Admin : espacement augmente entre le texte des sous-onglets et leur indicateur de validation.
+- HTML : correction de l'echappement des coches et des separateurs du Service libre.
+- Service libre : correction du symbole de validation et retour des indicateurs coche/croix dans les sous-onglets.
 - Navigation Admin : bouton Construction replace directement a cote de Pré-requis année scolaire.
 - Navigation Admin : anciens onglets conserves comme sous-onglets dans les deux pages de pré-requis.
 - Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation reduite a trois etapes.

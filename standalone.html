@@ -75,7 +75,7 @@
       .stepStatus::before { content: "x"; }
       .weeks button.stepComplete .stepStatus { background: #16a34a; border: 1px solid #15803d; }
       .weeks button.stepIncomplete .stepStatus { background: #dc2626; border: 1px solid #b91c1c; }
-      .weeks button.stepComplete .stepStatus::before { content: "✓"; }
+      .weeks button.stepComplete .stepStatus::before { content: "\2713"; }
       .weeks button.stepComplete .stepDone { display: inline-flex; }
       .tabs button { min-width: 0; }
       .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
@@ -418,6 +418,10 @@
       .constructionTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 0 0 12px; max-width: max-content; padding: 5px; }
       .constructionTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
       .constructionTabs button.active { background: #0f172a; color: #fff; }
+      .constructionTabs .stepStatus { margin-left: 8px; }
+      .constructionTabs button.stepComplete .stepStatus { background: #16a34a; border: 1px solid #15803d; }
+      .constructionTabs button.stepIncomplete .stepStatus { background: #dc2626; border: 1px solid #b91c1c; }
+      .constructionTabs button.stepComplete .stepStatus::before { content: "\2713"; }
       .cycleDefinitionPage { display: grid; gap: 14px; margin-top: 12px; }
       .cycleDefinitionPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
       .cycleDefinitionPanel .cycleList { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
@@ -611,7 +615,7 @@
       .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .validationPopup { align-items: center; background: #0f172a; border: 1px solid #020617; border-radius: 10px; bottom: 18px; box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22); color: #fff; display: inline-flex; font-size: 13px; font-weight: 950; gap: 8px; min-height: 42px; padding: 0 14px; position: fixed; right: 18px; z-index: 1200; }
-      .validationPopup::before { background: #22c55e; border-radius: 999px; content: "✓"; display: inline-grid; height: 20px; place-items: center; width: 20px; }
+      .validationPopup::before { background: #22c55e; border-radius: 999px; content: "\2713"; display: inline-grid; height: 20px; place-items: center; width: 20px; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2, body.printA4 { background: #fff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .weekArrow, body.printA2 .weekArrow, body.printA4 .weekArrow, body.printA3 [data-print-format], body.printA2 [data-print-format], body.printA4 [data-print-format], body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend, body.printA3 .zoomControls, body.printA2 .zoomControls, body.printA4 .zoomControls, body.printA3 .cycleSummaryControl, body.printA2 .cycleSummaryControl, body.printA4 .cycleSummaryControl { display: none !important; }
@@ -963,6 +967,9 @@
       const ADMIN_EMAIL = "eps@lm.com";
       const fallbackBugFixLog = `# Log des corrections
 
+- Navigation Admin : espacement augmente entre le texte des sous-onglets et leur indicateur de validation.
+- HTML : correction de l'echappement des coches et des separateurs du Service libre.
+- Service libre : correction du symbole de validation et retour des indicateurs coche/croix dans les sous-onglets.
 - Navigation Admin : bouton Construction replace directement a cote de Pré-requis année scolaire.
 - Navigation Admin : anciens onglets conserves comme sous-onglets dans les deux pages de pré-requis.
 - Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation reduite a trois etapes.
@@ -4019,22 +4026,22 @@
                 ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
                   const active = selectedClass === schoolClass;
-                  return `<button class="choiceButton serviceClassButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}" title="${assignment ? `${assignment.hours}h affectee(s)` : ""}">${compactClassName(schoolClass)}${assignment ? ` · ${assignment.hours}h` : ""}</button>`;
+                  return `<button class="choiceButton serviceClassButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}" title="${assignment ? `${assignment.hours}h affectee(s)` : ""}">${compactClassName(schoolClass)}${assignment ? ` &middot; ${assignment.hours}h` : ""}</button>`;
                 }).join("")}</div>
                 ${selectedClass ? `<div class="serviceClassRow">
                   <strong>${compactClassName(selectedClass)}</strong>
                   <input class="serviceHoursInput ${selectedClassAssignment ? "" : "needsValidation"}" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassHoursDraft}" placeholder="${serviceClassTarget(selectedClass)}h" />
-                  <button class="serviceValidateButton" data-service-class-validate="${teacher.id}" data-service-class="${selectedClass}" title="Valider les heures" ${canValidateSelectedClass ? "" : "disabled"}>✓</button>
+                  <button class="serviceValidateButton" data-service-class-validate="${teacher.id}" data-service-class="${selectedClass}" title="Valider les heures" ${canValidateSelectedClass ? "" : "disabled"}>&#10003;</button>
                 </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
-                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} · ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
+                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
                 <div class="serviceFreeBox">
                   <label>Service libre</label>
                   <div class="serviceFreeRow">
                     <input data-service-free-label="${teacher.id}" value="${freeDraft.label}" placeholder="Ex. soutien piscine" />
                     <input data-service-free-hours="${teacher.id}" type="number" min="0" step="0.5" value="${freeDraft.hours}" placeholder="h" />
-                    <button class="serviceValidateButton" data-service-free-validate="${teacher.id}" title="Valider le service libre" ${freeDraft.label.trim() && Number(freeDraft.hours) > 0 ? "" : "disabled"}>âœ“</button>
+                    <button class="serviceValidateButton" data-service-free-validate="${teacher.id}" title="Valider le service libre" ${freeDraft.label.trim() && Number(freeDraft.hours) > 0 ? "" : "disabled"}>&#10003;</button>
                   </div>
-                  <div class="classPills">${freeRows.length ? freeRows.map((row) => `<button class="classPill" data-service-free-delete="${teacher.id}" data-service-free-id="${row.id}" title="Supprimer ce service libre">${row.label} Â· ${row.hours}h</button>`).join("") : `<span class="classPill">Aucun service libre</span>`}</div>
+                  <div class="classPills">${freeRows.length ? freeRows.map((row) => `<button class="classPill" data-service-free-delete="${teacher.id}" data-service-free-id="${row.id}" title="Supprimer ce service libre">${row.label} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucun service libre</span>`}</div>
                 </div>
                   </div>
                   <div class="serviceColumn">
@@ -4283,7 +4290,10 @@
 
       function renderPrerequisiteTabs(items, active, datasetName) {
         return `<div class="constructionTabs">
-          ${items.map((item) => `<button class="${active === item.id ? "active" : ""}" ${datasetName}="${item.id}">${item.label}</button>`).join("")}
+          ${items.map((item) => {
+            const complete = adminStepComplete(item.id);
+            return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="stepStatus" aria-label="${complete ? "Etape complete" : "Etape incomplete"}"></span></button>`;
+          }).join("")}
         </div>`;
       }
 
