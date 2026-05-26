@@ -1,5 +1,9 @@
 # Log des corrections
 
+- Navigation Admin : onglet Construction remis au fond standard avec une icône travaux.
+- Construction : déplacement des blocs AS et événements avec mise à jour des AS/événements source.
+- Construction : déplacement bloqué sur les créneaux AS et bloc fantôme semi-transparent ajouté pendant le déplacement.
+- Construction : déplacement des blocs de cours par appui long puis sélection d'une case cible.
 - Navigation tablette : onglets Admin placés sous les onglets Professeur pour éviter qu'ils soient masqués.
 - Verrous : commande de verrouillage placée juste sous les sous-onglets dans les deux prérequis.
 - Verrous : texte corrigé et cadenas aligné sur la même ligne que la coche/croix.

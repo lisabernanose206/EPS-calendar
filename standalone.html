@@ -80,9 +80,7 @@
       .weeks button.stepComplete .stepStatus::before { content: "\2713"; }
       .weeks button.stepComplete .stepDone { display: inline-flex; }
       .tabs button { min-width: 0; }
-      .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
       .weeks button.active { background: #0f766e; color: white; }
-      .weeks button.primaryAdminTab.active { background: #000; color: #fff; box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000; }
       .adminBuildAction { margin-left: 0; }
       .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
@@ -334,6 +332,13 @@
       .buildBlock strong { color: #172033; font-size: 10px; line-height: 1.1; }
       .buildBlock span { color: #475569; font-size: 9px; font-weight: 850; line-height: 1.1; }
       .buildBlock button { background: rgba(255,255,255,0.55); border: 0; border-radius: 999px; color: #334155; cursor: pointer; font-size: 10px; font-weight: 950; justify-self: end; padding: 1px 5px; }
+      .constructionTable .buildBlock[data-move-kind] { cursor: grab; touch-action: manipulation; }
+      .constructionTable .buildBlock.moveSelected { box-shadow: 0 0 0 2px #0f172a, 0 0 0 5px rgba(15, 118, 110, 0.22); }
+      .constructionTable .buildDropCell.moveTarget { background: rgba(204, 251, 241, 0.42); outline: 2px dashed #0f766e; outline-offset: -4px; }
+      .constructionMoveHint { align-items: center; background: #ecfeff; border: 1px solid #67e8f9; border-radius: 8px; color: #155e75; display: flex; font-size: 12px; font-weight: 950; justify-content: space-between; margin: 8px 0; padding: 8px 10px; }
+      .constructionMoveHint button { background: #fff; border: 1px solid #67e8f9; border-radius: 7px; color: #155e75; cursor: pointer; font-size: 11px; font-weight: 950; min-height: 26px; padding: 0 8px; }
+      .movingBlockGhost { background: rgba(255,255,255,0.78); border: 2px solid #0f766e; border-radius: 7px; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22); color: #172033; font-size: 11px; font-weight: 950; left: 0; max-width: 160px; opacity: 0.82; padding: 7px 9px; pointer-events: none; position: fixed; top: 0; transform: translate(-50%, -125%); z-index: 5000; }
+      .movingBlockGhost span { color: #475569; display: block; font-size: 9px; font-weight: 850; margin-top: 2px; }
       .coTeacherDurationPanel { align-items: end; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 120px; margin-top: 8px; padding: 9px; }
       .coTeacherDurationPanel label { color: #334155; display: grid; font-size: 11px; font-weight: 900; gap: 3px; }
       .coTeacherDurationPanel input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-weight: 900; min-height: 34px; padding: 0 8px; width: 100%; }
@@ -780,7 +785,7 @@
             <section class="weeks">
               <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
               <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button class="primaryAdminTab adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction</span></button>
+              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span><span aria-hidden="true">🚧</span>Construction</span></button>
             </section>
           </section>
         </nav>
@@ -947,6 +952,7 @@
       let expandedTeacherColorId = "";
       let activeBuildCell = null;
       let editingBuildBlock = null;
+      let movingBuildBlock = null;
       let pendingBlockDelete = null;
       let sportEvents = loadSportEvents();
       let asSessions = loadAsSessions();
@@ -1970,7 +1976,8 @@
         return asSessions.filter((session) => {
           const start = dateOnly(session.start);
           const end = dateOnly(session.end);
-          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && !itemExcludedForCell(asExclusions, session.id, key);
+          const slotIds = Array.isArray(session.slotIds) ? session.slotIds : [];
+          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && (!slotIds.length || slotIds.includes(row.slot.id)) && !itemExcludedForCell(asExclusions, session.id, key);
         });
       }
 
@@ -2986,6 +2993,138 @@
         rebuildConstructionPlan();
       }
 
+      function blockForRuleStorage(block) {
+        const { ruleId, cycleId, cycleName, weekLetter, ...storedBlock } = block;
+        return storedBlock;
+      }
+
+      function movingBlockGhostHtml() {
+        if (!movingBuildBlock) return "";
+        const block = movingBlockPayload();
+        if (!block) return "";
+        const x = Number(movingBuildBlock.x || 0);
+        const y = Number(movingBuildBlock.y || 0);
+        return `<div class="movingBlockGhost" id="movingBlockGhost" style="left:${x}px;top:${y}px;"><strong>${block.title}</strong><span>${block.detail || ""}</span></div>`;
+      }
+
+      function movingBlockPayload() {
+        if (!movingBuildBlock) return null;
+        if (movingBuildBlock.type === "course") {
+          const block = constructionPlan[movingBuildBlock.key]?.[movingBuildBlock.index];
+          return block ? { title: block.schoolClass || "Cours", detail: [block.facilityLabel || "", block.activityLabel || ""].filter(Boolean).join(" · "), raw: block } : null;
+        }
+        if (movingBuildBlock.type === "event") {
+          const event = sportEvents.find((item) => item.id === movingBuildBlock.id);
+          return event ? { title: event.name || "Evenement sportif", detail: eventClassSummary(event), raw: event } : null;
+        }
+        if (movingBuildBlock.type === "as") {
+          const session = asSessions.find((item) => item.id === movingBuildBlock.id);
+          return session ? { title: asBlockLabel(session), detail: asSessionTeacherLabel(session), raw: session } : null;
+        }
+        return null;
+      }
+
+      function moveConstructionBlock(sourceKey, index, targetKey) {
+        const block = constructionPlan[sourceKey]?.[index];
+        if (!block || sourceKey === targetKey) return false;
+        const targetParts = parseYearCellKey(targetKey);
+        const targetRow = yearRows().find((item) => item.id === targetParts.rowId);
+        const targetWeek = schoolYearWeeks().find((item) => item.rank === targetParts.weekRank);
+        if (!targetRow || !targetWeek) return false;
+        if (targetRow.isAs) {
+          showValidationPopup("Impossible de deplacer un cours sur un creneau AS");
+          return false;
+        }
+        const classLevel = classParts(block.schoolClass).level;
+        const targetCycle = cycleForWeek(targetWeek, classLevel);
+        if (!targetCycle) {
+          showValidationPopup("Aucun cycle pour cette classe sur la case cible");
+          return false;
+        }
+        const nextWeekLetter = (block.weekLetter && block.weekLetter !== "all") ? targetWeek.letter : "all";
+        const storedBlock = blockForRuleStorage(block);
+        const unavailableMessage = blockUnavailableMessage(targetRow, targetWeek, storedBlock);
+        const cycleUnavailableMessage = blockCycleUnavailableMessage(targetRow.id, targetCycle.id, storedBlock, nextWeekLetter);
+        const conflictMessage = unavailableMessage || cycleUnavailableMessage || blockCycleConflictMessage(targetRow.id, targetCycle.id, storedBlock, block.ruleId, nextWeekLetter);
+        if (conflictMessage) {
+          showValidationPopup(conflictMessage);
+          return false;
+        }
+        const rule = constructionRules.find((item) => item.id === block.ruleId);
+        if (rule) {
+          rule.rowId = targetRow.id;
+          rule.cycleId = targetCycle.id;
+          rule.classLevel = classLevel;
+          rule.weekLetter = nextWeekLetter;
+          rule.block = storedBlock;
+          delete blockExclusions[rule.id];
+          saveBlockExclusions();
+          rebuildConstructionPlan();
+        } else {
+          removeBlockFromSingleSlot(sourceKey, block);
+          applyBlockToCycle(targetRow.id, targetCycle.id, storedBlock, nextWeekLetter);
+        }
+        showValidationPopup("Bloc deplace");
+        return true;
+      }
+
+      function moveSportEventBlock(eventId, targetKey) {
+        const event = sportEvents.find((item) => item.id === eventId);
+        if (!event) return false;
+        const targetParts = parseYearCellKey(targetKey);
+        const targetRow = yearRows().find((item) => item.id === targetParts.rowId);
+        const targetWeek = schoolYearWeeks().find((item) => item.rank === targetParts.weekRank);
+        if (!targetRow || !targetWeek) return false;
+        const targetDate = rowDateForWeek(targetRow, targetWeek);
+        const durationDays = Math.max(0, Math.round((dateOnly(event.end) - dateOnly(event.start)) / 86400000));
+        const nextEnd = new Date(targetDate);
+        nextEnd.setDate(nextEnd.getDate() + durationDays);
+        const nextEvent = {
+          ...event,
+          start: dateKey(targetDate),
+          end: dateKey(nextEnd),
+          halfDay: `slot-${targetRow.slot.id}`
+        };
+        const exclusions = eventExclusionsFor(nextEvent);
+        sportEvents = sportEvents.map((item) => item.id === eventId ? nextEvent : item);
+        delete eventExclusions[eventId];
+        if (exclusions.length) eventExclusions[eventId] = exclusions;
+        saveSportEvents();
+        saveEventExclusions();
+        rebuildConstructionPlan();
+        showValidationPopup("Evenement deplace");
+        return true;
+      }
+
+      function moveAsBlock(sessionId, targetKey) {
+        const session = asSessions.find((item) => item.id === sessionId);
+        if (!session) return false;
+        const targetParts = parseYearCellKey(targetKey);
+        const targetRow = yearRows().find((item) => item.id === targetParts.rowId);
+        if (!targetRow) return false;
+        if (!targetRow.isAs) {
+          showValidationPopup("Une AS doit rester sur un creneau AS");
+          return false;
+        }
+        asSessions = asSessions.map((item) => item.id === sessionId ? {
+          ...item,
+          weekdays: [targetRow.day],
+          slotIds: [targetRow.slot.id]
+        } : item);
+        delete asExclusions[sessionId];
+        saveAsSessions();
+        saveAsExclusions();
+        showValidationPopup("AS deplacee");
+        return true;
+      }
+
+      function moveSelectedBlockTo(targetKey) {
+        if (!movingBuildBlock) return false;
+        if (movingBuildBlock.type === "event") return moveSportEventBlock(movingBuildBlock.id, targetKey);
+        if (movingBuildBlock.type === "as") return moveAsBlock(movingBuildBlock.id, targetKey);
+        return moveConstructionBlock(movingBuildBlock.key, movingBuildBlock.index, targetKey);
+      }
+
       function removeBlockFromCycle(rowId, blockIndex, block) {
         if (block.ruleId) {
           constructionRules = constructionRules.filter((rule) => rule.id !== block.ruleId);
@@ -3194,6 +3333,7 @@
           start: asStart,
           end: asEnd,
           weekdays: [...asWeekdays],
+          slotIds: [],
           teacherIds: [...asTeacherIds]
         };
         if (editingAsId) asSessions = asSessions.map((item) => item.id === editingAsId ? session : item);
@@ -4693,10 +4833,12 @@
             <div class="calendarLegend">V = vacances · F = férié</div>
             ${renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
+            ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc selectionne : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
             ${constructionTableContent}
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
+          ${movingBlockGhostHtml()}
         </section>`;
       }
 
@@ -5283,7 +5425,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           ? orderedTeacherIds.map((teacherId) => {
             const matches = indexedItems.filter(({ item }) => teacherIdsForBlock(item)[0] === teacherId);
             return `<div class="buildFacilitySlot">${matches.map(({ item, index }) => `
-              <div class="buildBlock" style="${blockTeacherStyle(item)}">
+              <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" data-move-kind="course" data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
                 <button data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${item.schoolClass || item.label || "Bloc"}</strong>
                 <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
@@ -5295,13 +5437,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
-          <div class="buildBlock eventBlock">
+          <div class="buildBlock eventBlock ${movingBuildBlock?.type === "event" && movingBuildBlock?.id === event.id ? "moveSelected" : ""}" data-move-kind="event" data-move-id="${event.id}" data-block-key="${key}">
             <strong>${event.name} : ${eventClassSummary(event)}</strong>
             <div class="eventBlockControls">
               ${eventTeacherDots(event)}
             </div>
           </div>`).join("")}${asItems.map((session) => `
-          <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
+          <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
             <strong>${asBlockLabel(session)}</strong>
           </div>`).join("")}</div>`;
       }
@@ -5460,7 +5602,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
                 const blocked = vacation || holiday;
-              return `<td title="${holiday || vacation?.name || ""}" class="${editable && !blocked ? "buildDropCell" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" ${editable && !blocked ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
+              const canMoveHere = editable && !blocked && (movingBuildBlock?.type === "as" ? row.isAs : true);
+              const canOpenHere = editable && !blocked && !row.isAs;
+              return `<td title="${holiday || vacation?.name || ""}" class="${canOpenHere ? "buildDropCell" : ""} ${movingBuildBlock && canMoveHere ? "moveTarget" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" ${canMoveHere ? `data-move-cell="${key}"` : ""} ${canOpenHere ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
                 ${vacation ? `<span class="muted">V</span>` : ""}
                 ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
                 ${renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds)}
@@ -6933,9 +7077,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
-        document.querySelectorAll("[data-open-cell]").forEach((cell) => {
+        document.querySelectorAll("[data-move-cell], [data-open-cell]").forEach((cell) => {
           cell.addEventListener("click", (event) => {
-            if (event.target.closest("[data-remove-cell]")) return;
+            if (event.target.closest("[data-remove-cell], [data-move-kind]")) return;
+            if (movingBuildBlock) {
+              moveSelectedBlockTo(cell.dataset.moveCell || cell.dataset.openCell);
+              movingBuildBlock = null;
+              window.onpointermove = null;
+              activeBuildCell = null;
+              editingBuildBlock = null;
+              render();
+              return;
+            }
+            if (!cell.dataset.openCell) return;
             activeBuildCell = cell.dataset.openCell;
             editingBuildBlock = null;
             blockTeacherIds = [];
@@ -6948,6 +7102,26 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        const cancelMoveBlock = document.getElementById("cancelMoveBlock");
+        if (cancelMoveBlock) {
+          cancelMoveBlock.addEventListener("click", () => {
+            movingBuildBlock = null;
+            window.onpointermove = null;
+            render();
+          });
+        }
+        if (movingBuildBlock) {
+          window.onpointermove = (event) => {
+            movingBuildBlock = { ...movingBuildBlock, x: event.clientX, y: event.clientY };
+            const ghost = document.getElementById("movingBlockGhost");
+            if (ghost) {
+              ghost.style.left = `${event.clientX}px`;
+              ghost.style.top = `${event.clientY}px`;
+            }
+          };
+        } else {
+          window.onpointermove = null;
+        }
         document.querySelectorAll("[data-edit-built-block]").forEach((block) => {
           block.addEventListener("dblclick", (event) => {
             event.stopPropagation();
@@ -6963,6 +7137,41 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockSecondTeacherHours = teacherIdsForBlock(item).length > 1 ? String(coTeacherHoursForBlock(item, teacherIdsForBlock(item)[1], currentBlockSlotHours())) : "";
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
+          });
+        });
+        document.querySelectorAll("[data-move-kind]").forEach((block) => {
+          let longPressTimer = null;
+          const clearLongPress = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          block.addEventListener("pointerdown", (event) => {
+            if (event.target.closest("[data-remove-cell]")) return;
+            event.stopPropagation();
+            clearLongPress();
+            longPressTimer = setTimeout(() => {
+              movingBuildBlock = {
+                type: block.dataset.moveKind,
+                key: block.dataset.blockKey,
+                index: Number(block.dataset.moveIndex),
+                id: block.dataset.moveId,
+                x: event.clientX,
+                y: event.clientY
+              };
+              activeBuildCell = null;
+              editingBuildBlock = null;
+              showValidationPopup("Bloc selectionne : cliquez sur la case cible");
+              render();
+            }, 650);
+          });
+          ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => {
+            block.addEventListener(eventName, (event) => {
+              event.stopPropagation();
+              clearLongPress();
+            });
+          });
+          block.addEventListener("click", (event) => {
+            event.stopPropagation();
           });
         });
         document.querySelectorAll("[data-remove-cell]").forEach((button) => {
