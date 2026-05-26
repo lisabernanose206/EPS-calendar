@@ -1,5 +1,27 @@
 # Log des corrections
 
+- Navigation Admin : bouton Construction replace directement a cote de Pré-requis année scolaire.
+- Navigation Admin : anciens onglets conserves comme sous-onglets dans les deux pages de pré-requis.
+- Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation reduite a trois etapes.
+- Navigation Admin : regroupement des cinq premiers onglets dans Pré-requis établissement.
+- Etablissement : configuration generale conservee a gauche et creneaux cours/AS regroupes a droite.
+- Choix des dates : validation possible pour les periodes qui traversent week-ends, jours feries ou vacances, tout en gardant ces jours non selectionnables comme bornes.
+- Service libre : saisie stabilisee sans rechargement du panneau a chaque caractere.
+- Etablissement : creneaux de cours et AS configures par heures de debut/fin, avec duree calculee automatiquement.
+- Etablissement : ajout du nom d'etablissement, du type college et de la zone scolaire A/B/C avec vacances 2026-2027 mises a jour automatiquement selon la zone.
+- Etablissement : renommage de l'onglet Contraintes etablissement.
+- Choix des dates : calendrier maintenu ouvert jusqu'a validation explicite par bouton.
+- Service theorique : ajout du service libre pour affecter des heures non rattachees a une classe.
+- Contraintes etablissement : creneaux cours et AS rendus ajoutables/supprimables avec format horaire explicite.
+- Service theorique : champ heures signale en rouge tant qu'il n'est pas valide et bouton de validation ajoute.
+- Synchronisation cloud : sauvegardes mises en file d'attente, recuperation automatique des changements distants et droits SQL eps_plannings ajoutes.
+- Choix des dates : correction du decalage d'un jour lie au fuseau horaire dans le calendrier.
+- Confirmations utilisateur : messages d'ajout et de suppression generalises sur les actions principales.
+- Confirmations utilisateur : popup de validation adaptee apres ajout ou modification d'un element.
+- Classes en duo : duree parametrable pour le deuxieme professeur et prise en compte dans le service reel.
+- Contraintes etablissement : nouvel onglet Admin avant Profs pour parametrer les creneaux de cours et les horaires d'AS.
+- Navigation Admin : bouton Construction replace a droite de la ligne des prerequis.
+- Selection dates : week-ends, jours feries et vacances grises et bloquees dans les calendriers de parametrage.
 - Emploi du temps : texte des blocs colores centre horizontalement et verticalement.
 - Resume cycle : en-tete de niveau 2 passe en fond blanc avec texte noir.
 - Resume cycle : centrage des blocs colores force apres les styles generiques du tableau.

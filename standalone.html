@@ -81,8 +81,7 @@
       .weeks button.primaryAdminTab { background: #0f172a; color: #fff; }
       .weeks button.active { background: #0f766e; color: white; }
       .weeks button.primaryAdminTab.active { background: #000; color: #fff; box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000; }
-      .adminBuildNav { align-items: start; }
-      .adminBuildNav .weeks { display: grid; grid-template-columns: 1fr; }
+      .adminBuildAction { margin-left: 0; }
       .navGroup.locked { display: none; }
       .tabs button.active { background: #0f172a; color: white; }
       .mainContent { min-width: 0; }
@@ -332,6 +331,10 @@
       .buildBlock strong { color: #172033; font-size: 10px; line-height: 1.1; }
       .buildBlock span { color: #475569; font-size: 9px; font-weight: 850; line-height: 1.1; }
       .buildBlock button { background: rgba(255,255,255,0.55); border: 0; border-radius: 999px; color: #334155; cursor: pointer; font-size: 10px; font-weight: 950; justify-self: end; padding: 1px 5px; }
+      .coTeacherDurationPanel { align-items: end; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 120px; margin-top: 8px; padding: 9px; }
+      .coTeacherDurationPanel label { color: #334155; display: grid; font-size: 11px; font-weight: 900; gap: 3px; }
+      .coTeacherDurationPanel input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-weight: 900; min-height: 34px; padding: 0 8px; width: 100%; }
+      .coTeacherDurationPanel span { color: #64748b; font-size: 10px; font-weight: 850; }
       .constructionTable .buildCellStack { gap: 2px; }
       .constructionTable .buildFacilitySlot { gap: 2px; min-height: 0; }
       .constructionTable .buildSlotSpacer { min-height: 0; }
@@ -388,6 +391,10 @@
       .cycleRow { border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 6px; padding: 8px; }
       .cycleRow.active { border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12); }
       .cycleRow label { align-items: center; color: #172033; display: flex; font-size: 12px; font-weight: 900; gap: 6px; }
+      .cycleRow input { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 36px; padding: 0 9px; width: 100%; }
+      .schoolSlotGrid { display: grid; gap: 6px; grid-template-columns: 1fr 1fr auto; }
+      .schoolSlotGrid label { grid-column: 1 / -1; }
+      .schoolSlotGrid input[type="time"] { text-align: center; }
       .cycleDates { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
       .cycleDates input { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 6px; width: 100%; }
       .dateRangeField { position: relative; }
@@ -402,7 +409,12 @@
       .dateRangeDay.blank { visibility: hidden; }
       .dateRangeDay.selected { background: #0f172a; border-color: #0f172a; color: #fff; }
       .dateRangeDay.inRange { background: #ccfbf1; border-color: #5eead4; color: #134e4a; }
+      .dateRangeDay.blocked, .dateRangeDay:disabled { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 5px, #cbd5e1 5px, #cbd5e1 10px); border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; opacity: 0.75; }
       .dateRangeHint { color: #64748b; font-size: 10px; font-weight: 850; }
+      .dateRangeHint.error { color: #b91c1c; }
+      .dateRangeActions { display: flex; justify-content: flex-end; margin-top: 7px; }
+      .dateRangeValidate { background: #0f172a; border: 0; border-radius: 7px; color: #fff; cursor: pointer; font-size: 11px; font-weight: 950; min-height: 30px; padding: 0 10px; }
+      .dateRangeValidate:disabled { background: #cbd5e1; cursor: not-allowed; }
       .constructionTabs { background: #e2e8f0; border-radius: 10px; display: flex; gap: 5px; margin: 0 0 12px; max-width: max-content; padding: 5px; }
       .constructionTabs button { background: transparent; border: 0; border-radius: 8px; color: #334155; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 38px; padding: 0 14px; white-space: nowrap; }
       .constructionTabs button.active { background: #0f172a; color: #fff; }
@@ -465,6 +477,9 @@
       .eventPage { display: grid; gap: 14px; grid-template-columns: 360px minmax(0, 1fr); margin-top: 12px; }
       .eventForm, .eventList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
       .eventForm h3, .eventList h3 { margin: 0 0 10px; }
+      .prerequisitesPage { display: grid; gap: 16px; }
+      .prerequisitesPage > .eventPage { margin-top: 0; }
+      .prerequisitesPageTitle { color: #172033; font-size: 18px; margin: 0; }
       .eventField { display: grid; gap: 6px; margin-top: 10px; }
       .eventField label { color: #64748b; font-size: 12px; font-weight: 900; }
       .eventField input, .eventField select { border: 1px solid #cbd5e1; border-radius: 8px; color: #172033; font-weight: 850; min-height: 38px; padding: 0 9px; width: 100%; }
@@ -559,6 +574,7 @@
       .serviceTarget { display: grid; gap: 5px; }
       .serviceTarget label, .serviceTeacher label { color: #64748b; font-size: 11px; font-weight: 950; }
       .serviceTarget input, .serviceHoursInput { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 12px; font-weight: 900; min-height: 32px; padding: 0 8px; width: 100%; }
+      .serviceHoursInput.needsValidation { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15); }
       .compactServicePanel .serviceTarget { gap: 3px; }
       .compactServicePanel .serviceTarget label { font-size: 10px; }
       .compactServicePanel .serviceTarget input { font-size: 11px; min-height: 26px; padding: 0 6px; }
@@ -569,8 +585,14 @@
       .serviceColumn h4 { color: #172033; font-size: 12px; margin: 0; }
       .serviceLevelButtons { display: grid; gap: 5px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .serviceClassRows { display: flex; flex-wrap: wrap; gap: 5px; }
-      .serviceClassRow { align-items: center; display: grid; gap: 6px; grid-template-columns: 1fr 68px; }
+      .serviceClassRow { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(46px, auto) minmax(70px, 1fr) 34px; }
       .serviceClassRow .choiceButton { border-radius: 7px; justify-content: flex-start; min-height: 28px; text-align: left; }
+      .serviceValidateButton { align-items: center; background: #0f172a; border: 0; border-radius: 7px; color: #fff; cursor: pointer; display: inline-flex; font-size: 14px; font-weight: 950; height: 32px; justify-content: center; width: 34px; }
+      .serviceValidateButton:disabled { background: #cbd5e1; cursor: not-allowed; }
+      .serviceFreeBox { border-top: 1px solid rgba(15,23,42,0.12); display: grid; gap: 6px; padding-top: 7px; }
+      .serviceFreeBox label { color: #334155; font-size: 11px; font-weight: 950; }
+      .serviceFreeRow { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) 70px 34px; }
+      .serviceFreeRow input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 12px; font-weight: 900; min-height: 32px; padding: 0 8px; width: 100%; }
       .serviceClassButton { min-width: 44px; padding: 0 7px; }
       .serviceAlerts { display: grid; gap: 6px; }
       .serviceAlert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 12px; font-weight: 900; padding: 8px 10px; }
@@ -588,6 +610,8 @@
       .requestStatus.success { background: #ecfdf5; border: 1px solid #34d399; color: #047857; }
       .requestStatus.error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
+      .validationPopup { align-items: center; background: #0f172a; border: 1px solid #020617; border-radius: 10px; bottom: 18px; box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22); color: #fff; display: inline-flex; font-size: 13px; font-weight: 950; gap: 8px; min-height: 42px; padding: 0 14px; position: fixed; right: 18px; z-index: 1200; }
+      .validationPopup::before { background: #22c55e; border-radius: 999px; content: "✓"; display: inline-grid; height: 20px; place-items: center; width: 20px; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2, body.printA4 { background: #fff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .weekArrow, body.printA2 .weekArrow, body.printA4 .weekArrow, body.printA3 [data-print-format], body.printA2 [data-print-format], body.printA4 [data-print-format], body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend, body.printA3 .zoomControls, body.printA2 .zoomControls, body.printA4 .zoomControls, body.printA3 .cycleSummaryControl, body.printA2 .cycleSummaryControl, body.printA4 .cycleSummaryControl { display: none !important; }
@@ -708,23 +732,12 @@
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
-              <button data-week="build" data-build-mode="team"><span class="stepNav"><span class="stepBadge">1</span>Profs<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="classes"><span class="stepNav"><span class="stepBadge">2</span>Classes<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="facilities"><span class="stepNav"><span class="stepBadge">3</span>Installations<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="activities"><span class="stepNav"><span class="stepBadge">4</span>Activités<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="unavailable"><span class="stepNav"><span class="stepBadge">5</span>Indisponibilités<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="cycles"><span class="stepNav"><span class="stepBadge">6</span>Cycles<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="as"><span class="stepNav"><span class="stepBadge">7</span>AS<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="events"><span class="stepNav"><span class="stepBadge">8</span>Événements sportifs<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="hours"><span class="stepNav"><span class="stepBadge">9</span>Service<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button class="primaryAdminTab adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction</span></button>
             </section>
           </section>
-          <section class="navGroup adminBuildNav" id="adminBuildNavGroup">
-            <span class="navGroupLabel"></span>
-            <section class="weeks">
-              <button class="primaryAdminTab" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">10</span>Construction</span></button>
-            </section>
-          </section>
+
 
           <section class="navGroup questionNavGroup">
             <section class="weeks">
@@ -790,12 +803,27 @@
       ];
       let teachers = loadTeachers();
       const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
-      const slots = [
+      const defaultCourseSlots = [
         { id: "8", label: "8h-10h", hours: 2 },
         { id: "10", label: "10h-12h", hours: 2 },
         { id: "13", label: "13h30-15h30", hours: 2 },
         { id: "15", label: "15h30-16h30", hours: 1 }
       ];
+      const defaultAsSlots = [
+        { id: "as", label: "AS 12h30-13h15", days: ["Lundi", "Mardi", "Jeudi", "Vendredi"], hours: 0.75 },
+        { id: "as", label: "AS 12h30-15h30", days: ["Mercredi"], hours: 3 }
+      ];
+      const defaultSchoolConstraints = {
+        establishmentName: "",
+        establishmentType: "college",
+        schoolZone: "B",
+        courseSlots: defaultCourseSlots,
+        asSlots: defaultAsSlots,
+        asWeekdayLabel: "AS 12h30-13h15",
+        asWednesdayLabel: "AS 12h30-15h30"
+      };
+      let schoolConstraints = loadSchoolConstraints();
+      let slots = schoolConstraints.courseSlots;
       const defaultFacilities = [
         { id: "gym", label: "Salle de gym", type: "external" },
         { id: "boxe", label: "Salle de boxe", type: "external" },
@@ -843,6 +871,8 @@
       let blockExclusions = loadBlockExclusions();
       let constructionPlan = {};
       let constructionMode = "planning";
+      let prerequisiteMode = "establishment";
+      let yearPrerequisiteMode = "unavailable";
       let constructionZoom = 0.8;
       let constructionPrintTrimesterExport = false;
       let cycleViewZoom = 0.8;
@@ -855,12 +885,15 @@
       let serviceAssignments = loadServiceAssignments();
       let serviceLevelByTeacher = {};
       let serviceClassByTeacher = {};
+      let serviceDraftHours = {};
+      let serviceFreeDrafts = {};
       let blockTeacherIds = [];
       let blockClass = "";
       let blockClassLevel = "";
       let blockFacilityId = "";
       let blockActivityId = "";
       let blockWeekLetter = "all";
+      let blockSecondTeacherHours = "";
       let facilityDraftName = "";
       let facilityDraftType = "";
       let activityDraftName = "";
@@ -910,10 +943,13 @@
       let requestMessage = "";
       let requestStatus = "";
       let requestSubmitting = false;
+      let validationPopupMessage = "";
+      let validationPopupTimer = null;
       let activeDateRangePicker = "";
       let dateRangeDraftStart = "";
       let dateRangeDraftEnd = "";
       let dateRangeMonth = "";
+      let dateRangeSelectionError = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
       const BUILT_IN_CLOUD_CONFIG = {
         enabled: true,
@@ -927,6 +963,28 @@
       const ADMIN_EMAIL = "eps@lm.com";
       const fallbackBugFixLog = `# Log des corrections
 
+- Navigation Admin : bouton Construction replace directement a cote de Pré-requis année scolaire.
+- Navigation Admin : anciens onglets conserves comme sous-onglets dans les deux pages de pré-requis.
+- Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation reduite a trois etapes.
+- Navigation Admin : regroupement des cinq premiers onglets dans Pré-requis établissement.
+- Etablissement : configuration generale conservee a gauche et creneaux cours/AS regroupes a droite.
+- Choix des dates : validation possible pour les periodes qui traversent week-ends, jours feries ou vacances, tout en gardant ces jours non selectionnables comme bornes.
+- Service libre : saisie stabilisee sans rechargement du panneau a chaque caractere.
+- Etablissement : creneaux de cours et AS configures par heures de debut/fin, avec duree calculee automatiquement.
+- Etablissement : ajout du nom d'etablissement, du type college et de la zone scolaire A/B/C avec vacances 2026-2027 mises a jour automatiquement selon la zone.
+- Etablissement : renommage de l'onglet Contraintes etablissement.
+- Choix des dates : calendrier maintenu ouvert jusqu'a validation explicite par bouton.
+- Service theorique : ajout du service libre pour affecter des heures non rattachees a une classe.
+- Contraintes etablissement : creneaux cours et AS rendus ajoutables/supprimables avec format horaire explicite.
+- Service theorique : champ heures signale en rouge tant qu'il n'est pas valide et bouton de validation ajoute.
+- Synchronisation cloud : sauvegardes mises en file d'attente, recuperation automatique des changements distants et droits SQL eps_plannings ajoutes.
+- Choix des dates : correction du decalage d'un jour lie au fuseau horaire dans le calendrier.
+- Confirmations utilisateur : messages d'ajout et de suppression generalises sur les actions principales.
+- Confirmations utilisateur : popup de validation adaptee apres ajout ou modification d'un element.
+- Classes en duo : duree parametrable pour le deuxieme professeur et prise en compte dans le service reel.
+- Contraintes etablissement : nouvel onglet Admin avant Profs pour parametrer les creneaux de cours et les horaires d'AS.
+- Navigation Admin : bouton Construction replace a droite de la ligne des prerequis.
+- Selection dates : week-ends, jours feries et vacances grises et bloquees dans les calendriers de parametrage.
 - Vidage selectif de la construction : construction, AS, evenements sportifs, ou plusieurs elements a la fois.
 - AS et evenements sportifs rattaches au planning courant dans eps_plannings.data avec planningId.
 - Installations : plus de type coche par defaut, libelles Externe/Interne, suppression possible de toutes les installations.
@@ -935,6 +993,9 @@
       let cloudConfig = loadCloudConfig();
       let cloudStatus = cloudReady() ? "Cloud configuré. Chargement automatique activé." : "Cloud non configuré.";
       let cloudSaveTimer = null;
+      let cloudSaveQueued = false;
+      let cloudLastUpdatedAt = "";
+      let cloudRefreshTimer = null;
       let cloudSyncing = false;
       let adminSession = loadAdminSession();
       let authEmail = ADMIN_EMAIL;
@@ -1123,7 +1184,11 @@
       }
 
       function dateKey(date) {
-        return date.toISOString().slice(0, 10);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      }
+
+      function attrValue(value) {
+        return String(value || "").replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
       }
 
       function rowDateForWeek(row, weekItem) {
@@ -1148,14 +1213,36 @@
         ]);
       }
 
-      function schoolVacations() {
-        return [
+      const schoolVacationCalendars = {
+        A: [
+          { name: "Vacances Toussaint", start: "2026-10-17", end: "2026-11-01" },
+          { name: "Vacances Noel", start: "2026-12-19", end: "2027-01-03" },
+          { name: "Vacances hiver zone A", start: "2027-02-13", end: "2027-02-28" },
+          { name: "Vacances printemps zone A", start: "2027-04-10", end: "2027-04-25" },
+          { name: "Vacances ete", start: "2027-07-03", end: "2027-08-31" }
+        ],
+        B: [
           { name: "Vacances Toussaint", start: "2026-10-17", end: "2026-11-01" },
           { name: "Vacances Noel", start: "2026-12-19", end: "2027-01-03" },
           { name: "Vacances hiver zone B", start: "2027-02-20", end: "2027-03-07" },
           { name: "Vacances printemps zone B", start: "2027-04-17", end: "2027-05-02" },
           { name: "Vacances ete", start: "2027-07-03", end: "2027-08-31" }
-        ];
+        ],
+        C: [
+          { name: "Vacances Toussaint", start: "2026-10-17", end: "2026-11-01" },
+          { name: "Vacances Noel", start: "2026-12-19", end: "2027-01-03" },
+          { name: "Vacances hiver zone C", start: "2027-02-06", end: "2027-02-21" },
+          { name: "Vacances printemps zone C", start: "2027-04-03", end: "2027-04-18" },
+          { name: "Vacances ete", start: "2027-07-03", end: "2027-08-31" }
+        ]
+      };
+
+      function activeSchoolZone() {
+        return ["A", "B", "C"].includes(schoolConstraints?.schoolZone) ? schoolConstraints.schoolZone : defaultSchoolConstraints.schoolZone;
+      }
+
+      function schoolVacations() {
+        return schoolVacationCalendars[activeSchoolZone()] || schoolVacationCalendars.B;
       }
 
       function vacationForWeek(weekItem) {
@@ -1185,18 +1272,60 @@
         return null;
       }
 
+      function dateRangeBlockedReason(value) {
+        const date = dateOnly(value);
+        const day = date.getDay();
+        if (day === 0 || day === 6) return "Week-end";
+        const holiday = schoolYearHolidays().get(value);
+        if (holiday) return holiday;
+        const vacation = schoolVacations().find((item) => date >= dateOnly(item.start) && date <= dateOnly(item.end));
+        return vacation?.name || "";
+      }
+
+      function dateRangeHasBlockedDay(start, end) {
+        let cursor = dateOnly(start);
+        const last = dateOnly(end);
+        while (cursor <= last) {
+          if (dateRangeBlockedReason(dateKey(cursor))) return true;
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        return false;
+      }
+
+      function asSlotsForDay(day) {
+        return (schoolConstraints.asSlots || defaultAsSlots)
+          .filter((slot) => (slot.days || []).includes(day))
+          .map((slot) => ({ ...slot, isAs: true }));
+      }
+
+      function daySlotsFor(day) {
+        return [
+          ...slots.slice(0, 2),
+          ...asSlotsForDay(day),
+          ...slots.slice(2)
+        ];
+      }
+
+      function timetableSlots() {
+        const combined = [];
+        days.forEach((day) => {
+          daySlotsFor(day).forEach((slot) => {
+            const key = `${slot.id}-${slot.label}`;
+            if (!combined.some((item) => item.key === key)) combined.push({ ...slot, key });
+          });
+        });
+        return combined;
+      }
+
       function yearRows() {
         return days.flatMap((day) => {
-          const asSlot = { id: "as", label: day === "Mercredi" ? "AS 12h30-15h30" : "AS 12h30-13h15", hours: 0 };
-          const daySlots = day === "Mercredi"
-            ? [slots[0], slots[1], asSlot]
-            : [slots[0], slots[1], asSlot, slots[2], slots[3]];
+          const daySlots = daySlotsFor(day);
           return daySlots.map((slot) => ({
           id: `${day}-${slot.id}`,
           day,
           slot,
           label: `${day} ${slot.label}`,
-          isAs: slot.id === "as"
+          isAs: Boolean(slot.isAs)
           }));
         });
       }
@@ -1262,6 +1391,113 @@
         scheduleCloudSave();
       }
 
+      function loadSchoolConstraints() {
+        try {
+          const saved = localStorage.getItem("planningEpsSchoolConstraints2026");
+          return normalizeSchoolConstraints(saved ? JSON.parse(saved) : {});
+        } catch {
+          return defaultSchoolConstraints;
+        }
+      }
+
+      function normalizeSchoolConstraints(value = {}) {
+        const normalizeTime = (value) => {
+          const match = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+          if (!match) return "";
+          const hours = Number(match[1]);
+          const minutes = Number(match[2]);
+          if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return "";
+          return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+        };
+        const parseTimeRange = (label) => {
+          const match = String(label || "").match(/(\d{1,2})h?(?::?(\d{2}))?\s*-\s*(\d{1,2})h?(?::?(\d{2}))?/i);
+          if (!match) return null;
+          const start = normalizeTime(`${match[1]}:${match[2] || "00"}`);
+          const end = normalizeTime(`${match[3]}:${match[4] || "00"}`);
+          return start && end ? { start, end } : null;
+        };
+        const timeLabel = (value) => {
+          const [hours, minutes] = value.split(":");
+          return `${Number(hours)}h${minutes === "00" ? "" : minutes}`;
+        };
+        const hoursBetween = (start, end) => {
+          const [startHours, startMinutes] = start.split(":").map(Number);
+          const [endHours, endMinutes] = end.split(":").map(Number);
+          const diff = ((endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)) / 60;
+          return diff > 0 ? Math.round(diff * 100) / 100 : 0;
+        };
+        const normalizeSlot = (slot, fallbackSlot, prefix = "") => {
+          const parsed = parseTimeRange(slot.label) || parseTimeRange(fallbackSlot.label);
+          const startTime = normalizeTime(slot.startTime) || parsed?.start || "08:00";
+          const endTime = normalizeTime(slot.endTime) || parsed?.end || "09:00";
+          const hours = hoursBetween(startTime, endTime);
+          const label = `${prefix}${timeLabel(startTime)}-${timeLabel(endTime)}`;
+          return { startTime, endTime, hours, label };
+        };
+        const savedSlots = Array.isArray(value.courseSlots) ? value.courseSlots : [];
+        const baseSlots = savedSlots.length ? savedSlots : defaultCourseSlots;
+        const courseSlots = baseSlots.map((slot, index) => {
+          const fallbackSlot = defaultCourseSlots[index] || defaultCourseSlots[0];
+          const normalizedSlot = normalizeSlot(slot, fallbackSlot);
+          return {
+            id: (slot.id || `slot-${Date.now()}-${index}`).trim(),
+            ...normalizedSlot
+          };
+        });
+        const legacyAsSlots = [
+          { ...defaultAsSlots[0], label: value.asWeekdayLabel || defaultAsSlots[0].label },
+          { ...defaultAsSlots[1], label: value.asWednesdayLabel || defaultAsSlots[1].label }
+        ];
+        const savedAsSlots = Array.isArray(value.asSlots) && value.asSlots.length ? value.asSlots : legacyAsSlots;
+        const asSlots = savedAsSlots.map((slot, index) => {
+          const daysList = Array.isArray(slot.days) && slot.days.length ? slot.days.filter((day) => days.includes(day)) : [...defaultAsSlots[index % defaultAsSlots.length].days];
+          const fallbackSlot = defaultAsSlots[index % defaultAsSlots.length];
+          const normalizedSlot = normalizeSlot(slot, fallbackSlot, "AS ");
+          return {
+            id: (slot.id || `as-${Date.now()}-${index}`).trim(),
+            ...normalizedSlot,
+            days: daysList.length ? daysList : ["Mercredi"],
+          };
+        });
+        const schoolZone = ["A", "B", "C"].includes(value.schoolZone) ? value.schoolZone : defaultSchoolConstraints.schoolZone;
+        return {
+          establishmentName: (value.establishmentName || defaultSchoolConstraints.establishmentName).trim(),
+          establishmentType: "college",
+          schoolZone,
+          courseSlots,
+          asSlots,
+          asWeekdayLabel: asSlots.find((slot) => slot.days.some((day) => day !== "Mercredi"))?.label || defaultSchoolConstraints.asWeekdayLabel,
+          asWednesdayLabel: asSlots.find((slot) => slot.days.includes("Mercredi"))?.label || defaultSchoolConstraints.asWednesdayLabel
+        };
+      }
+
+      function saveSchoolConstraints() {
+        localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
+        scheduleCloudSave();
+      }
+
+      function syncSchoolSlots() {
+        schoolConstraints = normalizeSchoolConstraints(schoolConstraints);
+        slots = schoolConstraints.courseSlots;
+      }
+
+      function saveSchoolSlotsAndRender(message = "") {
+        syncSchoolSlots();
+        saveSchoolConstraints();
+        if (message) showValidationPopup(message);
+        render();
+      }
+
+      function makeSlotId(prefix, existingIds) {
+        let index = existingIds.length + 1;
+        let id = `${prefix}-${index}`;
+        while (existingIds.includes(id)) {
+          index += 1;
+          id = `${prefix}-${index}`;
+        }
+        return id;
+      }
+
       function generatedClassLabels(mode, count) {
         return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => mode === "letter" ? String.fromCharCode(65 + index) : String(index + 1));
       }
@@ -1311,7 +1547,7 @@
         const valid = validClassSet();
         serviceAssignments = Object.fromEntries(Object.entries(serviceAssignments).map(([teacherId, rows]) => [
           teacherId,
-          Array.isArray(rows) ? rows.filter((row) => valid.has(row.classId)) : []
+          Array.isArray(rows) ? rows.filter((row) => !row.classId || valid.has(row.classId)) : []
         ]));
         unavailableClassIds = unavailableClassIds.filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass)));
         facilityUnavailability = facilityUnavailability.map((item) => ({ ...item, classIds: (item.classIds || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
@@ -1401,6 +1637,7 @@
                   teacherNames: item.teacherNames || item.teacherName,
                   teacherId: item.teacherId,
                   teacherName: item.teacherName,
+                  coTeacherHours: item.coTeacherHours || {},
                   color: item.color,
                   border: item.border,
                   schoolClass: item.schoolClass,
@@ -1579,6 +1816,9 @@
       function halfDayForSlot(slotId) {
         if (slotId === "8" || slotId === "10") return "morning";
         if (slotId === "13" || slotId === "15") return "afternoon";
+        const label = slots.find((slot) => slot.id === slotId)?.label || "";
+        const hour = Number((label.match(/^(\d{1,2})h/) || [])[1]);
+        if (Number.isFinite(hour)) return hour < 12 ? "morning" : hour < 13 ? "midday" : "afternoon";
         return "midday";
       }
 
@@ -1598,7 +1838,8 @@
       function eventStartSlotId(event) {
         const halfDay = event.halfDay || "all";
         if (halfDay.startsWith("slot-")) return halfDay.replace("slot-", "");
-        return halfDay === "afternoon" ? "13" : "8";
+        if (halfDay === "afternoon") return slots.find((slot) => halfDayForSlot(slot.id) === "afternoon")?.id || slots[0]?.id || "";
+        return slots.find((slot) => halfDayForSlot(slot.id) === "morning")?.id || slots[0]?.id || "";
       }
 
       function eventPeriodLabel(event) {
@@ -1984,6 +2225,7 @@
           cyclesByLevel,
           serviceHoursByLevel,
           serviceAssignments,
+          schoolConstraints,
           constructionRules,
           constructionPlan,
           blockExclusions,
@@ -2007,6 +2249,8 @@
         cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
         serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
         serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
+        schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
+        slots = schoolConstraints.courseSlots;
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
@@ -2030,6 +2274,7 @@
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
+        localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
@@ -2041,13 +2286,19 @@
       }
 
       function scheduleCloudSave() {
-        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave || cloudSyncing) return;
+        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
+        if (cloudSyncing) {
+          cloudSaveQueued = true;
+          return;
+        }
         clearTimeout(cloudSaveTimer);
         cloudStatus = "Sauvegarde cloud en attente...";
         cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false), 900);
       }
 
       async function cloudSaveToRemote(shouldRender = true) {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
         if (!isAdmin()) {
           cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
           if (shouldRender) render();
@@ -2062,29 +2313,46 @@
         cloudStatus = "Sauvegarde cloud en cours...";
         if (shouldRender) render();
         try {
+          const updatedAt = new Date().toISOString();
           const response = await fetch(`${cloudEndpoint()}?on_conflict=id`, {
             method: "POST",
             headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-            body: JSON.stringify({ id: cloudConfig.planningId, data: collectPlanningData(), updated_at: new Date().toISOString() })
+            body: JSON.stringify({ id: cloudConfig.planningId, data: collectPlanningData(), updated_at: updatedAt })
           });
           if (!response.ok) throw new Error(await response.text());
+          cloudLastUpdatedAt = updatedAt;
           cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`;
         } catch (error) {
           cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
         } finally {
           cloudSyncing = false;
+          if (cloudSaveQueued) {
+            cloudSaveQueued = false;
+            scheduleCloudSave();
+          }
           if (shouldRender) render();
         }
       }
 
-      async function cloudLoadFromRemote(shouldRender = true) {
+      function cloudRemoteIsNewer(updatedAt) {
+        if (!updatedAt) return true;
+        if (!cloudLastUpdatedAt) return true;
+        return updatedAt !== cloudLastUpdatedAt;
+      }
+
+      async function cloudLoadFromRemote(shouldRender = true, silent = false) {
         if (!cloudReady()) {
           cloudStatus = "Cloud non configuré.";
           if (shouldRender) render();
           return;
         }
+        if (cloudSaveTimer || cloudSaveQueued) {
+          if (!silent) cloudStatus = "Chargement reporte : une sauvegarde locale est en attente.";
+          if (shouldRender) render();
+          return;
+        }
         cloudSyncing = true;
-        cloudStatus = "Chargement depuis le cloud...";
+        if (!silent) cloudStatus = "Chargement depuis le cloud...";
         if (shouldRender) render();
         try {
           const response = await fetch(`${cloudEndpoint()}?select=data,updated_at&id=eq.${encodeURIComponent(cloudConfig.planningId)}`, {
@@ -2093,17 +2361,31 @@
           if (!response.ok) throw new Error(await response.text());
           const rows = await response.json();
           if (!rows.length) {
-            cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
+            if (!silent) cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
+          } else if (!cloudRemoteIsNewer(rows[0].updated_at)) {
+            if (!silent) cloudStatus = `Données déjà à jour (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
           } else {
             applyPlanningData(rows[0].data);
+            cloudLastUpdatedAt = rows[0].updated_at;
             cloudStatus = `Données cloud chargées (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
+            if (silent) showValidationPopup("Synchronisation cloud reçue");
           }
         } catch (error) {
-          cloudStatus = `Erreur cloud : ${error.message || "chargement impossible"}`;
+          if (!silent) cloudStatus = `Erreur cloud : ${error.message || "chargement impossible"}`;
         } finally {
           cloudSyncing = false;
           if (shouldRender) render();
         }
+      }
+
+      function restartCloudAutoRefresh() {
+        clearInterval(cloudRefreshTimer);
+        cloudRefreshTimer = null;
+        if (!cloudReady() || !cloudConfig.autoLoad) return;
+        cloudRefreshTimer = setInterval(() => {
+          if (cloudSyncing || cloudSaveTimer || cloudSaveQueued) return;
+          cloudLoadFromRemote(true, true);
+        }, 15000);
       }
 
       function setCycleCount(count) {
@@ -2249,19 +2531,23 @@
             const value = dateKey(new Date(monthDate.getFullYear(), monthDate.getMonth(), day));
             const selected = value === draftStart || value === draftEnd;
             const inRange = draftStart && draftEnd && value > draftStart && value < draftEnd;
-            return `<button class="dateRangeDay ${selected ? "selected" : ""} ${inRange ? "inRange" : ""}" data-date-range-day="${value}">${day}</button>`;
+            const blockedReason = dateRangeBlockedReason(value);
+            return `<button type="button" class="dateRangeDay ${selected ? "selected" : ""} ${inRange ? "inRange" : ""} ${blockedReason ? "blocked" : ""}" data-date-range-day="${value}" ${blockedReason ? `disabled title="${blockedReason}"` : ""}>${day}</button>`;
           })
         ].join("");
         return `<div class="dateRangeField">
           <button class="dateRangeButton" data-open-date-range="${id}" data-range-start="${start || ""}" data-range-end="${end || ""}" ${disabled ? "disabled" : ""}>${dateRangeLabel(start, end)}</button>
           ${isOpen ? `<div class="dateRangePicker">
             <div class="dateRangeHead">
-              <button data-date-range-month="-">‹</button>
+              <button type="button" data-date-range-month="-">‹</button>
               <strong>${monthLabel}</strong>
-              <button data-date-range-month="+">›</button>
+              <button type="button" data-date-range-month="+">›</button>
             </div>
             <div class="dateRangeGrid">${["L", "M", "M", "J", "V", "S", "D"].map((day) => `<span class="dateRangeWeekday">${day}</span>`).join("")}${dayButtons}</div>
-            <span class="dateRangeHint">${dateRangeDraftStart && !dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de debut."}</span>
+            <span class="dateRangeHint ${dateRangeSelectionError ? "error" : ""}">${dateRangeSelectionError || (dateRangeDraftStart && !dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de debut.")}</span>
+            <div class="dateRangeActions">
+              <button type="button" class="dateRangeValidate" data-validate-date-range="${id}" ${dateRangeDraftStart && dateRangeDraftEnd ? "" : "disabled"}>Valider les dates</button>
+            </div>
           </div>` : ""}
         </div>`;
       }
@@ -2356,11 +2642,13 @@
             (constructionPlan[key] || []).forEach((item) => {
               teacherIdsForBlock(item).forEach((teacherId) => {
                 if (!stats[teacherId]) return;
-                stats[teacherId].total += row.slot.hours;
+                const blockHours = teacherHoursForBlock(item, teacherId, row.slot.hours);
+                stats[teacherId].total += blockHours;
                 stats[teacherId].details.push({
                   week: weekItem,
                   day: row.day,
                   slot: row.slot,
+                  hours: blockHours,
                   schoolClass: item.schoolClass || "Classe",
                   facility: item.facilityLabel || "Installation"
                 });
@@ -2412,7 +2700,7 @@
                 if (vacationForCell(row, weekItem) || holidayFor(row, weekItem)) return;
                 const teacherIds = teacherIdsForBlock(rule.block);
                 if (!teacherIds.includes(teacher.id)) return;
-                cycleStats.total += row.slot.hours;
+                cycleStats.total += teacherHoursForBlock(rule.block, teacher.id, row.slot.hours);
                 if (rule.block.schoolClass) cycleStats.classes.add(rule.block.schoolClass);
               });
             });
@@ -2591,6 +2879,7 @@
         if (!block) return;
         if (scope === "cycle") removeBlockFromCycle(parseYearCellKey(key).rowId, index, block);
         if (scope === "slot") removeBlockFromSingleSlot(key, block);
+        showValidationPopup(scope === "cycle" ? "Créneau supprimé du cycle" : "Créneau supprimé");
       }
 
       function confirmSlotItemDeletion(label) {
@@ -2605,6 +2894,7 @@
         const existing = eventExclusions[eventId] || [];
         if (!existing.includes(key)) eventExclusions[eventId] = [...existing, key];
         saveEventExclusions();
+        showValidationPopup("Événement supprimé du créneau");
         render();
       }
 
@@ -2614,6 +2904,7 @@
         const existing = asExclusions[sessionId] || [];
         if (!existing.includes(key)) asExclusions[sessionId] = [...existing, key];
         saveAsExclusions();
+        showValidationPopup("AS supprimée du créneau");
         render();
       }
 
@@ -2989,6 +3280,41 @@
         return block.teacherNames || teacherNamesForBlock(block).join(" + ") || block.teacherName || "Prof";
       }
 
+      function clampCourseHours(value, maxHours) {
+        const max = Math.max(0.5, Number(maxHours) || 0.5);
+        const hours = Number(value);
+        if (!Number.isFinite(hours) || hours <= 0) return max;
+        return Math.min(max, Math.max(0.25, hours));
+      }
+
+      function coTeacherHoursForBlock(block, teacherId, slotHours) {
+        const ids = teacherIdsForBlock(block);
+        if (!teacherId || ids.indexOf(teacherId) <= 0) return Number(slotHours) || 0;
+        const stored = block.coTeacherHours && block.coTeacherHours[teacherId] !== undefined
+          ? block.coTeacherHours[teacherId]
+          : block.secondaryTeacherHours;
+        return clampCourseHours(stored === undefined ? slotHours : stored, slotHours);
+      }
+
+      function teacherHoursForBlock(block, teacherId, slotHours) {
+        const ids = teacherIdsForBlock(block);
+        if (!ids.includes(teacherId)) return 0;
+        return ids.indexOf(teacherId) === 0 ? Number(slotHours) || 0 : coTeacherHoursForBlock(block, teacherId, slotHours);
+      }
+
+      function currentBlockSlotHours() {
+        if (!activeBuildCell) return 2;
+        const { rowId } = parseYearCellKey(activeBuildCell);
+        return yearRows().find((item) => item.id === rowId)?.slot?.hours || 2;
+      }
+
+      function secondaryTeacherLabel(block, slotHours) {
+        const ids = teacherIdsForBlock(block);
+        if (ids.length < 2) return "";
+        const name = teachers.find((teacher) => teacher.id === ids[1])?.name || "2e prof";
+        return `${name} : ${coTeacherHoursForBlock(block, ids[1], slotHours)}h`;
+      }
+
       function blockTeacherStyle(block) {
         const blockTeachers = teacherIdsForBlock(block)
           .map((id) => teachers.find((teacher) => teacher.id === id))
@@ -3105,8 +3431,16 @@
         return Array.isArray(serviceAssignments[teacherId]) ? serviceAssignments[teacherId] : [];
       }
 
+      function serviceClassRowsForTeacher(teacherId) {
+        return serviceRowsForTeacher(teacherId).filter((row) => row.classId);
+      }
+
+      function serviceFreeRowsForTeacher(teacherId) {
+        return serviceRowsForTeacher(teacherId).filter((row) => row.freeService);
+      }
+
       function serviceAssignmentFor(teacherId, schoolClass) {
-        return serviceRowsForTeacher(teacherId).find((item) => item.classId === schoolClass);
+        return serviceClassRowsForTeacher(teacherId).find((item) => item.classId === schoolClass);
       }
 
       function serviceClassTarget(schoolClass) {
@@ -3122,6 +3456,16 @@
         return classes.includes(serviceClassByTeacher[teacherId]) ? serviceClassByTeacher[teacherId] : "";
       }
 
+      function serviceDraftKey(teacherId, schoolClass) {
+        return `${teacherId}::${schoolClass}`;
+      }
+
+      function serviceDraftValue(teacherId, schoolClass) {
+        const key = serviceDraftKey(teacherId, schoolClass);
+        if (serviceDraftHours[key] !== undefined) return serviceDraftHours[key];
+        return serviceAssignmentFor(teacherId, schoolClass)?.hours ?? "";
+      }
+
       function serviceClassTotals() {
         const totals = Object.fromEntries(classes.map((schoolClass) => [schoolClass, 0]));
         Object.values(serviceAssignments).forEach((rows) => {
@@ -3134,6 +3478,45 @@
         return totals;
       }
 
+      function serviceFreeDraftForTeacher(teacherId) {
+        return serviceFreeDrafts[teacherId] || { label: "", hours: "" };
+      }
+
+      function syncServiceFreeDraft(teacherId) {
+        const labelInput = document.querySelector(`[data-service-free-label="${teacherId}"]`);
+        const hoursInput = document.querySelector(`[data-service-free-hours="${teacherId}"]`);
+        const validateButton = document.querySelector(`[data-service-free-validate="${teacherId}"]`);
+        const draft = {
+          label: labelInput?.value || "",
+          hours: hoursInput?.value || ""
+        };
+        serviceFreeDrafts = { ...serviceFreeDrafts, [teacherId]: draft };
+        if (validateButton) validateButton.disabled = !(draft.label.trim() && Number(draft.hours) > 0);
+      }
+
+      function setServiceFreeAssignment(teacherId, label, hours) {
+        const value = Math.max(0, Number(hours) || 0);
+        const cleanLabel = label.trim();
+        if (!cleanLabel || value <= 0) return false;
+        const currentRows = serviceRowsForTeacher(teacherId);
+        const row = {
+          id: `free-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          freeService: true,
+          label: cleanLabel,
+          hours: value
+        };
+        serviceAssignments = { ...serviceAssignments, [teacherId]: [...currentRows, row] };
+        saveServiceAssignments();
+        showValidationPopup("Service libre validé");
+        return true;
+      }
+
+      function removeServiceFreeAssignment(teacherId, rowId) {
+        const currentRows = serviceRowsForTeacher(teacherId).filter((row) => row.id !== rowId);
+        serviceAssignments = { ...serviceAssignments, [teacherId]: currentRows };
+        saveServiceAssignments();
+      }
+
       function serviceAlerts() {
         const totals = serviceClassTotals();
         return classes
@@ -3142,11 +3525,14 @@
       }
 
       function setServiceAssignment(teacherId, schoolClass, hours) {
+        const existing = serviceAssignmentFor(teacherId, schoolClass);
         const currentRows = serviceRowsForTeacher(teacherId).filter((row) => row.classId !== schoolClass);
         const value = Math.max(0, Number(hours) || 0);
         if (value > 0) currentRows.push({ classId: schoolClass, hours: value });
         serviceAssignments = { ...serviceAssignments, [teacherId]: currentRows };
         saveServiceAssignments();
+        if (value > 0) showValidationPopup("Service théorique validé");
+        else if (existing) showValidationPopup("Service théorique supprimé");
       }
 
       function removeServiceAssignment(teacherId, schoolClass) {
@@ -3196,13 +3582,19 @@
           .map((id) => teachers.find((item) => item.id === id))
           .filter(Boolean);
         const primaryTeacher = selectedTeachers[0];
+        const secondTeacher = selectedTeachers[1];
         const facility = facilities.find((item) => item.id === blockFacilityId);
         const activity = activities.find((item) => item.id === blockActivityId);
+        const slotHours = currentBlockSlotHours();
+        const coTeacherHours = secondTeacher
+          ? { [secondTeacher.id]: clampCourseHours(blockSecondTeacherHours || slotHours, slotHours) }
+          : {};
         return {
           teacherIds: selectedTeachers.map((teacher) => teacher.id),
           teacherNames: selectedTeachers.map((teacher) => teacher.name).join(" + "),
           teacherId: primaryTeacher?.id || "",
           teacherName: primaryTeacher?.name || "",
+          coTeacherHours,
           color: primaryTeacher?.color || "#f8fafc",
           border: primaryTeacher?.border || "#cbd5e1",
           schoolClass: blockClass,
@@ -3336,18 +3728,14 @@
         const weekItem = displayedSchoolWeek();
         const rows = yearRows();
         const calendarSlots = [
-          slots[0],
-          slots[1],
-          { id: "as", label: "AS 12h30-13h15 / mer. 12h30-15h30" },
-          slots[2],
-          slots[3]
+          ...timetableSlots()
         ];
         return `${renderDateInfo()}${renderTeacherLegend("homeTeacherLegend")}<div class="homeTimetableWrap"><table class="homeTimetable">
           <thead><tr><th class="timeColumn">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
           <tbody>${calendarSlots.map((slot) => `<tr>
             <th class="timeColumn">${slot.label}</th>
             ${days.map((day) => {
-              const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
+              const row = rows.find((item) => item.day === day && item.slot.id === slot.id && item.slot.label === slot.label);
               const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
               if (!row) return `<td class="${nonWorkingCell ? "nonWorkingCell" : ""}"><div class="homeTimetableSlot"></div></td>`;
               const key = yearCellKey(row.id, weekItem.rank);
@@ -3598,12 +3986,16 @@
           <div class="servicePanel">
             <h3>Service theorique / Service reel</h3>
             <div class="serviceTeachers">${teachers.map((teacher) => {
-              const teacherRows = serviceRowsForTeacher(teacher.id);
+              const teacherRows = serviceClassRowsForTeacher(teacher.id);
+              const freeRows = serviceFreeRowsForTeacher(teacher.id);
+              const freeDraft = serviceFreeDraftForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
               const visibleClasses = classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
               const selectedClass = selectedServiceClassForTeacher(teacher.id);
               const selectedClassAssignment = selectedClass ? serviceAssignmentFor(teacher.id, selectedClass) : null;
-              const total = teacherRows.reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
+              const selectedClassHoursDraft = selectedClass ? serviceDraftValue(teacher.id, selectedClass) : "";
+              const canValidateSelectedClass = selectedClass && Number(selectedClassHoursDraft) > 0;
+              const total = [...teacherRows, ...freeRows].reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
               const courseTarget = teacher.weeklyReference;
               const asTarget = 3;
               const teacherCycleStats = cycleStats[teacher.id];
@@ -3631,9 +4023,19 @@
                 }).join("")}</div>
                 ${selectedClass ? `<div class="serviceClassRow">
                   <strong>${compactClassName(selectedClass)}</strong>
-                  <input class="serviceHoursInput" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassAssignment ? selectedClassAssignment.hours : ""}" placeholder="${serviceClassTarget(selectedClass)}h" />
+                  <input class="serviceHoursInput ${selectedClassAssignment ? "" : "needsValidation"}" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassHoursDraft}" placeholder="${serviceClassTarget(selectedClass)}h" />
+                  <button class="serviceValidateButton" data-service-class-validate="${teacher.id}" data-service-class="${selectedClass}" title="Valider les heures" ${canValidateSelectedClass ? "" : "disabled"}>✓</button>
                 </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
                 <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} · ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
+                <div class="serviceFreeBox">
+                  <label>Service libre</label>
+                  <div class="serviceFreeRow">
+                    <input data-service-free-label="${teacher.id}" value="${freeDraft.label}" placeholder="Ex. soutien piscine" />
+                    <input data-service-free-hours="${teacher.id}" type="number" min="0" step="0.5" value="${freeDraft.hours}" placeholder="h" />
+                    <button class="serviceValidateButton" data-service-free-validate="${teacher.id}" title="Valider le service libre" ${freeDraft.label.trim() && Number(freeDraft.hours) > 0 ? "" : "disabled"}>âœ“</button>
+                  </div>
+                  <div class="classPills">${freeRows.length ? freeRows.map((row) => `<button class="classPill" data-service-free-delete="${teacher.id}" data-service-free-id="${row.id}" title="Supprimer ce service libre">${row.label} Â· ${row.hours}h</button>`).join("") : `<span class="classPill">Aucun service libre</span>`}</div>
+                </div>
                   </div>
                   <div class="serviceColumn">
                     <h4>Service reel</h4>
@@ -3807,15 +4209,16 @@
         const items = [];
         const cycleErrors = validateCycles(cycles);
         const hasServiceAssignments = teachers.some((teacher) => serviceRowsForTeacher(teacher.id).length > 0);
-        if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours.", buildMode: "team" });
-        if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes.", buildMode: "classes" });
-        if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours.", buildMode: "facilities" });
-        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode.", buildMode: "cycles" });
-        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0], buildMode: "cycles" });
-        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "hours" });
-        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "unavailable" });
-        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning.", buildMode: "as" });
-        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes.", buildMode: "events" });
+        if (!adminStepComplete("establishment")) items.push({ level: "blocking", title: "Creneaux a completer", detail: "Renseignez les creneaux de cours et les horaires d'AS dans Etablissement.", buildMode: "prerequisites", subMode: "establishment" });
+        if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours.", buildMode: "prerequisites", subMode: "team" });
+        if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes.", buildMode: "prerequisites", subMode: "classes" });
+        if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours.", buildMode: "prerequisites", subMode: "facilities" });
+        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode.", buildMode: "yearPrerequisites", subMode: "cycles" });
+        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0], buildMode: "yearPrerequisites", subMode: "cycles" });
+        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "yearPrerequisites", subMode: "hours" });
+        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "yearPrerequisites", subMode: "unavailable" });
+        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning.", buildMode: "yearPrerequisites", subMode: "as" });
+        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes.", buildMode: "yearPrerequisites", subMode: "events" });
         return items;
       }
 
@@ -3848,6 +4251,18 @@
       }
 
       function adminStepComplete(buildMode) {
+        if (buildMode === "prerequisites") {
+          return ["establishment", "team", "classes", "facilities", "activities"].every(adminStepComplete);
+        }
+        if (buildMode === "yearPrerequisites") {
+          return ["unavailable", "cycles", "as", "events", "hours"].every(adminStepComplete);
+        }
+        if (buildMode === "establishment") {
+          return slots.length > 0
+            && slots.every((slot) => slot.label && Number(slot.hours) > 0)
+            && (schoolConstraints.asSlots || []).length > 0
+            && (schoolConstraints.asSlots || []).every((slot) => slot.label && Number(slot.hours) > 0 && (slot.days || []).length);
+        }
         if (buildMode === "team") return teachers.length > 0;
         if (buildMode === "classes") return classes.length > 0;
         if (buildMode === "facilities") return facilities.length > 0;
@@ -3863,7 +4278,116 @@
       function renderConstructionWarnings() {
         const items = constructionReadinessItems();
         if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
-        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+      }
+
+      function renderPrerequisiteTabs(items, active, datasetName) {
+        return `<div class="constructionTabs">
+          ${items.map((item) => `<button class="${active === item.id ? "active" : ""}" ${datasetName}="${item.id}">${item.label}</button>`).join("")}
+        </div>`;
+      }
+
+      function renderPrerequisitesView() {
+        const tabs = [
+          { id: "establishment", label: "Établissement" },
+          { id: "team", label: "Profs" },
+          { id: "classes", label: "Classes" },
+          { id: "facilities", label: "Installations" },
+          { id: "activities", label: "Activités" }
+        ];
+        const content = prerequisiteMode === "team" ? renderTeamSettings()
+          : prerequisiteMode === "classes" ? renderClassesView()
+            : prerequisiteMode === "facilities" ? renderFacilitiesSettings()
+              : prerequisiteMode === "activities" ? renderActivitiesSettings()
+                : renderEstablishmentSettings();
+        return `<section class="prerequisitesPage">
+          <h2 class="prerequisitesPageTitle">Pré-requis établissement</h2>
+          ${renderPrerequisiteTabs(tabs, prerequisiteMode, "data-prerequisite-mode")}
+          ${content}
+        </section>`;
+      }
+
+      function renderYearPrerequisitesView() {
+        const tabs = [
+          { id: "unavailable", label: "Indisponibilités" },
+          { id: "cycles", label: "Cycles" },
+          { id: "as", label: "AS" },
+          { id: "events", label: "Événements sportifs" },
+          { id: "hours", label: "Service" }
+        ];
+        const content = yearPrerequisiteMode === "cycles" ? `<section>
+            <section class="cycleDefinitionPage">
+              <div class="cycleDefinitionPanel">
+                ${renderCycleDefinition()}
+              </div>
+            </section>
+          </section>`
+          : yearPrerequisiteMode === "as" ? renderAsView()
+            : yearPrerequisiteMode === "events" ? renderEventsView()
+              : yearPrerequisiteMode === "hours" ? renderHoursBalance()
+                : renderFacilityUnavailabilityView();
+        return `<section class="prerequisitesPage">
+          <h2 class="prerequisitesPageTitle">Pré-requis année scolaire</h2>
+          ${renderPrerequisiteTabs(tabs, yearPrerequisiteMode, "data-year-prerequisite-mode")}
+          ${content}
+        </section>`;
+      }
+
+      function renderEstablishmentSettings() {
+        return `<section class="eventPage">
+          <div class="eventForm">
+            <h3>Établissement</h3>
+            <p class="muted">Parametrez les horaires utilises dans les cours, les indisponibilites, les evenements et les AS en indiquant simplement l'heure de debut et l'heure de fin.</p>
+            <div class="eventField">
+              <label>Nom de l'etablissement</label>
+              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. College Loustic" />
+            </div>
+            <div class="eventField">
+              <label>Type d'etablissement</label>
+              <select id="establishmentType" disabled>
+                <option value="college" selected>College</option>
+              </select>
+              <span class="muted">Configuration college active pour le moment.</span>
+            </div>
+            <div class="eventField">
+              <label>Zone scolaire</label>
+              <div class="choiceGrid">
+                ${["A", "B", "C"].map((zone) => `<button class="choiceButton ${activeSchoolZone() === zone ? "active" : ""}" data-school-zone="${zone}">Zone ${zone}</button>`).join("")}
+              </div>
+              <span class="muted">Changer la zone met automatiquement a jour les vacances scolaires dans les calendriers.</span>
+            </div>
+            <div class="alertHelp">
+              <strong>Application automatique</strong>
+              <span>Les modifications sont sauvegardees automatiquement et reprises dans les tableaux, les indisponibilites et les evenements.</span>
+            </div>
+          </div>
+          <div class="eventList">
+            <h4>Créneaux de cours</h4>
+            <div class="cycleList">
+              ${slots.map((slot, index) => `<div class="cycleRow schoolSlotGrid">
+                <label>Cours ${index + 1}</label>
+                <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de debut" />
+                <input data-course-slot-end="${slot.id}" type="time" value="${slot.endTime}" aria-label="Heure de fin" />
+                <button class="ghostButton" data-delete-course-slot="${slot.id}" ${slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
+              </div>`).join("")}
+            </div>
+            <button class="ghostButton" id="addCourseSlot">Ajouter un créneau de cours</button>
+            <h3>Créneaux AS</h3>
+            <p class="muted">Ajoutez autant de créneaux AS que nécessaire. Cochez les jours concernés puis indiquez l'heure de debut et l'heure de fin.</p>
+            <div class="cycleList">
+              ${(schoolConstraints.asSlots || []).map((slot, index) => `<div class="cycleRow">
+                <label>AS ${index + 1}</label>
+                <div class="schoolSlotGrid">
+                  <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de debut AS" />
+                  <input data-as-slot-end="${index}" type="time" value="${slot.endTime}" aria-label="Heure de fin AS" />
+                </div>
+                <div class="choiceGrid">${days.map((day) => `<button class="choiceButton ${(slot.days || []).includes(day) ? "active" : ""}" data-as-slot-day="${index}" data-day="${day}">${day}</button>`).join("")}</div>
+                <button class="ghostButton" data-delete-as-slot="${index}" ${(schoolConstraints.asSlots || []).length <= 1 ? "disabled" : ""}>Supprimer</button>
+              </div>`).join("")}
+            </div>
+            <button class="ghostButton" id="addAsSlot">Ajouter un créneau AS</button>
+          </div>
+        </section>`;
       }
 
       function renderClassesView() {
@@ -3903,6 +4427,17 @@
         const monthLabels = weeks.map((weekItem) => monthLabelForWeek(weekItem));
         const rows = yearRows();
         const block = currentBlock();
+        if (constructionMode === "prerequisites") {
+          return renderPrerequisitesView();
+        }
+        if (constructionMode === "yearPrerequisites") {
+          return renderYearPrerequisitesView();
+        }
+        if (constructionMode === "establishment") {
+          return `<section>
+            ${renderEstablishmentSettings()}
+          </section>`;
+        }
         if (constructionMode === "facilities") {
           return `<section>
             ${renderFacilitiesSettings()}
@@ -4024,6 +4559,8 @@
 -- Chaque entree contient planningId = eps_plannings.id.
 
 alter table public.eps_plannings disable row level security;
+grant usage on schema public to anon, authenticated;
+grant insert, select, update on public.eps_plannings to anon, authenticated;
 
 create table public.eps_feedback (
   id uuid primary key default gen_random_uuid(),
@@ -4104,6 +4641,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const asItems = asSessionsForCell(row, weekItem);
         const presentCount = items.length + events.length + asItems.length;
         const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
+        const secondTeacher = blockTeacherIds.length > 1 ? teachers.find((teacher) => teacher.id === blockTeacherIds[1]) : null;
+        const secondTeacherHours = secondTeacher ? clampCourseHours(blockSecondTeacherHours || row.slot.hours, row.slot.hours) : "";
         return `<div class="modalBackdrop">
           <section class="modal">
             <div class="modalHeader">
@@ -4127,6 +4666,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   return `<button class="choiceButton ${blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${teacher.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
                 }).join("")}</div>
                 <span class="muted">Jusqu'à 2 profs pour un cours conjoint.</span>
+                ${secondTeacher ? `<div class="coTeacherDurationPanel">
+                  <label>Duree de presence du 2e prof
+                    <span>${secondTeacher.name} peut rester tout le creneau ou seulement une partie.</span>
+                  </label>
+                  <input id="blockSecondTeacherHours" type="number" min="0.25" max="${row.slot.hours}" step="0.25" value="${secondTeacherHours}" />
+                </div>` : ""}
               </div>
               <div class="buildField">
                 <label>Installation</label>
@@ -4188,6 +4733,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <span>${block.facilityLabel || "Installation a selectionner"}</span>
               ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}
               <span>${block.teacherNames || "Professeur a selectionner"}</span>
+              ${secondTeacher ? `<span>${secondTeacher.name} : ${secondTeacherHours}h</span>` : ""}
             </div>
             ${conflictMessage ? `<div class="conflictNotice">${conflictMessage}</div>` : ""}
             <div class="modalFooter">
@@ -4201,6 +4747,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   <button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>
                   <strong>${item.schoolClass || "Bloc"}</strong>
                   <span>${item.facilityLabel || ""}</span>
+                  ${secondaryTeacherLabel(item, row.slot.hours) ? `<span>${secondaryTeacherLabel(item, row.slot.hours)}</span>` : ""}
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map((event) => `
                 <div class="buildBlock eventBlock">
@@ -4391,7 +4938,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ${renderDateRangePicker("as", asStart, asEnd)}
             </div>
             <div class="eventField">
-              <label>Jours récurrents · 12h30-13h15, mercredi 12h30-15h30</label>
+              <label>Jours récurrents · ${(schoolConstraints.asSlots || []).map((slot) => slot.label.replace(/^AS\s*/i, "")).join(", ")}</label>
               <div class="choiceGrid">${days.map((day) => `<button class="choiceButton ${asWeekdays.includes(day) ? "active" : ""}" data-as-day="${day}">${day}</button>`).join("")}</div>
             </div>
             <div class="eventField">
@@ -4799,16 +5346,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderGuideView() {
         const steps = [
-          ["1. Profs", "Creez les professeurs, choisissez leur couleur et renseignez les remplacants si besoin."],
-          ["2. Classes", "Definissez les classes de l'etablissement et leur format de nommage."],
-          ["3. Installations", "Ajoutez les installations internes ou externes utilisables dans les cours."],
-          ["4. Activites", "Ajoutez les activites si vous voulez les preciser dans certains blocs."],
-          ["5. Indisponibilites", "Renseignez les contraintes des profs, classes et installations avant de construire."],
-          ["6. Cycles", "Creez les cycles par niveau quand ils different selon les classes."],
-          ["7. AS et evenements", "Ajoutez les AS et evenements sportifs qui doivent apparaitre dans le planning."],
-          ["8. Service", "Affectez les classes aux profs et verifiez l'ecart entre service theorique et reel."],
-          ["9. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les etapes precedentes sont validees."],
-          ["10. Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
+          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites."],
+          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service."],
+          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides."],
+          ["Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
           ["Emploi du temps", "Consultez la semaine selectionnee avec les cours, AS et evenements visibles."],
@@ -4836,16 +5377,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderGuideView() {
         const adminSteps = [
-          ["1. Profs", "Creez les professeurs, choisissez leur couleur et renseignez les remplacants si besoin."],
-          ["2. Classes", "Definissez les classes de l'etablissement et leur format de nommage."],
-          ["3. Installations", "Ajoutez les installations internes ou externes utilisables dans les cours."],
-          ["4. Activites", "Ajoutez les activites si vous voulez les preciser dans certains blocs."],
-          ["5. Indisponibilites", "Renseignez les contraintes des profs, classes et installations avant de construire."],
-          ["6. Cycles", "Creez les cycles par niveau quand ils different selon les classes."],
-          ["7. AS et evenements", "Ajoutez les AS et evenements sportifs qui doivent apparaitre dans le planning."],
-          ["8. Service", "Affectez les classes aux profs et verifiez l'ecart entre service theorique et reel."],
-          ["9. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les etapes precedentes sont validees."],
-          ["10. Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
+          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites."],
+          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service."],
+          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides."],
+          ["Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
           ["Emploi du temps", "Consultez la semaine selectionnee avec les cours, AS et evenements visibles."],
@@ -4980,6 +5515,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         </section>`;
       }
 
+      function showValidationPopup(message) {
+        validationPopupMessage = message;
+        clearTimeout(validationPopupTimer);
+        validationPopupTimer = setTimeout(() => {
+          validationPopupMessage = "";
+          render();
+        }, 2400);
+      }
+
+      function renderValidationPopup() {
+        return validationPopupMessage ? `<div class="validationPopup">${validationPopupMessage}</div>` : "";
+      }
+
       function renderAuthBox() {
         const authBox = document.getElementById("authBox");
         if (!authBox) return;
@@ -5026,8 +5574,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
-        const adminBuildNavGroup = document.getElementById("adminBuildNavGroup");
-        if (adminBuildNavGroup) adminBuildNavGroup.classList.toggle("locked", !isAdmin());
         updateNavigationActive();
         const cycle = generateCycle();
         const root = document.getElementById("root");
@@ -5046,6 +5592,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         else if (week === "log") root.innerHTML = renderBugFixLogView();
         else if (week === "request") root.innerHTML = renderRequestView();
         else root.innerHTML = renderCalendar(cycle);
+        root.insertAdjacentHTML("beforeend", renderValidationPopup());
         const adminLoginForm = document.getElementById("adminLoginForm");
         if (adminLoginForm) {
           adminLoginForm.addEventListener("submit", (event) => {
@@ -5065,6 +5612,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           warning.addEventListener("click", () => {
             week = "build";
             constructionMode = warning.dataset.warningBuildMode || "planning";
+            if (constructionMode === "prerequisites" && warning.dataset.warningSubMode) prerequisiteMode = warning.dataset.warningSubMode;
+            if (constructionMode === "yearPrerequisites" && warning.dataset.warningSubMode) yearPrerequisiteMode = warning.dataset.warningSubMode;
             render();
           });
         });
@@ -5085,6 +5634,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             activeDateRangePicker = button.dataset.openDateRange;
             dateRangeDraftStart = button.dataset.rangeStart || "";
             dateRangeDraftEnd = button.dataset.rangeEnd || "";
+            dateRangeSelectionError = "";
             dateRangeMonth = monthKeyForDate(dateRangeDraftStart || schoolYear.start);
             render();
           });
@@ -5098,6 +5648,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-date-range-day]").forEach((button) => {
           button.addEventListener("click", () => {
             const value = button.dataset.dateRangeDay;
+            if (button.disabled || dateRangeBlockedReason(value)) return;
+            dateRangeSelectionError = "";
             if (!dateRangeDraftStart || dateRangeDraftEnd) {
               dateRangeDraftStart = value;
               dateRangeDraftEnd = "";
@@ -5106,10 +5658,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             }
             const start = value < dateRangeDraftStart ? value : dateRangeDraftStart;
             const end = value < dateRangeDraftStart ? dateRangeDraftStart : value;
-            applyDateRangeSelection(activeDateRangePicker, start, end);
+            dateRangeDraftStart = start;
+            dateRangeDraftEnd = end;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-validate-date-range]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled || !dateRangeDraftStart || !dateRangeDraftEnd) return;
+            applyDateRangeSelection(button.dataset.validateDateRange, dateRangeDraftStart, dateRangeDraftEnd);
             activeDateRangePicker = "";
             dateRangeDraftStart = "";
             dateRangeDraftEnd = "";
+            dateRangeSelectionError = "";
+            showValidationPopup("Dates validées");
             render();
           });
         });
@@ -5215,6 +5777,18 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-prerequisite-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            prerequisiteMode = button.dataset.prerequisiteMode;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-year-prerequisite-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            yearPrerequisiteMode = button.dataset.yearPrerequisiteMode;
+            render();
+          });
+        });
         document.querySelectorAll("[data-service-level-hours]").forEach((input) => {
           input.addEventListener("change", () => {
             const level = input.dataset.serviceLevelHours;
@@ -5223,12 +5797,117 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        const establishmentNameInput = document.getElementById("establishmentName");
+        if (establishmentNameInput) {
+          establishmentNameInput.addEventListener("input", () => {
+            schoolConstraints = { ...schoolConstraints, establishmentName: establishmentNameInput.value };
+            saveSchoolConstraints();
+          });
+          establishmentNameInput.addEventListener("change", () => render());
+        }
+        document.querySelectorAll("[data-school-zone]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const zone = button.dataset.schoolZone;
+            if (!["A", "B", "C"].includes(zone)) return;
+            schoolConstraints = { ...schoolConstraints, schoolZone: zone };
+            saveSchoolSlotsAndRender(`Zone scolaire ${zone} appliquee`);
+          });
+        });
+        document.querySelectorAll("[data-course-slot-start], [data-course-slot-end]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const id = input.dataset.courseSlotStart || input.dataset.courseSlotEnd;
+            const field = input.dataset.courseSlotStart ? "startTime" : "endTime";
+            schoolConstraints = {
+              ...schoolConstraints,
+              courseSlots: schoolConstraints.courseSlots.map((slot) => slot.id === id ? { ...slot, [field]: input.value } : slot)
+            };
+            saveSchoolSlotsAndRender();
+          });
+        });
+        const addCourseSlot = document.getElementById("addCourseSlot");
+        if (addCourseSlot) {
+          addCourseSlot.addEventListener("click", () => {
+            const id = makeSlotId("slot", schoolConstraints.courseSlots.map((slot) => slot.id));
+            schoolConstraints = {
+              ...schoolConstraints,
+              courseSlots: [...schoolConstraints.courseSlots, { id, startTime: "16:30", endTime: "17:30", label: "16h30-17h30", hours: 1 }]
+            };
+            saveSchoolSlotsAndRender("Créneau de cours ajouté");
+          });
+        }
+        document.querySelectorAll("[data-delete-course-slot]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.deleteCourseSlot;
+            if (schoolConstraints.courseSlots.length <= 1) return;
+            schoolConstraints = {
+              ...schoolConstraints,
+              courseSlots: schoolConstraints.courseSlots.filter((slot) => slot.id !== id)
+            };
+            saveSchoolSlotsAndRender("Créneau de cours supprimé");
+          });
+        });
+        document.querySelectorAll("[data-as-slot-start], [data-as-slot-end]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const index = Number(input.dataset.asSlotStart || input.dataset.asSlotEnd);
+            const field = input.dataset.asSlotStart ? "startTime" : "endTime";
+            schoolConstraints = {
+              ...schoolConstraints,
+              asSlots: (schoolConstraints.asSlots || []).map((slot, slotIndex) => slotIndex === index ? { ...slot, [field]: input.value } : slot)
+            };
+            saveSchoolSlotsAndRender();
+          });
+        });
+        document.querySelectorAll("[data-as-slot-day]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const index = Number(button.dataset.asSlotDay);
+            const day = button.dataset.day;
+            schoolConstraints = {
+              ...schoolConstraints,
+              asSlots: (schoolConstraints.asSlots || []).map((slot, slotIndex) => {
+                if (slotIndex !== index) return slot;
+                const currentDays = slot.days || [];
+                const nextDays = currentDays.includes(day)
+                  ? currentDays.filter((item) => item !== day)
+                  : [...currentDays, day];
+                return { ...slot, days: nextDays.length ? nextDays : currentDays };
+              })
+            };
+            saveSchoolSlotsAndRender();
+          });
+        });
+        const addAsSlot = document.getElementById("addAsSlot");
+        if (addAsSlot) {
+          addAsSlot.addEventListener("click", () => {
+            const id = makeSlotId("as", (schoolConstraints.asSlots || []).map((slot) => slot.id));
+            schoolConstraints = {
+              ...schoolConstraints,
+              asSlots: [...(schoolConstraints.asSlots || []), { id, startTime: "16:30", endTime: "17:30", label: "AS 16h30-17h30", days: ["Mercredi"], hours: 1 }]
+            };
+            saveSchoolSlotsAndRender("Créneau AS ajouté");
+          });
+        }
+        document.querySelectorAll("[data-delete-as-slot]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const index = Number(button.dataset.deleteAsSlot);
+            if ((schoolConstraints.asSlots || []).length <= 1) return;
+            schoolConstraints = {
+              ...schoolConstraints,
+              asSlots: (schoolConstraints.asSlots || []).filter((_, slotIndex) => slotIndex !== index)
+            };
+            saveSchoolSlotsAndRender("Créneau AS supprimé");
+          });
+        });
         document.querySelectorAll("[data-class-count]").forEach((input) => {
           input.addEventListener("change", () => {
             const level = input.dataset.classCount;
             const mode = classConfig[level]?.mode || "number";
-            classConfig = { ...classConfig, [level]: { mode, labels: generatedClassLabels(mode, Math.min(26, Math.max(0, Number(input.value) || 0))) } };
+            const previousCount = classConfig[level]?.labels.length || 0;
+            const nextCount = Math.min(26, Math.max(0, Number(input.value) || 0));
+            classConfig = { ...classConfig, [level]: { mode, labels: generatedClassLabels(mode, nextCount) } };
             saveClassConfig();
+            if (nextCount > previousCount) showValidationPopup("Classes ajoutées");
+            else if (nextCount < previousCount) showValidationPopup("Classes supprimées");
+            else showValidationPopup("Classes mises à jour");
             render();
           });
         });
@@ -5247,6 +5926,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const current = classConfig[level] || defaultClassConfig[level];
             classConfig = { ...classConfig, [level]: { ...current, labels: generatedClassLabels(current.mode, current.labels.length + 1) } };
             saveClassConfig();
+            showValidationPopup("Classe validée");
             render();
           });
         });
@@ -5258,6 +5938,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (!window.confirm(`Supprimer la classe ${compactClassName(schoolClassLabel(level, label))} ?`)) return;
             classConfig = { ...classConfig, [level]: { ...current, labels: current.labels.filter((item) => item !== label) } };
             saveClassConfig();
+            showValidationPopup("Classe supprimée");
             render();
           });
         });
@@ -5266,6 +5947,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const teacherId = button.dataset.serviceClassToggle;
             const schoolClass = button.dataset.serviceClass;
             serviceClassByTeacher = { ...serviceClassByTeacher, [teacherId]: serviceClassByTeacher[teacherId] === schoolClass ? "" : schoolClass };
+            if (!serviceClassByTeacher[teacherId]) {
+              serviceDraftHours = { ...serviceDraftHours };
+              delete serviceDraftHours[serviceDraftKey(teacherId, schoolClass)];
+            }
             render();
           });
         });
@@ -5279,8 +5964,49 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
         });
         document.querySelectorAll("[data-service-class-hours]").forEach((input) => {
-          input.addEventListener("change", () => {
-            setServiceAssignment(input.dataset.serviceClassHours, input.dataset.serviceClass, input.value);
+          input.addEventListener("input", () => {
+            const teacherId = input.dataset.serviceClassHours;
+            const schoolClass = input.dataset.serviceClass;
+            serviceDraftHours = { ...serviceDraftHours, [serviceDraftKey(teacherId, schoolClass)]: input.value };
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-class-validate]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            const teacherId = button.dataset.serviceClassValidate;
+            const schoolClass = button.dataset.serviceClass;
+            setServiceAssignment(teacherId, schoolClass, serviceDraftValue(teacherId, schoolClass));
+            serviceDraftHours = { ...serviceDraftHours };
+            delete serviceDraftHours[serviceDraftKey(teacherId, schoolClass)];
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-free-label]").forEach((input) => {
+          input.addEventListener("input", () => {
+            syncServiceFreeDraft(input.dataset.serviceFreeLabel);
+          });
+        });
+        document.querySelectorAll("[data-service-free-hours]").forEach((input) => {
+          input.addEventListener("input", () => {
+            syncServiceFreeDraft(input.dataset.serviceFreeHours);
+          });
+        });
+        document.querySelectorAll("[data-service-free-validate]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            const teacherId = button.dataset.serviceFreeValidate;
+            const draft = serviceFreeDraftForTeacher(teacherId);
+            if (!setServiceFreeAssignment(teacherId, draft.label, draft.hours)) return;
+            serviceFreeDrafts = { ...serviceFreeDrafts, [teacherId]: { label: "", hours: "" } };
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-free-delete]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacherId = button.dataset.serviceFreeDelete;
+            removeServiceFreeAssignment(teacherId, button.dataset.serviceFreeId);
+            showValidationPopup("Service libre supprimé");
             render();
           });
         });
@@ -5291,6 +6017,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const teacherName = teachers.find((teacher) => teacher.id === teacherId)?.name || "ce prof";
             if (!window.confirm(`Supprimer l'affectation ${compactClassName(schoolClass)} pour ${teacherName} ?`)) return;
             removeServiceAssignment(teacherId, schoolClass);
+            showValidationPopup("Service théorique supprimé");
             render();
           });
         });
@@ -5321,6 +6048,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             cloudConfig = { ...cloudConfig, [key]: !cloudConfig[key] };
             saveCloudConfig();
             cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            restartCloudAutoRefresh();
             render();
           });
         });
@@ -5330,6 +6058,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             readCloudConfigInputs();
             saveCloudConfig();
             cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            restartCloudAutoRefresh();
             render();
           });
         }
@@ -5339,6 +6068,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             input.addEventListener("input", () => {
               readCloudConfigInputs();
               saveCloudConfig();
+              restartCloudAutoRefresh();
             });
           }
         });
@@ -5413,6 +6143,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             teacherDraftColor = firstAvailableTeacherColor();
             teacherDraftStatus = "certifie";
             saveTeachers();
+            showValidationPopup("Professeur validé");
             render();
           });
         }
@@ -5455,6 +6186,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             saveBlockExclusions();
             saveServiceAssignments();
             rebuildConstructionPlan();
+            showValidationPopup("Professeur supprimé");
             render();
           });
         });
@@ -5531,6 +6263,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             facilityDraftName = "";
             facilityDraftType = "";
             saveFacilities();
+            showValidationPopup("Installation validée");
             render();
           });
         }
@@ -5549,6 +6282,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             });
             saveFacilities();
             saveFacilityUnavailability();
+            showValidationPopup("Installation supprimée");
             render();
           });
         });
@@ -5560,6 +6294,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             activities = [...activities, { id: activityIdFromName(label), label }];
             activityDraftName = "";
             saveActivities();
+            showValidationPopup("Activité validée");
             render();
           });
         }
@@ -5574,6 +6309,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             } : rule);
             saveActivities();
             rebuildConstructionPlan();
+            showValidationPopup("Activité supprimée");
             render();
           });
         });
@@ -5586,9 +6322,21 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             } else {
               blockTeacherIds = [...blockTeacherIds, teacherId].slice(-2);
             }
+            if (blockTeacherIds.length < 2) blockSecondTeacherHours = "";
+            else if (!blockSecondTeacherHours) blockSecondTeacherHours = String(currentBlockSlotHours());
             render();
           });
         });
+        const blockSecondTeacherHoursInput = document.getElementById("blockSecondTeacherHours");
+        if (blockSecondTeacherHoursInput) {
+          blockSecondTeacherHoursInput.addEventListener("input", () => {
+            blockSecondTeacherHours = blockSecondTeacherHoursInput.value;
+          });
+          blockSecondTeacherHoursInput.addEventListener("change", () => {
+            blockSecondTeacherHours = String(clampCourseHours(blockSecondTeacherHoursInput.value, currentBlockSlotHours()));
+            render();
+          });
+        }
         document.querySelectorAll("[data-pick-facility]").forEach((button) => {
           button.addEventListener("click", () => {
             if (button.disabled) return;
@@ -5656,7 +6404,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (addSportEvent) {
           addSportEvent.addEventListener("click", () => {
             if (!eventTeacherIds.length) return;
+            const message = editingEventId ? "Événement sportif modifié" : "Événement sportif validé";
             saveSportEventFromForm();
+            showValidationPopup(message);
             render();
           });
         }
@@ -5691,6 +6441,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             saveSportEvents();
             saveEventExclusions();
             rebuildConstructionPlan();
+            showValidationPopup("Événement sportif supprimé");
             render();
           });
         });
@@ -5801,7 +6552,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (unavailableType === "facility" && !unavailableFacilityIds.length) return;
             if (unavailableType === "class" && !unavailableClassIds.length) return;
             if (unavailableType === "teacher" && !unavailableTeacherIds.length) return;
+            const message = editingUnavailableId ? "Contrainte modifiée" : "Contrainte validée";
             saveFacilityUnavailableFromForm();
+            showValidationPopup(message);
             render();
           });
         }
@@ -5841,6 +6594,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (editingUnavailableId === button.dataset.deleteUnavailable) resetFacilityUnavailableForm();
             saveFacilityUnavailability();
             rebuildConstructionPlan();
+            showValidationPopup("Contrainte supprimée");
             render();
           });
         });
@@ -5848,7 +6602,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (addAsSession) {
           addAsSession.addEventListener("click", () => {
             if (!asTeacherIds.length || !asWeekdays.length || !asStart || !asEnd) return;
+            const message = editingAsId ? "AS modifiée" : "AS validée";
             saveAsSessionFromForm();
+            showValidationPopup(message);
             render();
           });
         }
@@ -5879,6 +6635,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (editingAsId === button.dataset.deleteAs) resetAsForm();
             saveAsSessions();
             saveAsExclusions();
+            showValidationPopup("AS supprimée");
             render();
           });
         });
@@ -5910,9 +6667,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             }
             if (editingBuildBlock?.ruleId) updateConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter, weekItem);
             else applyBlockToCycle(rowId, cellCycle.id, block, blockWeekLetter);
+            showValidationPopup(editingBuildBlock ? "Créneau modifié" : "Créneau validé");
             editingBuildBlock = null;
             activeBuildCell = null;
             blockWeekLetter = "all";
+            blockSecondTeacherHours = "";
             render();
           });
         }
@@ -5921,6 +6680,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             activeBuildCell = null;
             editingBuildBlock = null;
             blockWeekLetter = "all";
+            blockSecondTeacherHours = "";
             render();
           });
         });
@@ -5934,7 +6694,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const cycleCountInput = document.getElementById("cycleCount");
         if (cycleCountInput) {
           cycleCountInput.addEventListener("change", () => {
+            const previousCount = activeCycles().length;
             setCycleCount(cycleCountInput.value);
+            const nextCount = activeCycles().length;
+            if (nextCount > previousCount) showValidationPopup("Cycle ajouté");
+            else if (nextCount < previousCount) showValidationPopup("Cycle supprimé");
+            else showValidationPopup("Cycles mis à jour");
             render();
           });
         }
@@ -5957,6 +6722,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockClass = "";
             blockClassLevel = "";
             blockWeekLetter = "all";
+            blockSecondTeacherHours = "";
             render();
           });
         });
@@ -5972,6 +6738,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockClass = item.schoolClass;
             blockClassLevel = classParts(item.schoolClass).level;
             blockWeekLetter = item.weekLetter || "all";
+            blockSecondTeacherHours = teacherIdsForBlock(item).length > 1 ? String(coTeacherHoursForBlock(item, teacherIdsForBlock(item)[1], currentBlockSlotHours())) : "";
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
           });
@@ -6065,6 +6832,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
             if (typedConfirm !== "VIDER") return;
             clearPlanningParts(options);
+            showValidationPopup("Éléments supprimés");
             render();
           });
         }
@@ -6104,7 +6872,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       });
       render();
       if (cloudReady() && cloudConfig.autoLoad) {
-        setTimeout(() => cloudLoadFromRemote(true), 300);
+        setTimeout(() => cloudLoadFromRemote(true).then(restartCloudAutoRefresh), 300);
+      } else {
+        restartCloudAutoRefresh();
       }
     </script>
   </body>
