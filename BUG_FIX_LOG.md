@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Navigation tablette : onglets Admin placés sous les onglets Professeur pour éviter qu'ils soient masqués.
 - Verrous : commande de verrouillage placée juste sous les sous-onglets dans les deux prérequis.
 - Verrous : texte corrigé et cadenas aligné sur la même ligne que la coche/croix.
 - Etablissement : blocs de créneaux et boutons d'ajout rendus plus visibles.
