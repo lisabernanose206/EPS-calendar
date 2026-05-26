@@ -72,6 +72,7 @@
       .tabs { margin-top: 10px; }
       .weeks button, .tabs button { background: transparent; border: 0; border-radius: 7px; color: #334155; cursor: pointer; font-size: 11px; font-weight: 900; line-height: 1.1; min-height: 26px; padding: 0 7px; text-align: center; white-space: nowrap; width: auto; }
       .stepNav { align-items: center; display: inline-flex; gap: 5px; }
+      .constructionHammerIcon { display: inline-block; flex: 0 0 auto; height: 20px; width: 20px; }
       .stepBadge { align-items: center; background: #000; border-radius: 999px; color: #fff; display: inline-flex; font-size: 10px; font-weight: 950; height: 18px; justify-content: center; min-width: 18px; padding: 0 5px; }
       .stepStatus { align-items: center; border-radius: 4px; color: #fff; display: inline-flex; font-size: 11px; font-weight: 950; height: 18px; justify-content: center; width: 18px; }
       .stepStatus::before { content: "x"; }
@@ -785,7 +786,7 @@
             <section class="weeks">
               <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
               <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span><span aria-hidden="true">🚧</span>Construction</span></button>
+              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
             </section>
           </section>
         </nav>
