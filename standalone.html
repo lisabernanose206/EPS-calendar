@@ -609,6 +609,8 @@
       .eventCard { border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; display: grid; gap: 5px; margin-top: 8px; padding: 10px; }
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .asExistingCard strong, .asExistingCard span { color: #172033; }
+      .asExistingCard .ghostButton { background: rgba(255,255,255,0.72); }
       .eventTeacherSummary { align-items: center; display: flex; flex-wrap: wrap; gap: 5px; }
       .eventTeacherSwatch { border: 1px solid transparent; border-radius: 4px; display: inline-block; height: 13px; width: 13px; }
       .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1804,6 +1806,18 @@
         const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
         if (baseClassId && item.hoursByClass && item.hoursByClass[baseClassId] !== undefined) return Number(item.hoursByClass[baseClassId]) || 0;
         return Number(item.hours || 0);
+      }
+
+      function specialClassInstanceForBaseClass(baseClassId) {
+        return specialClassInstances().find((instance) => instance.baseClassId === baseClassId) || null;
+      }
+
+      function serviceClassIdForBaseClass(baseClassId) {
+        return specialClassInstanceForBaseClass(baseClassId)?.schoolClass || baseClassId;
+      }
+
+      function serviceClassesForLevel(level) {
+        return classesForLevel(level).map(serviceClassIdForBaseClass);
       }
 
       function classesFromConfig() {
@@ -3284,7 +3298,7 @@
         if (special) {
           const item = specialClassFromSchoolId(schoolClass);
           const baseLabel = baseClassId ? compactClassName(baseClassId) : specialClassBaseLabel(item);
-          return `${label || "Classe spec."}${baseLabel !== "Non rattachee" ? ` (${baseLabel})` : ""}`;
+          return baseClassId ? `${baseLabel} ${label || "Specifique"}` : `${label || "Classe spec."}${baseLabel !== "Non rattachee" ? ` (${baseLabel})` : ""}`;
         }
         if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
@@ -4233,11 +4247,13 @@
         const parts = classParts(schoolClass);
         if (parts.special) return specialClassHoursForSchoolClass(schoolClass);
         const level = parts.level;
-        return Number(serviceHoursByLevel[level] ?? defaultServiceHours[level] ?? 0);
+        const legalTarget = Number(defaultServiceHours[level] ?? 0);
+        const configuredTarget = Number(serviceHoursByLevel[level] ?? legalTarget);
+        return legalTarget ? Math.min(configuredTarget, legalTarget) : configuredTarget;
       }
 
       function selectedServiceLevelForTeacher(teacherId) {
-        return [...classLevels, "special"].includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
+        return classLevels.includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
       }
 
       function selectedServiceClassForTeacher(teacherId) {
@@ -4264,6 +4280,26 @@
           });
         });
         return totals;
+      }
+
+      function serviceClassAssignedTotal(schoolClass, exceptTeacherId = "") {
+        return Object.entries(serviceAssignments).reduce((sum, [teacherId, rows]) => {
+          if (teacherId === exceptTeacherId || !Array.isArray(rows)) return sum;
+          return sum + rows
+            .filter((row) => row.classId === schoolClass)
+            .reduce((rowSum, row) => rowSum + (Number(row.hours) || 0), 0);
+        }, 0);
+      }
+
+      function serviceMaxAssignableHours(teacherId, schoolClass) {
+        const target = serviceClassTarget(schoolClass);
+        const assignedElsewhere = serviceClassAssignedTotal(schoolClass, teacherId);
+        return Math.max(0, Math.round((target - assignedElsewhere) * 10) / 10);
+      }
+
+      function serviceClassHoursValid(teacherId, schoolClass, hours) {
+        const value = Number(hours) || 0;
+        return value > 0 && value <= serviceMaxAssignableHours(teacherId, schoolClass);
       }
 
       function serviceFreeDraftForTeacher(teacherId) {
@@ -4316,11 +4352,18 @@
         const existing = serviceAssignmentFor(teacherId, schoolClass);
         const currentRows = serviceRowsForTeacher(teacherId).filter((row) => row.classId !== schoolClass);
         const value = Math.max(0, Number(hours) || 0);
+        const maxHours = serviceMaxAssignableHours(teacherId, schoolClass);
+        if (value > maxHours) {
+          showValidationPopup(`Maximum autorise : ${maxHours}h`);
+          return false;
+        }
         if (value > 0) currentRows.push({ classId: schoolClass, hours: value });
         serviceAssignments = { ...serviceAssignments, [teacherId]: currentRows };
         saveServiceAssignments(true);
+        const saved = true;
         if (value > 0) showValidationPopup("Service théorique validé");
         else if (existing) showValidationPopup("Service théorique supprimé");
+        return saved;
       }
 
       function removeServiceAssignment(teacherId, schoolClass) {
@@ -4798,7 +4841,7 @@
             <div class="serviceTargets">${classLevels.map((level) => `
               <div class="serviceTarget">
                 <label>${level}</label>
-                <input data-service-level-hours="${level}" type="number" min="0" step="0.5" value="${serviceHoursByLevel[level] ?? defaultServiceHours[level]}" />
+                <input data-service-level-hours="${level}" type="number" min="0" max="${defaultServiceHours[level]}" step="0.5" value="${serviceClassTarget(schoolClassLabel(level, classNumbersForLevel(level)[0] || "1"))}" />
               </div>`).join("")}${specialClassInstances().map(({ item, baseClassId, schoolClass }) => `
               <div class="serviceTarget">
                 <label>${compactClassName(schoolClass)}</label>
@@ -4814,13 +4857,12 @@
               const freeRows = serviceFreeRowsForTeacher(teacher.id);
               const freeDraft = serviceFreeDraftForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
-              const visibleClasses = selectedLevel === "special"
-                ? specialClassInstances().map((instance) => instance.schoolClass)
-                : classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
+              const visibleClasses = selectedLevel ? serviceClassesForLevel(selectedLevel) : [];
               const selectedClass = selectedServiceClassForTeacher(teacher.id);
               const selectedClassAssignment = selectedClass ? serviceAssignmentFor(teacher.id, selectedClass) : null;
               const selectedClassHoursDraft = selectedClass ? serviceDraftValue(teacher.id, selectedClass) : "";
-              const canValidateSelectedClass = selectedClass && Number(selectedClassHoursDraft) > 0;
+              const selectedClassMaxHours = selectedClass ? serviceMaxAssignableHours(teacher.id, selectedClass) : 0;
+              const canValidateSelectedClass = selectedClass && serviceClassHoursValid(teacher.id, selectedClass, selectedClassHoursDraft);
               const total = [...teacherRows, ...freeRows].reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
               const courseTarget = teacher.weeklyReference;
               const overtimeHours = Math.max(0, Math.round((total - courseTarget) * 10) / 10);
@@ -4845,7 +4887,6 @@
                     </div>
                 <div class="serviceLevelButtons">
                   ${classLevels.map((level) => `<button class="choiceButton ${selectedLevel === level ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="${level}">${level}</button>`).join("")}
-                  ${specialClasses().length ? `<button class="choiceButton ${selectedLevel === "special" ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="special">Specifiques</button>` : ""}
                 </div>
                 ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
@@ -4854,7 +4895,7 @@
                 }).join("")}</div>
                 ${selectedClass ? `<div class="serviceClassRow">
                   <strong>${compactClassName(selectedClass)}</strong>
-                  <input class="serviceHoursInput ${selectedClassAssignment ? "" : "needsValidation"}" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" step="0.5" value="${selectedClassHoursDraft}" placeholder="${serviceClassTarget(selectedClass)}h" />
+                  <input class="serviceHoursInput ${selectedClassAssignment ? "" : "needsValidation"}" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" max="${selectedClassMaxHours}" step="0.5" value="${selectedClassHoursDraft}" placeholder="${serviceClassTarget(selectedClass)}h max" />
                   <button class="serviceValidateButton" data-service-class-validate="${teacher.id}" data-service-class="${selectedClass}" title="Valider les heures" ${canValidateSelectedClass ? "" : "disabled"}>&#10003;</button>
                 </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
                 <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
@@ -5872,7 +5913,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <div class="eventList">
             <h3>Événements existants</h3>
             ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid fiveCardGrid">${sportEvents.map((event) => `
-              <article class="eventCard" style="${asSessionStyle(session)}">
+              <article class="eventCard">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
                 <span>Classes : ${eventClassSummary(event)}</span>
@@ -5916,7 +5957,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <div class="eventList">
             <h3>AS existantes</h3>
             ${asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : `<div class="compactCardGrid fiveCardGrid">${asSessions.map((session) => `
-              <article class="eventCard">
+              <article class="eventCard asExistingCard" style="${asSessionStyle(session)}">
                 <strong>${session.name}</strong>
                 <span>${session.start} → ${session.end} · ${session.weekdays.join(", ")} · AS midi</span>
                 <span>${asSessionTeacherLabel(session)}</span>
@@ -7082,7 +7123,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-service-level-hours]").forEach((input) => {
           input.addEventListener("change", () => {
             const level = input.dataset.serviceLevelHours;
-            serviceHoursByLevel = { ...serviceHoursByLevel, [level]: Math.max(0, Number(input.value) || 0) };
+            const legalTarget = Number(defaultServiceHours[level] ?? 0);
+            const value = Math.max(0, Number(input.value) || 0);
+            const cappedValue = legalTarget ? Math.min(value, legalTarget) : value;
+            input.value = String(cappedValue);
+            serviceHoursByLevel = { ...serviceHoursByLevel, [level]: cappedValue };
             saveServiceHoursByLevel(true);
             render();
           });
@@ -7344,8 +7389,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           input.addEventListener("input", () => {
             const teacherId = input.dataset.serviceClassHours;
             const schoolClass = input.dataset.serviceClass;
+            const maxHours = serviceMaxAssignableHours(teacherId, schoolClass);
+            if (Number(input.value) > maxHours) input.value = String(maxHours);
             serviceDraftHours = { ...serviceDraftHours, [serviceDraftKey(teacherId, schoolClass)]: input.value };
-            render();
+            const validateButton = document.querySelector(`[data-service-class-validate="${teacherId}"][data-service-class="${CSS.escape(schoolClass)}"]`);
+            input.max = String(maxHours);
+            input.classList.toggle("needsValidation", !serviceClassHoursValid(teacherId, schoolClass, input.value));
+            if (validateButton) validateButton.disabled = !serviceClassHoursValid(teacherId, schoolClass, input.value);
           });
         });
         document.querySelectorAll("[data-service-class-validate]").forEach((button) => {
@@ -7353,7 +7403,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (button.disabled) return;
             const teacherId = button.dataset.serviceClassValidate;
             const schoolClass = button.dataset.serviceClass;
-            setServiceAssignment(teacherId, schoolClass, serviceDraftValue(teacherId, schoolClass));
+            const saved = setServiceAssignment(teacherId, schoolClass, serviceDraftValue(teacherId, schoolClass));
+            if (!saved) {
+              render();
+              return;
+            }
             serviceDraftHours = { ...serviceDraftHours };
             delete serviceDraftHours[serviceDraftKey(teacherId, schoolClass)];
             render();
