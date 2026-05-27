@@ -1168,7 +1168,11 @@
 - Profs : palette pastel imposee, couleur modifiable, remplacant possible.
 - Indisponibilites : choix de n'importe quelle installation, dates libres ou cycles selectionnes.`;
       let cloudConfig = loadCloudConfig();
-      let cloudStatus = cloudReady() ? "Supabase actif. Sauvegarde cloud active, chargement automatique désactivé." : "Cloud non configuré.";
+      let cloudStatus = cloudReady()
+        ? cloudWriteAllowed()
+          ? "Supabase actif. Sauvegarde cloud active, chargement automatique désactivé."
+          : cloudWriteBlockedMessage()
+        : "Cloud non configuré.";
       let cloudSaveTimer = null;
       let cloudSaveQueued = false;
       let cloudLastUpdatedAt = "";
@@ -1710,8 +1714,15 @@
               suffix += 1;
             }
             seen.add(id);
-            const baseClassId = classesFromStandardConfig(normalized).includes(item?.baseClassId) ? item.baseClassId : "";
-            return { id, label, baseClassId, hours: Math.max(0, Number(item?.hours) || 0) };
+            const standardClassSet = new Set(classesFromStandardConfig(normalized));
+            const baseClassIds = [...new Set([
+              ...(Array.isArray(item?.baseClassIds) ? item.baseClassIds : []),
+              item?.baseClassId || ""
+            ].filter((schoolClass) => standardClassSet.has(schoolClass)))];
+            const hoursByClass = Object.fromEntries(Object.entries(item?.hoursByClass || {})
+              .filter(([schoolClass]) => standardClassSet.has(schoolClass))
+              .map(([schoolClass, hours]) => [schoolClass, Math.max(0, Number(hours) || 0)]));
+            return { id, label, baseClassIds, hours: Math.max(0, Number(item?.hours) || 0), hoursByClass };
           })
           .filter(Boolean);
         return normalized;
@@ -1742,21 +1753,59 @@
         return Array.isArray(classConfig.specialClasses) ? classConfig.specialClasses : [];
       }
 
-      function specialClassSchoolId(id) {
-        return `special::${id}`;
+      function specialClassSchoolId(id, baseClassId = "") {
+        return `special::${id}${baseClassId ? `::${baseClassId}` : ""}`;
       }
 
       function specialClassFromSchoolId(schoolClass) {
-        const id = String(schoolClass || "").startsWith("special::") ? String(schoolClass).slice("special::".length) : "";
+        const id = specialClassTypeIdFromSchoolId(schoolClass);
         return specialClasses().find((item) => item.id === id) || null;
       }
 
+      function specialClassTypeIdFromSchoolId(schoolClass) {
+        return String(schoolClass || "").startsWith("special::") ? String(schoolClass).slice("special::".length).split("::")[0] : "";
+      }
+
+      function specialClassBaseIdFromSchoolId(schoolClass) {
+        if (!String(schoolClass || "").startsWith("special::")) return "";
+        return String(schoolClass).slice("special::".length).split("::").slice(1).join("::");
+      }
+
       function specialClassBaseLabel(item) {
-        return item?.baseClassId ? compactClassName(item.baseClassId) : "Non rattachee";
+        const baseClassIds = specialClassBaseIds(item);
+        return baseClassIds.length ? baseClassIds.map(compactClassName).join(", ") : "Non rattachee";
+      }
+
+      function specialClassBaseIds(item) {
+        const standardClassSet = new Set(classesFromStandardConfig());
+        return [...new Set([
+          ...(Array.isArray(item?.baseClassIds) ? item.baseClassIds : []),
+          item?.baseClassId || ""
+        ].filter((schoolClass) => standardClassSet.has(schoolClass)))];
+      }
+
+      function specialClassInstances() {
+        return specialClasses().flatMap((item) => {
+          const baseClassIds = specialClassBaseIds(item);
+          const targets = baseClassIds.length ? baseClassIds : [""];
+          return targets.map((baseClassId) => ({
+            item,
+            baseClassId,
+            schoolClass: specialClassSchoolId(item.id, baseClassId)
+          }));
+        });
+      }
+
+      function specialClassHoursForSchoolClass(schoolClass) {
+        const item = specialClassFromSchoolId(schoolClass);
+        if (!item) return 0;
+        const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+        if (baseClassId && item.hoursByClass && item.hoursByClass[baseClassId] !== undefined) return Number(item.hoursByClass[baseClassId]) || 0;
+        return Number(item.hours || 0);
       }
 
       function classesFromConfig() {
-        return [...classesFromStandardConfig(), ...specialClasses().map((item) => specialClassSchoolId(item.id))];
+        return [...classesFromStandardConfig(), ...specialClassInstances().map((instance) => instance.schoolClass)];
       }
 
       function validClassSet() {
@@ -1765,7 +1814,7 @@
 
       function baseClassFromGroupedClass(schoolClass) {
         const parts = classParts(schoolClass);
-        if (parts.special) return specialClassSchoolId(parts.number);
+        if (parts.special) return specialClassSchoolId(parts.specialId || parts.number, parts.baseClassId || "");
         return parts.level && parts.number ? schoolClassLabel(parts.level, parts.number) : schoolClass;
       }
 
@@ -2229,8 +2278,19 @@
       }
 
       function asSessionStyle(session) {
-        const teacher = teachers.find((item) => item.id === session.teacherIds?.[0]) || teachers[0];
-        return `background:${teacher.color} !important;border-color:${teacher.border} !important`;
+        const sessionTeachers = (session.teacherIds || [])
+          .map((teacherId) => teachers.find((item) => item.id === teacherId))
+          .filter(Boolean);
+        const shownTeachers = sessionTeachers.length ? sessionTeachers : [teachers[0]].filter(Boolean);
+        const border = shownTeachers[0]?.border || "#9ca3af";
+        const background = shownTeachers.length > 1
+          ? `linear-gradient(90deg, ${shownTeachers.map((teacher, index) => {
+              const start = Math.round((index / shownTeachers.length) * 100);
+              const end = Math.round(((index + 1) / shownTeachers.length) * 100);
+              return `${teacher.color} ${start}% ${end}%`;
+            }).join(", ")})`
+          : (shownTeachers[0]?.color || "#e5e7eb");
+        return `background:${background} !important;border-color:${border} !important`;
       }
 
       function asSessionTeacherLabel(session) {
@@ -2375,10 +2435,10 @@
       function saveCycles(saveCloudNow = false) {
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
-        cycleSaveStatus = cloudReady() && isAdmin()
+        cycleSaveStatus = cloudWriteAllowed() && isAdmin()
           ? "Cycles sauvegardes localement. Sauvegarde cloud en cours."
           : "Cycles sauvegardes localement.";
-        if (saveCloudNow && isAdmin() && cloudReady()) {
+        if (saveCloudNow && isAdmin() && cloudWriteAllowed()) {
           clearTimeout(cloudSaveTimer);
           cloudSaveToRemote(false);
         } else {
@@ -2476,7 +2536,7 @@
       }
 
       function saveCloudNowIfPossible() {
-        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
+        if (!isAdmin() || !cloudReady() || !cloudWriteAllowed() || !cloudConfig.autoSave) return;
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
         if (cloudSyncing) {
@@ -2506,6 +2566,25 @@
 
       function cloudReady() {
         return Boolean(cloudConfig.enabled && cloudConfig.url && cloudConfig.anonKey && cloudConfig.planningId);
+      }
+
+      function isLocalRuntime() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        return protocol === "file:" || hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname.endsWith(".local");
+      }
+
+      function cloudWriteAllowed() {
+        return cloudReady() && !isLocalRuntime();
+      }
+
+      function cloudWriteBlockedMessage() {
+        return "Mode local : lecture cloud possible, ecriture Supabase bloquee. Seul le vrai site peut sauvegarder dans le cloud.";
+      }
+
+      function cloudConfigSavedMessage() {
+        if (!cloudReady()) return "Cloud non configuré.";
+        return cloudWriteAllowed() ? "Configuration cloud enregistrée." : cloudWriteBlockedMessage();
       }
 
       function cloudEndpoint() {
@@ -2566,7 +2645,11 @@
             local_admin: true
           });
           authPassword = "";
-          authStatus = cloudReady() ? "Mode admin actif. Sauvegarde Supabase active." : "Mode admin actif. Cloud non configuré.";
+          authStatus = cloudReady()
+            ? cloudWriteAllowed()
+              ? "Mode admin actif. Sauvegarde Supabase active."
+              : "Mode admin actif. Ecriture Supabase bloquee en local."
+            : "Mode admin actif. Cloud non configuré.";
           render();
           return;
         }
@@ -2707,6 +2790,10 @@
 
       function scheduleCloudSave() {
         if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
+        if (!cloudWriteAllowed()) {
+          cloudStatus = cloudWriteBlockedMessage();
+          return;
+        }
         if (cloudSyncing) {
           cloudSaveQueued = true;
           return;
@@ -2726,6 +2813,11 @@
         }
         if (!cloudReady()) {
           cloudStatus = "Cloud non configuré.";
+          if (shouldRender) render();
+          return;
+        }
+        if (!cloudWriteAllowed()) {
+          cloudStatus = cloudWriteBlockedMessage();
           if (shouldRender) render();
           return;
         }
@@ -3186,10 +3278,11 @@
       }
 
       function compactClassName(schoolClass) {
-        const { level, number, group, special, label } = classParts(schoolClass);
+        const { level, number, group, special, label, baseClassId } = classParts(schoolClass);
         if (special) {
           const item = specialClassFromSchoolId(schoolClass);
-          return `${label || "Classe spec."}${item?.baseClassId ? ` (${compactClassName(item.baseClassId)})` : ""}`;
+          const baseLabel = baseClassId ? compactClassName(baseClassId) : specialClassBaseLabel(item);
+          return `${label || "Classe spec."}${baseLabel !== "Non rattachee" ? ` (${baseLabel})` : ""}`;
         }
         if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
@@ -4136,7 +4229,7 @@
 
       function serviceClassTarget(schoolClass) {
         const parts = classParts(schoolClass);
-        if (parts.special) return Number(specialClassFromSchoolId(schoolClass)?.hours || 0);
+        if (parts.special) return specialClassHoursForSchoolClass(schoolClass);
         const level = parts.level;
         return Number(serviceHoursByLevel[level] ?? defaultServiceHours[level] ?? 0);
       }
@@ -4321,8 +4414,9 @@
         if (!schoolClass) return { level: blockClassLevel || "", number: "", group: "whole" };
         if (String(schoolClass).startsWith("special::")) {
           const item = specialClassFromSchoolId(schoolClass);
-          const id = String(schoolClass).slice("special::".length);
-          return { level: "special", number: id, group: "whole", special: true, label: item?.label || id };
+          const id = specialClassTypeIdFromSchoolId(schoolClass);
+          const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+          return { level: "special", number: specialClassSchoolId(id, baseClassId), group: "whole", special: true, specialId: id, baseClassId, label: item?.label || id };
         }
         const [level, number, group = "whole"] = schoolClass.split(" ");
         return {
@@ -4387,7 +4481,7 @@
 
       function updateSpecialBlockClass(id) {
         blockClassLevel = "special";
-        blockClass = specialClassSchoolId(id);
+        blockClass = id.startsWith("special::") ? id : specialClassSchoolId(id);
       }
 
       function toggleUnavailableClass(schoolClass) {
@@ -4703,13 +4797,13 @@
               <div class="serviceTarget">
                 <label>${level}</label>
                 <input data-service-level-hours="${level}" type="number" min="0" step="0.5" value="${serviceHoursByLevel[level] ?? defaultServiceHours[level]}" />
-              </div>`).join("")}${specialClasses().map((item) => `
+              </div>`).join("")}${specialClassInstances().map(({ item, baseClassId, schoolClass }) => `
               <div class="serviceTarget">
-                <label>${item.label}</label>
-                <input data-service-special-hours="${item.id}" type="number" min="0" step="0.5" value="${item.hours || 0}" />
+                <label>${compactClassName(schoolClass)}</label>
+                <input data-service-special-hours="${schoolClass}" type="number" min="0" step="0.5" value="${specialClassHoursForSchoolClass(schoolClass)}" />
               </div>`).join("")}</div>
             <div class="alertHelp"><strong>Contrainte de construction</strong><span>Il faut minimum 24h d'intervalle pour refaire cours avec la même classe, peu importe le prof. Cette contrainte sera intégrée lors de la construction des emplois du temps.</span></div>
-            ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${item.schoolClass} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
+            ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${compactClassName(item.schoolClass)} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
           </div>
           <div class="servicePanel">
             <h3>Service theorique / Service reel</h3>
@@ -4719,7 +4813,7 @@
               const freeDraft = serviceFreeDraftForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
               const visibleClasses = selectedLevel === "special"
-                ? specialClasses().map((item) => specialClassSchoolId(item.id))
+                ? specialClassInstances().map((instance) => instance.schoolClass)
                 : classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
               const selectedClass = selectedServiceClassForTeacher(teacher.id);
               const selectedClassAssignment = selectedClass ? serviceAssignmentFor(teacher.id, selectedClass) : null;
@@ -5188,15 +5282,17 @@
                 <input id="specialClassName" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
                 <button class="ghostButton" id="addSpecialClass">Valider</button>
               </div>
-              <div class="cycleList">${specialClasses().length ? specialClasses().map((item) => `<div class="cycleRow">
+              <div class="cycleList">${specialClasses().length ? specialClasses().map((item) => {
+                const baseClassIds = specialClassBaseIds(item);
+                return `<div class="cycleRow">
                 <label>${item.label}</label>
-                <select data-special-class-base="${item.id}">
-                  <option value="">Classe de rattachement</option>
-                  ${standardClasses.map((schoolClass) => `<option value="${schoolClass}" ${item.baseClassId === schoolClass ? "selected" : ""}>${compactClassName(schoolClass)}</option>`).join("")}
-                </select>
+                <div class="choiceGrid">
+                  ${standardClasses.map((schoolClass) => `<button class="choiceButton ${baseClassIds.includes(schoolClass) ? "active" : ""}" data-special-class-base="${item.id}" data-special-class-value="${schoolClass}">${compactClassName(schoolClass)}</button>`).join("")}
+                </div>
                 <span class="muted">${specialClassBaseLabel(item)}</span>
                 <button class="ghostButton" data-remove-special-class="${item.id}" title="Supprimer cette classe">Supprimer</button>
-              </div>`).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
+              </div>`;
+              }).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
             </div>
           </div>
         </section>`;
@@ -5437,7 +5533,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             </div>
             <div class="cloudActions">
               <button class="ghostButton" id="saveCloudConfig">Enregistrer la configuration</button>
-              <button class="ghostButton" id="pushCloudNow" ${!cloudReady() || cloudSyncing ? "disabled" : ""}>Envoyer ce planning vers le cloud</button>
+              <button class="ghostButton" id="pushCloudNow" ${!cloudWriteAllowed() || cloudSyncing ? "disabled" : ""} title="${cloudWriteAllowed() ? "Envoyer vers Supabase" : cloudWriteBlockedMessage()}">Envoyer ce planning vers le cloud</button>
               <button class="ghostButton" id="pullCloudNow" ${!cloudReady() || cloudSyncing ? "disabled" : ""}>Charger le planning cloud</button>
             </div>
             <div class="cloudStatus">${cloudStatus}</div>
@@ -5542,20 +5638,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   }));
                   const reason = unavailable ? `Toutes les classes de ${level} sont deja prises, indisponibles ou hors service theorique sur ce creneau.` : `Filtrer les classes de ${level}.`;
                   return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
-                }).join("")}${specialClasses().length ? (() => {
-                  const unavailable = specialClasses().every((item) => {
-                    const schoolClass = specialClassSchoolId(item.id);
+                }).join("")}${specialClassInstances().length ? (() => {
+                  const unavailable = specialClassInstances().every((instance) => {
+                    const schoolClass = instance.schoolClass;
                     return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
                   });
                   const reason = unavailable ? "Toutes les classes specifiques sont deja prises, indisponibles ou hors service theorique sur ce creneau." : "Filtrer les classes specifiques.";
                   return `<button class="choiceButton ${selectedClass.level === "special" ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="special" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>Specifiques</button>`;
                 })() : ""}</div>
-                ${selectedClass.level === "special" ? `<div class="choiceGrid">${specialClasses().map((item) => {
-                  const schoolClass = specialClassSchoolId(item.id);
+                ${selectedClass.level === "special" ? `<div class="choiceGrid">${specialClassInstances().map(({ item, schoolClass }) => {
                   const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
                   const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
-                  const reason = unavailable ? serviceMessage || `${item.label} est deja prise ou indisponible sur ce creneau.` : `${item.label} disponible.`;
-                  return `<button class="choiceButton ${schoolClass === blockClass ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-special-class="${item.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${item.label}</button>`;
+                  const label = compactClassName(schoolClass);
+                  const reason = unavailable ? serviceMessage || `${label} est deja prise ou indisponible sur ce creneau.` : `${label} disponible.`;
+                  return `<button class="choiceButton ${schoolClass === blockClass ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-special-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${label}</button>`;
                 }).join("")}</div>` : ""}
                 ${!selectedClass.level ? `<span class="muted">Choisissez d'abord un niveau.</span>` : selectedClass.level !== "special" ? `<div class="choiceGrid">${classNumbersForLevel(selectedClass.level).map((number) => {
                   const unavailable = classGroups.every((group) => {
@@ -5770,7 +5866,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <div class="eventList">
             <h3>Événements existants</h3>
             ${sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid fiveCardGrid">${sportEvents.map((event) => `
-              <article class="eventCard">
+              <article class="eventCard" style="${asSessionStyle(session)}">
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
                 <span>Classes : ${eventClassSummary(event)}</span>
@@ -6513,6 +6609,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         render();
         try {
           if (!cloudReady()) throw new Error("cloud non configure");
+          if (!cloudWriteAllowed()) throw new Error(cloudWriteBlockedMessage());
           const payload = {
             planning_id: cloudConfig.planningId,
             kind: requestKind,
@@ -6986,10 +7083,17 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         });
         document.querySelectorAll("[data-service-special-hours]").forEach((input) => {
           input.addEventListener("change", () => {
-            const id = input.dataset.serviceSpecialHours;
+            const schoolClass = input.dataset.serviceSpecialHours;
+            const id = specialClassTypeIdFromSchoolId(schoolClass);
+            const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+            const hours = Math.max(0, Number(input.value) || 0);
             classConfig = {
               ...classConfig,
-              specialClasses: specialClasses().map((item) => item.id === id ? { ...item, hours: Math.max(0, Number(input.value) || 0) } : item)
+              specialClasses: specialClasses().map((item) => {
+                if (item.id !== id) return item;
+                if (!baseClassId) return { ...item, hours };
+                return { ...item, hoursByClass: { ...(item.hoursByClass || {}), [baseClassId]: hours } };
+              })
             };
             saveClassConfig();
             render();
@@ -7154,22 +7258,29 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               id = `${baseId}-${suffix}`;
               suffix += 1;
             }
-            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, baseClassId: "", hours: 0 }] };
+            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, baseClassIds: [], hours: 0 }] };
             saveClassConfig();
             showValidationPopup("Classe specifique ajoutee");
             render();
           });
         }
-        document.querySelectorAll("[data-special-class-base]").forEach((select) => {
-          select.addEventListener("change", () => {
-            const id = select.dataset.specialClassBase;
-            const baseClassId = select.value;
+        document.querySelectorAll("[data-special-class-base]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.specialClassBase;
+            const baseClassId = button.dataset.specialClassValue;
             classConfig = {
               ...classConfig,
-              specialClasses: specialClasses().map((item) => item.id === id ? { ...item, baseClassId } : item)
+              specialClasses: specialClasses().map((item) => {
+                if (item.id !== id) return item;
+                const baseClassIds = specialClassBaseIds(item);
+                const nextBaseClassIds = baseClassIds.includes(baseClassId)
+                  ? baseClassIds.filter((schoolClass) => schoolClass !== baseClassId)
+                  : [...baseClassIds, baseClassId];
+                return { ...item, baseClassIds: nextBaseClassIds };
+              })
             };
             saveClassConfig();
-            showValidationPopup("Classe specifique rattachee");
+            showValidationPopup("Rattachements mis a jour");
             render();
           });
         });
@@ -7289,7 +7400,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             readCloudConfigInputs();
             cloudConfig = { ...cloudConfig, [key]: !cloudConfig[key] };
             saveCloudConfig();
-            cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            cloudStatus = cloudConfigSavedMessage();
             restartCloudAutoRefresh();
             render();
           });
@@ -7299,7 +7410,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           saveCloudConfigButton.addEventListener("click", () => {
             readCloudConfigInputs();
             saveCloudConfig();
-            cloudStatus = cloudReady() ? "Configuration cloud enregistrée." : "Cloud non configuré.";
+            cloudStatus = cloudConfigSavedMessage();
             restartCloudAutoRefresh();
             render();
           });
