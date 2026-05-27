@@ -350,7 +350,15 @@
       .homeTeacherLegend, .yearTeacherLegend { gap: 6px; margin-top: 8px; }
       .homeTeacherLegend .legendItem, .yearTeacherLegend .legendItem { color: #172033; font-size: 12px; font-weight: 950; min-height: 32px; padding: 0 9px; }
       .buildDropCell { background: #fff; min-width: 120px; }
-      .buildDropCell.availableTeacherBg { background: var(--available-teacher-bg, #fff); }
+      .buildDropCell.availableTeacherBg {
+        background-color: #fff;
+        background-image: var(--available-teacher-dots, none), var(--available-teacher-bg, none);
+        background-position: var(--available-teacher-dot-positions, 0 0), 0 0;
+        background-repeat: var(--available-teacher-dot-repeats, no-repeat), no-repeat;
+        background-size: var(--available-teacher-dot-sizes, auto), 100% 100%;
+      }
+      .constructionBlockedCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #cbd5e1 6px, #cbd5e1 12px) !important; color: #64748b; cursor: not-allowed; }
+      .constructionBlockedCell .muted { color: #64748b; }
       .conflictCell { outline: 3px solid #dc2626 !important; outline-offset: -3px; }
       .conflictBadge { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; display: inline-flex; font-size: 10px; font-weight: 950; padding: 2px 6px; }
       .conflictNotice { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 12px; font-weight: 900; margin-top: 10px; padding: 9px 10px; }
@@ -1107,7 +1115,7 @@
       let dateRangeMonth = "";
       let dateRangeSelectionError = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
-      const CLOUD_AUTO_LOAD_DISABLED = true;
+      const CLOUD_AUTO_LOAD_DISABLED = false;
       const PREREQUISITES_LOCK_KEY = "planningEpsPrerequisitesLocked2026";
       const PREREQUISITE_LOCKS_KEY = "planningEpsPrerequisiteLocks2026";
       const YEAR_PREREQUISITE_LOCKS_KEY = "planningEpsYearPrerequisiteLocks2026";
@@ -1118,7 +1126,7 @@
       const BUILT_IN_CLOUD_CONFIG = {
         enabled: true,
         autoSave: true,
-        autoLoad: false,
+        autoLoad: true,
         url: "https://kgmhuwuiswabbmeyqibp.supabase.co",
         anonKey: "sb_publishable_dJcG78XPNikpRqKGDB_0tw_ZZO7QAgj",
         planningId: "planning-eps-2026-2027"
@@ -1174,7 +1182,7 @@
       let cloudConfig = loadCloudConfig();
       let cloudStatus = cloudReady()
         ? cloudWriteAllowed()
-          ? "Supabase actif. Sauvegarde cloud active, chargement automatique désactivé."
+          ? "Supabase actif. Sauvegarde cloud active, chargement automatique actif."
           : cloudWriteBlockedMessage()
         : "Cloud non configuré.";
       let cloudSaveTimer = null;
@@ -1491,6 +1499,13 @@
         ];
       }
 
+      function isWednesdayAfternoonCourse(row) {
+        if (!row || row.isAs || row.day !== "Mercredi") return false;
+        const start = String(row.slot?.startTime || "").trim();
+        if (start) return Number(start.split(":")[0]) >= 12;
+        return ["13", "15"].includes(String(row.slot?.id || ""));
+      }
+
       function timetableSlots() {
         const combined = [];
         days.forEach((day) => {
@@ -1554,7 +1569,7 @@
 
       function saveConstructionPlan() {
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadTeachers() {
@@ -1573,7 +1588,7 @@
 
       function saveTeachers() {
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadSchoolConstraints() {
@@ -1866,7 +1881,7 @@
         saveSportEvents();
         saveConstructionRules();
         saveConstructionPlan();
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadServiceHoursByLevel() {
@@ -1955,7 +1970,7 @@
 
       function saveConstructionRules() {
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadConstructionWorkspaceMode() {
@@ -2011,7 +2026,7 @@
       function saveConstructionRuleSettings() {
         constructionRuleSettings = normalizeConstructionRuleSettings(constructionRuleSettings);
         localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function resetConstructionRuleSettings() {
@@ -2030,7 +2045,7 @@
 
       function saveBlockExclusions() {
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function isBlockExcluded(ruleId, key) {
@@ -2072,7 +2087,7 @@
       function saveSportEvents() {
         sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadAsSessions() {
@@ -2087,7 +2102,7 @@
       function saveAsSessions() {
         asSessions = normalizePlanningItems(asSessions);
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadFacilities() {
@@ -2104,7 +2119,7 @@
 
       function saveFacilities() {
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadActivities() {
@@ -2119,7 +2134,7 @@
 
       function saveActivities() {
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadFacilityActivities() {
@@ -2143,10 +2158,11 @@
           ]));
       }
 
-      function saveFacilityActivities() {
+      function saveFacilityActivities(immediateCloud = true) {
         pruneFacilityActivities();
         localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(facilityActivities));
-        scheduleCloudSave();
+        if (immediateCloud) saveCloudNowIfPossible();
+        else scheduleCloudSave();
       }
 
       function loadFacilityUnavailability() {
@@ -2160,7 +2176,7 @@
 
       function saveFacilityUnavailability() {
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadEventExclusions() {
@@ -2174,7 +2190,7 @@
 
       function saveEventExclusions() {
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function loadAsExclusions() {
@@ -2188,7 +2204,7 @@
 
       function saveAsExclusions() {
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
-        scheduleCloudSave();
+        saveCloudNowIfPossible();
       }
 
       function itemExcludedForCell(exclusions, itemId, key) {
@@ -2473,7 +2489,7 @@
         const defaults = {
           enabled: false,
           autoSave: false,
-          autoLoad: false,
+          autoLoad: true,
           url: "",
           anonKey: "",
           planningId: "vaucanson-2026-2027",
@@ -2486,13 +2502,13 @@
         try {
           const saved = localStorage.getItem(CLOUD_CONFIG_KEY);
           const savedConfig = saved ? JSON.parse(saved) : {};
-          const merged = { ...defaults, ...savedConfig, autoLoad: CLOUD_AUTO_LOAD_DISABLED ? false : savedConfig.autoLoad };
+          const merged = { ...defaults, ...savedConfig, autoLoad: CLOUD_AUTO_LOAD_DISABLED ? false : true };
           if (defaults.url && defaults.anonKey) {
             return {
               ...merged,
               enabled: true,
               autoSave: true,
-              autoLoad: false,
+              autoLoad: true,
               url: defaults.url,
               anonKey: defaults.anonKey,
               planningId: defaults.planningId
@@ -4111,7 +4127,18 @@
           const color = transparentTeacherColor(teacher.color);
           return [`${color} ${start}%`, `${color} ${end}%`];
         });
-        return `--available-teacher-bg:linear-gradient(90deg, ${stops.join(", ")});`;
+        if (availableTeachers.length === 1) {
+          return `--available-teacher-bg:linear-gradient(90deg, ${stops.join(", ")});`;
+        }
+        const boundaries = availableTeachers.slice(1).map((_, index) => (((index + 1) * step).toFixed(2)));
+        const dots = boundaries.map(() => "repeating-linear-gradient(to bottom, rgba(15,23,42,0.52) 0 2px, transparent 2px 6px)");
+        return [
+          `--available-teacher-bg:linear-gradient(90deg, ${stops.join(", ")});`,
+          `--available-teacher-dots:${dots.join(", ")};`,
+          `--available-teacher-dot-positions:${boundaries.map((boundary) => `${boundary}% 0`).join(", ")};`,
+          `--available-teacher-dot-repeats:${boundaries.map(() => "repeat-y").join(", ")};`,
+          `--available-teacher-dot-sizes:${boundaries.map(() => "2px 6px").join(", ")};`
+        ].join("");
       }
 
       function availableTeacherCellTitle(row, weekItem, key) {
@@ -5565,7 +5592,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<section class="cloudPage">
           <div class="cloudPanel">
             <h3>Synchronisation cloud</h3>
-            <p class="muted">Les modifications sont sauvegardées dans Supabase. Le chargement automatique depuis le cloud est désactivé pour éviter les conflits pendant la saisie.</p>
+            <p class="muted">Les modifications faites sur le vrai site sont sauvegardées dans Supabase. Au démarrage, le planning cloud est rechargé pour retrouver les mêmes données sur les autres ordinateurs.</p>
             <div class="cloudGrid">
               <div class="cloudField">
                 <label>URL Supabase</label>
@@ -5584,7 +5611,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <div class="choiceGrid">
                   <button class="choiceButton ${cloudConfig.enabled ? "active" : ""}" data-cloud-toggle="enabled">${cloudConfig.enabled ? "Cloud actif" : "Cloud inactif"}</button>
                   <button class="choiceButton ${cloudConfig.autoSave ? "active" : ""}" data-cloud-toggle="autoSave">Autosauvegarde</button>
-                  <button class="choiceButton" data-cloud-toggle="autoLoad" disabled>Chargement auto désactivé</button>
+                  <button class="choiceButton active" data-cloud-toggle="autoLoad" disabled>Chargement auto actif</button>
                 </div>
               </div>
             </div>
@@ -6281,14 +6308,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const key = yearCellKey(row.id, weekItem.rank);
         const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
         const asItems = asSessionsForConstructionCycle(row, cycle, key, filterSelection);
-        const blocked = false;
-        const canOpenHere = !row.isAs;
+        const blocked = isWednesdayAfternoonCourse(row);
+        const canOpenHere = !row.isAs && !blocked;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
         const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
-        const cellTitle = [label, availabilityTitle].filter(Boolean).join(" | ");
-        return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}"` : ""} data-move-cell="${key}">
+        const cellTitle = [label, blocked ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
+        return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
-          ${row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
+          ${blocked ? "" : row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
             <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
               <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
               <strong>${asBlockLabel(session)}</strong>
@@ -6334,10 +6361,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const aItems = keyA ? indexedConstructionItemsForKey(keyA, filterSelection, "A") : [];
                 const bItems = keyB ? indexedConstructionItemsForKey(keyB, filterSelection, "B") : [];
                 const hasQuinzaine = aItems.length || bItems.length;
+                const blockedRow = isWednesdayAfternoonCourse(row);
                 return `<td class="cycleConstructionCell">
                   <div class="cycleConstructionCellInner">
                     ${hasQuinzaine
-                      ? `${allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection)}</div>`
+                      ? `${!blockedRow && allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection)}</div>`
                       : renderConstructionCycleArea(row, cycle, "", "", filterSelection)}
                   </div>
                 </td>`;
@@ -6501,12 +6529,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
                 const blocked = vacation || holiday;
-              const canMoveHere = editable && !blocked && (movingBuildBlock?.type === "as" ? row.isAs : true);
-              const canOpenHere = editable && !blocked && !row.isAs;
+              const blockedWednesdayAfternoon = isWednesdayAfternoonCourse(row);
+              const canMoveHere = editable && !blocked && !blockedWednesdayAfternoon && (movingBuildBlock?.type === "as" ? row.isAs : true);
+              const canOpenHere = editable && !blocked && !blockedWednesdayAfternoon && !row.isAs;
               const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
               const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
-              const cellTitle = [holiday || vacation?.name || "", availabilityTitle].filter(Boolean).join(" | ");
-              return `<td title="${cellTitle}" class="${canOpenHere ? "buildDropCell availableTeacherBg" : ""} ${movingBuildBlock && canMoveHere ? "moveTarget" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" style="${availableStyle}" ${canMoveHere ? `data-move-cell="${key}"` : ""} ${canOpenHere ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
+              const cellTitle = [holiday || vacation?.name || "", blockedWednesdayAfternoon ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
+              return `<td title="${cellTitle}" class="${canOpenHere ? "buildDropCell availableTeacherBg" : ""} ${blockedWednesdayAfternoon ? "constructionBlockedCell" : ""} ${movingBuildBlock && canMoveHere ? "moveTarget" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" style="${availableStyle}" ${canMoveHere ? `data-move-cell="${key}"` : ""} ${canOpenHere ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
                 ${vacation ? `<span class="muted">V</span>` : ""}
                 ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
                 ${renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds)}
