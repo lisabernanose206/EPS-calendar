@@ -638,7 +638,7 @@
       .classConfigPill { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 5px; min-height: 28px; padding: 0 7px; }
       .classConfigPill button { background: transparent; border: 0; color: #991b1b; cursor: pointer; font-weight: 950; padding: 0; }
       .specialClassPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; padding: 12px; }
-      .specialClassForm { display: grid; gap: 8px; grid-template-columns: minmax(180px, 1fr) auto; }
+      .specialClassForm { display: grid; gap: 8px; grid-template-columns: minmax(180px, 1fr); }
       .specialClassForm input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 13px; font-weight: 800; min-height: 36px; padding: 0 10px; width: 100%; }
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
@@ -1046,6 +1046,8 @@
       let facilityDraftName = "";
       let facilityDraftType = "";
       let activityDraftName = "";
+      let specialClassDraftName = "";
+      let specialClassDraftBaseIds = [];
       let teacherDraftName = "";
       let teacherDraftColor = teacherPalette[0].color;
       let teacherDraftStatus = "certifie";
@@ -5250,6 +5252,7 @@
 
       function renderClassesView() {
         const standardClasses = classesFromStandardConfig();
+        const canAddSpecialClass = Boolean(specialClassDraftName.trim() && specialClassDraftBaseIds.length);
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Classes</h3>
@@ -5279,8 +5282,11 @@
             <div class="specialClassPanel">
               <h3>Classes a besoin specifique</h3>
               <div class="specialClassForm">
-                <input id="specialClassName" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
-                <button class="ghostButton" id="addSpecialClass">Valider</button>
+                <input id="specialClassName" value="${specialClassDraftName}" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
+                <div class="choiceGrid">
+                  ${standardClasses.map((schoolClass) => `<button class="choiceButton ${specialClassDraftBaseIds.includes(schoolClass) ? "active" : ""}" data-special-class-draft-base="${schoolClass}">${compactClassName(schoolClass)}</button>`).join("")}
+                </div>
+                <button class="ghostButton" id="addSpecialClass" ${canAddSpecialClass ? "" : "disabled"}>Valider</button>
               </div>
               <div class="cycleList">${specialClasses().length ? specialClasses().map((item) => {
                 const baseClassIds = specialClassBaseIds(item);
@@ -7245,11 +7251,27 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           });
         });
         const specialClassNameInput = document.getElementById("specialClassName");
+        if (specialClassNameInput) {
+          specialClassNameInput.addEventListener("input", () => {
+            specialClassDraftName = specialClassNameInput.value;
+            const addButton = document.getElementById("addSpecialClass");
+            if (addButton) addButton.disabled = !specialClassDraftName.trim() || !specialClassDraftBaseIds.length;
+          });
+        }
+        document.querySelectorAll("[data-special-class-draft-base]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const baseClassId = button.dataset.specialClassDraftBase;
+            specialClassDraftBaseIds = specialClassDraftBaseIds.includes(baseClassId)
+              ? specialClassDraftBaseIds.filter((schoolClass) => schoolClass !== baseClassId)
+              : [...specialClassDraftBaseIds, baseClassId];
+            render();
+          });
+        });
         const addSpecialClassButton = document.getElementById("addSpecialClass");
         if (addSpecialClassButton && specialClassNameInput) {
           addSpecialClassButton.addEventListener("click", () => {
-            const label = specialClassNameInput.value.trim();
-            if (!label) return;
+            const label = specialClassDraftName.trim();
+            if (!label || !specialClassDraftBaseIds.length) return;
             const baseId = specialClassSlug(label);
             const existingIds = specialClasses().map((item) => item.id);
             let id = baseId;
@@ -7258,7 +7280,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               id = `${baseId}-${suffix}`;
               suffix += 1;
             }
-            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, baseClassIds: [], hours: 0 }] };
+            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, baseClassIds: [...specialClassDraftBaseIds], hours: 0, hoursByClass: {} }] };
+            specialClassDraftName = "";
+            specialClassDraftBaseIds = [];
             saveClassConfig();
             showValidationPopup("Classe specifique ajoutee");
             render();
