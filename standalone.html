@@ -300,6 +300,9 @@
       .paletteItem { cursor: grab; user-select: none; }
       .builderActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
       .constructionExportControls { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+      .iconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; font-size: 16px; font-weight: 950; height: 34px; justify-content: center; line-height: 1; padding: 0; width: 34px; }
+      .iconButton:hover { border-color: #0f172a; }
+      .iconButton svg { display: block; height: 20px; width: 20px; }
       .printOnly { display: none; }
       .constructionPrintSections { display: contents; }
       .constructionPrintSection { display: grid; gap: 8px; }
@@ -327,6 +330,12 @@
       .constructionRuleActions { display: flex; gap: 8px; justify-content: flex-end; }
       .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
       .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .constructionRuleGroupsGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .constructionRuleCategoryGroup { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; padding: 8px; }
+      .constructionRuleCategoryHead { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+      .constructionRuleCategoryHead strong { color: #0f172a; font-size: 12px; }
+      .constructionRuleCategoryHead span { background: #e2e8f0; border-radius: 999px; color: #334155; font-size: 11px; font-weight: 950; padding: 2px 7px; }
+      .constructionRuleCategoryGroup .constructionRulesGrid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
@@ -358,8 +367,8 @@
       .constructionTable .buildCellStack { gap: 2px; min-width: 0; width: 100%; }
       .constructionTable .buildFacilitySlot { gap: 2px; min-height: 0; }
       .constructionTable .buildSlotSpacer { min-height: 0; }
-      .constructionTable .buildBlock { gap: 0; min-height: 0; max-width: 100%; min-width: 0; overflow: hidden; padding: 2px 18px 2px 18px; position: relative; width: 100%; }
-      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { display: block; line-height: 1.05; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .constructionTable .buildBlock { gap: 0; justify-items: center; min-height: 0; max-width: 100%; min-width: 0; overflow: hidden; padding: 2px 18px 2px 18px; position: relative; text-align: center; width: 100%; }
+      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { display: block; line-height: 1.05; max-width: 100%; min-width: 0; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
       .constructionTable .buildBlock button { position: absolute; top: 2px; }
       .constructionTable .buildBlock .removeBlockButton { right: 2px; }
       .constructionTable .buildBlock .moveBlockButton { left: 2px; }
@@ -375,6 +384,10 @@
       .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: 1fr 1fr; height: 48px; min-height: 0; }
       .cycleConstructionHalf, .cycleConstructionFull { border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 0; min-width: 0; overflow: visible; padding: 3px; }
       .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; text-align: center; }
+      .cycleConstructionAsCell { background: #fff; display: grid; min-height: 100%; overflow: hidden; }
+      .constructionAsStack { align-content: start; align-items: start; display: grid; gap: 3px; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); min-width: 0; overflow: hidden; width: 100%; }
+      .constructionAsStack .buildBlock { min-height: 24px; width: 100%; }
+      .constructionAsStack .buildBlock strong, .constructionAsStack .buildBlock span { font-size: 8px; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock { align-items: center !important; display: flex !important; justify-content: center !important; padding: 2px !important; text-align: center !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { margin: 0 auto !important; text-align: center !important; width: 100%; }
       .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) th { background: #fff !important; color: #0f172a !important; }
@@ -588,6 +601,8 @@
       .eventCard { border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; display: grid; gap: 5px; margin-top: 8px; padding: 10px; }
       .eventCard strong { color: #9a3412; }
       .eventCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .eventTeacherSummary { align-items: center; display: flex; flex-wrap: wrap; gap: 5px; }
+      .eventTeacherSwatch { border: 1px solid transparent; border-radius: 4px; display: inline-block; height: 13px; width: 13px; }
       .compactCardGrid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .compactCardGrid .eventCard { margin-top: 0; }
       .fiveCardGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -5104,6 +5119,11 @@
 
       function renderConstructionRulesView() {
         const selectedCategory = constructionRuleCategoryChoices.includes(constructionRuleDraft.category) ? constructionRuleDraft.category : "Autre";
+        const ruleGroups = Object.entries(constructionRuleSettings.reduce((groups, rule) => {
+          const category = rule.category || "Regle personnalisee";
+          groups[category] = [...(groups[category] || []), rule];
+          return groups;
+        }, {})).sort(([first], [second]) => first.localeCompare(second, "fr"));
         return `<section class="constructionRulesPage">
           <div class="constructionRulesForm">
             <h3>Ajouter une regle</h3>
@@ -5130,14 +5150,16 @@
               <h3>Regles actives</h3>
               <button class="ghostButton" id="restoreDefaultConstructionRules">Retablir les regles par defaut</button>
             </div>
-            ${constructionRuleSettings.length ? `<div class="constructionRulesGrid">${constructionRuleSettings.map((rule) => `<article class="constructionRuleCard">
-              <small>${escapeHtml(rule.category)}</small>
-              <strong>${escapeHtml(rule.title)}</strong>
-              <span>${escapeHtml(rule.detail)}</span>
-              <div class="constructionRuleActions">
-                <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
-              </div>
-            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
+            ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => `<section class="constructionRuleCategoryGroup">
+              <div class="constructionRuleCategoryHead"><strong>${escapeHtml(category)}</strong><span>${rules.length}</span></div>
+              <div class="constructionRulesGrid">${rules.map((rule) => `<article class="constructionRuleCard">
+                <strong>${escapeHtml(rule.title)}</strong>
+                <span>${escapeHtml(rule.detail)}</span>
+                <div class="constructionRuleActions">
+                  <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
+                </div>
+              </article>`).join("")}</div>
+            </section>`).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
           </div>
         </section>`;
       }
@@ -5226,8 +5248,11 @@
                 <button class="ghostButton" data-construction-zoom="+">+</button>
               </div>
               <div class="constructionExportControls">
-                <button class="ghostButton" data-print-format="A3">Exporter A3</button>
-                <button class="ghostButton" data-print-format="A2">Exporter A2</button>
+                <button class="iconButton" data-print-format="A4" title="Exporter en A4" aria-label="Exporter en A4">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
               </div>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
@@ -5656,7 +5681,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
                 <span>${event.start} → ${event.end} · ${eventPeriodLabel(event)}</span>
                 <span>Classes : ${eventClassSummary(event)}</span>
-                <span>${event.teacherIds.length} prof(s)</span>
+                <span class="eventTeacherSummary">${event.teacherIds.length} prof(s) ${event.teacherIds.map((teacherId) => {
+                  const teacher = teachers.find((item) => item.id === teacherId);
+                  return teacher ? `<i class="eventTeacherSwatch" style="background:${teacher.color};border-color:${teacher.border}" title="${teacher.name}"></i>` : "";
+                }).join("")}</span>
                 <button class="ghostButton" data-edit-event="${event.id}">Modifier</button>
                 <button class="ghostButton" data-delete-event="${event.id}">Supprimer</button>
               </article>`).join("")}</div>`}
@@ -5981,26 +6009,43 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         `).join("");
       }
 
+      function asSessionsForConstructionCycle(row, cycle, key, filterSelection = false) {
+        if (!row?.isAs || !cycle) return [];
+        const cycleStart = dateOnly(cycle.start);
+        const cycleEnd = dateOnly(cycle.end);
+        return asSessions
+          .filter((session) => {
+            const start = dateOnly(session.start);
+            const end = dateOnly(session.end);
+            const slotIds = Array.isArray(session.slotIds) ? session.slotIds : [];
+            return start <= cycleEnd
+              && end >= cycleStart
+              && (session.weekdays || []).includes(row.day)
+              && (!slotIds.length || slotIds.includes(row.slot.id))
+              && !itemExcludedForCell(asExclusions, session.id, key);
+          })
+          .filter((session) => !filterSelection || asMatchesTeacherSelection(session));
+      }
+
       function renderConstructionCycleArea(row, cycle, letter, label, filterSelection = false) {
         const weekItem = representativeWeekForCycle(cycle, letter);
         if (!weekItem) return `<div class="cycleConstructionFull"><span class="muted">Cycle sans semaine</span></div>`;
         const key = yearCellKey(row.id, weekItem.rank);
         const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
-        const asItems = row.isAs ? asSessionsForCell(row, weekItem).filter((session) => !filterSelection || asMatchesTeacherSelection(session)) : [];
+        const asItems = asSessionsForConstructionCycle(row, cycle, key, filterSelection);
         const blocked = false;
         const canOpenHere = !row.isAs;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
         const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
         const cellTitle = [label, availabilityTitle].filter(Boolean).join(" | ");
-        return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}"` : ""} data-move-cell="${key}">
+        return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}"` : ""} data-move-cell="${key}">
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
-          ${renderConstructionCycleBlocks(indexedItems, key)}
-          ${asItems.map((session) => `
+          ${row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
             <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
               <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
               <strong>${asBlockLabel(session)}</strong>
               <span>${asSessionTeacherLabel(session)}</span>
-            </div>`).join("")}
+            </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key)}
         </div>`;
       }
 
