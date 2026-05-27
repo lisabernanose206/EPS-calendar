@@ -1789,6 +1789,7 @@
       }
 
       function specialClassInstances() {
+        const levelRank = Object.fromEntries(classLevels.map((level, index) => [level, index]));
         return specialClasses().flatMap((item) => {
           const baseClassIds = specialClassBaseIds(item);
           const targets = baseClassIds.length ? baseClassIds : [""];
@@ -1797,6 +1798,12 @@
             baseClassId,
             schoolClass: specialClassSchoolId(item.id, baseClassId)
           }));
+        }).sort((a, b) => {
+          const aParts = classParts(a.baseClassId);
+          const bParts = classParts(b.baseClassId);
+          const levelDiff = (levelRank[aParts.level] ?? 99) - (levelRank[bParts.level] ?? 99);
+          if (levelDiff) return levelDiff;
+          return compactClassName(a.baseClassId).localeCompare(compactClassName(b.baseClassId), "fr", { numeric: true });
         });
       }
 
