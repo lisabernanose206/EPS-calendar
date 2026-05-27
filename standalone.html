@@ -4274,7 +4274,10 @@
       function serviceDraftValue(teacherId, schoolClass) {
         const key = serviceDraftKey(teacherId, schoolClass);
         if (serviceDraftHours[key] !== undefined) return serviceDraftHours[key];
-        return serviceAssignmentFor(teacherId, schoolClass)?.hours ?? "";
+        const assignment = serviceAssignmentFor(teacherId, schoolClass);
+        if (assignment) return assignment.hours;
+        const maxHours = serviceMaxAssignableHours(teacherId, schoolClass);
+        return maxHours > 0 ? maxHours : "";
       }
 
       function serviceClassTotals() {
