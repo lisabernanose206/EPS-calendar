@@ -3075,12 +3075,6 @@
       function restartCloudAutoRefresh() {
         clearInterval(cloudRefreshTimer);
         cloudRefreshTimer = null;
-        if (CLOUD_AUTO_LOAD_DISABLED) return;
-        if (!cloudReady() || !cloudConfig.autoLoad) return;
-        cloudRefreshTimer = setInterval(() => {
-          if (cloudSyncing || cloudSaveTimer || cloudSaveQueued) return;
-          cloudLoadFromRemote(true, true);
-        }, 15000);
       }
 
       function setCycleCount(count) {
@@ -5739,7 +5733,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<section class="cloudPage">
           <div class="cloudPanel">
             <h3>Synchronisation cloud</h3>
-            <p class="muted">Les modifications faites sur le vrai site sont sauvegardées dans Supabase. Au démarrage, le planning cloud est rechargé pour retrouver les mêmes données sur les autres ordinateurs.</p>
+            <p class="muted">Les modifications faites sur le vrai site sont sauvegardées dans Supabase. Au démarrage, le planning cloud est rechargé ; ensuite, seuls les ajouts et suppressions déclenchent une sauvegarde.</p>
             <div class="cloudGrid">
               <div class="cloudField">
                 <label>URL Supabase</label>
@@ -5758,7 +5752,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <div class="choiceGrid">
                   <button class="choiceButton ${cloudConfig.enabled ? "active" : ""}" data-cloud-toggle="enabled">${cloudConfig.enabled ? "Cloud actif" : "Cloud inactif"}</button>
                   <button class="choiceButton ${cloudConfig.autoSave ? "active" : ""}" data-cloud-toggle="autoSave">Autosauvegarde</button>
-                  <button class="choiceButton active" data-cloud-toggle="autoLoad" disabled>Chargement auto actif</button>
+                  <button class="choiceButton active" data-cloud-toggle="autoLoad" disabled>Chargement au demarrage</button>
                 </div>
               </div>
             </div>
@@ -8655,7 +8649,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       });
       render();
       if (cloudReady() && cloudConfig.autoLoad) {
-        setTimeout(() => cloudLoadFromRemote(true).then(restartCloudAutoRefresh), 300);
+        setTimeout(() => cloudLoadFromRemote(true), 300);
       } else {
         restartCloudAutoRefresh();
       }
