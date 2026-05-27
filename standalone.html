@@ -1115,6 +1115,7 @@
       let dateRangeMonth = "";
       let dateRangeSelectionError = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
+      const CLOUD_LOCAL_UNSYNCED_KEY = "planningEpsLocalUnsyncedChanges2026";
       const CLOUD_AUTO_LOAD_DISABLED = false;
       const PREREQUISITES_LOCK_KEY = "planningEpsPrerequisitesLocked2026";
       const PREREQUISITE_LOCKS_KEY = "planningEpsPrerequisiteLocks2026";
@@ -1188,6 +1189,7 @@
       let cloudSaveTimer = null;
       let cloudSaveQueued = false;
       let cloudLastUpdatedAt = "";
+      let localUnsyncedChanges = localStorage.getItem(CLOUD_LOCAL_UNSYNCED_KEY) || "";
       let cloudRefreshTimer = null;
       let cloudSyncing = false;
       let adminSession = loadAdminSession();
@@ -2574,7 +2576,18 @@
         saveLocksToCloudNow();
       }
 
+      function markLocalChangedForCloud() {
+        localUnsyncedChanges = new Date().toISOString();
+        localStorage.setItem(CLOUD_LOCAL_UNSYNCED_KEY, localUnsyncedChanges);
+      }
+
+      function clearLocalChangedForCloud() {
+        localUnsyncedChanges = "";
+        localStorage.removeItem(CLOUD_LOCAL_UNSYNCED_KEY);
+      }
+
       function saveCloudNowIfPossible() {
+        markLocalChangedForCloud();
         if (!isAdmin() || !cloudReady() || !cloudWriteAllowed() || !cloudConfig.autoSave) return;
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
@@ -2828,6 +2841,7 @@
       }
 
       function scheduleCloudSave() {
+        markLocalChangedForCloud();
         if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
         if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
@@ -2845,6 +2859,7 @@
       async function cloudSaveToRemote(shouldRender = true) {
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
+        let cloudSaveSucceeded = false;
         if (!isAdmin()) {
           cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
           if (shouldRender) render();
@@ -2871,12 +2886,14 @@
             body: JSON.stringify({ id: cloudConfig.planningId, data: collectPlanningData(), updated_at: updatedAt })
           });
           if (!response.ok) throw new Error(await response.text());
+          cloudSaveSucceeded = true;
           cloudLastUpdatedAt = updatedAt;
           cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`;
         } catch (error) {
           cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
         } finally {
           cloudSyncing = false;
+          if (cloudSaveSucceeded && !cloudSaveQueued) clearLocalChangedForCloud();
           if (cloudSaveQueued) {
             cloudSaveQueued = false;
             scheduleCloudSave();
@@ -2896,6 +2913,16 @@
           cloudStatus = "Cloud non configuré.";
           if (shouldRender) render();
           return;
+        }
+        if (localUnsyncedChanges) {
+          if (silent) return;
+          const message = "Des modifications locales ne sont pas encore envoyées dans Supabase. Charger le cloud maintenant peut les écraser. Continuer ?";
+          if (!window.confirm(message)) {
+            cloudStatus = "Chargement cloud annulé : modifications locales à sauvegarder d'abord.";
+            if (shouldRender) render();
+            return;
+          }
+          clearLocalChangedForCloud();
         }
         if (cloudSaveTimer || cloudSaveQueued) {
           if (!silent) cloudStatus = "Chargement reporte : une sauvegarde locale est en attente.";
