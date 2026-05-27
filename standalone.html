@@ -3009,7 +3009,10 @@
           cloudLastUpdatedAt = updatedAt;
           cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
         } catch (error) {
-          cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
+          const message = error.message || "sauvegarde impossible";
+          cloudStatus = message.includes("42501") || message.includes("permission denied")
+            ? "Erreur cloud : droits Supabase manquants. Dans Supabase SQL Editor, lance GRANT INSERT, SELECT, UPDATE ON public.eps_plannings TO anon, authenticated;"
+            : `Erreur cloud : ${message}`;
           shouldDiscardLocalChanges = true;
         } finally {
           cloudSyncing = false;
@@ -5705,7 +5708,7 @@
       }
 
       function renderCloudSettings() {
-        const sql = `create table public.eps_plannings (
+        const sql = `create table if not exists public.eps_plannings (
   id text primary key,
   data jsonb not null,
   updated_at timestamptz not null default now()
@@ -5719,7 +5722,7 @@ alter table public.eps_plannings disable row level security;
 grant usage on schema public to anon, authenticated;
 grant insert, select, update on public.eps_plannings to anon, authenticated;
 
-create table public.eps_feedback (
+create table if not exists public.eps_feedback (
   id uuid primary key default gen_random_uuid(),
   planning_id text not null,
   kind text not null check (kind in ('bug', 'improvement')),
