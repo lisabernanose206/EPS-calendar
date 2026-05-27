@@ -26,8 +26,9 @@ window.__EPS_CLOUD_CONFIG__ = {
   url: import.meta.env.VITE_SUPABASE_URL || "https://kgmhuwuiswabbmeyqibp.supabase.co",
   anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_dJcG78XPNikpRqKGDB_0tw_ZZO7QAgj",
   planningId: import.meta.env.VITE_SUPABASE_PLANNING_ID || "planning-eps-2026-2027",
-  enabled: import.meta.env.VITE_SUPABASE_ENABLED ? import.meta.env.VITE_SUPABASE_ENABLED === "true" : true,
-  autoLoad: import.meta.env.VITE_SUPABASE_AUTO_LOAD ? import.meta.env.VITE_SUPABASE_AUTO_LOAD === "true" : true
+  enabled: true,
+  autoSave: true,
+  autoLoad: false
 };
 
 window.__EPS_BUG_FIX_LOG__ = bugFixLog;
