@@ -326,6 +326,7 @@
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
       .constructionRuleActions { display: flex; gap: 8px; justify-content: flex-end; }
       .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
+      .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
@@ -354,19 +355,25 @@
       .coTeacherDurationPanel label { color: #334155; display: grid; font-size: 11px; font-weight: 900; gap: 3px; }
       .coTeacherDurationPanel input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-weight: 900; min-height: 34px; padding: 0 8px; width: 100%; }
       .coTeacherDurationPanel span { color: #64748b; font-size: 10px; font-weight: 850; }
-      .constructionTable .buildCellStack { gap: 2px; }
+      .constructionTable .buildCellStack { gap: 2px; min-width: 0; width: 100%; }
       .constructionTable .buildFacilitySlot { gap: 2px; min-height: 0; }
       .constructionTable .buildSlotSpacer { min-height: 0; }
-      .constructionTable .buildBlock { gap: 0; min-height: 0; padding: 2px 18px 2px 3px; position: relative; }
-      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { line-height: 1.05; }
+      .constructionTable .buildBlock { gap: 0; min-height: 0; max-width: 100%; min-width: 0; overflow: hidden; padding: 2px 18px 2px 18px; position: relative; width: 100%; }
+      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { display: block; line-height: 1.05; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .constructionTable .buildBlock button { position: absolute; top: 2px; }
       .constructionTable .buildBlock .removeBlockButton { right: 2px; }
       .constructionTable .buildBlock .moveBlockButton { left: 2px; }
       .cycleConstructionTabs { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-      .cycleConstructionCell { min-height: 72px; padding: 0; vertical-align: stretch; }
-      .cycleConstructionCellInner { display: grid; gap: 4px; min-height: 72px; padding: 4px; }
-      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: 1fr 1fr; min-height: 58px; }
-      .cycleConstructionHalf, .cycleConstructionFull { border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-width: 0; padding: 3px; }
+      .cycleConstructionTableWrap { max-height: none !important; overflow: visible !important; }
+      .cycleConstructionTable { min-width: 0; table-layout: fixed; width: 100%; }
+      .cycleConstructionTable .buildDropCell { min-width: 0; }
+      .cycleConstructionTable .timeHead { left: auto !important; min-width: 112px !important; position: static !important; width: 112px !important; z-index: auto !important; }
+      .cycleConstructionTable thead th { position: static !important; z-index: auto !important; }
+      .cycleConstructionTable th, .cycleConstructionTable td { padding: 3px; }
+      .cycleConstructionCell { height: 58px; padding: 0; vertical-align: stretch; }
+      .cycleConstructionCellInner { display: grid; gap: 3px; height: 58px; min-height: 0; padding: 3px; }
+      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: 1fr 1fr; height: 48px; min-height: 0; }
+      .cycleConstructionHalf, .cycleConstructionFull { border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 0; min-width: 0; overflow: visible; padding: 3px; }
       .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; text-align: center; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock { align-items: center !important; display: flex !important; justify-content: center !important; padding: 2px !important; text-align: center !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { margin: 0 auto !important; text-align: center !important; width: 100%; }
@@ -757,6 +764,8 @@
       }
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
+        .constructionRulesPage { grid-template-columns: 1fr; }
+        .constructionRulesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .cycleSummaryHeader { grid-template-columns: 1fr 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .compactCardGrid { grid-template-columns: 1fr; }
@@ -781,6 +790,7 @@
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: 1fr; }
+        .constructionRulesGrid { grid-template-columns: 1fr; }
         .compactActivityGrid, .facilityActivityMatrix { grid-template-columns: 1fr; }
         .guideGrid { grid-template-columns: 1fr; }
         .logGroupGrid { grid-template-columns: 1fr; }
@@ -944,6 +954,16 @@
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
         { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." }
       ];
+      const constructionRuleCategoryChoices = [
+        "Conflit prof",
+        "Conflit classe",
+        "Conflit installation",
+        "Service",
+        "Installations / activites",
+        "Rythme classe",
+        "Cycle",
+        "Autre"
+      ];
       const schoolYear = {
         label: "2026/2027",
         start: new Date(2026, 8, 1),
@@ -971,12 +991,12 @@
       let constructionPlan = {};
       let constructionMode = "planning";
       let constructionRuleSettings = loadConstructionRuleSettings();
-      let constructionRuleDraft = { title: "", detail: "", category: "" };
+      let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
       let prerequisiteMode = "establishment";
       let yearPrerequisiteMode = "unavailable";
       let prerequisiteLocks = {};
       let yearPrerequisiteLocks = {};
-      let constructionZoom = 0.8;
+      let constructionZoom = 1;
       let constructionPrintTrimesterExport = false;
       let cycleViewZoom = 0.8;
       let clearConstructionPanelOpen = false;
@@ -5083,12 +5103,16 @@
       }
 
       function renderConstructionRulesView() {
+        const selectedCategory = constructionRuleCategoryChoices.includes(constructionRuleDraft.category) ? constructionRuleDraft.category : "Autre";
         return `<section class="constructionRulesPage">
           <div class="constructionRulesForm">
             <h3>Ajouter une regle</h3>
             <div class="eventField">
               <label>Categorie</label>
-              <input id="constructionRuleCategory" value="${escapeHtml(constructionRuleDraft.category)}" placeholder="Ex. Conflit prof" />
+              <select id="constructionRuleCategory">
+                ${constructionRuleCategoryChoices.map((category) => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("")}
+              </select>
+              ${selectedCategory === "Autre" ? `<input id="constructionRuleCustomCategory" value="${escapeHtml(constructionRuleDraft.customCategory || constructionRuleDraft.category)}" placeholder="Votre categorie" />` : ""}
             </div>
             <div class="eventField">
               <label>Titre</label>
@@ -5106,14 +5130,14 @@
               <h3>Regles actives</h3>
               <button class="ghostButton" id="restoreDefaultConstructionRules">Retablir les regles par defaut</button>
             </div>
-            ${constructionRuleSettings.length ? constructionRuleSettings.map((rule) => `<article class="constructionRuleCard">
+            ${constructionRuleSettings.length ? `<div class="constructionRulesGrid">${constructionRuleSettings.map((rule) => `<article class="constructionRuleCard">
               <small>${escapeHtml(rule.category)}</small>
               <strong>${escapeHtml(rule.title)}</strong>
               <span>${escapeHtml(rule.detail)}</span>
               <div class="constructionRuleActions">
                 <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
               </div>
-            </article>`).join("") : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
           </div>
         </section>`;
       }
@@ -5962,6 +5986,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (!weekItem) return `<div class="cycleConstructionFull"><span class="muted">Cycle sans semaine</span></div>`;
         const key = yearCellKey(row.id, weekItem.rank);
         const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
+        const asItems = row.isAs ? asSessionsForCell(row, weekItem).filter((session) => !filterSelection || asMatchesTeacherSelection(session)) : [];
         const blocked = false;
         const canOpenHere = !row.isAs;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
@@ -5970,13 +5995,33 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}"` : ""} data-move-cell="${key}">
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
           ${renderConstructionCycleBlocks(indexedItems, key)}
+          ${asItems.map((session) => `
+            <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
+              <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
+              <strong>${asBlockLabel(session)}</strong>
+              <span>${asSessionTeacherLabel(session)}</span>
+            </div>`).join("")}
         </div>`;
+      }
+
+      function constructionWeekTypeSlots() {
+        return [
+          ...slots.slice(0, 2),
+          { id: "__as__", label: "AS", isAsSummary: true },
+          ...slots.slice(2)
+        ];
+      }
+
+      function constructionRowForSlot(day, slot) {
+        const rows = yearRows();
+        if (slot.isAsSummary) return rows.find((item) => item.day === day && item.isAs) || null;
+        return rows.find((item) => item.day === day && item.slot.id === slot.id && item.slot.label === slot.label) || null;
       }
 
       function renderConstructionCycleTable(cycle, rows, editable, filterSelection = false) {
         if (!cycle) return `<div class="alertEmpty">Aucun cycle classique defini.</div>`;
-        const slotRows = slots.map((slot) => ({ ...slot, key: slot.id }));
-        return `<div class="yearWrap"><table class="yearTable constructionTable cycleConstructionTable">
+        const slotRows = constructionWeekTypeSlots();
+        return `<div class="yearWrap cycleConstructionTableWrap"><table class="yearTable constructionTable cycleConstructionTable">
           <thead>
             <tr><th class="timeHead">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr>
           </thead>
@@ -5984,7 +6029,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ${slotRows.map((slot) => `<tr>
               <th class="timeHead">${slot.label}</th>
               ${days.map((day) => {
-                const row = yearRows().find((item) => item.day === day && item.slot.id === slot.id);
+                const row = constructionRowForSlot(day, slot);
                 if (!row) return `<td class="mergedOff"><span class="muted">-</span></td>`;
                 const weekAll = representativeWeekForCycle(cycle);
                 const weekA = representativeWeekForCycle(cycle, "A");
@@ -6721,10 +6766,17 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         });
         const constructionRuleCategory = document.getElementById("constructionRuleCategory");
         if (constructionRuleCategory) {
-          constructionRuleCategory.addEventListener("input", () => {
+          constructionRuleCategory.addEventListener("change", () => {
             constructionRuleDraft = { ...constructionRuleDraft, category: constructionRuleCategory.value };
+            render();
           });
-          constructionRuleCategory.addEventListener("change", () => render());
+        }
+        const constructionRuleCustomCategory = document.getElementById("constructionRuleCustomCategory");
+        if (constructionRuleCustomCategory) {
+          constructionRuleCustomCategory.addEventListener("input", () => {
+            constructionRuleDraft = { ...constructionRuleDraft, customCategory: constructionRuleCustomCategory.value };
+          });
+          constructionRuleCustomCategory.addEventListener("change", () => render());
         }
         const constructionRuleTitle = document.getElementById("constructionRuleTitle");
         if (constructionRuleTitle) {
@@ -6750,12 +6802,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ...constructionRuleSettings,
               {
                 id: `custom-rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                category: constructionRuleDraft.category.trim() || "Regle personnalisee",
+                category: constructionRuleDraft.category === "Autre"
+                  ? constructionRuleDraft.customCategory.trim() || "Regle personnalisee"
+                  : constructionRuleDraft.category.trim() || "Regle personnalisee",
                 title: title || "Regle personnalisee",
                 detail
               }
             ];
-            constructionRuleDraft = { title: "", detail: "", category: "" };
+            constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
             saveConstructionRuleSettings();
             showValidationPopup("Regle ajoutee");
             render();
@@ -6777,7 +6831,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           restoreDefaultConstructionRules.addEventListener("click", () => {
             if (!window.confirm("Retablir les regles de construction par defaut ?")) return;
             resetConstructionRuleSettings();
-            constructionRuleDraft = { title: "", detail: "", category: "" };
+            constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
             showValidationPopup("Regles par defaut retablies");
             render();
           });
@@ -7129,7 +7183,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         });
         document.querySelectorAll("[data-construction-zoom-reset]").forEach((button) => {
           button.addEventListener("click", () => {
-            constructionZoom = 0.8;
+            constructionZoom = 1;
             render();
           });
         });
