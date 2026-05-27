@@ -320,6 +320,14 @@
       .clearConstructionOptions label { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; display: flex; font-size: 12px; font-weight: 900; gap: 7px; min-height: 34px; padding: 0 10px; }
       .clearConstructionOptions input { accent-color: #0f172a; }
       .clearConstructionFooter { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .constructionModePanel { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; margin: 8px 0; padding: 8px 10px; }
+      .constructionModeButtons { display: inline-flex; gap: 6px; }
+      .constructionModeButtons button { background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 950; min-height: 32px; padding: 0 10px; }
+      .constructionModeButtons button.active { background: #0f172a; border-color: #0f172a; color: #fff; }
+      .constructionModeButtons button:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+      .constructionModePanel span { color: #64748b; font-size: 11px; font-weight: 850; }
+      .constructionVersionControls { align-items: center; display: inline-flex; flex-wrap: wrap; gap: 6px; }
+      .constructionVersionControls select { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; }
       .constructionRulesPage { display: grid; gap: 12px; grid-template-columns: 340px minmax(0, 1fr); margin-top: 12px; }
       .constructionRulesForm, .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
       .constructionRulesForm h3, .constructionRulesList h3 { margin: 0; }
@@ -1005,6 +1013,8 @@
       let blockExclusions = loadBlockExclusions();
       let constructionPlan = {};
       let constructionMode = "planning";
+      let constructionWorkspaceMode = loadConstructionWorkspaceMode();
+      let constructionVersions = loadConstructionVersions();
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
       let prerequisiteMode = "establishment";
@@ -1700,7 +1710,8 @@
               suffix += 1;
             }
             seen.add(id);
-            return { id, label, hours: Math.max(0, Number(item?.hours) || 0) };
+            const baseClassId = classesFromStandardConfig(normalized).includes(item?.baseClassId) ? item.baseClassId : "";
+            return { id, label, baseClassId, hours: Math.max(0, Number(item?.hours) || 0) };
           })
           .filter(Boolean);
         return normalized;
@@ -1723,6 +1734,10 @@
         return classConfig[level]?.labels || [];
       }
 
+      function classesFromStandardConfig(config = classConfig) {
+        return classLevels.flatMap((level) => (config[level]?.labels || []).map((label) => schoolClassLabel(level, label)));
+      }
+
       function specialClasses() {
         return Array.isArray(classConfig.specialClasses) ? classConfig.specialClasses : [];
       }
@@ -1736,8 +1751,12 @@
         return specialClasses().find((item) => item.id === id) || null;
       }
 
+      function specialClassBaseLabel(item) {
+        return item?.baseClassId ? compactClassName(item.baseClassId) : "Non rattachee";
+      }
+
       function classesFromConfig() {
-        return [...classLevels.flatMap((level) => classesForLevel(level)), ...specialClasses().map((item) => specialClassSchoolId(item.id))];
+        return [...classesFromStandardConfig(), ...specialClasses().map((item) => specialClassSchoolId(item.id))];
       }
 
       function validClassSet() {
@@ -1864,6 +1883,35 @@
 
       function saveConstructionRules() {
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        scheduleCloudSave();
+      }
+
+      function loadConstructionWorkspaceMode() {
+        try {
+          const saved = localStorage.getItem("planningEpsConstructionWorkspaceMode2026");
+          return ["manual", "optimized"].includes(saved) ? saved : "manual";
+        } catch {
+          return "manual";
+        }
+      }
+
+      function saveConstructionWorkspaceMode() {
+        localStorage.setItem("planningEpsConstructionWorkspaceMode2026", constructionWorkspaceMode);
+        scheduleCloudSave();
+      }
+
+      function loadConstructionVersions() {
+        try {
+          const saved = localStorage.getItem("planningEpsConstructionVersions2026");
+          const parsed = saved ? JSON.parse(saved) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveConstructionVersions() {
+        localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(constructionVersions));
         scheduleCloudSave();
       }
 
@@ -2575,6 +2623,8 @@
           schoolConstraints,
           prerequisiteLocks,
           yearPrerequisiteLocks,
+          constructionWorkspaceMode,
+          constructionVersions,
           constructionRuleSettings,
           constructionRules,
           constructionPlan,
@@ -2612,6 +2662,8 @@
           : yearPrerequisiteLocks;
         slots = schoolConstraints.courseSlots;
         activeCycleId = cycles[0]?.id || activeCycleId;
+        constructionWorkspaceMode = ["manual", "optimized"].includes(data.constructionWorkspaceMode) ? data.constructionWorkspaceMode : constructionWorkspaceMode;
+        constructionVersions = Array.isArray(data.constructionVersions) ? data.constructionVersions : constructionVersions;
         constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
@@ -2640,6 +2692,8 @@
         localStorage.setItem(PREREQUISITE_LOCKS_KEY, JSON.stringify(prerequisiteLocks));
         localStorage.setItem(YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify(yearPrerequisiteLocks));
         localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
+        localStorage.setItem("planningEpsConstructionWorkspaceMode2026", constructionWorkspaceMode);
+        localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(constructionVersions));
         localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
@@ -3133,7 +3187,10 @@
 
       function compactClassName(schoolClass) {
         const { level, number, group, special, label } = classParts(schoolClass);
-        if (special) return label || "Classe spec.";
+        if (special) {
+          const item = specialClassFromSchoolId(schoolClass);
+          return `${label || "Classe spec."}${item?.baseClassId ? ` (${compactClassName(item.baseClassId)})` : ""}`;
+        }
         if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
       }
@@ -3791,22 +3848,41 @@
           saveBlockExclusions();
           saveConstructionPlan();
         }
-        if (options.events) {
-          sportEvents = [];
-          eventExclusions = {};
-          resetEventForm();
-          saveSportEvents();
-          saveEventExclusions();
-          rebuildConstructionPlan();
-        }
-        if (options.as) {
-          asSessions = [];
-          asExclusions = {};
-          resetAsForm();
-          saveAsSessions();
-          saveAsExclusions();
-        }
         clearConstructionPanelOpen = false;
+      }
+
+      function constructionVersionLabel(version) {
+        const date = version?.savedAt ? new Date(version.savedAt) : null;
+        const dateLabel = date && !Number.isNaN(date.getTime())
+          ? date.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+          : "";
+        return [version?.name || "Version manuelle", dateLabel].filter(Boolean).join(" - ");
+      }
+
+      function saveCurrentConstructionVersion() {
+        const savedAt = new Date().toISOString();
+        constructionVersions = [
+          {
+            id: `construction-version-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            name: `Manuelle ${constructionVersions.length + 1}`,
+            mode: constructionWorkspaceMode,
+            savedAt,
+            constructionRules: JSON.parse(JSON.stringify(constructionRules)),
+            blockExclusions: JSON.parse(JSON.stringify(blockExclusions))
+          },
+          ...constructionVersions
+        ].slice(0, 12);
+        saveConstructionVersions();
+      }
+
+      function restoreConstructionVersion(versionId) {
+        const version = constructionVersions.find((item) => item.id === versionId);
+        if (!version) return false;
+        constructionRules = Array.isArray(version.constructionRules) ? JSON.parse(JSON.stringify(version.constructionRules)) : [];
+        blockExclusions = version.blockExclusions && typeof version.blockExclusions === "object" ? JSON.parse(JSON.stringify(version.blockExclusions)) : {};
+        rebuildConstructionPlan();
+        saveBlockExclusions();
+        return true;
       }
 
       function conflictMap() {
@@ -5079,6 +5155,7 @@
       }
 
       function renderClassesView() {
+        const standardClasses = classesFromStandardConfig();
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Classes</h3>
@@ -5111,7 +5188,15 @@
                 <input id="specialClassName" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
                 <button class="ghostButton" id="addSpecialClass">Valider</button>
               </div>
-              <div class="classConfigPills">${specialClasses().length ? specialClasses().map((item) => `<span class="classConfigPill">${item.label}<button data-remove-special-class="${item.id}" title="Supprimer cette classe">x</button></span>`).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
+              <div class="cycleList">${specialClasses().length ? specialClasses().map((item) => `<div class="cycleRow">
+                <label>${item.label}</label>
+                <select data-special-class-base="${item.id}">
+                  <option value="">Classe de rattachement</option>
+                  ${standardClasses.map((schoolClass) => `<option value="${schoolClass}" ${item.baseClassId === schoolClass ? "selected" : ""}>${compactClassName(schoolClass)}</option>`).join("")}
+                </select>
+                <span class="muted">${specialClassBaseLabel(item)}</span>
+                <button class="ghostButton" data-remove-special-class="${item.id}" title="Supprimer cette classe">Supprimer</button>
+              </div>`).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
             </div>
           </div>
         </section>`;
@@ -5238,6 +5323,16 @@
         const constructionTableContent = `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, true)}</div>`;
         return `<section class="builderPage">
           <div>
+            <div class="constructionModePanel">
+              <div class="constructionModeButtons" aria-label="Mode de construction">
+                <button class="${constructionWorkspaceMode === "manual" ? "active" : ""}" data-construction-workspace-mode="manual">Construction manuelle</button>
+                <button class="${constructionWorkspaceMode === "optimized" ? "active" : ""}" data-construction-workspace-mode="optimized" disabled title="Disponible plus tard">Construction optimisee</button>
+              </div>
+              <div class="constructionVersionControls">
+                <button class="ghostButton" id="saveConstructionVersion">Sauver version</button>
+                ${constructionVersions.length ? `<select id="constructionVersionSelect" aria-label="Versions de construction">${constructionVersions.map((version) => `<option value="${version.id}">${escapeHtml(constructionVersionLabel(version))}</option>`).join("")}</select><button class="ghostButton" id="restoreConstructionVersion">Recuperer</button>` : `<span>Aucune version sauvegardee.</span>`}
+              </div>
+            </div>
             <div class="builderActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}"><i class="dot" style="background:${teacher.border}"></i>${teacher.name}</span>`).join("")}
@@ -5273,12 +5368,10 @@
 
       function renderClearConstructionPanel() {
         return `<div class="clearConstructionPanel">
-          <h3>Vider les elements selectionnes</h3>
+          <h3>Vider la construction manuelle</h3>
+          <div class="alertHelp"><strong>Conserve</strong><span>Les pre-requis, regles de construction, AS, evenements sportifs, services, installations et activites restent intacts.</span></div>
           <div class="clearConstructionOptions">
-            <label><input type="checkbox" data-clear-option="all" /> Tout</label>
             <label><input type="checkbox" data-clear-option="construction" checked /> Creneau prof</label>
-            <label><input type="checkbox" data-clear-option="as" /> AS</label>
-            <label><input type="checkbox" data-clear-option="events" /> Evenements sportifs</label>
           </div>
           <div class="clearConstructionFooter">
             <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
@@ -5831,7 +5924,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           <div class="facilityActivityMatrix">${facilities.map((facility) => {
             const linked = facilityActivities[facility.id] || [];
             const linkedActivities = linked.map((id) => activities.find((activity) => activity.id === id)).filter(Boolean);
-            const unlinkedActivities = activities.filter((activity) => !linked.includes(activity.id));
+            const unlinkedActivities = activities
+              .filter((activity) => !linked.includes(activity.id))
+              .sort((a, b) => a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
             return `<article class="facilityActivityRow">
               <strong>${facility.label}</strong>
               ${linkedActivities.length ? `<div class="facilityActivityOrdered">${linkedActivities.map((activity, index) => `
@@ -7059,12 +7154,25 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               id = `${baseId}-${suffix}`;
               suffix += 1;
             }
-            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, hours: 0 }] };
+            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, baseClassId: "", hours: 0 }] };
             saveClassConfig();
             showValidationPopup("Classe specifique ajoutee");
             render();
           });
         }
+        document.querySelectorAll("[data-special-class-base]").forEach((select) => {
+          select.addEventListener("change", () => {
+            const id = select.dataset.specialClassBase;
+            const baseClassId = select.value;
+            classConfig = {
+              ...classConfig,
+              specialClasses: specialClasses().map((item) => item.id === id ? { ...item, baseClassId } : item)
+            };
+            saveClassConfig();
+            showValidationPopup("Classe specifique rattachee");
+            render();
+          });
+        });
         document.querySelectorAll("[data-remove-special-class]").forEach((button) => {
           button.addEventListener("click", () => {
             const item = specialClasses().find((specialClass) => specialClass.id === button.dataset.removeSpecialClass);
@@ -8092,41 +8200,45 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        const allClearOption = document.querySelector("[data-clear-option='all']");
-        document.querySelectorAll("[data-clear-option]").forEach((input) => {
-          input.addEventListener("change", () => {
-            if (input.dataset.clearOption === "all") {
-              document.querySelectorAll("[data-clear-option]:not([data-clear-option='all'])").forEach((option) => {
-                option.checked = input.checked;
-              });
-              return;
-            }
-            if (allClearOption) {
-              const options = [...document.querySelectorAll("[data-clear-option]:not([data-clear-option='all'])")];
-              allClearOption.checked = options.every((option) => option.checked);
-            }
-          });
-        });
         const confirmClearConstruction = document.getElementById("confirmClearConstruction");
         if (confirmClearConstruction) {
           confirmClearConstruction.addEventListener("click", () => {
             const options = {
-              construction: Boolean(document.querySelector("[data-clear-option='construction']")?.checked),
-              as: Boolean(document.querySelector("[data-clear-option='as']")?.checked),
-              events: Boolean(document.querySelector("[data-clear-option='events']")?.checked)
+              construction: Boolean(document.querySelector("[data-clear-option='construction']")?.checked)
             };
-            const selectedLabels = [
-              options.construction ? "les creneaux prof" : "",
-              options.as ? "l'AS" : "",
-              options.events ? "les evenements sportifs" : ""
-            ].filter(Boolean);
-            if (!selectedLabels.length) return;
-            const firstConfirm = window.confirm(`Supprimer ${selectedLabels.join(", ")} ?\n\nCette action est definitive sur ce planning.`);
+            if (!options.construction) return;
+            const firstConfirm = window.confirm("Supprimer uniquement les creneaux prof construits ?\n\nLes pre-requis, regles, AS et evenements sportifs seront conserves.");
             if (!firstConfirm) return;
             const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
             if (typedConfirm !== "VIDER") return;
             clearPlanningParts(options);
-            showValidationPopup("Éléments supprimés");
+            showValidationPopup("Construction videe, pre-requis conserves");
+            render();
+          });
+        }
+        document.querySelectorAll("[data-construction-workspace-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            constructionWorkspaceMode = button.dataset.constructionWorkspaceMode === "optimized" ? "optimized" : "manual";
+            saveConstructionWorkspaceMode();
+            render();
+          });
+        });
+        const saveConstructionVersionButton = document.getElementById("saveConstructionVersion");
+        if (saveConstructionVersionButton) {
+          saveConstructionVersionButton.addEventListener("click", () => {
+            saveCurrentConstructionVersion();
+            showValidationPopup("Version de construction sauvegardee");
+            render();
+          });
+        }
+        const restoreConstructionVersionButton = document.getElementById("restoreConstructionVersion");
+        if (restoreConstructionVersionButton) {
+          restoreConstructionVersionButton.addEventListener("click", () => {
+            const versionId = document.getElementById("constructionVersionSelect")?.value || "";
+            if (!versionId) return;
+            if (!window.confirm("Recuperer cette version dans la construction manuelle actuelle ?")) return;
+            if (restoreConstructionVersion(versionId)) showValidationPopup("Version recuperee");
             render();
           });
         }
