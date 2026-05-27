@@ -1116,7 +1116,34 @@
       let dateRangeSelectionError = "";
       const CLOUD_CONFIG_KEY = "planningEpsCloudConfig2026";
       const CLOUD_LOCAL_UNSYNCED_KEY = "planningEpsLocalUnsyncedChanges2026";
+      const CLOUD_DIRTY_KEYS_KEY = "planningEpsDirtyCloudKeys2026";
       const CLOUD_AUTO_LOAD_DISABLED = false;
+      const cloudDataKeys = [
+        "teachers",
+        "classConfig",
+        "facilities",
+        "activities",
+        "facilityActivities",
+        "yearPlan",
+        "cycles",
+        "cyclesByLevel",
+        "serviceHoursByLevel",
+        "serviceAssignments",
+        "schoolConstraints",
+        "prerequisiteLocks",
+        "yearPrerequisiteLocks",
+        "constructionWorkspaceMode",
+        "constructionVersions",
+        "constructionRuleSettings",
+        "constructionRules",
+        "constructionPlan",
+        "blockExclusions",
+        "sportEvents",
+        "asSessions",
+        "facilityUnavailability",
+        "eventExclusions",
+        "asExclusions"
+      ];
       const PREREQUISITES_LOCK_KEY = "planningEpsPrerequisitesLocked2026";
       const PREREQUISITE_LOCKS_KEY = "planningEpsPrerequisiteLocks2026";
       const YEAR_PREREQUISITE_LOCKS_KEY = "planningEpsYearPrerequisiteLocks2026";
@@ -1190,6 +1217,7 @@
       let cloudSaveQueued = false;
       let cloudLastUpdatedAt = "";
       let localUnsyncedChanges = localStorage.getItem(CLOUD_LOCAL_UNSYNCED_KEY) || "";
+      let cloudDirtyKeys = new Set(loadCloudDirtyKeys());
       let cloudRefreshTimer = null;
       let cloudSyncing = false;
       let adminSession = loadAdminSession();
@@ -1551,7 +1579,7 @@
 
       function saveYearPlan() {
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
-        scheduleCloudSave();
+        scheduleCloudSave(["yearPlan"]);
       }
 
       function yearValue(rowId, weekRank) {
@@ -1571,7 +1599,7 @@
 
       function saveConstructionPlan() {
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["constructionPlan"]);
       }
 
       function loadTeachers() {
@@ -1590,7 +1618,7 @@
 
       function saveTeachers() {
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["teachers"]);
       }
 
       function loadSchoolConstraints() {
@@ -1675,7 +1703,7 @@
 
       function saveSchoolConstraints() {
         localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
-        scheduleCloudSave();
+        scheduleCloudSave(["schoolConstraints"]);
       }
 
       function syncSchoolSlots() {
@@ -1877,13 +1905,14 @@
       function saveClassConfig() {
         classes = classesFromConfig();
         pruneClassReferences();
+        sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
-        saveServiceAssignments(true);
-        saveFacilityUnavailability();
-        saveSportEvents();
-        saveConstructionRules();
-        saveConstructionPlan();
-        saveCloudNowIfPossible();
+        localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
+        localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
+        localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
+        localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
+        saveCloudNowIfPossible(["classConfig", "serviceAssignments", "facilityUnavailability", "sportEvents", "constructionRules", "constructionPlan"]);
       }
 
       function loadServiceHoursByLevel() {
@@ -1895,10 +1924,10 @@
         }
       }
 
-      function saveServiceHoursByLevel(immediateCloud = false) {
+      function saveServiceHoursByLevel(immediateCloud = true) {
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
-        if (immediateCloud) saveCloudNowIfPossible();
-        else scheduleCloudSave();
+        if (immediateCloud) saveCloudNowIfPossible(["serviceHoursByLevel"]);
+        else scheduleCloudSave(["serviceHoursByLevel"]);
       }
 
       function loadServiceAssignments() {
@@ -1910,10 +1939,10 @@
         }
       }
 
-      function saveServiceAssignments(immediateCloud = false) {
+      function saveServiceAssignments(immediateCloud = true) {
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
-        if (immediateCloud) saveCloudNowIfPossible();
-        else scheduleCloudSave();
+        if (immediateCloud) saveCloudNowIfPossible(["serviceAssignments"]);
+        else scheduleCloudSave(["serviceAssignments"]);
       }
 
       function shadeColor(hex, amount) {
@@ -1972,7 +2001,7 @@
 
       function saveConstructionRules() {
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["constructionRules"]);
       }
 
       function loadConstructionWorkspaceMode() {
@@ -1986,7 +2015,7 @@
 
       function saveConstructionWorkspaceMode() {
         localStorage.setItem("planningEpsConstructionWorkspaceMode2026", constructionWorkspaceMode);
-        scheduleCloudSave();
+        scheduleCloudSave(["constructionWorkspaceMode"]);
       }
 
       function loadConstructionVersions() {
@@ -2001,7 +2030,7 @@
 
       function saveConstructionVersions() {
         localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(constructionVersions));
-        scheduleCloudSave();
+        scheduleCloudSave(["constructionVersions"]);
       }
 
       function normalizeConstructionRuleSettings(items) {
@@ -2028,7 +2057,7 @@
       function saveConstructionRuleSettings() {
         constructionRuleSettings = normalizeConstructionRuleSettings(constructionRuleSettings);
         localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["constructionRuleSettings"]);
       }
 
       function resetConstructionRuleSettings() {
@@ -2047,7 +2076,7 @@
 
       function saveBlockExclusions() {
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["blockExclusions"]);
       }
 
       function isBlockExcluded(ruleId, key) {
@@ -2089,7 +2118,7 @@
       function saveSportEvents() {
         sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["sportEvents"]);
       }
 
       function loadAsSessions() {
@@ -2104,7 +2133,7 @@
       function saveAsSessions() {
         asSessions = normalizePlanningItems(asSessions);
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["asSessions"]);
       }
 
       function loadFacilities() {
@@ -2121,7 +2150,7 @@
 
       function saveFacilities() {
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["facilities", "facilityActivities"]);
       }
 
       function loadActivities() {
@@ -2136,7 +2165,7 @@
 
       function saveActivities() {
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["activities", "facilityActivities", "constructionRules"]);
       }
 
       function loadFacilityActivities() {
@@ -2163,8 +2192,8 @@
       function saveFacilityActivities(immediateCloud = true) {
         pruneFacilityActivities();
         localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(facilityActivities));
-        if (immediateCloud) saveCloudNowIfPossible();
-        else scheduleCloudSave();
+        if (immediateCloud) saveCloudNowIfPossible(["facilityActivities"]);
+        else scheduleCloudSave(["facilityActivities"]);
       }
 
       function loadFacilityUnavailability() {
@@ -2178,7 +2207,7 @@
 
       function saveFacilityUnavailability() {
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["facilityUnavailability"]);
       }
 
       function loadEventExclusions() {
@@ -2192,7 +2221,7 @@
 
       function saveEventExclusions() {
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["eventExclusions"]);
       }
 
       function loadAsExclusions() {
@@ -2206,7 +2235,7 @@
 
       function saveAsExclusions() {
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
-        saveCloudNowIfPossible();
+        saveCloudNowIfPossible(["asExclusions"]);
       }
 
       function itemExcludedForCell(exclusions, itemId, key) {
@@ -2481,9 +2510,10 @@
           : "Cycles sauvegardes localement.";
         if (saveCloudNow && isAdmin() && cloudWriteAllowed()) {
           clearTimeout(cloudSaveTimer);
+          markLocalChangedForCloud(["cycles", "cyclesByLevel"]);
           cloudSaveToRemote(false);
         } else {
-          scheduleCloudSave();
+          scheduleCloudSave(["cycles", "cyclesByLevel"]);
         }
       }
 
@@ -2568,38 +2598,72 @@
       function savePrerequisiteLocks() {
         localStorage.setItem(PREREQUISITE_LOCKS_KEY, JSON.stringify({ ...defaultPrerequisiteLocks(false), ...prerequisiteLocks }));
         localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
-        saveLocksToCloudNow();
+        saveLocksToCloudNow(["prerequisiteLocks"]);
       }
 
       function saveYearPrerequisiteLocks() {
         localStorage.setItem(YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify({ ...defaultYearPrerequisiteLocks(false), ...yearPrerequisiteLocks }));
-        saveLocksToCloudNow();
+        saveLocksToCloudNow(["yearPrerequisiteLocks"]);
       }
 
-      function markLocalChangedForCloud() {
+      function loadCloudDirtyKeys() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(CLOUD_DIRTY_KEYS_KEY) || "[]");
+          return Array.isArray(saved) ? saved.filter((key) => cloudDataKeys.includes(key)) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function normalizeCloudDirtyKeys(keys = []) {
+        const list = Array.isArray(keys) ? keys : [keys];
+        return list.filter((key) => cloudDataKeys.includes(key));
+      }
+
+      function markLocalChangedForCloud(keys = []) {
         localUnsyncedChanges = new Date().toISOString();
         localStorage.setItem(CLOUD_LOCAL_UNSYNCED_KEY, localUnsyncedChanges);
+        normalizeCloudDirtyKeys(keys).forEach((key) => cloudDirtyKeys.add(key));
+        localStorage.setItem(CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...cloudDirtyKeys]));
       }
 
       function clearLocalChangedForCloud() {
         localUnsyncedChanges = "";
+        cloudDirtyKeys = new Set();
         localStorage.removeItem(CLOUD_LOCAL_UNSYNCED_KEY);
+        localStorage.removeItem(CLOUD_DIRTY_KEYS_KEY);
       }
 
-      function saveCloudNowIfPossible() {
-        markLocalChangedForCloud();
-        if (!isAdmin() || !cloudReady() || !cloudWriteAllowed() || !cloudConfig.autoSave) return;
+      function saveCloudNowIfPossible(keys = []) {
+        markLocalChangedForCloud(keys);
+        if (!isAdmin()) {
+          cloudStatus = "Modifications locales en attente : connexion admin requise pour sauvegarder Supabase.";
+          return false;
+        }
+        if (!cloudReady()) {
+          cloudStatus = "Modifications locales en attente : cloud non configure.";
+          return false;
+        }
+        if (!cloudWriteAllowed()) {
+          cloudStatus = cloudWriteBlockedMessage();
+          return false;
+        }
+        if (!cloudConfig.autoSave) {
+          cloudStatus = "Modifications locales en attente : autosauvegarde cloud desactivee.";
+          return false;
+        }
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
         if (cloudSyncing) {
           cloudSaveQueued = true;
-          return;
+          return true;
         }
         cloudSaveToRemote(false);
+        return true;
       }
 
-      function saveLocksToCloudNow() {
-        saveCloudNowIfPossible();
+      function saveLocksToCloudNow(keys = ["prerequisiteLocks", "yearPrerequisiteLocks"]) {
+        saveCloudNowIfPossible(keys);
       }
 
       function readCloudConfigInputs() {
@@ -2637,6 +2701,14 @@
       function cloudConfigSavedMessage() {
         if (!cloudReady()) return "Cloud non configuré.";
         return cloudWriteAllowed() ? "Configuration cloud enregistrée." : cloudWriteBlockedMessage();
+      }
+
+      function criticalCloudNotice(label = "Modifications") {
+        if (!cloudReady()) return "";
+        const message = localUnsyncedChanges
+          ? `${label} en attente d'envoi Supabase.`
+          : cloudStatus;
+        return `<div class="cloudStatus">${message}</div>`;
       }
 
       function cloudEndpoint() {
@@ -2840,8 +2912,8 @@
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
       }
 
-      function scheduleCloudSave() {
-        markLocalChangedForCloud();
+      function scheduleCloudSave(keys = []) {
+        markLocalChangedForCloud(keys);
         if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
         if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
@@ -2860,6 +2932,7 @@
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
         let cloudSaveSucceeded = false;
+        const changedKeys = [...cloudDirtyKeys].filter((key) => cloudDataKeys.includes(key));
         if (!isAdmin()) {
           cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
           if (shouldRender) render();
@@ -2875,20 +2948,40 @@
           if (shouldRender) render();
           return;
         }
+        if (!changedKeys.length) {
+          cloudStatus = "Aucune modification locale recente a envoyer. Supabase reste la source officielle.";
+          if (shouldRender) render();
+          return;
+        }
         cloudSyncing = true;
         cloudStatus = "Sauvegarde cloud en cours...";
         if (shouldRender) render();
         try {
           const updatedAt = new Date().toISOString();
+          const currentData = collectPlanningData();
+          const remoteResponse = await fetch(`${cloudEndpoint()}?select=data,updated_at&id=eq.${encodeURIComponent(cloudConfig.planningId)}`, {
+            headers: cloudHeaders()
+          });
+          if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
+          const remoteRows = await remoteResponse.json();
+          const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
+          const dataToSave = remoteData
+            ? { ...remoteData, version: currentData.version, planningId: cloudConfig.planningId, savedAt: updatedAt }
+            : { ...currentData, savedAt: updatedAt };
+          if (remoteData) {
+            changedKeys.forEach((key) => {
+              dataToSave[key] = currentData[key];
+            });
+          }
           const response = await fetch(`${cloudEndpoint()}?on_conflict=id`, {
             method: "POST",
             headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-            body: JSON.stringify({ id: cloudConfig.planningId, data: collectPlanningData(), updated_at: updatedAt })
+            body: JSON.stringify({ id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt })
           });
           if (!response.ok) throw new Error(await response.text());
           cloudSaveSucceeded = true;
           cloudLastUpdatedAt = updatedAt;
-          cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`;
+          cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
         } catch (error) {
           cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
         } finally {
@@ -4893,11 +4986,13 @@
         const cycleStats = completeCycleCourseAverages();
         const yearAsStats = asHoursForWeeks(yearWeeks);
         const alerts = serviceAlerts();
+        const serviceCloudNotice = criticalCloudNotice("Service theorique");
         return `<section class="hoursBalancePage">
           <div class="hoursBalanceHeader">
             <div>
               <h2>Service</h2>
               <p class="muted">Affectez les classes aux profs et indiquez le nombre d'heures hebdomadaires prévues. Une alerte s'affiche si une classe dépasse son volume autorisé.</p>
+              ${serviceCloudNotice}
             </div>
           </div>
           <div class="servicePanel compactServicePanel">
@@ -5358,10 +5453,12 @@
       function renderClassesView() {
         const standardClasses = classesFromStandardConfig();
         const canAddSpecialClass = Boolean(specialClassDraftName.trim() && specialClassDraftBaseIds.length);
+        const classCloudNotice = criticalCloudNotice("Modifications de classes");
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Classes</h3>
             <p class="muted">Définissez les classes de l'établissement. Elles sont utilisées dans Construction, Service, Indisponibilités et Événements sportifs.</p>
+            ${classCloudNotice}
           </div>
           <div class="eventList">
             <h3>Classes existantes</h3>
@@ -6123,11 +6220,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (!facilities.length || !activities.length) {
           return `<section class="eventList facilityActivityLinksPanel">
             <h3>Activites possibles par installation</h3>
+            ${criticalCloudNotice("Liens installations/activites")}
             <div class="alertEmpty">Ajoutez au moins une installation et une activite pour definir les activites possibles.</div>
           </section>`;
         }
         return `<section class="eventList facilityActivityLinksPanel">
           <h3>Activites possibles par installation</h3>
+          ${criticalCloudNotice("Liens installations/activites")}
           <div class="facilityActivityMatrix">${facilities.map((facility) => {
             const linked = facilityActivities[facility.id] || [];
             const linkedActivities = linked.map((id) => activities.find((activity) => activity.id === id)).filter(Boolean);
