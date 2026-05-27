@@ -1052,7 +1052,7 @@
       let specialClassDraftBaseIds = [];
       let teacherDraftName = "";
       let teacherDraftColor = teacherPalette[0].color;
-      let teacherDraftStatus = "certifie";
+      let teacherDraftStatus = "";
       let expandedTeacherColorId = "";
       let activeBuildCell = null;
       let activeBuildCycleId = null;
@@ -6145,8 +6145,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (teacherDraftColor && !draftPalette.some((item) => item.color === teacherDraftColor)) {
           teacherDraftColor = firstAvailableTeacherColor();
         }
-        const canAddTeacher = teacherDraftName.trim().length > 0 && Boolean(teacherDraftColor);
-        const teacherDraftHours = teacherDraftStatus === "agrege" ? 14 : 17;
+        const canAddTeacher = teacherDraftName.trim().length > 0 && Boolean(teacherDraftColor) && Boolean(teacherDraftStatus);
+        const teacherDraftHours = teacherDraftStatus === "agrege" ? 14 : teacherDraftStatus === "certifie" ? 17 : "-";
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Ajouter un professeur</h3>
@@ -7555,7 +7555,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (addTeacher) {
           addTeacher.addEventListener("click", () => {
             const name = teacherDraftName.trim();
-            if (!name || !teacherDraftColor) return;
+            if (!name || !teacherDraftColor || !teacherDraftStatus) return;
             const id = `p-${Date.now()}-${Math.random().toString(16).slice(2)}`;
             const weeklyReference = teacherDraftStatus === "agrege" ? 14 : 17;
             const teacher = {
@@ -7572,7 +7572,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             cycleTeacherIds = [...cycleTeacherIds, id];
             teacherDraftName = "";
             teacherDraftColor = firstAvailableTeacherColor();
-            teacherDraftStatus = "certifie";
+            teacherDraftStatus = "";
             saveTeachers();
             showValidationPopup("Professeur validé");
             render();
