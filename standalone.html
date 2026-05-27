@@ -2772,6 +2772,7 @@
         constructionVersions = Array.isArray(data.constructionVersions) ? data.constructionVersions : constructionVersions;
         constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
+        constructionPlan = data.constructionPlan && typeof data.constructionPlan === "object" ? data.constructionPlan : buildConstructionPlanFromRules();
         blockExclusions = data.blockExclusions || blockExclusions;
         sportEvents = Array.isArray(data.sportEvents) ? normalizePlanningItems(data.sportEvents) : normalizePlanningItems(sportEvents);
         asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
@@ -2783,7 +2784,6 @@
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
         cycleTeacherIds = teachers.map((teacher) => teacher.id);
         cycleFacilityIds = facilities.map((facility) => facility.id);
-        constructionPlan = buildConstructionPlanFromRules();
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
         localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
