@@ -2634,22 +2634,30 @@
         localStorage.removeItem(CLOUD_DIRTY_KEYS_KEY);
       }
 
+      function discardLocalChangesFromCloudSoon() {
+        if (!cloudReady() || cloudSyncing) return;
+        setTimeout(() => cloudLoadFromRemote(true, true), 0);
+      }
+
       function saveCloudNowIfPossible(keys = []) {
         markLocalChangedForCloud(keys);
         if (!isAdmin()) {
-          cloudStatus = "Modifications locales en attente : connexion admin requise pour sauvegarder Supabase.";
+          cloudStatus = "Modification refusee : rechargement de la source Supabase.";
+          discardLocalChangesFromCloudSoon();
           return false;
         }
         if (!cloudReady()) {
-          cloudStatus = "Modifications locales en attente : cloud non configure.";
+          cloudStatus = "Modification refusee : cloud non configure.";
           return false;
         }
         if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
+          discardLocalChangesFromCloudSoon();
           return false;
         }
         if (!cloudConfig.autoSave) {
-          cloudStatus = "Modifications locales en attente : autosauvegarde cloud desactivee.";
+          cloudStatus = "Modification refusee : autosauvegarde cloud desactivee.";
+          discardLocalChangesFromCloudSoon();
           return false;
         }
         clearTimeout(cloudSaveTimer);
@@ -2706,7 +2714,7 @@
       function criticalCloudNotice(label = "Modifications") {
         if (!cloudReady()) return "";
         const message = localUnsyncedChanges
-          ? `${label} en attente d'envoi Supabase.`
+          ? `${label} en cours d'envoi Supabase.`
           : cloudStatus;
         return `<div class="cloudStatus">${message}</div>`;
       }
@@ -2914,9 +2922,23 @@
 
       function scheduleCloudSave(keys = []) {
         markLocalChangedForCloud(keys);
-        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) return;
+        if (!isAdmin()) {
+          cloudStatus = "Modification refusee : rechargement de la source Supabase.";
+          discardLocalChangesFromCloudSoon();
+          return;
+        }
+        if (!cloudReady()) {
+          cloudStatus = "Modification refusee : cloud non configure.";
+          return;
+        }
+        if (!cloudConfig.autoSave) {
+          cloudStatus = "Modification refusee : autosauvegarde cloud desactivee.";
+          discardLocalChangesFromCloudSoon();
+          return;
+        }
         if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
+          discardLocalChangesFromCloudSoon();
           return;
         }
         if (cloudSyncing) {
@@ -2932,9 +2954,11 @@
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
         let cloudSaveSucceeded = false;
+        let shouldDiscardLocalChanges = false;
         const changedKeys = [...cloudDirtyKeys].filter((key) => cloudDataKeys.includes(key));
         if (!isAdmin()) {
           cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
+          discardLocalChangesFromCloudSoon();
           if (shouldRender) render();
           return;
         }
@@ -2945,11 +2969,13 @@
         }
         if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
+          discardLocalChangesFromCloudSoon();
           if (shouldRender) render();
           return;
         }
         if (!changedKeys.length) {
           cloudStatus = "Aucune modification locale recente a envoyer. Supabase reste la source officielle.";
+          clearLocalChangedForCloud();
           if (shouldRender) render();
           return;
         }
@@ -2984,12 +3010,15 @@
           cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
         } catch (error) {
           cloudStatus = `Erreur cloud : ${error.message || "sauvegarde impossible"}`;
+          shouldDiscardLocalChanges = true;
         } finally {
           cloudSyncing = false;
           if (cloudSaveSucceeded && !cloudSaveQueued) clearLocalChangedForCloud();
           if (cloudSaveQueued) {
             cloudSaveQueued = false;
             scheduleCloudSave();
+          } else if (shouldDiscardLocalChanges) {
+            discardLocalChangesFromCloudSoon();
           }
           if (shouldRender) render();
         }
@@ -3007,21 +3036,12 @@
           if (shouldRender) render();
           return;
         }
-        if (localUnsyncedChanges) {
-          if (silent) return;
-          const message = "Des modifications locales ne sont pas encore envoyées dans Supabase. Charger le cloud maintenant peut les écraser. Continuer ?";
-          if (!window.confirm(message)) {
-            cloudStatus = "Chargement cloud annulé : modifications locales à sauvegarder d'abord.";
-            if (shouldRender) render();
-            return;
-          }
-          clearLocalChangedForCloud();
-        }
         if (cloudSaveTimer || cloudSaveQueued) {
           if (!silent) cloudStatus = "Chargement reporte : une sauvegarde locale est en attente.";
           if (shouldRender) render();
           return;
         }
+        clearLocalChangedForCloud();
         cloudSyncing = true;
         if (!silent) cloudStatus = "Chargement depuis le cloud...";
         if (shouldRender) render();
