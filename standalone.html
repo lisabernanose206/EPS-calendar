@@ -317,6 +317,15 @@
       .clearConstructionOptions label { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; display: flex; font-size: 12px; font-weight: 900; gap: 7px; min-height: 34px; padding: 0 10px; }
       .clearConstructionOptions input { accent-color: #0f172a; }
       .clearConstructionFooter { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .constructionRulesPage { display: grid; gap: 12px; grid-template-columns: 340px minmax(0, 1fr); margin-top: 12px; }
+      .constructionRulesForm, .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
+      .constructionRulesForm h3, .constructionRulesList h3 { margin: 0; }
+      .constructionRuleCard { border: 1px solid #cbd5e1; border-left: 5px solid #0f766e; border-radius: 8px; display: grid; gap: 5px; padding: 10px; }
+      .constructionRuleCard strong { color: #0f172a; font-size: 13px; }
+      .constructionRuleCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
+      .constructionRuleActions { display: flex; gap: 8px; justify-content: flex-end; }
+      .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
@@ -353,6 +362,12 @@
       .constructionTable .buildBlock button { position: absolute; top: 2px; }
       .constructionTable .buildBlock .removeBlockButton { right: 2px; }
       .constructionTable .buildBlock .moveBlockButton { left: 2px; }
+      .cycleConstructionTabs { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+      .cycleConstructionCell { min-height: 72px; padding: 0; vertical-align: stretch; }
+      .cycleConstructionCellInner { display: grid; gap: 4px; min-height: 72px; padding: 4px; }
+      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: 1fr 1fr; min-height: 58px; }
+      .cycleConstructionHalf, .cycleConstructionFull { border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-width: 0; padding: 3px; }
+      .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; text-align: center; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock { align-items: center !important; display: flex !important; justify-content: center !important; padding: 2px !important; text-align: center !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { margin: 0 auto !important; text-align: center !important; width: 100%; }
       .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) th { background: #fff !important; color: #0f172a !important; }
@@ -592,6 +607,9 @@
       .classConfigPills { display: flex; flex-wrap: wrap; gap: 5px; }
       .classConfigPill { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 5px; min-height: 28px; padding: 0 7px; }
       .classConfigPill button { background: transparent; border: 0; color: #991b1b; cursor: pointer; font-weight: 950; padding: 0; }
+      .specialClassPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; padding: 12px; }
+      .specialClassForm { display: grid; gap: 8px; grid-template-columns: minmax(180px, 1fr) auto; }
+      .specialClassForm input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 13px; font-weight: 800; min-height: 36px; padding: 0 10px; width: 100%; }
       .eventBlock { background: #111827 !important; border-color: #000 !important; color: #fff !important; }
       .eventBlock strong, .eventBlock span { color: #fff !important; }
       .eventBlock button { background: rgba(255,255,255,0.18) !important; color: #fff !important; }
@@ -648,6 +666,8 @@
       .serviceCompare { align-items: start; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
       .serviceColumn { background: rgba(255,255,255,0.42); border: 1px solid rgba(15,23,42,0.1); border-radius: 8px; display: grid; gap: 7px; padding: 8px; }
       .serviceColumn h4 { color: #172033; font-size: 12px; margin: 0; }
+      .serviceTheorySummary { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
+      .overtimeBadge { background: #fff7ed; border: 1px solid #fb923c; border-radius: 999px; color: #9a3412; font-size: 10px; font-weight: 950; padding: 4px 8px; white-space: nowrap; }
       .serviceLevelButtons { display: grid; gap: 5px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .serviceClassRows { display: flex; flex-wrap: wrap; gap: 5px; }
       .serviceClassRow { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(46px, auto) minmax(70px, 1fr) 34px; }
@@ -802,7 +822,8 @@
             <section class="weeks">
               <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
               <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
+              <button data-week="build" data-build-mode="rules"><span class="stepNav"><span class="stepBadge">3</span>Regles de construction<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">4</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
             </section>
           </section>
         </nav>
@@ -911,6 +932,18 @@
       let classConfig = loadClassConfig();
       let classes = classesFromConfig();
       const defaultServiceHours = { "6eme": 4, "5eme": 3, "4eme": 3, "3eme": 3 };
+      const defaultConstructionRuleSettings = [
+        { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquee indisponible sur le creneau." },
+        { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le creneau." },
+        { id: "class-unavailable", category: "Conflit classe", title: "Classe disponible", detail: "Impossible de placer une classe indiquee indisponible sur le creneau." },
+        { id: "teacher-single-place", category: "Conflit prof", title: "Un prof, un seul cours", detail: "Un professeur ne peut pas etre affecte a deux cours differents sur le meme creneau." },
+        { id: "facility-single-place", category: "Conflit installation", title: "Une installation, un seul cours", detail: "Une installation ne peut pas accueillir deux cours sur le meme creneau, sauf co-intervention explicite." },
+        { id: "class-single-place", category: "Conflit classe", title: "Une classe, un seul cours", detail: "Une classe ou un demi-groupe ne peut pas etre place sur deux cours qui se chevauchent." },
+        { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
+        { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
+        { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
+        { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." }
+      ];
       const schoolYear = {
         label: "2026/2027",
         start: new Date(2026, 8, 1),
@@ -929,6 +962,7 @@
       let cyclesByLevel = loadCyclesByLevel();
       let activeCycleScope = "default";
       let activeCycleId = cycles[0].id;
+      let activeConstructionCycleId = cycles[0]?.id || "cycle-1";
       let cycleSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
@@ -936,6 +970,8 @@
       let blockExclusions = loadBlockExclusions();
       let constructionPlan = {};
       let constructionMode = "planning";
+      let constructionRuleSettings = loadConstructionRuleSettings();
+      let constructionRuleDraft = { title: "", detail: "", category: "" };
       let prerequisiteMode = "establishment";
       let yearPrerequisiteMode = "unavailable";
       let prerequisiteLocks = {};
@@ -970,8 +1006,10 @@
       let teacherDraftStatus = "certifie";
       let expandedTeacherColorId = "";
       let activeBuildCell = null;
+      let activeBuildCycleId = null;
       let editingBuildBlock = null;
       let movingBuildBlock = null;
+      let ignoreNextMoveCellClick = false;
       let pendingBlockDelete = null;
       let sportEvents = loadSportEvents();
       let asSessions = loadAsSessions();
@@ -1596,8 +1634,18 @@
         return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => mode === "letter" ? String.fromCharCode(65 + index) : String(index + 1));
       }
 
+      function specialClassSlug(label) {
+        return String(label || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 36) || "classe-specifique";
+      }
+
       function normalizeClassConfig(config) {
-        return Object.fromEntries(classLevels.map((level) => {
+        const normalized = Object.fromEntries(classLevels.map((level) => {
           const item = config?.[level] || defaultClassConfig[level];
           const mode = item.mode === "letter" ? "letter" : "number";
           const labels = Array.isArray(item.labels)
@@ -1605,6 +1653,22 @@
             : generatedClassLabels(mode, 7);
           return [level, { mode, labels }];
         }));
+        const seen = new Set();
+        normalized.specialClasses = (Array.isArray(config?.specialClasses) ? config.specialClasses : [])
+          .map((item) => {
+            const label = String(item?.label || "").trim();
+            if (!label) return null;
+            let id = String(item?.id || specialClassSlug(label)).trim() || specialClassSlug(label);
+            let suffix = 2;
+            while (seen.has(id)) {
+              id = `${specialClassSlug(label)}-${suffix}`;
+              suffix += 1;
+            }
+            seen.add(id);
+            return { id, label, hours: Math.max(0, Number(item?.hours) || 0) };
+          })
+          .filter(Boolean);
+        return normalized;
       }
 
       function loadClassConfig() {
@@ -1624,8 +1688,21 @@
         return classConfig[level]?.labels || [];
       }
 
+      function specialClasses() {
+        return Array.isArray(classConfig.specialClasses) ? classConfig.specialClasses : [];
+      }
+
+      function specialClassSchoolId(id) {
+        return `special::${id}`;
+      }
+
+      function specialClassFromSchoolId(schoolClass) {
+        const id = String(schoolClass || "").startsWith("special::") ? String(schoolClass).slice("special::".length) : "";
+        return specialClasses().find((item) => item.id === id) || null;
+      }
+
       function classesFromConfig() {
-        return classLevels.flatMap((level) => classesForLevel(level));
+        return [...classLevels.flatMap((level) => classesForLevel(level)), ...specialClasses().map((item) => specialClassSchoolId(item.id))];
       }
 
       function validClassSet() {
@@ -1634,6 +1711,7 @@
 
       function baseClassFromGroupedClass(schoolClass) {
         const parts = classParts(schoolClass);
+        if (parts.special) return specialClassSchoolId(parts.number);
         return parts.level && parts.number ? schoolClassLabel(parts.level, parts.number) : schoolClass;
       }
 
@@ -1752,6 +1830,38 @@
       function saveConstructionRules() {
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         scheduleCloudSave();
+      }
+
+      function normalizeConstructionRuleSettings(items) {
+        const source = Array.isArray(items) ? items : defaultConstructionRuleSettings;
+        return source
+          .map((item) => ({
+            id: String(item?.id || `rule-setting-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+            category: String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
+            title: String(item?.title || "").trim(),
+            detail: String(item?.detail || "").trim()
+          }))
+          .filter((item) => item.title || item.detail);
+      }
+
+      function loadConstructionRuleSettings() {
+        try {
+          const saved = localStorage.getItem("planningEpsConstructionRuleSettings2026");
+          return normalizeConstructionRuleSettings(saved ? JSON.parse(saved) : defaultConstructionRuleSettings);
+        } catch {
+          return normalizeConstructionRuleSettings(defaultConstructionRuleSettings);
+        }
+      }
+
+      function saveConstructionRuleSettings() {
+        constructionRuleSettings = normalizeConstructionRuleSettings(constructionRuleSettings);
+        localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
+        scheduleCloudSave();
+      }
+
+      function resetConstructionRuleSettings() {
+        constructionRuleSettings = normalizeConstructionRuleSettings(defaultConstructionRuleSettings);
+        saveConstructionRuleSettings();
       }
 
       function loadBlockExclusions() {
@@ -2430,6 +2540,7 @@
           schoolConstraints,
           prerequisiteLocks,
           yearPrerequisiteLocks,
+          constructionRuleSettings,
           constructionRules,
           constructionPlan,
           blockExclusions,
@@ -2466,6 +2577,7 @@
           : yearPrerequisiteLocks;
         slots = schoolConstraints.courseSlots;
         activeCycleId = cycles[0]?.id || activeCycleId;
+        constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
         sportEvents = Array.isArray(data.sportEvents) ? normalizePlanningItems(data.sportEvents) : normalizePlanningItems(sportEvents);
@@ -2493,6 +2605,7 @@
         localStorage.setItem(PREREQUISITE_LOCKS_KEY, JSON.stringify(prerequisiteLocks));
         localStorage.setItem(YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify(yearPrerequisiteLocks));
         localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
+        localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
@@ -2836,6 +2949,34 @@
         return schoolYearWeeks().filter((weekItem) => weekItem.end >= start && weekItem.start <= end);
       }
 
+      function classicConstructionCycles() {
+        return cycles.slice(0, 4);
+      }
+
+      function activeConstructionCycle() {
+        const choices = classicConstructionCycles();
+        if (!choices.some((cycle) => cycle.id === activeConstructionCycleId)) activeConstructionCycleId = choices[0]?.id || "";
+        return choices.find((cycle) => cycle.id === activeConstructionCycleId) || choices[0] || null;
+      }
+
+      function representativeWeekForCycle(cycle, letter = "") {
+        const cycleWeeks = weeksForCycle(cycle);
+        if (!cycleWeeks.length) return null;
+        const isRequestedLetter = (weekItem) => !["A", "B"].includes(letter) || weekItem.letter === letter;
+        const usableWeeks = cycleWeeks.filter((weekItem) =>
+          isRequestedLetter(weekItem)
+          && days.every((day) => {
+            const rowDate = rowDateForWeek({ day }, weekItem);
+            const inVacation = schoolVacations().some((vacation) => rowDate >= dateOnly(vacation.start) && rowDate <= dateOnly(vacation.end));
+            const holiday = schoolYearHolidays().has(dateKey(rowDate));
+            return !inVacation && !holiday;
+          })
+        );
+        if (usableWeeks.length) return usableWeeks[0];
+        if (letter === "A" || letter === "B") return cycleWeeks.find((weekItem) => weekItem.letter === letter) || cycleWeeks[0];
+        return cycleWeeks[0];
+      }
+
       function cycleForWeek(weekItem, classLevel = "") {
         return cyclesForClassLevel(classLevel).find((cycle) => weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
       }
@@ -2956,7 +3097,8 @@
       }
 
       function compactClassName(schoolClass) {
-        const { level, number, group } = classParts(schoolClass);
+        const { level, number, group, special, label } = classParts(schoolClass);
+        if (special) return label || "Classe spec.";
         if (!level || !number) return (schoolClass || "").replace("eme ", "e").replace("eme", "e").replace(/\s+/g, "");
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
       }
@@ -2972,7 +3114,7 @@
         selectedClasses.forEach((schoolClass) => {
           const { level } = classParts(schoolClass);
           const wholeLevelClasses = classesForLevel(level);
-          if (level && wholeLevelClasses.every((item) => selectedClasses.includes(item))) return;
+          if (classLevels.includes(level) && wholeLevelClasses.every((item) => selectedClasses.includes(item))) return;
           labels.push(compactClassName(schoolClass));
         });
         return labels.join(", ");
@@ -3035,6 +3177,14 @@
         if (diff < -0.25) return { label: "À compléter", className: "statusLow" };
         if (diff > 0.25) return { label: "Au-dessus", className: "statusHigh" };
         return { label: "Équilibré", className: "statusOk" };
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
       }
 
       function applyBlockToCycle(rowId, cycleId, block, weekLetter = "all") {
@@ -3194,6 +3344,27 @@
         if (movingBuildBlock.type === "event") return moveSportEventBlock(movingBuildBlock.id, targetKey);
         if (movingBuildBlock.type === "as") return moveAsBlock(movingBuildBlock.id, targetKey);
         return moveConstructionBlock(movingBuildBlock.key, movingBuildBlock.index, targetKey);
+      }
+
+      function startMovingBuildBlock(payload, x = 0, y = 0, suppressImmediateCellClick = false) {
+        movingBuildBlock = {
+          type: payload.type,
+          key: payload.key,
+          index: Number(payload.index),
+          id: payload.id,
+          x,
+          y
+        };
+        if (suppressImmediateCellClick) {
+          ignoreNextMoveCellClick = true;
+          setTimeout(() => {
+            ignoreNextMoveCellClick = false;
+          }, 350);
+        }
+        activeBuildCell = null;
+        editingBuildBlock = null;
+        showValidationPopup("Bloc selectionne : cliquez sur la case cible");
+        render();
       }
 
       function removeBlockFromCycle(rowId, blockIndex, block) {
@@ -3853,12 +4024,14 @@
       }
 
       function serviceClassTarget(schoolClass) {
-        const level = classParts(schoolClass).level;
+        const parts = classParts(schoolClass);
+        if (parts.special) return Number(specialClassFromSchoolId(schoolClass)?.hours || 0);
+        const level = parts.level;
         return Number(serviceHoursByLevel[level] ?? defaultServiceHours[level] ?? 0);
       }
 
       function selectedServiceLevelForTeacher(teacherId) {
-        return classLevels.includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
+        return [...classLevels, "special"].includes(serviceLevelByTeacher[teacherId]) ? serviceLevelByTeacher[teacherId] : "";
       }
 
       function selectedServiceClassForTeacher(teacherId) {
@@ -4035,6 +4208,11 @@
 
       function classParts(schoolClass) {
         if (!schoolClass) return { level: blockClassLevel || "", number: "", group: "whole" };
+        if (String(schoolClass).startsWith("special::")) {
+          const item = specialClassFromSchoolId(schoolClass);
+          const id = String(schoolClass).slice("special::".length);
+          return { level: "special", number: id, group: "whole", special: true, label: item?.label || id };
+        }
         const [level, number, group = "whole"] = schoolClass.split(" ");
         return {
           level: classLevels.includes(level) ? level : "",
@@ -4050,6 +4228,7 @@
       function classesOverlap(firstClass, secondClass) {
         const first = classParts(firstClass);
         const second = classParts(secondClass);
+        if (first.special || second.special) return Boolean(first.special && second.special && first.number === second.number);
         if (!first.level || !second.level || first.level !== second.level || first.number !== second.number) return false;
         return first.group === "whole" || second.group === "whole" || first.group === second.group;
       }
@@ -4057,6 +4236,7 @@
       function classSameBase(firstClass, secondClass) {
         const first = classParts(firstClass);
         const second = classParts(secondClass);
+        if (first.special || second.special) return Boolean(first.special && second.special && first.number === second.number);
         return Boolean(first.level && second.level && first.level === second.level && first.number === second.number);
       }
 
@@ -4092,6 +4272,11 @@
         const nextGroup = part === "group" ? value : current.group;
         if (!nextLevel || !nextNumber) return;
         blockClass = schoolClassLabel(nextLevel, nextNumber, nextGroup);
+      }
+
+      function updateSpecialBlockClass(id) {
+        blockClassLevel = "special";
+        blockClass = specialClassSchoolId(id);
       }
 
       function toggleUnavailableClass(schoolClass) {
@@ -4407,6 +4592,10 @@
               <div class="serviceTarget">
                 <label>${level}</label>
                 <input data-service-level-hours="${level}" type="number" min="0" step="0.5" value="${serviceHoursByLevel[level] ?? defaultServiceHours[level]}" />
+              </div>`).join("")}${specialClasses().map((item) => `
+              <div class="serviceTarget">
+                <label>${item.label}</label>
+                <input data-service-special-hours="${item.id}" type="number" min="0" step="0.5" value="${item.hours || 0}" />
               </div>`).join("")}</div>
             <div class="alertHelp"><strong>Contrainte de construction</strong><span>Il faut minimum 24h d'intervalle pour refaire cours avec la même classe, peu importe le prof. Cette contrainte sera intégrée lors de la construction des emplois du temps.</span></div>
             ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${item.schoolClass} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
@@ -4418,13 +4607,16 @@
               const freeRows = serviceFreeRowsForTeacher(teacher.id);
               const freeDraft = serviceFreeDraftForTeacher(teacher.id);
               const selectedLevel = selectedServiceLevelForTeacher(teacher.id);
-              const visibleClasses = classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
+              const visibleClasses = selectedLevel === "special"
+                ? specialClasses().map((item) => specialClassSchoolId(item.id))
+                : classes.filter((schoolClass) => classParts(schoolClass).level === selectedLevel);
               const selectedClass = selectedServiceClassForTeacher(teacher.id);
               const selectedClassAssignment = selectedClass ? serviceAssignmentFor(teacher.id, selectedClass) : null;
               const selectedClassHoursDraft = selectedClass ? serviceDraftValue(teacher.id, selectedClass) : "";
               const canValidateSelectedClass = selectedClass && Number(selectedClassHoursDraft) > 0;
               const total = [...teacherRows, ...freeRows].reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
               const courseTarget = teacher.weeklyReference;
+              const overtimeHours = Math.max(0, Math.round((total - courseTarget) * 10) / 10);
               const asTarget = 3;
               const teacherCycleStats = cycleStats[teacher.id];
               const courseAverage = teacherCycleStats.weeks ? Math.round((teacherCycleStats.total / teacherCycleStats.weeks) * 10) / 10 : 0;
@@ -4440,9 +4632,13 @@
                 <div class="serviceCompare">
                   <div class="serviceColumn">
                     <h4>Service theorique</h4>
-                    <span class="hoursStatus ${hourStatus(total - teacher.weeklyReference).className}">${total}h / ${teacher.weeklyReference}h</span>
+                    <div class="serviceTheorySummary">
+                      <span class="hoursStatus ${hourStatus(total - courseTarget).className}">${total}h / ${courseTarget}h</span>
+                      ${overtimeHours ? `<span class="overtimeBadge">${overtimeHours}h sup</span>` : ""}
+                    </div>
                 <div class="serviceLevelButtons">
                   ${classLevels.map((level) => `<button class="choiceButton ${selectedLevel === level ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="${level}">${level}</button>`).join("")}
+                  ${specialClasses().length ? `<button class="choiceButton ${selectedLevel === "special" ? "active" : ""}" data-service-level="${teacher.id}" data-service-level-value="special">Specifiques</button>` : ""}
                 </div>
                 ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
@@ -4686,6 +4882,9 @@
         if (buildMode === "yearPrerequisites") {
           return ["unavailable", "cycles", "as", "events", "hours"].every(adminStepComplete);
         }
+        if (buildMode === "rules") {
+          return constructionRuleSettings.length > 0;
+        }
         if (buildMode === "establishment") {
           return slots.length > 0
             && slots.every((slot) => slot.label && Number(slot.hours) > 0)
@@ -4871,14 +5070,55 @@
                 <button class="ghostButton" data-add-class-label="${level}">Ajouter une classe</button>
               </article>`;
             }).join("")}</div>
+            <div class="specialClassPanel">
+              <h3>Classes a besoin specifique</h3>
+              <div class="specialClassForm">
+                <input id="specialClassName" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
+                <button class="ghostButton" id="addSpecialClass">Valider</button>
+              </div>
+              <div class="classConfigPills">${specialClasses().length ? specialClasses().map((item) => `<span class="classConfigPill">${item.label}<button data-remove-special-class="${item.id}" title="Supprimer cette classe">x</button></span>`).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
+            </div>
+          </div>
+        </section>`;
+      }
+
+      function renderConstructionRulesView() {
+        return `<section class="constructionRulesPage">
+          <div class="constructionRulesForm">
+            <h3>Ajouter une regle</h3>
+            <div class="eventField">
+              <label>Categorie</label>
+              <input id="constructionRuleCategory" value="${escapeHtml(constructionRuleDraft.category)}" placeholder="Ex. Conflit prof" />
+            </div>
+            <div class="eventField">
+              <label>Titre</label>
+              <input id="constructionRuleTitle" value="${escapeHtml(constructionRuleDraft.title)}" placeholder="Ex. Maximum 2h par jour pour une classe" />
+            </div>
+            <div class="eventField">
+              <label>Description</label>
+              <textarea id="constructionRuleDetail" placeholder="Expliquez la regle pour le futur moteur automatique.">${escapeHtml(constructionRuleDraft.detail)}</textarea>
+            </div>
+            <button class="addButton" id="addConstructionRuleSetting" ${constructionRuleDraft.title.trim() || constructionRuleDraft.detail.trim() ? "" : "disabled"}>Ajouter la regle</button>
+            <div class="alertHelp"><strong>Usage</strong><span>Cette liste sert de referentiel pour la construction automatique. Les conflits deja codes restent securises dans l'app, meme si une regle est retiree ici.</span></div>
+          </div>
+          <div class="constructionRulesList">
+            <div class="constructionRulesToolbar">
+              <h3>Regles actives</h3>
+              <button class="ghostButton" id="restoreDefaultConstructionRules">Retablir les regles par defaut</button>
+            </div>
+            ${constructionRuleSettings.length ? constructionRuleSettings.map((rule) => `<article class="constructionRuleCard">
+              <small>${escapeHtml(rule.category)}</small>
+              <strong>${escapeHtml(rule.title)}</strong>
+              <span>${escapeHtml(rule.detail)}</span>
+              <div class="constructionRuleActions">
+                <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
+              </div>
+            </article>`).join("") : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
           </div>
         </section>`;
       }
 
       function renderConstructionView() {
-        const weeks = schoolYearWeeks();
-        const current = currentSchoolWeek();
-        const monthLabels = weeks.map((weekItem) => monthLabelForWeek(weekItem));
         const rows = yearRows();
         const block = currentBlock();
         if (constructionMode === "prerequisites") {
@@ -4936,6 +5176,9 @@
             ${renderHoursBalance()}
           </section>`;
         }
+        if (constructionMode === "rules") {
+          return renderConstructionRulesView();
+        }
         if (!canAccessConstructionPlanning()) {
           return `<section class="builderPage">
             <div class="constructionWarningPanel">
@@ -4944,15 +5187,9 @@
             ${renderConstructionWarnings()}
           </section>`;
         }
-        const trimesterSections = constructionPrintTrimesterExport ? constructionTrimesterSections(weeks) : [];
-        const constructionTableContent = constructionPrintTrimesterExport
-          ? `<div class="constructionPrintSections">${trimesterSections.map((section) => `
-              <section class="constructionPrintSection">
-                <div class="printOnly"><strong>Construction - ${section.title}</strong><span>${section.detail}</span></div>
-                <div class="constructionZoomWrap" style="--table-zoom:1;--table-offset:0;zoom:1">${renderConstructionTable(section.weeks, current, section.weeks.map(monthLabelForWeek), rows, true)}</div>
-              </section>
-            `).join("")}</div>`
-          : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionTable(weeks, current, monthLabels, rows, true)}</div>`;
+        const constructionCycles = classicConstructionCycles();
+        const selectedCycle = activeConstructionCycle();
+        const constructionTableContent = `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, true)}</div>`;
         return `<section class="builderPage">
           <div>
             <div class="builderActions">
@@ -4965,12 +5202,15 @@
                 <button class="ghostButton" data-construction-zoom="+">+</button>
               </div>
               <div class="constructionExportControls">
-                <button class="ghostButton" data-print-format="A3" data-print-trimesters="construction">Exporter trimestres A3</button>
-                <button class="ghostButton" data-print-format="A2" data-print-trimesters="construction">Exporter trimestres A2</button>
+                <button class="ghostButton" data-print-format="A3">Exporter A3</button>
+                <button class="ghostButton" data-print-format="A2">Exporter A2</button>
               </div>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
-            <div class="calendarLegend">V = vacances · F = férié</div>
+            <div class="cycleConstructionTabs">
+              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
+            </div>
+            <div class="calendarLegend">Semaine type du cycle - lignes = creneaux de cours d'une journee - colonnes = jours - les creneaux quinzaine sont separes en A/B.</div>
             ${renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc selectionne : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
@@ -5074,13 +5314,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
         const block = currentBlock();
         const blockLevel = classParts(block.schoolClass).level;
-        const cellCycle = cycleForWeek(weekItem, blockLevel);
+        const cellCycle = activeBuildCycleId
+          ? cycles.find((cycle) => cycle.id === activeBuildCycleId)
+          : cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
         const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass) || !serviceAllowsClassForTeachers(blockTeacherIds, blockClass);
         const selectedFacilityUnavailable = (occupied.facilityIds.has(blockFacilityId) && !blockCoIntervention) || occupied.unavailableFacilityIds.has(blockFacilityId);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId));
-        const weekLetterMismatch = blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
+        const weekLetterMismatch = !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
         const unavailableMessage = blockUnavailableMessage(row, weekItem, block);
         const cycleUnavailableMessage = cellCycle ? blockCycleUnavailableMessage(row.id, cellCycle.id, block, blockWeekLetter) : "";
         const conflictMessage = unavailableMessage || cycleUnavailableMessage || (weekLetterMismatch
@@ -5158,8 +5400,22 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   }));
                   const reason = unavailable ? `Toutes les classes de ${level} sont deja prises, indisponibles ou hors service theorique sur ce creneau.` : `Filtrer les classes de ${level}.`;
                   return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
-                }).join("")}</div>
-                ${selectedClass.level ? `<div class="choiceGrid">${classNumbersForLevel(selectedClass.level).map((number) => {
+                }).join("")}${specialClasses().length ? (() => {
+                  const unavailable = specialClasses().every((item) => {
+                    const schoolClass = specialClassSchoolId(item.id);
+                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
+                  });
+                  const reason = unavailable ? "Toutes les classes specifiques sont deja prises, indisponibles ou hors service theorique sur ce creneau." : "Filtrer les classes specifiques.";
+                  return `<button class="choiceButton ${selectedClass.level === "special" ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="special" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>Specifiques</button>`;
+                })() : ""}</div>
+                ${selectedClass.level === "special" ? `<div class="choiceGrid">${specialClasses().map((item) => {
+                  const schoolClass = specialClassSchoolId(item.id);
+                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
+                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
+                  const reason = unavailable ? serviceMessage || `${item.label} est deja prise ou indisponible sur ce creneau.` : `${item.label} disponible.`;
+                  return `<button class="choiceButton ${schoolClass === blockClass ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-special-class="${item.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${item.label}</button>`;
+                }).join("")}</div>` : ""}
+                ${!selectedClass.level ? `<span class="muted">Choisissez d'abord un niveau.</span>` : selectedClass.level !== "special" ? `<div class="choiceGrid">${classNumbersForLevel(selectedClass.level).map((number) => {
                   const unavailable = classGroups.every((group) => {
                     const candidateClass = schoolClassLabel(selectedClass.level, number, group.id);
                     return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass) || !serviceAllowsClassForTeachers(blockTeacherIds, candidateClass);
@@ -5168,8 +5424,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, baseClass);
                   const reason = unavailable ? serviceMessage || `${selectedClass.level} ${number} est deja prise, indisponible ou hors service theorique sur ce creneau.` : `${selectedClass.level} ${number} disponible.`;
                   return `<button class="choiceButton ${number === selectedClass.number ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-number="${number}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${number}</button>`;
-                }).join("")}</div>` : `<span class="muted">Choisissez d'abord un niveau.</span>`}
-                ${selectedClass.level && selectedClass.number ? `<div class="choiceGrid">${classGroups.map((group) => {
+                }).join("")}</div>` : ""}
+                ${selectedClass.level && selectedClass.level !== "special" && selectedClass.number ? `<div class="choiceGrid">${classGroups.map((group) => {
                   const schoolClass = schoolClassLabel(selectedClass.level, selectedClass.number, group.id);
                   const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
                   const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
@@ -5182,8 +5438,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <label>Rythme</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${blockWeekLetter === "all" ? "active" : ""}" data-pick-week-letter="all">Toutes les semaines</button>
-                <button class="choiceButton ${blockWeekLetter === "A" ? "active" : ""} ${weekItem.letter !== "A" ? "unavailable" : ""}" data-pick-week-letter="A" title="${weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" aria-label="${weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" ${weekItem.letter !== "A" ? "disabled" : ""}>Quinzaine A</button>
-                <button class="choiceButton ${blockWeekLetter === "B" ? "active" : ""} ${weekItem.letter !== "B" ? "unavailable" : ""}" data-pick-week-letter="B" title="${weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" aria-label="${weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" ${weekItem.letter !== "B" ? "disabled" : ""}>Quinzaine B</button>
+                <button class="choiceButton ${blockWeekLetter === "A" ? "active" : ""} ${!activeBuildCycleId && weekItem.letter !== "A" ? "unavailable" : ""}" data-pick-week-letter="A" title="${!activeBuildCycleId && weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" aria-label="${!activeBuildCycleId && weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" ${!activeBuildCycleId && weekItem.letter !== "A" ? "disabled" : ""}>Quinzaine A</button>
+                <button class="choiceButton ${blockWeekLetter === "B" ? "active" : ""} ${!activeBuildCycleId && weekItem.letter !== "B" ? "unavailable" : ""}" data-pick-week-letter="B" title="${!activeBuildCycleId && weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" aria-label="${!activeBuildCycleId && weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" ${!activeBuildCycleId && weekItem.letter !== "B" ? "disabled" : ""}>Quinzaine B</button>
               </div>
             </div>
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
@@ -5681,6 +5937,76 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
             <strong>${asBlockLabel(session)}</strong>
           </div>`).join("")}</div>`;
+      }
+
+      function indexedConstructionItemsForKey(key, filterSelection = false, weekLetter = "") {
+        return (constructionPlan[key] || [])
+          .map((item, index) => ({ item, index }))
+          .filter(({ item }) => (!filterSelection || blockMatchesTeacherSelection(item)) && (!weekLetter || (item.weekLetter || "all") === weekLetter));
+      }
+
+      function renderConstructionCycleBlocks(indexedItems, key) {
+        return indexedItems.map(({ item, index }) => `
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" data-move-kind="course" data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
+            <button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
+            <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
+            <strong>${item.schoolClass || item.label || "Bloc"}</strong>
+            <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
+            ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
+          </div>
+        `).join("");
+      }
+
+      function renderConstructionCycleArea(row, cycle, letter, label, filterSelection = false) {
+        const weekItem = representativeWeekForCycle(cycle, letter);
+        if (!weekItem) return `<div class="cycleConstructionFull"><span class="muted">Cycle sans semaine</span></div>`;
+        const key = yearCellKey(row.id, weekItem.rank);
+        const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
+        const blocked = false;
+        const canOpenHere = !row.isAs;
+        const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
+        const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
+        const cellTitle = [label, availabilityTitle].filter(Boolean).join(" | ");
+        return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}"` : ""} data-move-cell="${key}">
+          ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
+          ${renderConstructionCycleBlocks(indexedItems, key)}
+        </div>`;
+      }
+
+      function renderConstructionCycleTable(cycle, rows, editable, filterSelection = false) {
+        if (!cycle) return `<div class="alertEmpty">Aucun cycle classique defini.</div>`;
+        const slotRows = slots.map((slot) => ({ ...slot, key: slot.id }));
+        return `<div class="yearWrap"><table class="yearTable constructionTable cycleConstructionTable">
+          <thead>
+            <tr><th class="timeHead">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr>
+          </thead>
+          <tbody>
+            ${slotRows.map((slot) => `<tr>
+              <th class="timeHead">${slot.label}</th>
+              ${days.map((day) => {
+                const row = yearRows().find((item) => item.day === day && item.slot.id === slot.id);
+                if (!row) return `<td class="mergedOff"><span class="muted">-</span></td>`;
+                const weekAll = representativeWeekForCycle(cycle);
+                const weekA = representativeWeekForCycle(cycle, "A");
+                const weekB = representativeWeekForCycle(cycle, "B");
+                const keyAll = weekAll ? yearCellKey(row.id, weekAll.rank) : "";
+                const keyA = weekA ? yearCellKey(row.id, weekA.rank) : "";
+                const keyB = weekB ? yearCellKey(row.id, weekB.rank) : "";
+                const allItems = keyAll ? indexedConstructionItemsForKey(keyAll, filterSelection, "all") : [];
+                const aItems = keyA ? indexedConstructionItemsForKey(keyA, filterSelection, "A") : [];
+                const bItems = keyB ? indexedConstructionItemsForKey(keyB, filterSelection, "B") : [];
+                const hasQuinzaine = aItems.length || bItems.length;
+                return `<td class="cycleConstructionCell">
+                  <div class="cycleConstructionCellInner">
+                    ${hasQuinzaine
+                      ? `${allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection)}</div>`
+                      : renderConstructionCycleArea(row, cycle, "", "", filterSelection)}
+                  </div>
+                </td>`;
+              }).join("")}
+            </tr>`).join("")}
+          </tbody>
+        </table></div>`;
       }
 
       function renderFacilityUnavailabilityView() {
@@ -6393,11 +6719,85 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        const constructionRuleCategory = document.getElementById("constructionRuleCategory");
+        if (constructionRuleCategory) {
+          constructionRuleCategory.addEventListener("input", () => {
+            constructionRuleDraft = { ...constructionRuleDraft, category: constructionRuleCategory.value };
+          });
+          constructionRuleCategory.addEventListener("change", () => render());
+        }
+        const constructionRuleTitle = document.getElementById("constructionRuleTitle");
+        if (constructionRuleTitle) {
+          constructionRuleTitle.addEventListener("input", () => {
+            constructionRuleDraft = { ...constructionRuleDraft, title: constructionRuleTitle.value };
+          });
+          constructionRuleTitle.addEventListener("change", () => render());
+        }
+        const constructionRuleDetail = document.getElementById("constructionRuleDetail");
+        if (constructionRuleDetail) {
+          constructionRuleDetail.addEventListener("input", () => {
+            constructionRuleDraft = { ...constructionRuleDraft, detail: constructionRuleDetail.value };
+          });
+          constructionRuleDetail.addEventListener("change", () => render());
+        }
+        const addConstructionRuleSetting = document.getElementById("addConstructionRuleSetting");
+        if (addConstructionRuleSetting) {
+          addConstructionRuleSetting.addEventListener("click", () => {
+            const title = constructionRuleDraft.title.trim();
+            const detail = constructionRuleDraft.detail.trim();
+            if (!title && !detail) return;
+            constructionRuleSettings = [
+              ...constructionRuleSettings,
+              {
+                id: `custom-rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                category: constructionRuleDraft.category.trim() || "Regle personnalisee",
+                title: title || "Regle personnalisee",
+                detail
+              }
+            ];
+            constructionRuleDraft = { title: "", detail: "", category: "" };
+            saveConstructionRuleSettings();
+            showValidationPopup("Regle ajoutee");
+            render();
+          });
+        }
+        document.querySelectorAll("[data-delete-construction-rule-setting]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const rule = constructionRuleSettings.find((item) => item.id === button.dataset.deleteConstructionRuleSetting);
+            if (!rule) return;
+            if (!window.confirm(`Supprimer la regle "${rule.title}" ?`)) return;
+            constructionRuleSettings = constructionRuleSettings.filter((item) => item.id !== rule.id);
+            saveConstructionRuleSettings();
+            showValidationPopup("Regle supprimee");
+            render();
+          });
+        });
+        const restoreDefaultConstructionRules = document.getElementById("restoreDefaultConstructionRules");
+        if (restoreDefaultConstructionRules) {
+          restoreDefaultConstructionRules.addEventListener("click", () => {
+            if (!window.confirm("Retablir les regles de construction par defaut ?")) return;
+            resetConstructionRuleSettings();
+            constructionRuleDraft = { title: "", detail: "", category: "" };
+            showValidationPopup("Regles par defaut retablies");
+            render();
+          });
+        }
         document.querySelectorAll("[data-service-level-hours]").forEach((input) => {
           input.addEventListener("change", () => {
             const level = input.dataset.serviceLevelHours;
             serviceHoursByLevel = { ...serviceHoursByLevel, [level]: Math.max(0, Number(input.value) || 0) };
             saveServiceHoursByLevel(true);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-service-special-hours]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const id = input.dataset.serviceSpecialHours;
+            classConfig = {
+              ...classConfig,
+              specialClasses: specialClasses().map((item) => item.id === id ? { ...item, hours: Math.max(0, Number(input.value) || 0) } : item)
+            };
+            saveClassConfig();
             render();
           });
         });
@@ -6543,6 +6943,37 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             classConfig = { ...classConfig, [level]: { ...current, labels: current.labels.filter((item) => item !== label) } };
             saveClassConfig();
             showValidationPopup("Classe supprimée");
+            render();
+          });
+        });
+        const specialClassNameInput = document.getElementById("specialClassName");
+        const addSpecialClassButton = document.getElementById("addSpecialClass");
+        if (addSpecialClassButton && specialClassNameInput) {
+          addSpecialClassButton.addEventListener("click", () => {
+            const label = specialClassNameInput.value.trim();
+            if (!label) return;
+            const baseId = specialClassSlug(label);
+            const existingIds = specialClasses().map((item) => item.id);
+            let id = baseId;
+            let suffix = 2;
+            while (existingIds.includes(id)) {
+              id = `${baseId}-${suffix}`;
+              suffix += 1;
+            }
+            classConfig = { ...classConfig, specialClasses: [...specialClasses(), { id, label, hours: 0 }] };
+            saveClassConfig();
+            showValidationPopup("Classe specifique ajoutee");
+            render();
+          });
+        }
+        document.querySelectorAll("[data-remove-special-class]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const item = specialClasses().find((specialClass) => specialClass.id === button.dataset.removeSpecialClass);
+            if (!item) return;
+            if (!window.confirm(`Supprimer la classe ${item.label} ?`)) return;
+            classConfig = { ...classConfig, specialClasses: specialClasses().filter((specialClass) => specialClass.id !== item.id) };
+            saveClassConfig();
+            showValidationPopup("Classe specifique supprimee");
             render();
           });
         });
@@ -7023,6 +7454,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-pick-special-class]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            updateSpecialBlockClass(button.dataset.pickSpecialClass);
+            render();
+          });
+        });
         const eventNameInput = document.getElementById("eventName");
         if (eventNameInput) eventNameInput.addEventListener("input", () => eventName = eventNameInput.value);
         document.querySelectorAll("[data-event-half-day]").forEach((button) => {
@@ -7298,14 +7736,16 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
             if (!blockTeacherIds.length) return;
             const block = currentBlock();
-            const cellCycle = cycleForWeek(weekItem, classParts(block.schoolClass).level);
+            const cellCycle = activeBuildCycleId
+              ? cycles.find((cycle) => cycle.id === activeBuildCycleId)
+              : cycleForWeek(weekItem, classParts(block.schoolClass).level);
             if (!cellCycle) return;
             const row = yearRows().find((item) => item.id === rowId);
             if (blockUnavailableMessage(row, weekItem, block)) {
               render();
               return;
             }
-            if (blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter) {
+            if (!activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter) {
               render();
               return;
             }
@@ -7322,6 +7762,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             showValidationPopup(editingBuildBlock ? "Créneau modifié" : "Créneau validé");
             editingBuildBlock = null;
             activeBuildCell = null;
+            activeBuildCycleId = null;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
@@ -7331,6 +7772,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("#closeBuildModal, #closeBuildModalFooter").forEach((button) => {
           button.addEventListener("click", () => {
             activeBuildCell = null;
+            activeBuildCycleId = null;
             editingBuildBlock = null;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
@@ -7342,6 +7784,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             if (button.disabled) return;
             blockWeekLetter = button.dataset.pickWeekLetter;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-construction-cycle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            activeConstructionCycleId = button.dataset.constructionCycle;
+            activeBuildCell = null;
+            activeBuildCycleId = null;
+            editingBuildBlock = null;
             render();
           });
         });
@@ -7368,11 +7819,16 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-move-cell], [data-open-cell]").forEach((cell) => {
           cell.addEventListener("click", (event) => {
             if (event.target.closest("[data-remove-cell], [data-start-move-kind]")) return;
+            if (ignoreNextMoveCellClick) {
+              ignoreNextMoveCellClick = false;
+              return;
+            }
             if (movingBuildBlock) {
               moveSelectedBlockTo(cell.dataset.moveCell || cell.dataset.openCell);
               movingBuildBlock = null;
               window.onpointermove = null;
               activeBuildCell = null;
+              activeBuildCycleId = null;
               editingBuildBlock = null;
               blockCoIntervention = false;
               render();
@@ -7380,13 +7836,14 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             }
             if (!cell.dataset.openCell) return;
             activeBuildCell = cell.dataset.openCell;
+            activeBuildCycleId = cell.dataset.openCycleId || null;
             editingBuildBlock = null;
             blockTeacherIds = [];
             blockFacilityId = "";
             blockActivityId = "";
             blockClass = "";
             blockClassLevel = "";
-            blockWeekLetter = "all";
+            blockWeekLetter = cell.dataset.openWeekLetter || "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
             render();
@@ -7396,6 +7853,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (cancelMoveBlock) {
           cancelMoveBlock.addEventListener("click", () => {
             movingBuildBlock = null;
+            ignoreNextMoveCellClick = false;
             window.onpointermove = null;
             render();
           });
@@ -7415,6 +7873,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         window.onkeydown = (event) => {
           if (event.key !== "Escape" || !movingBuildBlock) return;
           movingBuildBlock = null;
+          ignoreNextMoveCellClick = false;
           window.onpointermove = null;
           render();
         };
@@ -7424,6 +7883,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const index = Number(block.dataset.editBuiltBlock);
             const item = constructionPlan[activeBuildCell]?.[index];
             if (!item) return;
+            activeBuildCycleId = item.cycleId || activeBuildCycleId;
             blockTeacherIds = teacherIdsForBlock(item);
             blockFacilityId = item.facilityId;
             blockActivityId = item.activityId || "";
@@ -7439,18 +7899,43 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-start-move-kind]").forEach((button) => {
           button.addEventListener("click", (event) => {
             event.stopPropagation();
-            movingBuildBlock = {
+            startMovingBuildBlock({
               type: button.dataset.startMoveKind,
               key: button.dataset.blockKey,
               index: Number(button.dataset.moveIndex),
-              id: button.dataset.moveId,
-              x: event.clientX,
-              y: event.clientY
-            };
-            activeBuildCell = null;
-            editingBuildBlock = null;
-            showValidationPopup("Bloc selectionne : cliquez sur la case cible");
-            render();
+              id: button.dataset.moveId
+            }, event.clientX, event.clientY);
+          });
+        });
+        document.querySelectorAll("[data-move-kind]").forEach((block) => {
+          let longPressTimer = null;
+          let startX = 0;
+          let startY = 0;
+          const clearLongPress = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          block.addEventListener("pointerdown", (event) => {
+            if (event.target.closest("[data-remove-cell], [data-start-move-kind]")) return;
+            startX = event.clientX;
+            startY = event.clientY;
+            clearLongPress();
+            longPressTimer = setTimeout(() => {
+              startMovingBuildBlock({
+                type: block.dataset.moveKind,
+                key: block.dataset.blockKey,
+                index: Number(block.dataset.moveIndex),
+                id: block.dataset.moveId
+              }, startX, startY, true);
+            }, 550);
+          });
+          block.addEventListener("pointermove", (event) => {
+            if (!longPressTimer) return;
+            const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+            if (distance > 8) clearLongPress();
+          });
+          ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => {
+            block.addEventListener(eventName, clearLongPress);
           });
         });
         document.querySelectorAll("[data-remove-cell]").forEach((button) => {
