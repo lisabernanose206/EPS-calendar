@@ -701,7 +701,7 @@
       .hoursDetail span { color: #64748b; font-size: 10px; }
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
-      .classPill.needsValidation { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+      .classPill.needsValidation { background: #fef2f2; border: 2px solid #020617; color: #991b1b; box-shadow: 0 0 0 2px rgba(220,38,38,0.14); }
       button.classPill { cursor: pointer; font: inherit; }
       button.classPill:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
       .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
@@ -5791,6 +5791,20 @@
         return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundConstructedHours(total)]));
       }
 
+      function constructionSummaryClasses() {
+        const classItems = classLevels.flatMap(serviceClassesForLevel);
+        specialClassInstances().forEach((instance) => {
+          if (!instance.baseClassId) classItems.push(instance.schoolClass);
+        });
+        return [...new Set(classItems)];
+      }
+
+      function constructionClassSummaryTotal(schoolClass, classTotals) {
+        const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+        if (baseClassId) return roundConstructedHours((classTotals[schoolClass] || 0) + (classTotals[baseClassId] || 0));
+        return classTotals[schoolClass] || 0;
+      }
+
       function annualConstructionTeacherClassHours() {
         const totals = Object.fromEntries(teachers.map((teacher) => [teacher.id, {}]));
         annualConstructionRules().forEach((rule) => {
@@ -5800,7 +5814,8 @@
           const slotHours = fullServiceSlotHours(row);
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
           teacherIdsForBlock(rule.block).forEach((teacherId) => {
-            const schoolClass = teacherClassForBlock(rule.block, teacherId);
+            const rawClass = teacherClassForBlock(rule.block, teacherId);
+            const schoolClass = rawClass ? serviceClassIdForBaseClass(rawClass) : "";
             if (!schoolClass) return;
             if (!totals[teacherId]) totals[teacherId] = {};
             totals[teacherId][schoolClass] = (totals[teacherId][schoolClass] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
@@ -5814,7 +5829,12 @@
 
       function constructionTeacherClassSummaries(teacherId, teacherClassTotals) {
         const expectedRows = serviceClassRowsForTeacher(teacherId);
-        const expectedByClass = Object.fromEntries(expectedRows.map((row) => [row.classId, Number(row.hours) || 0]));
+        const expectedByClass = {};
+        expectedRows.forEach((row) => {
+          const schoolClass = row.classId ? serviceClassIdForBaseClass(row.classId) : "";
+          if (!schoolClass) return;
+          expectedByClass[schoolClass] = (expectedByClass[schoolClass] || 0) + (Number(row.hours) || 0);
+        });
         const actualByClass = teacherClassTotals[teacherId] || {};
         return [...new Set([...Object.keys(expectedByClass), ...Object.keys(actualByClass)])]
           .sort((a, b) => a.localeCompare(b, "fr"))
@@ -5839,10 +5859,10 @@
 
       function constructionClassesStepComplete() {
         const totals = annualConstructionClassHours();
-        return classes.every((schoolClass) => {
+        return constructionSummaryClasses().every((schoolClass) => {
           const target = classHourTargetForConstruction(schoolClass);
           if (!target) return true;
-          return Math.abs((totals[schoolClass] || 0) - target) < 0.01;
+          return Math.abs(constructionClassSummaryTotal(schoolClass, totals) - target) < 0.01;
         });
       }
 
@@ -5908,8 +5928,8 @@
         const teacherTotals = annualConstructionTeacherHours();
         const teacherClassTotals = annualConstructionTeacherClassHours();
         const classTotals = annualConstructionClassHours();
-        const classSummaries = classes.map((schoolClass) => {
-          const total = classTotals[schoolClass] || 0;
+        const classSummaries = constructionSummaryClasses().map((schoolClass) => {
+          const total = constructionClassSummaryTotal(schoolClass, classTotals);
           const target = classHourTargetForConstruction(schoolClass);
           const diff = roundConstructedHours(total - (target || 0));
           const missing = Math.max(0, -diff);
@@ -5917,8 +5937,6 @@
           const ok = !target || Math.abs(diff) < 0.01;
           return { schoolClass, total, target, missing, excess, ok };
         });
-        const missingClasses = classSummaries.filter((item) => item.target && item.missing > 0);
-        const excessClasses = classSummaries.filter((item) => item.target && item.excess > 0);
         return `<div class="servicePanel compactServicePanel">
           <h3>Service reel construit</h3>
           <div class="hoursBalanceGrid">
@@ -5941,14 +5959,6 @@
               </article>`;
             }).join("")}
           </div>
-          ${missingClasses.length ? `<h3>Classes a completer</h3>
-          <div class="classPills">
-            ${missingClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} &middot; manque ${formatHours(item.missing)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
-          </div>` : ""}
-          ${excessClasses.length ? `<h3>Classes en depassement</h3>
-          <div class="classPills">
-            ${excessClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} &middot; trop ${formatHours(item.excess)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
-          </div>` : ""}
           <h3>Volumes par classe</h3>
           <div class="classPills">
             ${classSummaries.map((item) => {
