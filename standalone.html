@@ -5729,6 +5729,10 @@
         return Math.round((Number(value) || 0) * 60) / 60;
       }
 
+      function roundConstructedHours(value) {
+        return Math.round((Number(value) || 0) * 2) / 2;
+      }
+
       function formatHours(value) {
         const totalMinutes = Math.round((Number(value) || 0) * 60);
         const hours = Math.floor(totalMinutes / 60);
@@ -5768,7 +5772,7 @@
             totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
           });
         });
-        return Object.fromEntries(Object.entries(totals).map(([teacherId, total]) => [teacherId, roundHours(total)]));
+        return Object.fromEntries(Object.entries(totals).map(([teacherId, total]) => [teacherId, roundConstructedHours(total)]));
       }
 
       function annualConstructionClassHours() {
@@ -5784,7 +5788,7 @@
             totals[schoolClass] += slotHours * multiplier;
           });
         });
-        return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundHours(total)]));
+        return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundConstructedHours(total)]));
       }
 
       function classHourTargetForConstruction(schoolClass) {
@@ -5864,11 +5868,14 @@
         const classSummaries = classes.map((schoolClass) => {
           const total = classTotals[schoolClass] || 0;
           const target = classHourTargetForConstruction(schoolClass);
-          const missing = Math.max(0, roundHours((target || 0) - total));
-          const ok = !target || missing < 0.01;
-          return { schoolClass, total, target, missing, ok };
+          const diff = roundConstructedHours(total - (target || 0));
+          const missing = Math.max(0, -diff);
+          const excess = Math.max(0, diff);
+          const ok = !target || Math.abs(diff) < 0.01;
+          return { schoolClass, total, target, missing, excess, ok };
         });
-        const missingClasses = classSummaries.filter((item) => item.target && !item.ok);
+        const missingClasses = classSummaries.filter((item) => item.target && item.missing > 0);
+        const excessClasses = classSummaries.filter((item) => item.target && item.excess > 0);
         return `<div class="servicePanel compactServicePanel">
           <h3>Service reel construit</h3>
           <div class="hoursBalanceGrid">
@@ -5887,6 +5894,10 @@
           ${missingClasses.length ? `<h3>Classes a completer</h3>
           <div class="classPills">
             ${missingClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} · manque ${formatHours(item.missing)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
+          </div>` : ""}
+          ${excessClasses.length ? `<h3>Classes en depassement</h3>
+          <div class="classPills">
+            ${excessClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} Â· trop ${formatHours(item.excess)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
           </div>` : ""}
           <h3>Volumes par classe</h3>
           <div class="classPills">
