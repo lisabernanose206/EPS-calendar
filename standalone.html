@@ -317,6 +317,9 @@
       .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
+      .constructionOptimizeNotice { background: #ecfeff; border: 1px solid #67e8f9; border-left: 5px solid #0891b2; border-radius: 8px; color: #155e75; display: grid; font-size: 12px; font-weight: 900; gap: 2px; margin: 8px 0; padding: 8px 10px; }
+      .constructionOptimizeNotice.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
+      .constructionOptimizeNotice span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
       .weeks button:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.45; }
       .clearConstructionPanel { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 10px; margin: 0 0 10px; max-width: 640px; padding: 12px; }
       .clearConstructionPanel h3 { color: #0f172a; font-size: 14px; margin: 0; }
@@ -607,7 +610,7 @@
       .prerequisitesPage { display: grid; gap: 16px; }
       .prerequisitesPage > .eventPage { margin-top: 0; }
       .prerequisitesPageTitle { color: #172033; font-size: 18px; margin: 0; }
-      .prerequisitesPage > .constructionTabs { max-width: max-content; width: auto; }
+      .prerequisitesPage > .constructionTabs { flex-wrap: wrap; max-width: 100%; width: 100%; }
       .prerequisitesPage > .constructionTabs button { align-items: center; display: grid; flex: 0 0 auto; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; justify-items: start; min-width: 150px; padding: 0 14px; text-align: left; }
       .prerequisitesPage > .constructionTabs .subtabStatusStack { margin-left: 0; }
       .prerequisitesHeader { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
@@ -994,6 +997,7 @@
       let activities = loadActivities();
       let facilityActivities = loadFacilityActivities();
       const classLevels = ["6eme", "5eme", "4eme", "3eme"];
+      let activityProgramByLevel = loadActivityProgramByLevel();
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
       const defaultClassConfig = Object.fromEntries(classLevels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
       const classGroups = [
@@ -1013,6 +1017,7 @@
         { id: "class-single-place", category: "Conflit classe", title: "Une classe, un seul cours", detail: "Une classe ou un demi-groupe ne peut pas etre place sur deux cours qui se chevauchent." },
         { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
         { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
+        { id: "class-activity-program", category: "Installations / activites", title: "Programme annuel des classes", detail: "Les classes doivent suivre leur programme de l'annee en termes d'activites." },
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
         { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." },
         { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixes sur l'annee ; seules les installations et activites varient par cycle." },
@@ -1078,6 +1083,7 @@
       let constructionRuleInterpretationSource = "";
       let editingConstructionRuleId = "";
       let expandedConstructionRuleCategory = "";
+      let constructionOptimizationResult = null;
       let constructionChecksRevision = 0;
       let constructionChecksCache = { revision: -1 };
       let prerequisiteMode = "establishment";
@@ -1183,6 +1189,7 @@
         "facilities",
         "activities",
         "facilityActivities",
+        "activityProgramByLevel",
         "yearPlan",
         "cycles",
         "cyclesByLevel",
@@ -1207,7 +1214,7 @@
       const PREREQUISITES_LOCK_KEY = "planningEpsPrerequisitesLocked2026";
       const PREREQUISITE_LOCKS_KEY = "planningEpsPrerequisiteLocks2026";
       const YEAR_PREREQUISITE_LOCKS_KEY = "planningEpsYearPrerequisiteLocks2026";
-      const prerequisiteSubModes = ["establishment", "team", "classes", "facilitiesActivities"];
+      const prerequisiteSubModes = ["establishment", "team", "classes", "facilitiesActivities", "program"];
       const yearPrerequisiteSubModes = ["unavailable", "cycles", "as", "events", "hours"];
       prerequisiteLocks = loadPrerequisiteLocks();
       yearPrerequisiteLocks = loadYearPrerequisiteLocks();
@@ -2167,7 +2174,8 @@
             title: String(item?.title || "").trim(),
             detail: String(item?.detail || "").trim(),
             reformulatedDetail: String(item?.reformulatedDetail || "").trim(),
-            interpretedRule: item?.interpretedRule && typeof item.interpretedRule === "object" ? item.interpretedRule : null
+            interpretedRule: item?.interpretedRule && typeof item.interpretedRule === "object" ? item.interpretedRule : null,
+            interpretedRules: Array.isArray(item?.interpretedRules) ? item.interpretedRules.filter((rule) => rule && typeof rule === "object") : []
           }))
           .filter((item) => item.title || item.detail);
         const existingIds = new Set(normalized.map((item) => item.id));
@@ -2372,7 +2380,7 @@
       function saveActivities() {
         invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
-        saveCloudNowIfPossible(["activities", "facilityActivities", "constructionRules"]);
+        saveCloudNowIfPossible(["activities", "facilityActivities", "activityProgramByLevel", "constructionRules"]);
       }
 
       function loadFacilityActivities() {
@@ -2394,6 +2402,31 @@
             facilityId,
             Array.isArray(ids) ? ids.filter((id) => activityIds.has(id)) : []
           ]));
+        activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
+      }
+
+      function normalizeActivityProgramByLevel(program) {
+        const activityIds = new Set(activities.map((activity) => activity.id));
+        return Object.fromEntries(classLevels.map((level) => {
+          const ids = Array.isArray(program?.[level]) ? program[level] : [];
+          return [level, ids.filter((id, index) => activityIds.has(id) && ids.indexOf(id) === index)];
+        }));
+      }
+
+      function loadActivityProgramByLevel() {
+        try {
+          const saved = localStorage.getItem("planningEpsActivityProgramByLevel2026");
+          return normalizeActivityProgramByLevel(saved ? JSON.parse(saved) : {});
+        } catch {
+          return normalizeActivityProgramByLevel({});
+        }
+      }
+
+      function saveActivityProgramByLevel() {
+        invalidateConstructionChecksCache();
+        activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
+        localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
+        saveCloudNowIfPossible(["activityProgramByLevel"]);
       }
 
       function saveFacilityActivities(immediateCloud = true) {
@@ -3069,6 +3102,7 @@
           facilities,
           activities,
           facilityActivities,
+          activityProgramByLevel,
           yearPlan,
           cycles,
           cyclesByLevel,
@@ -3100,6 +3134,7 @@
         facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
         activities = Array.isArray(data.activities) ? data.activities : activities;
         facilityActivities = data.facilityActivities && typeof data.facilityActivities === "object" ? data.facilityActivities : {};
+        activityProgramByLevel = normalizeActivityProgramByLevel(data.activityProgramByLevel || activityProgramByLevel);
         pruneFacilityActivities();
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
@@ -3139,6 +3174,7 @@
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
         localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(facilityActivities));
+        localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
@@ -3904,6 +3940,20 @@
           .sort((first, second) => second.label.length - first.label.length)[0]?.choice || null;
       }
 
+      function findNamedChoicesInText(text, choices) {
+        const normalized = normalizeSearchText(text);
+        const matches = choices
+          .map((choice) => ({ choice, label: normalizeSearchText(choice.label || choice.name || choice.id) }))
+          .filter((item) => item.label && normalized.includes(item.label))
+          .sort((first, second) => second.label.length - first.label.length);
+        const selected = [];
+        matches.forEach((match) => {
+          if (selected.some((item) => item.label.includes(match.label) || match.label.includes(item.label))) return;
+          selected.push(match);
+        });
+        return selected.map((item) => item.choice);
+      }
+
       function inferRuleClassLevel(text) {
         const normalized = normalizeSearchText(text);
         return classLevels.find((level) => normalized.includes(normalizeSearchText(level))) || "";
@@ -3923,25 +3973,23 @@
       }
 
       function localInterpretConstructionRule(text) {
-        const facility = findNamedChoiceInText(text, facilities);
-        const activity = findNamedChoiceInText(text, activities);
+        const matchedFacilities = findNamedChoicesInText(text, facilities);
+        const matchedActivities = findNamedChoicesInText(text, activities);
         const cycle = findNamedChoiceInText(text, classicConstructionCycles().map((cycle, index) => ({ ...cycle, label: cycle.name || `Cycle ${index + 1}` })));
         const teacher = findNamedChoiceInText(text, teachers);
         const schoolClass = findNamedChoiceInText(text, classes.map((schoolClass) => ({ id: schoolClass, label: compactClassName(schoolClass) })));
         const classLevel = inferRuleClassLevel(text);
-        const targetKind = activity && !facility ? "activity" : "facility";
+        const targetKind = matchedActivities.length && !matchedFacilities.length ? "activity" : "facility";
         const type = inferInterpretedRuleType(text, targetKind);
-        const targetId = targetKind === "activity" ? activity?.id : facility?.id;
-        if (!type || !targetId) {
+        const targets = targetKind === "activity" ? matchedActivities : matchedFacilities;
+        if (!type || !targets.length) {
           return {
             interpretable: false,
             error: "La regle doit mentionner une action claire (interdire, eviter, favoriser, imposer) et une installation ou une activite existante."
           };
         }
-        const rule = {
+        const baseRule = {
           type,
-          facilityId: targetKind === "facility" ? facility.id : "",
-          activityId: targetKind === "activity" ? activity.id : "",
           target: {
             classLevel,
             schoolClass: schoolClass?.id || "",
@@ -3951,6 +3999,19 @@
           hard: type.startsWith("forbid_") || type.startsWith("require_"),
           priority: type.startsWith("avoid_") ? 80 : type.startsWith("prefer_") ? 55 : 100
         };
+        const rules = targets.length > 1
+          ? [{
+            ...baseRule,
+            facilityId: targetKind === "facility" ? targets[0].id : "",
+            facilityIds: targetKind === "facility" ? targets.map((target) => target.id) : [],
+            activityId: targetKind === "activity" ? targets[0].id : "",
+            activityIds: targetKind === "activity" ? targets.map((target) => target.id) : []
+          }]
+          : targets.map((target) => ({
+            ...baseRule,
+            facilityId: targetKind === "facility" ? target.id : "",
+            activityId: targetKind === "activity" ? target.id : ""
+          }));
         const actionLabel = type.startsWith("forbid_")
           ? "Interdire"
           : type.startsWith("require_")
@@ -3958,7 +4019,7 @@
             : type.startsWith("prefer_")
               ? "Favoriser"
               : "Eviter";
-        const targetLabel = targetKind === "activity" ? activity.label : facility.label;
+        const targetLabel = targets.map((target) => target.label).join(", ");
         const scope = [
           classLevel ? `niveau ${classLevel}` : "",
           schoolClass ? `classe ${compactClassName(schoolClass.id)}` : "",
@@ -3968,7 +4029,8 @@
         return {
           interpretable: true,
           reformulatedDetail: `${actionLabel} ${targetLabel} pour ${scope}.`,
-          interpretedRule: rule
+          interpretedRule: rules[0],
+          interpretedRules: rules
         };
       }
 
@@ -4004,13 +4066,17 @@
               })
             }).then((response) => response.ok ? response.json() : Promise.reject(new Error("Interpretation IA indisponible")))
             : localInterpretConstructionRule(source);
-          if (!result?.interpretable || !result?.interpretedRule) {
+          const resultRules = Array.isArray(result?.interpretedRules)
+            ? result.interpretedRules
+            : [result?.interpretedRule].filter(Boolean);
+          if (!result?.interpretable || !resultRules.length) {
             constructionRuleInterpretation = null;
             constructionRuleInterpretationError = result?.error || "Cette regle n'est pas encore exploitable par l'optimiseur.";
           } else {
             constructionRuleInterpretation = {
               reformulatedDetail: String(result.reformulatedDetail || constructionRuleDraft.detail || constructionRuleDraft.title).trim(),
-              interpretedRule: result.interpretedRule
+              interpretedRule: resultRules[0],
+              interpretedRules: resultRules
             };
             constructionRuleInterpretationSource = source;
           }
@@ -4025,8 +4091,12 @@
 
       function interpretedOptimizerRules() {
         return constructionRuleSettings
-          .map((rule) => rule.interpretedRule ? ({ source: rule, rule: rule.interpretedRule }) : null)
-          .filter(Boolean);
+          .flatMap((source) => {
+            const rules = Array.isArray(source.interpretedRules)
+              ? source.interpretedRules
+              : [source.interpretedRule].filter(Boolean);
+            return rules.map((rule) => ({ source, rule }));
+          });
       }
 
       function optimizerRuleMatchesTarget(customRule, constructionRule, cycle) {
@@ -4041,10 +4111,12 @@
       function customRuleBlocksOptimizedCandidate(constructionRule, cycle, block) {
         return interpretedOptimizerRules().some(({ rule }) => {
           if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return false;
-          if (rule.type === "forbid_facility") return block.facilityId === rule.facilityId;
-          if (rule.type === "forbid_activity") return block.activityId === rule.activityId;
-          if (rule.type === "require_facility") return block.facilityId !== rule.facilityId;
-          if (rule.type === "require_activity") return block.activityId !== rule.activityId;
+          const facilityIds = Array.isArray(rule.facilityIds) && rule.facilityIds.length ? rule.facilityIds : [rule.facilityId].filter(Boolean);
+          const activityIds = Array.isArray(rule.activityIds) && rule.activityIds.length ? rule.activityIds : [rule.activityId].filter(Boolean);
+          if (rule.type === "forbid_facility") return facilityIds.includes(block.facilityId);
+          if (rule.type === "forbid_activity") return activityIds.includes(block.activityId);
+          if (rule.type === "require_facility") return facilityIds.length && !facilityIds.includes(block.facilityId);
+          if (rule.type === "require_activity") return activityIds.length && !activityIds.includes(block.activityId);
           return false;
         });
       }
@@ -4053,10 +4125,12 @@
         return interpretedOptimizerRules().reduce((score, { rule }) => {
           if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return score;
           const priority = Number(rule.priority) || 50;
-          if (rule.type === "avoid_facility" && block.facilityId === rule.facilityId) return score + priority;
-          if (rule.type === "avoid_activity" && block.activityId === rule.activityId) return score + priority;
-          if (rule.type === "prefer_facility" && block.facilityId !== rule.facilityId) return score + priority;
-          if (rule.type === "prefer_activity" && block.activityId !== rule.activityId) return score + priority;
+          const facilityIds = Array.isArray(rule.facilityIds) && rule.facilityIds.length ? rule.facilityIds : [rule.facilityId].filter(Boolean);
+          const activityIds = Array.isArray(rule.activityIds) && rule.activityIds.length ? rule.activityIds : [rule.activityId].filter(Boolean);
+          if (rule.type === "avoid_facility" && facilityIds.includes(block.facilityId)) return score + priority;
+          if (rule.type === "avoid_activity" && activityIds.includes(block.activityId)) return score + priority;
+          if (rule.type === "prefer_facility" && facilityIds.length && !facilityIds.includes(block.facilityId)) return score + priority;
+          if (rule.type === "prefer_activity" && activityIds.length && !activityIds.includes(block.activityId)) return score + priority;
           return score;
         }, 0);
       }
@@ -4084,12 +4158,16 @@
         if (!rule?.block || rule.block.optionBlock) return [];
         const enforceActivityLinks = constructionRuleSettingEnabled("facility-activity-link");
         const enforceUnavailableFacilities = constructionRuleSettingEnabled("facility-unavailable");
+        const enforceProgram = constructionRuleSettingEnabled("class-activity-program");
+        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+        const programActivityIds = enforceProgram ? (activityProgramByLevel[level] || []) : [];
         return facilities.flatMap((facility) => {
           const linkedActivities = activitiesForFacility(facility.id);
           const activityChoices = enforceActivityLinks
             ? (linkedActivities.length ? linkedActivities : [null])
             : activities;
           return activityChoices
+            .filter((activity) => !enforceProgram || !programActivityIds.length || (activity && programActivityIds.includes(activity.id)))
             .map((activity) => optimizedCandidateBlock(rule, facility, activity))
             .filter((block) => !customRuleBlocksOptimizedCandidate(rule, cycle, block))
             .filter((block) => !enforceUnavailableFacilities || !blockCycleUnavailableMessage(rule.rowId, cycle.id, block, rule.weekLetter || "all"));
@@ -4111,12 +4189,17 @@
         const teacherIds = teacherIdsForBlock(rule.block);
         const teacherFacilityPenalty = teacherIds.reduce((sum, teacherId) => sum + (usage.teacherFacility.get(`${teacherId}::${block.facilityId}`) || 0), 0);
         const teacherActivityPenalty = teacherIds.reduce((sum, teacherId) => sum + (usage.teacherActivity.get(`${teacherId}::${block.activityId}`) || 0), 0);
+        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+        const programPenalty = constructionRuleSettingEnabled("class-activity-program") && block.activityId
+          ? (usage.levelActivity.get(`${level}::${block.activityId}`) || 0) * 70
+          : 0;
         return (
           (usage.rowFacility.get(rowFacilityKey) || 0) * 50
           + (usage.facility.get(block.facilityId) || 0) * 8
           + (usage.activity.get(block.activityId) || 0) * 4
           + teacherFacilityPenalty * 3
           + teacherActivityPenalty * 2
+          + programPenalty
           + customRuleOptimizedPenalty(rule, cycle, block)
         );
       }
@@ -4126,6 +4209,8 @@
         bump(usage.facility, block.facilityId);
         bump(usage.activity, block.activityId || "__none__");
         bump(usage.rowFacility, `${rule.rowId}::${block.facilityId}`);
+        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+        if (level && block.activityId) bump(usage.levelActivity, `${level}::${block.activityId}`);
         teacherIdsForBlock(rule.block).forEach((teacherId) => {
           bump(usage.teacherFacility, `${teacherId}::${block.facilityId}`);
           bump(usage.teacherActivity, `${teacherId}::${block.activityId || "__none__"}`);
@@ -4156,11 +4241,14 @@
 
       function optimizeConstructionCycleDetails() {
         if (!facilities.length || !activities.length) {
-          return { saved: 0, unresolved: constructionRules.length, message: "Ajoutez d'abord des installations et des activites." };
+          const result = { saved: 0, unresolved: constructionRules.length, message: "Ajoutez d'abord des installations et des activites.", detail: "La construction optimisee a besoin de couples installation/activite pour proposer une solution." };
+          constructionOptimizationResult = result;
+          return result;
         }
         const usage = {
           facility: new Map(),
           activity: new Map(),
+          levelActivity: new Map(),
           rowFacility: new Map(),
           teacherFacility: new Map(),
           teacherActivity: new Map()
@@ -4182,13 +4270,21 @@
           });
         });
         rebuildConstructionPlan();
-        return {
+        const result = {
           saved,
           unresolved,
           message: unresolved
             ? `${saved} detail(s) optimise(s), ${unresolved} bloc(s) sans solution`
             : `${saved} detail(s) optimise(s)`
         };
+        constructionOptimizationResult = {
+          ...result,
+          level: unresolved ? "warning" : "ready",
+          detail: saved
+            ? "Les installations et activites ont ete renseignees dans les cycles, sans modifier les blocs profs/classes."
+            : "Aucun detail n'a ete ajoute. Verifiez qu'il existe des blocs profs/classes et des couples installation/activite compatibles."
+        };
+        return result;
       }
 
       function blockForRuleStorage(block) {
@@ -6094,6 +6190,7 @@
         if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes.", buildMode: "prerequisites", subMode: "classes" });
         if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours.", buildMode: "prerequisites", subMode: "facilitiesActivities" });
         if (!activities.length) items.push({ level: "blocking", title: "Aucune activite", detail: "Ajoutez au moins une activite et reliez-la aux installations possibles.", buildMode: "prerequisites", subMode: "facilitiesActivities" });
+        if (!adminStepComplete("program")) items.push({ level: "blocking", title: "Programme incomplet", detail: "Affectez les activites attendues pour chaque niveau dans Programme.", buildMode: "prerequisites", subMode: "program" });
         if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode.", buildMode: "yearPrerequisites", subMode: "cycles" });
         if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0], buildMode: "yearPrerequisites", subMode: "cycles" });
         if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "yearPrerequisites", subMode: "hours" });
@@ -6364,6 +6461,7 @@
         if (buildMode === "team") return teachers.length > 0;
         if (buildMode === "classes") return classes.length > 0;
         if (buildMode === "facilities" || buildMode === "activities" || buildMode === "facilitiesActivities") return facilities.length > 0 && activities.length > 0;
+        if (buildMode === "program") return activities.length > 0 && classLevels.every((level) => (activityProgramByLevel[level] || []).length > 0);
         if (buildMode === "unavailable") return facilityUnavailability.length > 0;
         if (buildMode === "cycles") return cycles.length > 0 && !validateCycles(cycles).length;
         if (buildMode === "as") return asSessions.length > 0;
@@ -6445,12 +6543,14 @@
           { id: "establishment", label: "Établissement" },
           { id: "team", label: "Profs" },
           { id: "classes", label: "Classes" },
-          { id: "facilitiesActivities", label: "Installations & activites" }
+          { id: "facilitiesActivities", label: "Installations & activites" },
+          { id: "program", label: "Programme" }
         ];
         const content = prerequisiteMode === "team" ? renderTeamSettings()
           : prerequisiteMode === "classes" ? renderClassesView()
             : prerequisiteMode === "facilitiesActivities" || prerequisiteMode === "facilities" || prerequisiteMode === "activities" ? renderFacilitiesActivitiesSettings()
-              : renderEstablishmentSettings();
+              : prerequisiteMode === "program" ? renderActivityProgramSettings()
+                : renderEstablishmentSettings();
         const currentLocked = prerequisiteLocked(prerequisiteMode);
         return `<section class="prerequisitesPage">
           <div class="prerequisitesHeader">
@@ -6704,7 +6804,7 @@
                   </div>
                 </div>
                 <span>${escapeHtml(rule.reformulatedDetail || rule.detail)}</span>
-                ${rule.interpretedRule ? `<small>Optimiseur : ${escapeHtml(rule.interpretedRule.type || "regle structuree")}</small>` : ""}
+                ${rule.interpretedRule ? `<small>Optimiseur : ${escapeHtml(rule.interpretedRule.type || "regle structuree")}${Array.isArray(rule.interpretedRules) && rule.interpretedRules.length > 1 ? ` x${rule.interpretedRules.length}` : ""}</small>` : ""}
               </article>`).join("")}</div>` : ""}
             </section>`;
             }).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
@@ -6838,6 +6938,7 @@
             </div>
             ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillee : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
             ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activites se renseignent ensuite par cycle." : "Details par cycle : les blocs profs/classes sont fixes ; cliquez sur un bloc pour renseigner son installation et son activite sur ce cycle."}</div>`}
+            ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
             ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
@@ -7521,6 +7622,30 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               `).join("")}</div>` : ""}
             </article>`;
           }).join("")}</div>
+        </section>`;
+      }
+
+      function renderActivityProgramSettings() {
+        return `<section class="eventPage">
+          <div class="eventList" style="grid-column:1 / -1">
+            <h3>Programme annuel par niveau</h3>
+            ${activities.length ? `<div class="facilityActivityMatrix">${classLevels.map((level) => {
+              const selectedIds = activityProgramByLevel[level] || [];
+              const selectedActivities = selectedIds.map((id) => activities.find((activity) => activity.id === id)).filter(Boolean);
+              const unselectedActivities = activities
+                .filter((activity) => !selectedIds.includes(activity.id))
+                .sort((a, b) => a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
+              return `<article class="facilityActivityRow">
+                <strong>${level}</strong>
+                ${selectedActivities.length ? `<div class="choiceGrid">${selectedActivities.map((activity) => `
+                  <button class="choiceButton active" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
+                `).join("")}</div>` : `<span class="muted">Aucune activite affectee a ce niveau.</span>`}
+                ${unselectedActivities.length ? `<div class="choiceGrid">${unselectedActivities.map((activity) => `
+                  <button class="choiceButton" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
+                `).join("")}</div>` : ""}
+              </article>`;
+            }).join("")}</div>` : `<div class="alertEmpty">Ajoutez d'abord les activites dans Installations & activites.</div>`}
+          </div>
         </section>`;
       }
 
@@ -8605,7 +8730,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 title: title || "Regle personnalisee",
                 detail,
                 reformulatedDetail: constructionRuleInterpretation.reformulatedDetail,
-                interpretedRule: constructionRuleInterpretation.interpretedRule
+                interpretedRule: constructionRuleInterpretation.interpretedRule,
+                interpretedRules: constructionRuleInterpretation.interpretedRules || [constructionRuleInterpretation.interpretedRule].filter(Boolean)
               }
             ];
             constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
@@ -9289,6 +9415,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             const deletedId = button.dataset.deleteActivity;
             activities = activities.filter((activity) => activity.id !== deletedId);
+            activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
             facilityActivities = Object.fromEntries(Object.entries(facilityActivities).map(([facilityId, ids]) => [
               facilityId,
               Array.isArray(ids) ? ids.filter((id) => id !== deletedId) : []
@@ -9299,9 +9426,26 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               block: { ...rule.block, activityId: "", activityLabel: "" }
             } : rule);
             saveActivities();
+            saveActivityProgramByLevel();
             saveFacilityActivities();
             rebuildConstructionPlan();
             showValidationPopup("Activité supprimée");
+            render();
+          });
+        });
+        document.querySelectorAll("[data-program-activity]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const level = button.dataset.programActivityLevel;
+            const activityId = button.dataset.programActivity;
+            if (!classLevels.includes(level) || !activities.some((activity) => activity.id === activityId)) return;
+            const current = activityProgramByLevel[level] || [];
+            activityProgramByLevel = {
+              ...activityProgramByLevel,
+              [level]: current.includes(activityId)
+                ? current.filter((id) => id !== activityId)
+                : [...current, activityId]
+            };
+            saveActivityProgramByLevel();
             render();
           });
         });
