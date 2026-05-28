@@ -719,6 +719,7 @@
       .serviceTeachers { align-items: start; display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .serviceTeacher { align-self: start; border: 1px solid transparent; border-radius: 8px; display: grid; gap: 8px; padding: 10px; }
       .serviceCompare { align-items: start; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+      .serviceCompare.singleColumn { grid-template-columns: 1fr; }
       .serviceColumn { background: rgba(255,255,255,0.42); border: 1px solid rgba(15,23,42,0.1); border-radius: 8px; display: grid; gap: 7px; padding: 8px; }
       .serviceColumn h4 { color: #172033; font-size: 12px; margin: 0; }
       .serviceTheorySummary { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
@@ -5448,9 +5449,6 @@
       }
 
       function renderHoursBalance() {
-        const yearWeeks = workingSchoolWeeks();
-        const cycleStats = completeCycleCourseAverages();
-        const yearAsStats = asHoursForWeeks(yearWeeks);
         const alerts = serviceAlerts();
         const serviceCloudNotice = criticalCloudNotice("Service theorique");
         return `<section class="hoursBalancePage">
@@ -5476,7 +5474,7 @@
             ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${compactClassName(item.schoolClass)} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
           </div>
           <div class="servicePanel">
-            <h3>Service theorique / Service reel</h3>
+            <h3>Service theorique</h3>
             <div class="serviceTeachers">${teachers.map((teacher) => {
               const teacherRows = serviceClassRowsForTeacher(teacher.id);
               const freeRows = serviceFreeRowsForTeacher(teacher.id);
@@ -5491,19 +5489,11 @@
               const total = [...teacherRows, ...freeRows].reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
               const courseTarget = teacher.weeklyReference;
               const overtimeHours = Math.max(0, Math.round((total - courseTarget) * 10) / 10);
-              const asTarget = 3;
-              const teacherCycleStats = cycleStats[teacher.id];
-              const courseAverage = teacherCycleStats.weeks ? Math.round((teacherCycleStats.total / teacherCycleStats.weeks) * 10) / 10 : 0;
-              const asTotal = yearWeeks.length ? Math.round(((yearAsStats[teacher.id] || 0) / yearWeeks.length) * 10) / 10 : 0;
-              const realStatus = hourStatus(courseAverage - courseTarget);
-              const progress = Math.min(100, Math.round((courseAverage / courseTarget) * 100));
-              const asProgress = Math.min(100, Math.round((asTotal / asTarget) * 100));
-              const realClasses = [...teacherCycleStats.classes].sort((a, b) => a.localeCompare(b, "fr"));
               return `<article class="serviceTeacher" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop">
                   <strong>${teacher.name}</strong>
                 </div>
-                <div class="serviceCompare">
+                <div class="serviceCompare singleColumn">
                   <div class="serviceColumn">
                     <h4>Service theorique</h4>
                     <div class="serviceTheorySummary">
@@ -5533,17 +5523,6 @@
                   </div>
                   <div class="classPills">${freeRows.length ? freeRows.map((row) => `<button class="classPill" data-service-free-delete="${teacher.id}" data-service-free-id="${row.id}" title="Supprimer ce service libre">${row.label} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucun service libre</span>`}</div>
                 </div>
-                  </div>
-                  <div class="serviceColumn">
-                    <h4>Service reel</h4>
-                    <span class="hoursStatus ${realStatus.className}">${realStatus.label}</span>
-                    <div class="hoursNumbers">
-                      <div class="hoursMain"><strong>${courseAverage}h</strong><span class="muted">cours / ${courseTarget}h</span></div>
-                      <div class="hoursProgress"><span style="width:${progress}%"></span></div>
-                      <div class="hoursMain"><strong>${asTotal}h</strong><span class="muted">AS / ${asTarget}h</span></div>
-                      <div class="hoursProgress"><span style="width:${asProgress}%"></span></div>
-                    </div>
-                    <div class="classPills">${realClasses.length ? realClasses.map((schoolClass) => `<span class="classPill">${compactClassName(schoolClass)}</span>`).join("") : `<span class="classPill">Aucune classe construite</span>`}</div>
                   </div>
                 </div>
               </article>`;
