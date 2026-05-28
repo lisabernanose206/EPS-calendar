@@ -400,6 +400,9 @@
       .constructionTable .buildBlock button { position: absolute; top: 2px; }
       .constructionTable .buildBlock .removeBlockButton { right: 2px; }
       .constructionTable .buildBlock .moveBlockButton { left: 2px; }
+      .constructionTable .buildBlock.optimizationIssue { background: #fff7ed !important; border-color: #f97316 !important; box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0.28); }
+      .constructionTable .buildBlock.optimizationIssue strong { color: #9a3412; }
+      .constructionTable .buildBlock .optimizationIssueReason { color: #9a3412; font-size: 8px; font-weight: 950; }
       .cycleConstructionTabs { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
       .cycleConstructionTableWrap { max-height: none !important; overflow: visible !important; }
       .cycleConstructionTable { min-width: 0; table-layout: fixed; width: 100%; }
@@ -4100,6 +4103,26 @@
         });
       }
 
+      function optimizedUnresolvedReason(rule, cycle, candidates, assignments, usage) {
+        if (!candidates.length) {
+          const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+          const programActivityIds = constructionRuleSettingEnabled("class-activity-program") ? (activityProgramByLevel[level] || []) : [];
+          if (constructionRuleSettingEnabled("class-activity-program") && programActivityIds.length) return "Aucune installation ne propose une activite du programme compatible.";
+          if (constructionRuleSettingEnabled("facility-unavailable")) return "Aucune installation/activite compatible ou disponible sur ce creneau.";
+          return "Aucun couple installation/activite compatible.";
+        }
+        const withoutConflicts = candidates.filter((block) => !optimizedAssignmentHasConflict(rule, cycle, block, assignments));
+        if (!withoutConflicts.length) return "Toutes les installations compatibles sont deja occupees sur ce creneau.";
+        const withoutActivityLimit = withoutConflicts.filter((block) => !optimizedCandidateViolatesClassCycleActivity(rule, cycle, block, usage));
+        if (!withoutActivityLimit.length) {
+          const hasSixth = optimizedRuleClassKeys(rule).some((schoolClass) => classParts(schoolClass).level === "6eme");
+          return hasSixth
+            ? "La classe de 6eme a deja atteint ses deux activites distinctes sur ce cycle."
+            : "La classe a deja une activite affectee sur ce cycle.";
+        }
+        return "Aucune affectation n'a respecte toutes les contraintes actives.";
+      }
+
       function optimizedCandidateScore(rule, cycle, block, usage) {
         const rowFacilityKey = `${rule.rowId}::${block.facilityId}`;
         const teacherIds = teacherIdsForBlock(rule.block);
@@ -4163,7 +4186,11 @@
             .sort((first, second) => optimizedCandidateScore(rule, cycle, first, usage) - optimizedCandidateScore(rule, cycle, second, usage));
           const selected = viable[0];
           if (!selected) {
-            unresolved.push(rule);
+            unresolved.push({
+              rule,
+              cycleId: cycle.id,
+              reason: optimizedUnresolvedReason(rule, cycle, candidates, assignments, usage)
+            });
             return;
           }
           assignments.push({ rule, block: selected });
@@ -4191,9 +4218,20 @@
         };
         let saved = 0;
         let unresolved = 0;
+        const unresolvedBlocks = [];
         classicConstructionCycles().forEach((cycle) => {
           const result = solveOptimizedCycleDetailsForCycle(cycle, usage);
           unresolved += result.unresolved.length;
+          result.unresolved.forEach(({ rule, cycleId, reason }) => {
+            unresolvedBlocks.push({
+              ruleId: rule.id,
+              rowId: rule.rowId,
+              cycleId,
+              weekLetter: rule.weekLetter || "all",
+              label: blockClassLabel(rule.block),
+              reason
+            });
+          });
           result.assignments.forEach(({ rule, block }) => {
             rule.cycleOverrides = {
               ...(rule.cycleOverrides || {}),
@@ -4208,10 +4246,14 @@
         rebuildConstructionPlan();
         const annualProgramIssues = optimizedAnnualProgramViolations();
         const sixthProgramIssues = optimizedSixthProgramViolations();
-        const checkIssues = [...annualProgramIssues, ...sixthProgramIssues];
-        unresolved += checkIssues.length;
-        const checkDetail = checkIssues.length
-          ? `${checkIssues.slice(0, 3).join(" ; ")}${checkIssues.length > 3 ? ` (+${checkIssues.length - 3})` : ""}`
+        const unresolvedBlockIssues = unresolvedBlocks.map((issue) => {
+          const cycleName = classicConstructionCycles().find((cycle) => cycle.id === issue.cycleId)?.name || "cycle";
+          return `${issue.label || "Bloc"} ${cycleName} : ${issue.reason}`;
+        });
+        const detailIssues = [...unresolvedBlockIssues, ...annualProgramIssues, ...sixthProgramIssues];
+        unresolved += annualProgramIssues.length + sixthProgramIssues.length;
+        const checkDetail = detailIssues.length
+          ? `${detailIssues.slice(0, 3).join(" ; ")}${detailIssues.length > 3 ? ` (+${detailIssues.length - 3})` : ""}`
           : "";
         const result = {
           saved,
@@ -4222,6 +4264,7 @@
         };
         constructionOptimizationResult = {
           ...result,
+          unresolvedBlocks,
           level: unresolved ? "warning" : "ready",
           detail: checkDetail || (saved
             ? "Les installations et activites ont ete renseignees dans les cycles, sans modifier les blocs profs/classes."
@@ -7723,17 +7766,26 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           .filter(({ item }) => (!filterSelection || blockMatchesTeacherSelection(item)) && (!weekLetter || (item.weekLetter || "all") === weekLetter));
       }
 
-      function renderConstructionCycleBlocks(indexedItems, key, editable = true) {
+      function constructionOptimizationIssueForBlock(item, cycle) {
+        if (constructionBuildMode !== "cycleDetails" || !constructionOptimizationResult?.unresolvedBlocks?.length || !item?.ruleId || !cycle?.id) return null;
+        return constructionOptimizationResult.unresolvedBlocks.find((issue) => issue.ruleId === item.ruleId && issue.cycleId === cycle.id) || null;
+      }
+
+      function renderConstructionCycleBlocks(indexedItems, key, editable = true, cycle = null) {
         if (!indexedItems.length) return "";
-        return `<div class="cycleBlockGrid">${indexedItems.map(({ item, index }) => `
-          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
+        return `<div class="cycleBlockGrid">${indexedItems.map(({ item, index }) => {
+          const optimizationIssue = constructionOptimizationIssueForBlock(item, cycle);
+          return `
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(item)}">
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(item)}</strong>
             <span>${blockDetailLabel(item)}</span>
+            ${optimizationIssue ? `<span class="optimizationIssueReason">${escapeHtml(optimizationIssue.reason)}</span>` : ""}
             ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
-        `).join("")}</div>`;
+        `;
+        }).join("")}</div>`;
       }
 
       function asSessionsForConstructionCycle(row, cycle, key, filterSelection = false) {
@@ -7772,7 +7824,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>` : ""}
               <strong>${asBlockLabel(session)}</strong>
               <span>${asSessionTeacherLabel(session)}</span>
-            </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key, editable)}
+            </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key, editable, cycle)}
         </div>`;
       }
 
@@ -7817,7 +7869,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 return `<td class="cycleConstructionCell">
                   <div class="cycleConstructionCellInner">
                     ${hasQuinzaine
-                      ? `${!blockedRow && allItems.length ? renderConstructionCycleBlocks(allItems, keyAll, editable) : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection, editable)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection, editable)}</div>`
+                      ? `${!blockedRow && allItems.length ? renderConstructionCycleBlocks(allItems, keyAll, editable, cycle) : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection, editable)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection, editable)}</div>`
                       : renderConstructionCycleArea(row, cycle, "", "", filterSelection, editable)}
                   </div>
                 </td>`;
