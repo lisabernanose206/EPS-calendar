@@ -339,15 +339,23 @@
       .constructionRuleCard strong { color: #0f172a; font-size: 13px; }
       .constructionRuleCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
-      .constructionRuleActions { display: flex; gap: 8px; justify-content: flex-end; }
+      .constructionRuleCardHead { align-items: start; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
+      .constructionRuleActions { align-items: center; display: inline-flex; gap: 4px; justify-content: flex-end; }
+      .ruleIconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
+      .ruleIconButton:hover { border-color: #0f172a; color: #0f172a; }
+      .ruleIconButton.danger { color: #991b1b; }
+      .ruleIconButton.danger:hover { background: #fef2f2; border-color: #fca5a5; }
+      .ruleIconButton svg { height: 15px; width: 15px; }
       .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
-      .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-      .constructionRuleGroupsGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .constructionRuleFilters { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; }
+      .constructionRuleFilter { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; cursor: pointer; font-size: 11px; font-weight: 900; min-height: 28px; padding: 0 9px; }
+      .constructionRuleFilter.hidden { background: #fff; color: #94a3b8; text-decoration: line-through; }
+      .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      .constructionRuleGroupsGrid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
       .constructionRuleCategoryGroup { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; padding: 8px; }
       .constructionRuleCategoryHead { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .constructionRuleCategoryHead strong { color: #0f172a; font-size: 12px; }
       .constructionRuleCategoryHead span { background: #e2e8f0; border-radius: 999px; color: #334155; font-size: 11px; font-weight: 950; padding: 2px 7px; }
-      .constructionRuleCategoryGroup .constructionRulesGrid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
       .teacherColorLegend { display: flex; flex-wrap: wrap; gap: 6px; }
       .teacherColorLegend span { align-items: center; border: 1px solid #cbd5e1; border-radius: 6px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 6px; min-height: 30px; padding: 0 9px; }
       .yearTeacherLegend { margin-top: 6px; }
@@ -1054,6 +1062,7 @@
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
       let editingConstructionRuleId = "";
+      let hiddenConstructionRuleCategories = [];
       let constructionChecksRevision = 0;
       let constructionChecksCache = { revision: -1 };
       let prerequisiteMode = "establishment";
@@ -6079,11 +6088,20 @@
 
       function renderConstructionRulesView() {
         const selectedCategory = constructionRuleCategoryChoices.includes(constructionRuleDraft.category) ? constructionRuleDraft.category : "Autre";
+        const editIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.5 6.5 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const deleteIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
         const ruleGroups = Object.entries(constructionRuleSettings.reduce((groups, rule) => {
           const category = rule.category || "Regle personnalisee";
           groups[category] = [...(groups[category] || []), rule];
           return groups;
-        }, {})).sort(([first], [second]) => first.localeCompare(second, "fr"));
+        }, {})).sort(([first], [second]) => {
+          const firstIndex = constructionRuleCategoryChoices.indexOf(first);
+          const secondIndex = constructionRuleCategoryChoices.indexOf(second);
+          const firstRank = firstIndex === -1 ? 999 : firstIndex;
+          const secondRank = secondIndex === -1 ? 999 : secondIndex;
+          return firstRank - secondRank || first.localeCompare(second, "fr");
+        }).map(([category, rules]) => [category, [...rules].sort((first, second) => first.title.localeCompare(second.title, "fr"))]);
+        const visibleRuleGroups = ruleGroups.filter(([category]) => !hiddenConstructionRuleCategories.includes(category));
         return `<section class="constructionRulesPage">
           <div class="constructionRulesForm">
             <h3>Ajouter une regle</h3>
@@ -6110,7 +6128,8 @@
               <h3>Regles actives</h3>
               <button class="ghostButton" id="restoreDefaultConstructionRules">Retablir les regles par defaut</button>
             </div>
-            ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => `<section class="constructionRuleCategoryGroup">
+            ${ruleGroups.length ? `<div class="constructionRuleFilters">${ruleGroups.map(([category, rules]) => `<button class="constructionRuleFilter ${hiddenConstructionRuleCategories.includes(category) ? "hidden" : ""}" data-toggle-construction-rule-category="${escapeHtml(category)}">${escapeHtml(category)} · ${rules.length}</button>`).join("")}</div>` : ""}
+            ${visibleRuleGroups.length ? `<div class="constructionRuleGroupsGrid">${visibleRuleGroups.map(([category, rules]) => `<section class="constructionRuleCategoryGroup">
               <div class="constructionRuleCategoryHead"><strong>${escapeHtml(category)}</strong><span>${rules.length}</span></div>
               <div class="constructionRulesGrid">${rules.map((rule) => editingConstructionRuleId === rule.id ? `<article class="constructionRuleCard">
                 <div class="eventField">
@@ -6132,14 +6151,16 @@
                   <button class="ghostButton" data-cancel-construction-rule-edit>Annuler</button>
                 </div>
               </article>` : `<article class="constructionRuleCard">
-                <strong>${escapeHtml(rule.title)}</strong>
-                <span>${escapeHtml(rule.detail)}</span>
-                <div class="constructionRuleActions">
-                  <button class="ghostButton" data-edit-construction-rule-setting="${rule.id}">Modifier</button>
-                  <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
+                <div class="constructionRuleCardHead">
+                  <strong>${escapeHtml(rule.title)}</strong>
+                  <div class="constructionRuleActions">
+                    <button class="ruleIconButton" data-edit-construction-rule-setting="${rule.id}" title="Modifier" aria-label="Modifier">${editIcon}</button>
+                    <button class="ruleIconButton danger" data-delete-construction-rule-setting="${rule.id}" title="Supprimer" aria-label="Supprimer">${deleteIcon}</button>
+                  </div>
                 </div>
+                <span>${escapeHtml(rule.detail)}</span>
               </article>`).join("")}</div>
-            </section>`).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
+            </section>`).join("")}</div>` : `<div class="alertEmpty">${ruleGroups.length ? "Toutes les categories sont masquees." : "Aucune regle active. Vous pouvez retablir les regles par defaut."}</div>`}
           </div>
         </section>`;
       }
@@ -8028,6 +8049,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-cancel-construction-rule-edit]").forEach((button) => {
           button.addEventListener("click", () => {
             editingConstructionRuleId = "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-construction-rule-category]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const category = button.dataset.toggleConstructionRuleCategory;
+            hiddenConstructionRuleCategories = hiddenConstructionRuleCategories.includes(category)
+              ? hiddenConstructionRuleCategories.filter((item) => item !== category)
+              : [...hiddenConstructionRuleCategories, category];
             render();
           });
         });
