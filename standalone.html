@@ -2227,6 +2227,13 @@
         return selected.length ? selected : allOptionCycleIds();
       }
 
+      function optionAnnualFactorForRule(rule) {
+        if (!rule?.block?.optionBlock) return 1;
+        const totalCycles = optionCycleChoices().length || 1;
+        const selectedCycles = constructionCyclesForRule(rule).length || totalCycles;
+        return selectedCycles / totalCycles;
+      }
+
       function cycleOverrideForRule(rule, cycleId) {
         return rule?.cycleOverrides?.[cycleId] || {};
       }
@@ -4522,6 +4529,12 @@
         return classItems.map(compactClassName).join(" + ");
       }
 
+      function blockDetailLabel(block) {
+        const details = [block?.facilityLabel || block?.type || "", block?.activityLabel || ""]
+          .filter((item) => item && item !== blockClassLabel(block));
+        return details.join(" · ");
+      }
+
       function teacherNamesForBlock(block) {
         return teacherIdsForBlock(block).map((id) => teachers.find((teacher) => teacher.id === id)?.name || id);
       }
@@ -4772,6 +4785,14 @@
 
       function serviceFreeRowsForTeacher(teacherId) {
         return serviceRowsForTeacher(teacherId).filter((row) => row.freeService);
+      }
+
+      function serviceTotalForTeacher(teacherId) {
+        return serviceRowsForTeacher(teacherId).reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
+      }
+
+      function serviceTargetForTeacher(teacher) {
+        return Math.max(Number(teacher?.weeklyReference) || 0, serviceTotalForTeacher(teacher?.id));
       }
 
       function serviceFreeActivityId(label) {
@@ -5777,8 +5798,8 @@
       function serviceStepComplete() {
         if (serviceAlerts().length) return false;
         return teachers.every((teacher) => {
-          const total = serviceRowsForTeacher(teacher.id).reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
-          return total === teacher.weeklyReference;
+          const total = serviceTotalForTeacher(teacher.id);
+          return total >= teacher.weeklyReference;
         });
       }
 
@@ -5801,9 +5822,9 @@
           const row = yearRows().find((item) => item.id === rule.rowId);
           if (!row?.slot) return;
           const slotHours = fullServiceSlotHours(row);
-          const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
+          const multiplier = (rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1) * optionAnnualFactorForRule(rule);
           teacherIdsForBlock(rule.block).forEach((teacherId) => {
-            totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
+            totals[teacherId] = (totals[teacherId] || 0) + effectiveTeacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
           });
         });
         return Object.fromEntries(Object.entries(totals).map(([teacherId, total]) => [teacherId, roundConstructedHours(total)]));
@@ -5887,6 +5908,56 @@
           });
       }
 
+      function annualConstructionTeacherOptionHours() {
+        const totals = Object.fromEntries(teachers.map((teacher) => [teacher.id, {}]));
+        annualConstructionRules().forEach((rule) => {
+          if (!rule.block?.optionBlock) return;
+          const row = yearRows().find((item) => item.id === rule.rowId);
+          if (!row?.slot) return;
+          const slotHours = fullServiceSlotHours(row);
+          const multiplier = (rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1) * optionAnnualFactorForRule(rule);
+          teacherIdsForBlock(rule.block).forEach((teacherId) => {
+            const optionId = rule.block.optionId || "";
+            if (!optionId) return;
+            if (!totals[teacherId]) totals[teacherId] = {};
+            totals[teacherId][optionId] = (totals[teacherId][optionId] || 0) + effectiveTeacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
+          });
+        });
+        return Object.fromEntries(Object.entries(totals).map(([teacherId, optionTotals]) => [
+          teacherId,
+          Object.fromEntries(Object.entries(optionTotals).map(([optionId, total]) => [optionId, roundConstructedHours(total)]))
+        ]));
+      }
+
+      function constructionTeacherOptionSummaries(teacherId, teacherOptionTotals) {
+        const expectedRows = serviceFreeRowsForTeacher(teacherId);
+        const expectedByOption = {};
+        const labelsByOption = {};
+        expectedRows.forEach((row) => {
+          const optionId = serviceFreeOptionId(teacherId, row.id);
+          expectedByOption[optionId] = (expectedByOption[optionId] || 0) + (Number(row.hours) || 0);
+          labelsByOption[optionId] = row.label || "Option";
+        });
+        const actualByOption = teacherOptionTotals[teacherId] || {};
+        return [...new Set([...Object.keys(expectedByOption), ...Object.keys(actualByOption)])]
+          .sort((a, b) => (labelsByOption[a] || a).localeCompare(labelsByOption[b] || b, "fr"))
+          .map((optionId) => {
+            const option = serviceFreeOptionById(optionId);
+            const total = actualByOption[optionId] || 0;
+            const target = expectedByOption[optionId] || 0;
+            const diff = roundConstructedHours(total - target);
+            return {
+              optionId,
+              label: labelsByOption[optionId] || option?.label || "Option",
+              total,
+              target,
+              missing: Math.max(0, -diff),
+              excess: Math.max(0, diff),
+              ok: Math.abs(diff) < 0.01
+            };
+          });
+      }
+
       function classHourTargetForConstruction(schoolClass) {
         return serviceClassTarget(schoolClass);
       }
@@ -5906,7 +5977,7 @@
         if (!rules.length) return false;
         if (!rules.every(annualRuleHasTeacherClasses)) return false;
         const totals = annualConstructionTeacherHours();
-        return teachers.every((teacher) => (totals[teacher.id] || 0) >= teacher.weeklyReference) && constructionClassesStepComplete();
+        return teachers.every((teacher) => (totals[teacher.id] || 0) >= serviceTargetForTeacher(teacher)) && constructionClassesStepComplete();
         });
       }
 
@@ -5961,6 +6032,7 @@
       function renderConstructionServiceSummary() {
         const teacherTotals = annualConstructionTeacherHours();
         const teacherClassTotals = annualConstructionTeacherClassHours();
+        const teacherOptionTotals = annualConstructionTeacherOptionHours();
         const classTotals = annualConstructionClassHours();
         const classSummaries = constructionSummaryClasses().map((schoolClass) => {
           const total = constructionClassSummaryTotal(schoolClass, classTotals);
@@ -5976,19 +6048,22 @@
           <div class="hoursBalanceGrid">
             ${teachers.map((teacher) => {
               const total = teacherTotals[teacher.id] || 0;
-              const target = teacher.weeklyReference;
+              const target = serviceTargetForTeacher(teacher);
+              const overtimeHours = Math.max(0, roundConstructedHours(target - teacher.weeklyReference));
               const status = hourStatus(total - target);
               const progress = target ? Math.min(100, Math.round((total / target) * 100)) : 0;
               const classDetails = constructionTeacherClassSummaries(teacher.id, teacherClassTotals);
+              const optionDetails = constructionTeacherOptionSummaries(teacher.id, teacherOptionTotals);
+              const serviceDetails = [...classDetails.map((item) => ({ ...item, label: compactClassName(item.schoolClass) })), ...optionDetails.map((item) => ({ ...item, label: item.label }))];
               return `<article class="hoursCard" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop"><strong>${teacher.name}</strong><span class="hoursStatus ${status.className}">${status.label}</span></div>
-                <div class="hoursMain"><strong>${formatHours(total)}</strong><span class="muted">/ ${formatHours(target)}</span></div>
+                <div class="hoursMain"><strong>${formatHours(total)}</strong><span class="muted">/ ${formatHours(target)}${overtimeHours ? ` · dont ${formatHours(overtimeHours)} sup` : ""}</span></div>
                 <div class="hoursProgress"><span style="width:${progress}%"></span></div>
                 <div class="classPills">
-                  ${classDetails.length ? classDetails.map((item) => {
+                  ${serviceDetails.length ? serviceDetails.map((item) => {
                     const detail = item.missing ? ` &middot; manque ${formatHours(item.missing)}` : item.excess ? ` &middot; trop ${formatHours(item.excess)}` : "";
-                    return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${compactClassName(item.schoolClass)} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
-                  }).join("") : `<span class="classPill">Aucune classe affectee</span>`}
+                    return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${item.label} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
+                  }).join("") : `<span class="classPill">Aucun service affecte</span>`}
                 </div>
               </article>`;
             }).join("")}
@@ -7205,13 +7280,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
                 <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${blockClassLabel(item)}</strong>
-                <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
+                <span>${blockDetailLabel(item)}</span>
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
               <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <strong>${blockClassLabel(item)}</strong>
-                <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
+                <span>${blockDetailLabel(item)}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock ${movingBuildBlock?.type === "event" && movingBuildBlock?.id === event.id ? "moveSelected" : ""}" data-move-kind="event" data-move-id="${event.id}" data-block-key="${key}">
@@ -7240,7 +7315,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(item)}</strong>
-            <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
+            <span>${blockDetailLabel(item)}</span>
             ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
         `).join("")}</div>`;
