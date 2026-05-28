@@ -399,11 +399,14 @@
       .cycleConstructionTable .timeHead { left: auto !important; min-width: 112px !important; position: static !important; width: 112px !important; z-index: auto !important; }
       .cycleConstructionTable thead th { position: static !important; z-index: auto !important; }
       .cycleConstructionTable th, .cycleConstructionTable td { padding: 3px; }
-      .cycleConstructionCell { height: 58px; padding: 0; vertical-align: stretch; }
-      .cycleConstructionCellInner { display: grid; gap: 3px; height: 58px; min-height: 0; padding: 3px; }
-      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: 1fr 1fr; height: 48px; min-height: 0; }
-      .cycleConstructionHalf, .cycleConstructionFull { border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 0; min-width: 0; overflow: visible; padding: 3px; }
-      .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; text-align: center; }
+      .cycleConstructionCell { height: 58px; overflow: hidden; padding: 0; vertical-align: stretch; }
+      .cycleConstructionCellInner { box-sizing: border-box; display: grid; gap: 3px; height: 58px; min-height: 0; min-width: 0; overflow: hidden; padding: 3px; }
+      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: 48px; min-height: 0; min-width: 0; overflow: hidden; }
+      .cycleConstructionHalf, .cycleConstructionFull { box-sizing: border-box; border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 0; min-width: 0; max-width: 100%; overflow: hidden; padding: 3px; }
+      .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; max-width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+      .cycleBlockGrid { align-content: start; display: grid; gap: 2px; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); min-height: 0; min-width: 0; overflow: hidden; width: 100%; }
+      .cycleConstructionHalf .cycleBlockGrid { grid-template-columns: repeat(auto-fit, minmax(42px, 1fr)); }
+      .cycleBlockGrid .buildBlock { height: auto; min-width: 0; width: 100%; }
       .cycleConstructionAsCell { background: #fff; display: grid; min-height: 100%; overflow: hidden; }
       .constructionAsStack { align-content: start; align-items: start; display: grid; gap: 3px; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); min-width: 0; overflow: hidden; width: 100%; }
       .constructionAsStack .buildBlock { min-height: 24px; width: 100%; }
@@ -7018,7 +7021,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderConstructionCycleBlocks(indexedItems, key, editable = true) {
-        return indexedItems.map(({ item, index }) => `
+        if (!indexedItems.length) return "";
+        return `<div class="cycleBlockGrid">${indexedItems.map(({ item, index }) => `
           <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
@@ -7026,7 +7030,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
             ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
-        `).join("");
+        `).join("")}</div>`;
       }
 
       function asSessionsForConstructionCycle(row, cycle, key, filterSelection = false) {
@@ -7110,7 +7114,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 return `<td class="cycleConstructionCell">
                   <div class="cycleConstructionCellInner">
                     ${hasQuinzaine
-                      ? `${!blockedRow && allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll, editable)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection, editable)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection, editable)}</div>`
+                      ? `${!blockedRow && allItems.length ? renderConstructionCycleBlocks(allItems, keyAll, editable) : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection, editable)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection, editable)}</div>`
                       : renderConstructionCycleArea(row, cycle, "", "", filterSelection, editable)}
                   </div>
                 </td>`;
