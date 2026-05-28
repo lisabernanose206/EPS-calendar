@@ -390,10 +390,10 @@
       .coTeacherDurationPanel input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-weight: 900; min-height: 34px; padding: 0 8px; width: 100%; }
       .coTeacherDurationPanel span { color: #64748b; font-size: 10px; font-weight: 850; }
       .constructionTable .buildCellStack { gap: 2px; min-width: 0; width: 100%; }
-      .constructionTable .buildFacilitySlot { gap: 2px; min-height: 0; }
+      .constructionTable .buildFacilitySlot { gap: 3px; min-height: 34px; }
       .constructionTable .buildSlotSpacer { min-height: 0; }
-      .constructionTable .buildBlock { gap: 0; justify-items: center; min-height: 0; max-width: 100%; min-width: 0; overflow: hidden; padding: 2px 18px 2px 18px; position: relative; text-align: center; width: 100%; }
-      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { display: block; line-height: 1.05; max-width: 100%; min-width: 0; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+      .constructionTable .buildBlock { align-content: center; gap: 1px; justify-items: center; min-height: 28px; max-width: 100%; min-width: 0; overflow: visible; padding: 3px 18px 3px 18px; position: relative; text-align: center; width: 100%; }
+      .constructionTable .buildBlock strong, .constructionTable .buildBlock span { display: block; line-height: 1.05; max-width: 100%; min-width: 0; overflow: visible; overflow-wrap: anywhere; text-align: center; white-space: normal; word-break: normal; }
       .constructionTable .buildBlock button { position: absolute; top: 2px; }
       .constructionTable .buildBlock .removeBlockButton { right: 2px; }
       .constructionTable .buildBlock .moveBlockButton { left: 2px; }
@@ -405,9 +405,9 @@
       .cycleConstructionTable thead th { position: static !important; z-index: auto !important; }
       .cycleConstructionTable th, .cycleConstructionTable td { padding: 3px; }
       .cycleConstructionCell { min-height: 76px; overflow: visible; padding: 0; vertical-align: stretch; }
-      .cycleConstructionCellInner { box-sizing: border-box; display: grid; gap: 3px; grid-auto-rows: min-content; min-height: 76px; min-width: 0; overflow: visible; padding: 3px; }
-      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 54px; min-width: 0; overflow: visible; }
-      .cycleConstructionHalf, .cycleConstructionFull { box-sizing: border-box; border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 32px; min-width: 0; max-width: 100%; overflow: visible; padding: 3px; }
+      .cycleConstructionCellInner { box-sizing: border-box; display: grid; gap: 3px; grid-auto-rows: min-content; min-height: 88px; min-width: 0; overflow: visible; padding: 3px; }
+      .cycleConstructionSplit { display: grid; gap: 3px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 66px; min-width: 0; overflow: visible; }
+      .cycleConstructionHalf, .cycleConstructionFull { box-sizing: border-box; border: 1px dashed rgba(15,23,42,0.22); border-radius: 6px; min-height: 42px; min-width: 0; max-width: 100%; overflow: visible; padding: 3px; }
       .cycleConstructionHalfLabel { color: #64748b; display: block; font-size: 9px; font-weight: 950; margin-bottom: 2px; max-width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
       .cycleBlockGrid { align-content: start; display: grid; gap: 2px; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); min-height: 0; min-width: 0; overflow: visible; width: 100%; }
       .cycleConstructionHalf .cycleBlockGrid { grid-template-columns: repeat(auto-fit, minmax(42px, 1fr)); }
