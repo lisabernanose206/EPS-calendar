@@ -2090,6 +2090,7 @@
           if (!cycle) return;
           weeksForCycle(cycle).forEach((weekItem) => {
             if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
+            if (ruleBlockedByUnavailable(rule, weekItem)) return;
             const key = yearCellKey(rule.rowId, weekItem.rank);
             if (isBlockExcluded(rule.id, key)) return;
             if (isRuleExcluded(rule.id, key)) return;
@@ -2335,11 +2336,13 @@
         if (!row.isAs) return [];
         const rowDate = rowDateForWeek(row, weekItem);
         const key = yearCellKey(row.id, weekItem.rank);
+        const blockedTeacherIds = unavailableTeachersForCell(row, weekItem, true);
         return asSessions.filter((session) => {
           const start = dateOnly(session.start);
           const end = dateOnly(session.end);
           const slotIds = Array.isArray(session.slotIds) ? session.slotIds : [];
-          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && (!slotIds.length || slotIds.includes(row.slot.id)) && !itemExcludedForCell(asExclusions, session.id, key);
+          const teacherBlocked = (session.teacherIds || []).some((teacherId) => blockedTeacherIds.has(teacherId));
+          return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && (!slotIds.length || slotIds.includes(row.slot.id)) && !teacherBlocked && !itemExcludedForCell(asExclusions, session.id, key);
         });
       }
 
@@ -2371,13 +2374,13 @@
         return session.name && session.name !== "AS" ? `AS ${session.name}` : "AS";
       }
 
-      function unavailableForCell(row, weekItem) {
-        if (row.isAs) return [];
+      function unavailableForCell(row, weekItem, includeAs = false) {
+        if (row.isAs && !includeAs) return [];
         return facilityUnavailability.filter((item) => unavailableMatchesCell(item, row, weekItem));
       }
 
       function unavailableMatchesCell(item, row, weekItem) {
-        if (!item || !row || !weekItem || row.isAs) return false;
+        if (!item || !row || !weekItem) return false;
         const rowDate = rowDateForWeek(row, weekItem);
         const matchesPeriod = item.periodMode === "cycles" && (item.cycleIds || []).length
           ? (item.cycleIds || []).some((cycleId) => {
@@ -2404,8 +2407,15 @@
         return new Set(unavailableForCell(row, weekItem).flatMap((item) => item.classIds || []));
       }
 
-      function unavailableTeachersForCell(row, weekItem) {
-        return new Set(unavailableForCell(row, weekItem).flatMap((item) => item.teacherIds || []));
+      function unavailableTeachersForCell(row, weekItem, includeAs = false) {
+        return new Set(unavailableForCell(row, weekItem, includeAs).flatMap((item) => item.teacherIds || []));
+      }
+
+      function unavailableTeachersForCycleSpan(row, cycle, weekLetter = "all") {
+        if (!row || !cycle) return new Set();
+        return new Set(weeksForCycle(cycle)
+          .filter((weekItem) => weekLetter === "all" || weekItem.letter === weekLetter)
+          .flatMap((weekItem) => [...unavailableTeachersForCell(row, weekItem)]));
       }
 
       function blockUnavailableMessage(row, weekItem, block) {
@@ -3683,9 +3693,15 @@
         if (!session) return false;
         const targetParts = parseYearCellKey(targetKey);
         const targetRow = yearRows().find((item) => item.id === targetParts.rowId);
-        if (!targetRow) return false;
+        const targetWeek = schoolYearWeeks().find((item) => item.rank === targetParts.weekRank);
+        if (!targetRow || !targetWeek) return false;
         if (!targetRow.isAs) {
           showValidationPopup("Une AS doit rester sur un creneau AS");
+          return false;
+        }
+        const blockedTeacherIds = unavailableTeachersForCell(targetRow, targetWeek, true);
+        if ((session.teacherIds || []).some((teacherId) => blockedTeacherIds.has(teacherId))) {
+          showValidationPopup("Impossible de deplacer l'AS : un professeur est indisponible sur ce creneau");
           return false;
         }
         asSessions = asSessions.map((item) => item.id === sessionId ? {
@@ -5782,9 +5798,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           : cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
+        const cycleUnavailableTeacherIds = cellCycle ? unavailableTeachersForCycleSpan(row, cellCycle, blockWeekLetter) : new Set();
         const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass) || !serviceAllowsClassForTeachers(blockTeacherIds, blockClass);
         const selectedFacilityUnavailable = (occupied.facilityIds.has(blockFacilityId) && !blockCoIntervention) || occupied.unavailableFacilityIds.has(blockFacilityId);
-        const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId));
+        const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId) || cycleUnavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
         const unavailableMessage = blockUnavailableMessage(row, weekItem, block);
         const cycleUnavailableMessage = cellCycle ? blockCycleUnavailableMessage(row.id, cellCycle.id, block, blockWeekLetter) : "";
@@ -5814,11 +5831,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildField">
                 <label>Professeur(s)</label>
                 <div class="choiceGrid">${teachers.map((teacher) => {
-                  const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id);
+                  const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id) || cycleUnavailableTeacherIds.has(teacher.id);
                   const reason = occupied.teacherIds.has(teacher.id)
                     ? `${teacher.name} est deja pris sur ce creneau.`
                     : occupied.unavailableTeacherIds.has(teacher.id)
                       ? `${teacher.name} est indisponible sur ce creneau.`
+                      : cycleUnavailableTeacherIds.has(teacher.id)
+                        ? `${teacher.name} est indisponible sur une semaine de ce cycle.`
                       : `${teacher.name} disponible.`;
                   return `<button class="choiceButton ${blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${teacher.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
                 }).join("")}</div>

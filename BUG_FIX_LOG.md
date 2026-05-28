@@ -1,5 +1,7 @@
 # Log des corrections
 
+- Indisponibilites : prise en compte des profs, classes et installations lors de la reconstruction automatique du planning ; les AS respectent aussi les indisponibilites profs.
+
 - Navigation Admin : onglet Construction remis au fond standard avec une icône travaux.
 - Construction : déplacement des blocs AS et événements avec mise à jour des AS/événements source.
 - Construction : déplacement bloqué sur les créneaux AS et bloc fantôme semi-transparent ajouté pendant le déplacement.
