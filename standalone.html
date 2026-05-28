@@ -2154,7 +2154,7 @@
         const activityId = override.activityId !== undefined ? override.activityId : rule.block?.activityId || "";
         const facility = facilities.find((item) => item.id === facilityId);
         const activity = activityAllowedForFacility(facilityId, activityId)
-          ? activities.find((item) => item.id === activityId)
+          ? constructionActivityById(activityId)
           : null;
         return {
           ...rule.block,
@@ -4642,6 +4642,41 @@
         return serviceRowsForTeacher(teacherId).filter((row) => row.freeService);
       }
 
+      function serviceFreeActivityId(label) {
+        const base = String(label || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "") || "service-libre";
+        return `service-free::${base}`;
+      }
+
+      function serviceFreeActivities() {
+        const seen = new Set();
+        return Object.values(serviceAssignments)
+          .flatMap((rows) => Array.isArray(rows) ? rows : [])
+          .filter((row) => row.freeService && String(row.label || "").trim())
+          .map((row) => {
+            const label = String(row.label || "").trim();
+            return { id: serviceFreeActivityId(label), label, freeService: true };
+          })
+          .filter((activity) => {
+            const key = activity.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+      }
+
+      function serviceFreeActivityById(activityId) {
+        return serviceFreeActivities().find((activity) => activity.id === activityId) || null;
+      }
+
+      function constructionActivityById(activityId) {
+        return activities.find((activity) => activity.id === activityId) || serviceFreeActivityById(activityId);
+      }
+
       function serviceAssignmentFor(teacherId, schoolClass) {
         return serviceClassRowsForTeacher(teacherId).find((item) => item.classId === schoolClass);
       }
@@ -4827,6 +4862,7 @@
 
       function activityAllowedForFacility(facilityId, activityId) {
         if (!activityId) return true;
+        if (serviceFreeActivityById(activityId)) return true;
         return allowedActivityIdsForFacility(facilityId).includes(activityId);
       }
 
@@ -4837,7 +4873,7 @@
         const primaryTeacher = selectedTeachers[0];
         const facility = facilities.find((item) => item.id === blockFacilityId);
         const activity = activityAllowedForFacility(blockFacilityId, blockActivityId)
-          ? activities.find((item) => item.id === blockActivityId)
+          ? constructionActivityById(blockActivityId)
           : null;
         const selectedTeacherClasses = Object.fromEntries(selectedTeachers
           .map((teacher) => [teacher.id, blockTeacherClasses[teacher.id] || ""])
@@ -5595,7 +5631,9 @@
         if (!rules.length) return false;
         return rules.every((rule) => constructionCyclesForRule(rule).every((cycle) => {
           const block = blockWithCycleOverride(rule, cycle);
+          if (!block.facilityId && serviceFreeActivityById(block.activityId)) return true;
           if (!block.facilityId) return false;
+          if (serviceFreeActivityById(block.activityId)) return true;
           return activitiesForFacility(block.facilityId).length ? Boolean(block.activityId) : true;
         }));
       }
@@ -6182,6 +6220,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const presentCount = items.length + events.length + asItems.length;
         const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
         const availableActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : activities;
+        const availableFreeActivities = serviceFreeActivities();
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
         const renderTeacherClassPicker = (teacher) => {
           const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
@@ -6267,7 +6306,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
                   ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activite reliee a cette installation." : "Aucune activite renseignee."}</span>`}
                 </div>
-                <span class="muted">Optionnel : vous pouvez laisser vide, meme si une installation est choisie.</span>
+                ${availableFreeActivities.length ? `<label>Service libre</label>
+                <div class="choiceGrid">
+                  ${availableFreeActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("")}
+                </div>` : ""}
+                <span class="muted">Optionnel : les services libres peuvent etre choisis sans installation.</span>
               </div>` : ""}
               ${!editingCycleDetails ? (blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
             </div>
