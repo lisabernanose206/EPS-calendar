@@ -5791,6 +5791,48 @@
         return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundConstructedHours(total)]));
       }
 
+      function annualConstructionTeacherClassHours() {
+        const totals = Object.fromEntries(teachers.map((teacher) => [teacher.id, {}]));
+        annualConstructionRules().forEach((rule) => {
+          if (rule.block?.optionBlock) return;
+          const row = yearRows().find((item) => item.id === rule.rowId);
+          if (!row?.slot) return;
+          const slotHours = fullServiceSlotHours(row);
+          const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
+          teacherIdsForBlock(rule.block).forEach((teacherId) => {
+            const schoolClass = teacherClassForBlock(rule.block, teacherId);
+            if (!schoolClass) return;
+            if (!totals[teacherId]) totals[teacherId] = {};
+            totals[teacherId][schoolClass] = (totals[teacherId][schoolClass] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
+          });
+        });
+        return Object.fromEntries(Object.entries(totals).map(([teacherId, classTotals]) => [
+          teacherId,
+          Object.fromEntries(Object.entries(classTotals).map(([schoolClass, total]) => [schoolClass, roundConstructedHours(total)]))
+        ]));
+      }
+
+      function constructionTeacherClassSummaries(teacherId, teacherClassTotals) {
+        const expectedRows = serviceClassRowsForTeacher(teacherId);
+        const expectedByClass = Object.fromEntries(expectedRows.map((row) => [row.classId, Number(row.hours) || 0]));
+        const actualByClass = teacherClassTotals[teacherId] || {};
+        return [...new Set([...Object.keys(expectedByClass), ...Object.keys(actualByClass)])]
+          .sort((a, b) => a.localeCompare(b, "fr"))
+          .map((schoolClass) => {
+            const total = actualByClass[schoolClass] || 0;
+            const target = expectedByClass[schoolClass] || 0;
+            const diff = roundConstructedHours(total - target);
+            return {
+              schoolClass,
+              total,
+              target,
+              missing: Math.max(0, -diff),
+              excess: Math.max(0, diff),
+              ok: Math.abs(diff) < 0.01
+            };
+          });
+      }
+
       function classHourTargetForConstruction(schoolClass) {
         return serviceClassTarget(schoolClass);
       }
@@ -5864,6 +5906,7 @@
 
       function renderConstructionServiceSummary() {
         const teacherTotals = annualConstructionTeacherHours();
+        const teacherClassTotals = annualConstructionTeacherClassHours();
         const classTotals = annualConstructionClassHours();
         const classSummaries = classes.map((schoolClass) => {
           const total = classTotals[schoolClass] || 0;
@@ -5884,20 +5927,27 @@
               const target = teacher.weeklyReference;
               const status = hourStatus(total - target);
               const progress = target ? Math.min(100, Math.round((total / target) * 100)) : 0;
+              const classDetails = constructionTeacherClassSummaries(teacher.id, teacherClassTotals);
               return `<article class="hoursCard" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop"><strong>${teacher.name}</strong><span class="hoursStatus ${status.className}">${status.label}</span></div>
                 <div class="hoursMain"><strong>${formatHours(total)}</strong><span class="muted">/ ${formatHours(target)}</span></div>
                 <div class="hoursProgress"><span style="width:${progress}%"></span></div>
+                <div class="classPills">
+                  ${classDetails.length ? classDetails.map((item) => {
+                    const detail = item.missing ? ` &middot; manque ${formatHours(item.missing)}` : item.excess ? ` &middot; trop ${formatHours(item.excess)}` : "";
+                    return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${compactClassName(item.schoolClass)} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
+                  }).join("") : `<span class="classPill">Aucune classe affectee</span>`}
+                </div>
               </article>`;
             }).join("")}
           </div>
           ${missingClasses.length ? `<h3>Classes a completer</h3>
           <div class="classPills">
-            ${missingClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} · manque ${formatHours(item.missing)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
+            ${missingClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} &middot; manque ${formatHours(item.missing)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
           </div>` : ""}
           ${excessClasses.length ? `<h3>Classes en depassement</h3>
           <div class="classPills">
-            ${excessClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} Â· trop ${formatHours(item.excess)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
+            ${excessClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} &middot; trop ${formatHours(item.excess)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
           </div>` : ""}
           <h3>Volumes par classe</h3>
           <div class="classPills">
