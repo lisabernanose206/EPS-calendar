@@ -432,6 +432,7 @@
       .choiceButton { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; cursor: pointer; font-size: 11px; font-weight: 900; min-height: 30px; padding: 0 9px; }
       .choiceButton.active { box-shadow: inset 0 0 0 2px #0f172a; }
       .choiceButton.unavailable { filter: grayscale(1); opacity: 0.35; }
+      .choiceButton[aria-disabled="true"] { cursor: not-allowed; }
       .compactCardGrid.compactActivityGrid { gap: 5px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
       .compactActivityGrid .eventCard { gap: 4px; min-height: 0; padding: 7px; }
       .compactActivityGrid .eventCard strong { font-size: 11px; line-height: 1.05; overflow-wrap: anywhere; }
@@ -1094,6 +1095,7 @@
       let blockIsOption = false;
       let blockOptionId = "";
       let blockOptionHours = "";
+      let blockOptionCycleIds = [];
       let facilityDraftName = "";
       let facilityDraftType = "";
       let activityDraftName = "";
@@ -1960,10 +1962,10 @@
         unavailableClassIds = unavailableClassIds.filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass)));
         facilityUnavailability = facilityUnavailability.map((item) => ({ ...item, classIds: (item.classIds || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
         sportEvents = sportEvents.map((event) => ({ ...event, classes: (event.classes || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
-        constructionRules = constructionRules.filter((rule) => valid.has(baseClassFromGroupedClass(rule.block?.schoolClass || "")));
+        constructionRules = constructionRules.filter((rule) => rule.block?.optionBlock || valid.has(baseClassFromGroupedClass(rule.block?.schoolClass || "")));
         constructionPlan = Object.fromEntries(Object.entries(constructionPlan).map(([key, items]) => [
           key,
-          (items || []).filter((item) => valid.has(baseClassFromGroupedClass(item.schoolClass || "")))
+          (items || []).filter((item) => item.optionBlock || valid.has(baseClassFromGroupedClass(item.schoolClass || "")))
         ]));
       }
 
@@ -2199,9 +2201,30 @@
       function constructionCyclesForRule(rule) {
         if (!rule) return [];
         if (!isAnnualConstructionRule(rule)) return [findCycleForRule(rule)].filter(Boolean);
+        if (rule.block?.optionBlock) {
+          const optionCycles = cycles.slice(0, 4);
+          const selectedIds = Array.isArray(rule.block.optionCycleIds) ? rule.block.optionCycleIds : [];
+          return selectedIds.length
+            ? optionCycles.filter((cycle) => selectedIds.includes(cycle.id))
+            : optionCycles;
+        }
         const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
         const scopedCycles = cyclesForClassLevel(level);
         return (scopedCycles.length ? scopedCycles : cycles).slice(0, 4);
+      }
+
+      function optionCycleChoices() {
+        return cycles.slice(0, 4);
+      }
+
+      function allOptionCycleIds() {
+        return optionCycleChoices().map((cycle) => cycle.id);
+      }
+
+      function normalizedOptionCycleIds(ids = blockOptionCycleIds) {
+        const validIds = new Set(allOptionCycleIds());
+        const selected = (Array.isArray(ids) ? ids : []).filter((id) => validIds.has(id));
+        return selected.length ? selected : allOptionCycleIds();
       }
 
       function cycleOverrideForRule(rule, cycleId) {
@@ -4809,6 +4832,15 @@
         return teacherIds.length > 0 && teacherIds.every((teacherId) => serviceFreeRowsForTeacher(teacherId).length > 0);
       }
 
+      function optionBlockUnavailableReason(teacherIds = blockTeacherIds) {
+        if (!teacherIds.length) return "Selectionnez d'abord un professeur pour voir ses options.";
+        const missingTeachers = teacherIds
+          .filter((teacherId) => !serviceFreeRowsForTeacher(teacherId).length)
+          .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)?.name || teacherId);
+        if (missingTeachers.length) return `${missingTeachers.join(" + ")} n'a pas d'option renseignee dans le service theorique.`;
+        return "Option disponible.";
+      }
+
       function optionDurationMax(optionId, slotHours = currentBlockSlotHours()) {
         const option = serviceFreeOptionById(optionId);
         if (!option) return 0;
@@ -5019,6 +5051,7 @@
         const facility = facilities.find((item) => item.id === blockFacilityId);
         const option = blockIsOption && blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
         const optionHours = option ? normalizedOptionHours(option.id, blockOptionHours) : 0;
+        const optionCycleIds = blockIsOption ? normalizedOptionCycleIds() : [];
         const activity = activityAllowedForFacility(blockFacilityId, blockActivityId)
           ? constructionActivityById(blockActivityId)
           : null;
@@ -5046,6 +5079,7 @@
           optionRowId: option?.rowId || "",
           optionLabel: option?.label || "",
           optionHours,
+          optionCycleIds,
           coIntervention: blockCoIntervention
         };
       }
@@ -6564,6 +6598,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
         const selectedOption = blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
         const selectedOptionDefaultHours = selectedOption ? optionDurationMax(selectedOption.id) : 0;
+        const optionBlockAvailable = optionBlockAvailableForTeachers();
+        const optionBlockReason = optionBlockAvailable ? "Construire un bloc option." : optionBlockUnavailableReason();
+        const selectedOptionCycleIds = normalizedOptionCycleIds();
         const renderTeacherClassPicker = (teacher) => {
           const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
           const selectedLevel = blockTeacherClassLevels[teacher.id] || selectedTeacherClass.level || "";
@@ -6607,7 +6644,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="choiceGrid">
                 <button class="choiceButton ${blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-co-intervention ${blockIsOption ? "disabled" : ""}>Co-intervention</button>
                 <button class="choiceButton ${!blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-single-intervention>Cours simple</button>
-                <button class="choiceButton ${blockIsOption ? "active" : ""} ${blockTeacherIds.length && !optionBlockAvailableForTeachers() ? "unavailable" : ""}" data-toggle-option-block ${optionBlockAvailableForTeachers() ? "" : "disabled"}>Option</button>
+                <button class="choiceButton ${blockIsOption ? "active" : ""} ${optionBlockAvailable ? "" : "unavailable"}" data-toggle-option-block title="${optionBlockReason}" aria-label="${optionBlockReason}" aria-disabled="${optionBlockAvailable ? "false" : "true"}">Option</button>
               </div>
             </div>`}
             <div class="modalGrid">
@@ -6671,7 +6708,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   </div>
                   ${selectedOption ? `<label>Duree</label>
                   <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${blockOptionHours || selectedOptionDefaultHours}" />
-                  <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee.</span>`}
+                  <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>
+                  <label>Cycles concernés</label>
+                  <div class="choiceGrid">
+                    ${optionCycleChoices().map((cycle) => `<button class="choiceButton ${selectedOptionCycleIds.includes(cycle.id) ? "active" : ""}" data-pick-option-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
+                  </div>` : `<span class="muted">Choisissez l'option concernee.</span>`}
                   <span class="muted">Aucune classe n'est obligatoire pour valider ce bloc.</span>
                 </div>`
                 : blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
@@ -8858,6 +8899,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               blockIsOption = false;
               blockOptionId = "";
               blockOptionHours = "";
+              blockOptionCycleIds = [];
             }
             if (blockTeacherIds.length < 2) blockSecondTeacherHours = "";
             render();
@@ -8883,6 +8925,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = false;
             blockOptionId = "";
             blockOptionHours = "";
+            blockOptionCycleIds = [];
             render();
           });
         });
@@ -8892,18 +8935,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = false;
             blockOptionId = "";
             blockOptionHours = "";
+            blockOptionCycleIds = [];
             render();
           });
         });
         document.querySelectorAll("[data-toggle-option-block]").forEach((button) => {
           button.addEventListener("click", () => {
-            if (button.disabled || !optionBlockAvailableForTeachers()) return;
+            if (button.getAttribute("aria-disabled") === "true" || !optionBlockAvailableForTeachers()) return;
             blockIsOption = true;
             blockCoIntervention = false;
             blockClass = "";
             blockClassLevel = "";
             blockTeacherClasses = {};
             blockTeacherClassLevels = {};
+            blockOptionCycleIds = allOptionCycleIds();
             render();
           });
         });
@@ -8923,6 +8968,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             blockOptionId = blockOptionId === button.dataset.pickOption ? "" : button.dataset.pickOption;
             blockOptionHours = blockOptionId ? String(optionDurationMax(blockOptionId)) : "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pick-option-cycle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const cycleId = button.dataset.pickOptionCycle;
+            const selected = normalizedOptionCycleIds();
+            if (selected.includes(cycleId)) {
+              const next = selected.filter((id) => id !== cycleId);
+              blockOptionCycleIds = next.length ? next : selected;
+            } else {
+              blockOptionCycleIds = [...selected, cycleId];
+            }
             render();
           });
         });
@@ -9307,6 +9365,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = false;
             blockOptionId = "";
             blockOptionHours = "";
+            blockOptionCycleIds = [];
             blockTeacherClasses = {};
             blockTeacherClassLevels = {};
             render();
@@ -9323,6 +9382,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = false;
             blockOptionId = "";
             blockOptionHours = "";
+            blockOptionCycleIds = [];
             blockTeacherClasses = {};
             blockTeacherClassLevels = {};
             render();
@@ -9382,6 +9442,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               blockIsOption = false;
               blockOptionId = "";
               blockOptionHours = "";
+              blockOptionCycleIds = [];
               blockTeacherClasses = {};
               blockTeacherClassLevels = {};
               render();
@@ -9404,6 +9465,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = false;
             blockOptionId = "";
             blockOptionHours = "";
+            blockOptionCycleIds = [];
             render();
           });
         });
@@ -9460,6 +9522,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = Boolean(item.optionBlock);
             blockOptionId = item.optionId || "";
             blockOptionHours = item.optionHours ? String(item.optionHours) : "";
+            blockOptionCycleIds = item.optionBlock ? normalizedOptionCycleIds(item.optionCycleIds) : [];
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
           });
@@ -9491,6 +9554,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockIsOption = Boolean(item.optionBlock);
             blockOptionId = item.optionId || "";
             blockOptionHours = item.optionHours ? String(item.optionHours) : "";
+            blockOptionCycleIds = item.optionBlock ? normalizedOptionCycleIds(item.optionCycleIds) : [];
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
           });
