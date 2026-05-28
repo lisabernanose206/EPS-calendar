@@ -5678,7 +5678,7 @@
             </div>
             <div class="builderActions">
               <div class="teacherColorLegend">
-                ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}"><i class="dot" style="background:${teacher.border}"></i>${teacher.name}</span>`).join("")}
+                ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
               </div>
               <div class="zoomControls">
                 <button class="ghostButton" data-construction-zoom="-">-</button>
