@@ -6541,10 +6541,15 @@
         const options = constructionVersionPartOptions();
         const validIds = options.map((option) => option.id);
         const selectedParts = constructionVersionDraftParts.filter((part, index) => validIds.includes(part) && constructionVersionDraftParts.indexOf(part) === index);
-        return `<div class="modalOverlay">
-          <div class="blockModal">
-            <button class="modalClose" id="cancelConstructionVersionSaveTop">x</button>
-            <h2>Sauvegarder la construction</h2>
+        return `<div class="modalBackdrop">
+          <section class="modal">
+            <div class="modalHeader">
+              <div>
+                <h3>Sauvegarder la construction</h3>
+                <p class="muted">Creez une version reutilisable de la construction actuelle.</p>
+              </div>
+              <button class="modalClose" id="cancelConstructionVersionSaveTop">x</button>
+            </div>
             <div class="eventField">
               <label>Nom de la version</label>
               <input id="constructionVersionName" value="${escapeHtml(constructionVersionDraftName)}" placeholder="Ex. Version conseil peda" />
@@ -6562,7 +6567,7 @@
               <button class="ghostButton" id="cancelConstructionVersionSave">Annuler</button>
               <button class="addButton" id="confirmConstructionVersionSave" ${selectedParts.length ? "" : "disabled"}>Sauvegarder</button>
             </div>
-          </div>
+          </section>
         </div>`;
       }
 
