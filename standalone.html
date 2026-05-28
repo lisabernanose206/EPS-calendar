@@ -1268,6 +1268,10 @@
       let authEmail = ADMIN_EMAIL;
       let authPassword = "";
       let authStatus = adminSession ? "Mode admin actif." : "";
+      if (adminSession) {
+        week = "build";
+        constructionMode = "planning";
+      }
       sportEvents = normalizePlanningItems(sportEvents);
       asSessions = normalizePlanningItems(asSessions);
       localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
