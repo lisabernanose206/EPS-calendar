@@ -337,30 +337,18 @@
       .constructionVersionControls select { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; }
       .optimizeButton { background: #ecfeff; border-color: #67e8f9; color: #155e75; }
       .optimizeButton:hover { background: #cffafe; }
-      .constructionVersionChoices { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-      .constructionVersionChoice { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #172033; cursor: pointer; display: flex; font-size: 12px; font-weight: 850; gap: 8px; min-height: 36px; padding: 7px 9px; }
-      .constructionVersionChoice input { accent-color: #0f766e; flex: 0 0 auto; height: 16px; margin: 0; width: 16px; }
+      .constructionVersionChoices { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+      .constructionVersionChoice { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #172033; cursor: pointer; display: flex; font-size: 12px; font-weight: 850; gap: 8px; line-height: 1.2; min-height: 34px; min-width: 0; padding: 7px 9px; }
+      .eventField .constructionVersionChoice input[type="checkbox"], .constructionVersionChoice input[type="checkbox"] { accent-color: #0f766e; appearance: auto; flex: 0 0 14px; height: 14px; margin: 0; min-height: 0; padding: 0; width: 14px; }
       .constructionVersionChoice:has(input:checked) { background: #ecfdf5; border-color: #99f6e4; color: #0f766e; }
       .constructionRulesPage { display: grid; gap: 12px; grid-template-columns: 340px minmax(0, 1fr); margin-top: 12px; }
-      .constructionRulesForm, .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
-      .constructionRulesForm h3, .constructionRulesList h3 { margin: 0; }
+      .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
+      .constructionRulesList h3 { margin: 0; }
       .constructionRuleCard { border: 1px solid #cbd5e1; border-left: 5px solid #0f766e; border-radius: 8px; display: grid; gap: 5px; padding: 10px; }
       .constructionRuleCard strong { color: #0f172a; font-size: 13px; }
       .constructionRuleCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
       .constructionRuleCardHead { align-items: start; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
-      .constructionRuleActions { align-items: center; display: inline-flex; gap: 4px; justify-content: flex-end; }
-      .aiRulePreview { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0f766e; border-radius: 8px; display: grid; gap: 5px; padding: 9px; }
-      .aiRulePreview strong { color: #0f172a; font-size: 12px; }
-      .aiRulePreview span { color: #475569; font-size: 12px; font-weight: 850; line-height: 1.35; }
-      .aiRulePreview.error { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; }
-      .aiRulePreview.error strong, .aiRulePreview.error span { color: #991b1b; }
-      .aiRuleBadge { background: #ccfbf1; border: 1px solid #5eead4; border-radius: 999px; color: #0f766e; display: inline-flex; font-size: 10px; font-weight: 950; margin-top: 4px; padding: 2px 7px; width: max-content; }
-      .ruleIconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
-      .ruleIconButton:hover { border-color: #0f172a; color: #0f172a; }
-      .ruleIconButton.danger { color: #991b1b; }
-      .ruleIconButton.danger:hover { background: #fef2f2; border-color: #fca5a5; }
-      .ruleIconButton svg { height: 15px; width: 15px; }
       .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
       .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
       .constructionRuleGroupsGrid { display: grid; gap: 8px; }
@@ -985,13 +973,13 @@
       let schoolConstraints = loadSchoolConstraints();
       let slots = schoolConstraints.courseSlots;
       const defaultFacilities = [
-        { id: "gym", label: "Salle de gym", type: "external" },
-        { id: "boxe", label: "Salle de boxe", type: "external" },
-        { id: "bad", label: "Salle de badminton", type: "external" },
-        { id: "piscine", label: "Piscine", type: "external" },
-        { id: "cour", label: "Cour", type: "internal" },
-        { id: "terrains", label: "Petits terrains", type: "internal" },
-        { id: "basketball", label: "Basketball", type: "internal" }
+        { id: "gym", label: "Salle de gym", type: "external", locationType: "indoor" },
+        { id: "boxe", label: "Salle de boxe", type: "external", locationType: "indoor" },
+        { id: "bad", label: "Salle de badminton", type: "external", locationType: "indoor" },
+        { id: "piscine", label: "Piscine", type: "external", locationType: "indoor" },
+        { id: "cour", label: "Cour", type: "internal", locationType: "outdoor" },
+        { id: "terrains", label: "Petits terrains", type: "internal", locationType: "outdoor" },
+        { id: "basketball", label: "Basketball", type: "internal", locationType: "outdoor" }
       ];
       let facilities = loadFacilities();
       let activities = loadActivities();
@@ -1017,7 +1005,10 @@
         { id: "class-single-place", category: "Conflit classe", title: "Une classe, un seul cours", detail: "Une classe ou un demi-groupe ne peut pas etre place sur deux cours qui se chevauchent." },
         { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
         { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
-        { id: "class-activity-program", category: "Installations / activites", title: "Programme annuel des classes", detail: "Les classes doivent suivre leur programme de l'annee en termes d'activites." },
+        { id: "seasonal-location-preference", category: "Installations / activites", title: "Saisonnalite des lieux", detail: "Privilegier les lieux en exterieur au premier et au dernier cycle, et les lieux en interieur sur les cycles intermediaires." },
+        { id: "class-activity-program", category: "Installations / activites", title: "Programme annuel des classes", detail: "Chaque classe doit faire toutes les activites prevues dans son programme annuel." },
+        { id: "class-single-activity-per-cycle", category: "Installations / activites", title: "Activite unique hors 6eme", detail: "Sur un meme cycle, les classes de 5eme, 4eme et 3eme font une seule activite. Les 6eme suivent leur regle specifique." },
+        { id: "sixth-grade-dual-activity-swimming", category: "Installations / activites", title: "Programme specifique 6eme", detail: "Les classes de 6eme font exactement deux activites distinctes par cycle. La natation, associee a la piscine, est obligatoire sur les trois premiers cycles." },
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
         { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." },
         { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixes sur l'annee ; seules les installations et activites varient par cycle." },
@@ -1072,16 +1063,11 @@
       let constructionWorkspaceMode = loadConstructionWorkspaceMode();
       let constructionVersions = loadConstructionVersions();
       let constructionLocks = loadConstructionLocks();
+      let constructionOptimizeConfirmOpen = false;
       let constructionVersionPanelOpen = false;
       let constructionVersionDraftName = "";
       let constructionVersionDraftParts = [];
       let constructionRuleSettings = loadConstructionRuleSettings();
-      let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
-      let constructionRuleInterpretation = null;
-      let constructionRuleInterpretationError = "";
-      let constructionRuleInterpreting = false;
-      let constructionRuleInterpretationSource = "";
-      let editingConstructionRuleId = "";
       let expandedConstructionRuleCategory = "";
       let constructionOptimizationResult = null;
       let constructionChecksRevision = 0;
@@ -1120,6 +1106,7 @@
       let blockOptionCycleIds = [];
       let facilityDraftName = "";
       let facilityDraftType = "";
+      let facilityDraftLocationType = "";
       let activityDraftName = "";
       let specialClassDraftName = "";
       let specialClassDraftBaseIds = [];
@@ -2167,15 +2154,14 @@
 
       function normalizeConstructionRuleSettings(items) {
         const source = Array.isArray(items) ? items : defaultConstructionRuleSettings;
+        const defaultIds = new Set(defaultConstructionRuleSettings.map((item) => item.id));
         const normalized = source
+          .filter((item) => defaultIds.has(item?.id))
           .map((item) => ({
             id: String(item?.id || `rule-setting-${Date.now()}-${Math.random().toString(16).slice(2)}`),
             category: String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
             title: String(item?.title || "").trim(),
-            detail: String(item?.detail || "").trim(),
-            reformulatedDetail: String(item?.reformulatedDetail || "").trim(),
-            interpretedRule: item?.interpretedRule && typeof item.interpretedRule === "object" ? item.interpretedRule : null,
-            interpretedRules: Array.isArray(item?.interpretedRules) ? item.interpretedRules.filter((rule) => rule && typeof rule === "object") : []
+            detail: String(item?.detail || "").trim()
           }))
           .filter((item) => item.title || item.detail);
         const existingIds = new Set(normalized.map((item) => item.id));
@@ -2349,20 +2335,51 @@
         saveCloudNowIfPossible(["asSessions"]);
       }
 
+      function inferredFacilityLocationType(facility) {
+        const label = String(facility?.label || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (/cour|stade|terrain|basket|football|athletisme|piste|exterieur|plein air/.test(label)) return "outdoor";
+        if (/salle|gymnase|dojo|boxe|badminton|piscine|interieur/.test(label)) return "indoor";
+        return facility?.type === "internal" ? "outdoor" : "indoor";
+      }
+
+      function normalizeFacility(facility) {
+        const type = facility?.type === "internal" ? "internal" : "external";
+        const locationType = facility?.locationType === "outdoor" || facility?.locationType === "indoor"
+          ? facility.locationType
+          : inferredFacilityLocationType({ ...facility, type });
+        return {
+          ...facility,
+          type,
+          locationType
+        };
+      }
+
+      function normalizeFacilities(items) {
+        return (Array.isArray(items) ? items : defaultFacilities).map(normalizeFacility);
+      }
+
+      function facilityTypeLabel(type) {
+        return type === "external" ? "Externe a l'etablissement" : "Interne a l'etablissement";
+      }
+
+      function facilityLocationTypeLabel(locationType) {
+        return locationType === "outdoor" ? "En exterieur" : "En interieur";
+      }
+
       function loadFacilities() {
         try {
           const saved = localStorage.getItem("planningEpsFacilities2026");
           const parsed = saved ? JSON.parse(saved) : null;
-          if (!Array.isArray(parsed)) return [...defaultFacilities];
-          const withMissingDefaults = [...parsed];
-          return withMissingDefaults;
+          if (!Array.isArray(parsed)) return normalizeFacilities(defaultFacilities);
+          return normalizeFacilities(parsed);
         } catch {
-          return [...defaultFacilities];
+          return normalizeFacilities(defaultFacilities);
         }
       }
 
       function saveFacilities() {
         invalidateConstructionChecksCache();
+        facilities = normalizeFacilities(facilities);
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         saveCloudNowIfPossible(["facilities", "facilityActivities"]);
       }
@@ -3131,7 +3148,7 @@
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
         classConfig = normalizeClassConfig(data.classConfig || classConfig);
         classes = classesFromConfig();
-        facilities = Array.isArray(data.facilities) ? data.facilities : facilities;
+        facilities = Array.isArray(data.facilities) ? normalizeFacilities(data.facilities) : normalizeFacilities(facilities);
         activities = Array.isArray(data.activities) ? data.activities : activities;
         facilityActivities = data.facilityActivities && typeof data.facilityActivities === "object" ? data.facilityActivities : {};
         activityProgramByLevel = normalizeActivityProgramByLevel(data.activityProgramByLevel || activityProgramByLevel);
@@ -3908,233 +3925,6 @@
         return constructionRuleSettings.some((rule) => rule.id === id);
       }
 
-      function resetConstructionRuleInterpretation() {
-        constructionRuleInterpretation = null;
-        constructionRuleInterpretationError = "";
-        constructionRuleInterpretationSource = "";
-      }
-
-      function constructionRuleDraftSource() {
-        return [
-          constructionRuleDraft.title || "",
-          constructionRuleDraft.detail || "",
-          constructionRuleDraft.category || "",
-          constructionRuleDraft.customCategory || ""
-        ].join("\n").trim();
-      }
-
-      function normalizeSearchText(value) {
-        return String(value || "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]+/g, " ")
-          .trim();
-      }
-
-      function findNamedChoiceInText(text, choices) {
-        const normalized = normalizeSearchText(text);
-        return choices
-          .map((choice) => ({ choice, label: normalizeSearchText(choice.label || choice.name || choice.id) }))
-          .filter((item) => item.label && normalized.includes(item.label))
-          .sort((first, second) => second.label.length - first.label.length)[0]?.choice || null;
-      }
-
-      function findNamedChoicesInText(text, choices) {
-        const normalized = normalizeSearchText(text);
-        const matches = choices
-          .map((choice) => ({ choice, label: normalizeSearchText(choice.label || choice.name || choice.id) }))
-          .filter((item) => item.label && normalized.includes(item.label))
-          .sort((first, second) => second.label.length - first.label.length);
-        const selected = [];
-        matches.forEach((match) => {
-          if (selected.some((item) => item.label.includes(match.label) || match.label.includes(item.label))) return;
-          selected.push(match);
-        });
-        return selected.map((item) => item.choice);
-      }
-
-      function inferRuleClassLevel(text) {
-        const normalized = normalizeSearchText(text);
-        return classLevels.find((level) => normalized.includes(normalizeSearchText(level))) || "";
-      }
-
-      function inferInterpretedRuleType(text, targetKind) {
-        const normalized = normalizeSearchText(text);
-        const hard = /\b(interdire|interdit|jamais|ne pas|pas de|exclure|bloquer|empecher)\b/.test(normalized);
-        const avoid = /\b(eviter|evite|si possible pas|dernier recours|moins possible)\b/.test(normalized);
-        const prefer = /\b(favoriser|favorise|preferer|prioriser|privilegier|idealement)\b/.test(normalized);
-        const require = /\b(imposer|impose|obligatoire|doit etre|toujours|forcer)\b/.test(normalized);
-        if (hard) return targetKind === "activity" ? "forbid_activity" : "forbid_facility";
-        if (require) return targetKind === "activity" ? "require_activity" : "require_facility";
-        if (prefer) return targetKind === "activity" ? "prefer_activity" : "prefer_facility";
-        if (avoid) return targetKind === "activity" ? "avoid_activity" : "avoid_facility";
-        return "";
-      }
-
-      function localInterpretConstructionRule(text) {
-        const matchedFacilities = findNamedChoicesInText(text, facilities);
-        const matchedActivities = findNamedChoicesInText(text, activities);
-        const cycle = findNamedChoiceInText(text, classicConstructionCycles().map((cycle, index) => ({ ...cycle, label: cycle.name || `Cycle ${index + 1}` })));
-        const teacher = findNamedChoiceInText(text, teachers);
-        const schoolClass = findNamedChoiceInText(text, classes.map((schoolClass) => ({ id: schoolClass, label: compactClassName(schoolClass) })));
-        const classLevel = inferRuleClassLevel(text);
-        const targetKind = matchedActivities.length && !matchedFacilities.length ? "activity" : "facility";
-        const type = inferInterpretedRuleType(text, targetKind);
-        const targets = targetKind === "activity" ? matchedActivities : matchedFacilities;
-        if (!type || !targets.length) {
-          return {
-            interpretable: false,
-            error: "La regle doit mentionner une action claire (interdire, eviter, favoriser, imposer) et une installation ou une activite existante."
-          };
-        }
-        const baseRule = {
-          type,
-          target: {
-            classLevel,
-            schoolClass: schoolClass?.id || "",
-            teacherId: teacher?.id || "",
-            cycleId: cycle?.id || ""
-          },
-          hard: type.startsWith("forbid_") || type.startsWith("require_"),
-          priority: type.startsWith("avoid_") ? 80 : type.startsWith("prefer_") ? 55 : 100
-        };
-        const rules = targets.length > 1
-          ? [{
-            ...baseRule,
-            facilityId: targetKind === "facility" ? targets[0].id : "",
-            facilityIds: targetKind === "facility" ? targets.map((target) => target.id) : [],
-            activityId: targetKind === "activity" ? targets[0].id : "",
-            activityIds: targetKind === "activity" ? targets.map((target) => target.id) : []
-          }]
-          : targets.map((target) => ({
-            ...baseRule,
-            facilityId: targetKind === "facility" ? target.id : "",
-            activityId: targetKind === "activity" ? target.id : ""
-          }));
-        const actionLabel = type.startsWith("forbid_")
-          ? "Interdire"
-          : type.startsWith("require_")
-            ? "Imposer"
-            : type.startsWith("prefer_")
-              ? "Favoriser"
-              : "Eviter";
-        const targetLabel = targets.map((target) => target.label).join(", ");
-        const scope = [
-          classLevel ? `niveau ${classLevel}` : "",
-          schoolClass ? `classe ${compactClassName(schoolClass.id)}` : "",
-          teacher ? `prof ${teacher.name}` : "",
-          cycle ? cycle.name : ""
-        ].filter(Boolean).join(", ") || "tous les blocs concernes";
-        return {
-          interpretable: true,
-          reformulatedDetail: `${actionLabel} ${targetLabel} pour ${scope}.`,
-          interpretedRule: rules[0],
-          interpretedRules: rules
-        };
-      }
-
-      async function interpretConstructionRuleWithAi() {
-        const source = constructionRuleDraftSource();
-        if (!source) {
-          constructionRuleInterpretationError = "Renseignez une regle avant de lancer l'interpretation.";
-          constructionRuleInterpretation = null;
-          return;
-        }
-        constructionRuleInterpreting = true;
-        constructionRuleInterpretationError = "";
-        render();
-        try {
-          const endpoint = window.__EPS_AI_RULE_ENDPOINT__;
-          const result = endpoint
-            ? await fetch(endpoint, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                rule: {
-                  title: constructionRuleDraft.title,
-                  detail: constructionRuleDraft.detail,
-                  category: constructionRuleDraft.category === "Autre" ? constructionRuleDraft.customCategory : constructionRuleDraft.category
-                },
-                context: {
-                  facilities,
-                  activities,
-                  cycles: classicConstructionCycles(),
-                  teachers,
-                  classes
-                }
-              })
-            }).then((response) => response.ok ? response.json() : Promise.reject(new Error("Interpretation IA indisponible")))
-            : localInterpretConstructionRule(source);
-          const resultRules = Array.isArray(result?.interpretedRules)
-            ? result.interpretedRules
-            : [result?.interpretedRule].filter(Boolean);
-          if (!result?.interpretable || !resultRules.length) {
-            constructionRuleInterpretation = null;
-            constructionRuleInterpretationError = result?.error || "Cette regle n'est pas encore exploitable par l'optimiseur.";
-          } else {
-            constructionRuleInterpretation = {
-              reformulatedDetail: String(result.reformulatedDetail || constructionRuleDraft.detail || constructionRuleDraft.title).trim(),
-              interpretedRule: resultRules[0],
-              interpretedRules: resultRules
-            };
-            constructionRuleInterpretationSource = source;
-          }
-        } catch (error) {
-          constructionRuleInterpretation = null;
-          constructionRuleInterpretationError = String(error?.message || error || "Interpretation IA impossible.");
-        } finally {
-          constructionRuleInterpreting = false;
-          render();
-        }
-      }
-
-      function interpretedOptimizerRules() {
-        return constructionRuleSettings
-          .flatMap((source) => {
-            const rules = Array.isArray(source.interpretedRules)
-              ? source.interpretedRules
-              : [source.interpretedRule].filter(Boolean);
-            return rules.map((rule) => ({ source, rule }));
-          });
-      }
-
-      function optimizerRuleMatchesTarget(customRule, constructionRule, cycle) {
-        const target = customRule.target || {};
-        if (target.cycleId && target.cycleId !== cycle.id) return false;
-        if (target.classLevel && target.classLevel !== (constructionRule.classLevel || classParts(constructionRule.block?.schoolClass || "").level)) return false;
-        if (target.schoolClass && !classesForBlock(constructionRule.block).some((schoolClass) => classesOverlap(schoolClass, target.schoolClass))) return false;
-        if (target.teacherId && !teacherIdsForBlock(constructionRule.block).includes(target.teacherId)) return false;
-        return true;
-      }
-
-      function customRuleBlocksOptimizedCandidate(constructionRule, cycle, block) {
-        return interpretedOptimizerRules().some(({ rule }) => {
-          if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return false;
-          const facilityIds = Array.isArray(rule.facilityIds) && rule.facilityIds.length ? rule.facilityIds : [rule.facilityId].filter(Boolean);
-          const activityIds = Array.isArray(rule.activityIds) && rule.activityIds.length ? rule.activityIds : [rule.activityId].filter(Boolean);
-          if (rule.type === "forbid_facility") return facilityIds.includes(block.facilityId);
-          if (rule.type === "forbid_activity") return activityIds.includes(block.activityId);
-          if (rule.type === "require_facility") return facilityIds.length && !facilityIds.includes(block.facilityId);
-          if (rule.type === "require_activity") return activityIds.length && !activityIds.includes(block.activityId);
-          return false;
-        });
-      }
-
-      function customRuleOptimizedPenalty(constructionRule, cycle, block) {
-        return interpretedOptimizerRules().reduce((score, { rule }) => {
-          if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return score;
-          const priority = Number(rule.priority) || 50;
-          const facilityIds = Array.isArray(rule.facilityIds) && rule.facilityIds.length ? rule.facilityIds : [rule.facilityId].filter(Boolean);
-          const activityIds = Array.isArray(rule.activityIds) && rule.activityIds.length ? rule.activityIds : [rule.activityId].filter(Boolean);
-          if (rule.type === "avoid_facility" && facilityIds.includes(block.facilityId)) return score + priority;
-          if (rule.type === "avoid_activity" && activityIds.includes(block.activityId)) return score + priority;
-          if (rule.type === "prefer_facility" && facilityIds.length && !facilityIds.includes(block.facilityId)) return score + priority;
-          if (rule.type === "prefer_activity" && activityIds.length && !activityIds.includes(block.activityId)) return score + priority;
-          return score;
-        }, 0);
-      }
-
       function rulesShareCycleWeeks(firstRule, secondRule, cycle) {
         const firstLetter = firstRule.weekLetter || "all";
         const secondLetter = secondRule.weekLetter || "all";
@@ -4169,9 +3959,135 @@
           return activityChoices
             .filter((activity) => !enforceProgram || !programActivityIds.length || (activity && programActivityIds.includes(activity.id)))
             .map((activity) => optimizedCandidateBlock(rule, facility, activity))
-            .filter((block) => !customRuleBlocksOptimizedCandidate(rule, cycle, block))
             .filter((block) => !enforceUnavailableFacilities || !blockCycleUnavailableMessage(rule.rowId, cycle.id, block, rule.weekLetter || "all"));
         });
+      }
+
+      function optimizedRuleClassKeys(rule) {
+        return classesForBlock(rule.block).filter(Boolean);
+      }
+
+      function optimizedCycleActivityLimitForClass(schoolClass) {
+        return classParts(schoolClass).level === "6eme" && constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") ? 2 : 1;
+      }
+
+      function optimizedSwimmingActivityIds() {
+        const swimmingFacilityIds = facilities
+          .filter((facility) => /piscine|natation/i.test(String(facility.label || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")))
+          .map((facility) => facility.id);
+        const linkedSwimmingActivityIds = swimmingFacilityIds.flatMap((facilityId) => facilityActivities[facilityId] || []);
+        return [...new Set([
+          ...activities
+          .filter((activity) => /natation|piscine/i.test(String(activity.label || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")))
+          .map((activity) => activity.id),
+          ...linkedSwimmingActivityIds
+        ])];
+      }
+
+      function optimizedCycleIsSixthSwimmingCycle(cycle) {
+        return classicConstructionCycles().slice(0, 3).some((item) => item.id === cycle.id);
+      }
+
+      function optimizedCandidateViolatesClassCycleActivity(rule, cycle, block, usage) {
+        if (!block.activityId) return false;
+        const enforceSingleActivity = constructionRuleSettingEnabled("class-single-activity-per-cycle");
+        const enforceSixthProgram = constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming");
+        if (!enforceSingleActivity && !enforceSixthProgram) return false;
+        return optimizedRuleClassKeys(rule).some((schoolClass) => {
+          const key = `${schoolClass}::${cycle.id}`;
+          const existing = usage.classCycleActivities.get(key) || new Set();
+          const isSixth = classParts(schoolClass).level === "6eme" && enforceSixthProgram;
+          if (isSixth && existing.size === 1 && existing.has(block.activityId)) return true;
+          if (existing.has(block.activityId)) return false;
+          return existing.size >= optimizedCycleActivityLimitForClass(schoolClass);
+        });
+      }
+
+      function optimizedSwimmingPenalty(rule, cycle, block, usage) {
+        if (!constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming")) return 0;
+        const swimmingIds = optimizedSwimmingActivityIds();
+        if (!swimmingIds.length) return 0;
+        return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
+          if (classParts(schoolClass).level !== "6eme") return sum;
+          const isSwimming = swimmingIds.includes(block.activityId);
+          const classCycleKey = `${schoolClass}::${cycle.id}`;
+          const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
+          const hasSwimmingThisCycle = [...currentActivities].some((activityId) => swimmingIds.includes(activityId));
+          const firstThreeCycle = optimizedCycleIsSixthSwimmingCycle(cycle);
+          if (firstThreeCycle && !hasSwimmingThisCycle && !isSwimming) return sum + 5000;
+          if (firstThreeCycle && hasSwimmingThisCycle && isSwimming) return sum + 600;
+          if (!firstThreeCycle && isSwimming) return sum + 900;
+          if (currentActivities.size === 1 && currentActivities.has(block.activityId)) return sum + 450;
+          return sum;
+        }, 0);
+      }
+
+      function optimizedSeasonalLocationPenalty(cycle, block) {
+        if (!constructionRuleSettingEnabled("seasonal-location-preference")) return 0;
+        const cyclesList = classicConstructionCycles();
+        if (cyclesList.length < 2) return 0;
+        const cycleIndex = cyclesList.findIndex((item) => item.id === cycle.id);
+        if (cycleIndex < 0) return 0;
+        const locationType = facilities.find((facility) => facility.id === block.facilityId)?.locationType || "";
+        if (!locationType) return 0;
+        const edgeCycle = cycleIndex === 0 || cycleIndex === cyclesList.length - 1;
+        const preferredLocationType = edgeCycle ? "outdoor" : "indoor";
+        return locationType === preferredLocationType ? 0 : 320;
+      }
+
+      function optimizedAnnualProgramPenalty(rule, block, usage) {
+        if (!constructionRuleSettingEnabled("class-activity-program") || !block.activityId) return 0;
+        return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
+          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          if (!programActivityIds.includes(block.activityId)) return sum;
+          const doneActivityIds = usage.classYearActivities.get(schoolClass) || new Set();
+          return sum + (doneActivityIds.has(block.activityId) ? 520 : 0);
+        }, 0);
+      }
+
+      function optimizedAnnualProgramViolations() {
+        if (!constructionRuleSettingEnabled("class-activity-program")) return [];
+        return classes.flatMap((schoolClass) => {
+          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          if (!programActivityIds.length) return [];
+          const doneActivityIds = new Set();
+          classicConstructionCycles().forEach((cycle) => {
+            constructionRules.forEach((rule) => {
+              if (!constructionRuleAppliesToCycle(rule, cycle) || rule.block?.optionBlock) return;
+              if (!classesForBlock(rule.block).some((item) => classesOverlap(item, schoolClass))) return;
+              const block = blockWithCycleOverride(rule, cycle);
+              if (block.activityId) doneActivityIds.add(block.activityId);
+            });
+          });
+          const missingActivities = programActivityIds
+            .filter((activityId) => !doneActivityIds.has(activityId))
+            .map((activityId) => constructionActivityById(activityId)?.label || activityId);
+          return missingActivities.length
+            ? [`${compactClassName(schoolClass)} : ${missingActivities.join(", ")} non faite(s)`]
+            : [];
+        });
+      }
+
+      function optimizedSixthProgramViolations() {
+        if (!constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming")) return [];
+        const swimmingIds = optimizedSwimmingActivityIds();
+        const sixthClasses = classes.filter((schoolClass) => classParts(schoolClass).level === "6eme");
+        const cyclesToCheck = classicConstructionCycles();
+        return sixthClasses.flatMap((schoolClass) => cyclesToCheck.flatMap((cycle, cycleIndex) => {
+          const activityIds = new Set();
+          constructionRules.forEach((rule) => {
+            if (!constructionRuleAppliesToCycle(rule, cycle) || rule.block?.optionBlock) return;
+            if (!classesForBlock(rule.block).some((item) => classesOverlap(item, schoolClass))) return;
+            const block = blockWithCycleOverride(rule, cycle);
+            if (block.activityId) activityIds.add(block.activityId);
+          });
+          const issues = [];
+          if (activityIds.size !== 2) issues.push(`${compactClassName(schoolClass)} ${cycle.name || `cycle ${cycleIndex + 1}`} : ${activityIds.size || 0} activite(s) au lieu de 2`);
+          if (cycleIndex < 3 && ![...activityIds].some((activityId) => swimmingIds.includes(activityId))) {
+            issues.push(`${compactClassName(schoolClass)} ${cycle.name || `cycle ${cycleIndex + 1}`} : natation manquante`);
+          }
+          return issues;
+        }));
       }
 
       function optimizedAssignmentHasConflict(rule, cycle, block, assignments) {
@@ -4200,17 +4116,33 @@
           + teacherFacilityPenalty * 3
           + teacherActivityPenalty * 2
           + programPenalty
-          + customRuleOptimizedPenalty(rule, cycle, block)
+          + optimizedAnnualProgramPenalty(rule, block, usage)
+          + optimizedSwimmingPenalty(rule, cycle, block, usage)
+          + optimizedSeasonalLocationPenalty(cycle, block)
         );
       }
 
-      function bumpOptimizedUsage(rule, block, usage) {
+      function bumpOptimizedUsage(rule, cycle, block, usage) {
         const bump = (map, key) => map.set(key, (map.get(key) || 0) + 1);
+        const swimmingIds = optimizedSwimmingActivityIds();
         bump(usage.facility, block.facilityId);
         bump(usage.activity, block.activityId || "__none__");
         bump(usage.rowFacility, `${rule.rowId}::${block.facilityId}`);
         const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
         if (level && block.activityId) bump(usage.levelActivity, `${level}::${block.activityId}`);
+        if (block.activityId) {
+          optimizedRuleClassKeys(rule).forEach((schoolClass) => {
+            const classCycleKey = `${schoolClass}::${cycle.id}`;
+            if (!usage.classCycleActivities.has(classCycleKey)) usage.classCycleActivities.set(classCycleKey, new Set());
+            usage.classCycleActivities.get(classCycleKey).add(block.activityId);
+            if (!usage.classYearActivities.has(schoolClass)) usage.classYearActivities.set(schoolClass, new Set());
+            usage.classYearActivities.get(schoolClass).add(block.activityId);
+            if (classParts(schoolClass).level === "6eme" && swimmingIds.includes(block.activityId)) {
+              if (!usage.sixthSwimmingCycles.has(schoolClass)) usage.sixthSwimmingCycles.set(schoolClass, new Set());
+              usage.sixthSwimmingCycles.get(schoolClass).add(cycle.id);
+            }
+          });
+        }
         teacherIdsForBlock(rule.block).forEach((teacherId) => {
           bump(usage.teacherFacility, `${teacherId}::${block.facilityId}`);
           bump(usage.teacherActivity, `${teacherId}::${block.activityId || "__none__"}`);
@@ -4227,6 +4159,7 @@
         rules.forEach(({ rule, candidates }) => {
           const viable = candidates
             .filter((block) => !optimizedAssignmentHasConflict(rule, cycle, block, assignments))
+            .filter((block) => !optimizedCandidateViolatesClassCycleActivity(rule, cycle, block, usage))
             .sort((first, second) => optimizedCandidateScore(rule, cycle, first, usage) - optimizedCandidateScore(rule, cycle, second, usage));
           const selected = viable[0];
           if (!selected) {
@@ -4234,7 +4167,7 @@
             return;
           }
           assignments.push({ rule, block: selected });
-          bumpOptimizedUsage(rule, selected, usage);
+          bumpOptimizedUsage(rule, cycle, selected, usage);
         });
         return { assignments, unresolved };
       }
@@ -4249,6 +4182,9 @@
           facility: new Map(),
           activity: new Map(),
           levelActivity: new Map(),
+          classCycleActivities: new Map(),
+          classYearActivities: new Map(),
+          sixthSwimmingCycles: new Map(),
           rowFacility: new Map(),
           teacherFacility: new Map(),
           teacherActivity: new Map()
@@ -4270,19 +4206,26 @@
           });
         });
         rebuildConstructionPlan();
+        const annualProgramIssues = optimizedAnnualProgramViolations();
+        const sixthProgramIssues = optimizedSixthProgramViolations();
+        const checkIssues = [...annualProgramIssues, ...sixthProgramIssues];
+        unresolved += checkIssues.length;
+        const checkDetail = checkIssues.length
+          ? `${checkIssues.slice(0, 3).join(" ; ")}${checkIssues.length > 3 ? ` (+${checkIssues.length - 3})` : ""}`
+          : "";
         const result = {
           saved,
           unresolved,
           message: unresolved
-            ? `${saved} detail(s) optimise(s), ${unresolved} bloc(s) sans solution`
+            ? `${saved} detail(s) optimise(s), ${unresolved} point(s) a verifier`
             : `${saved} detail(s) optimise(s)`
         };
         constructionOptimizationResult = {
           ...result,
           level: unresolved ? "warning" : "ready",
-          detail: saved
+          detail: checkDetail || (saved
             ? "Les installations et activites ont ete renseignees dans les cycles, sans modifier les blocs profs/classes."
-            : "Aucun detail n'a ete ajoute. Verifiez qu'il existe des blocs profs/classes et des couples installation/activite compatibles."
+            : "Aucun detail n'a ete ajoute. Verifiez qu'il existe des blocs profs/classes et des couples installation/activite compatibles.")
         };
         return result;
       }
@@ -6722,15 +6665,8 @@
       }
 
       function renderConstructionRulesView() {
-        const selectedCategory = constructionRuleCategoryChoices.includes(constructionRuleDraft.category) ? constructionRuleDraft.category : "Autre";
-        const draftSource = constructionRuleDraftSource();
-        const interpretationIsCurrent = constructionRuleInterpretation && constructionRuleInterpretationSource === draftSource;
-        const canRequestInterpretation = Boolean(draftSource) && !constructionRuleInterpreting;
-        const canUseAddRuleButton = Boolean(draftSource) && !constructionRuleInterpreting;
-        const editIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.5 6.5 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-        const deleteIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
         const ruleGroups = Object.entries(constructionRuleSettings.reduce((groups, rule) => {
-          const category = rule.category || "Regle personnalisee";
+          const category = rule.category || "Regle systeme";
           groups[category] = [...(groups[category] || []), rule];
           return groups;
         }, {})).sort(([first], [second]) => {
@@ -6741,34 +6677,11 @@
           return firstRank - secondRank || first.localeCompare(second, "fr");
         }).map(([category, rules]) => [category, [...rules].sort((first, second) => first.title.localeCompare(second.title, "fr"))]);
         return `<section class="constructionRulesPage">
-          <div class="constructionRulesForm">
-            <h3>Ajouter une regle</h3>
-            <div class="eventField">
-              <label>Categorie</label>
-              <select id="constructionRuleCategory">
-                ${constructionRuleCategoryChoices.map((category) => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("")}
-              </select>
-              ${selectedCategory === "Autre" ? `<input id="constructionRuleCustomCategory" value="${escapeHtml(constructionRuleDraft.customCategory || constructionRuleDraft.category)}" placeholder="Votre categorie" />` : ""}
-            </div>
-            <div class="eventField">
-              <label>Titre</label>
-              <input id="constructionRuleTitle" value="${escapeHtml(constructionRuleDraft.title)}" placeholder="Ex. Maximum 2h par jour pour une classe" />
-            </div>
-            <div class="eventField">
-              <label>Description</label>
-              <textarea id="constructionRuleDetail" placeholder="Expliquez la regle pour le futur moteur automatique.">${escapeHtml(constructionRuleDraft.detail)}</textarea>
-            </div>
-            <button class="ghostButton" id="interpretConstructionRule" ${canRequestInterpretation ? "" : "disabled"}>${constructionRuleInterpreting ? "Interpretation..." : "Interpreter avec l'IA"}</button>
-            ${constructionRuleInterpretationError ? `<div class="aiRulePreview error"><strong>Regle non interpretable</strong><span>${escapeHtml(constructionRuleInterpretationError)}</span></div>` : ""}
-            ${interpretationIsCurrent ? `<div class="aiRulePreview"><strong>Reformulation a valider</strong><span>${escapeHtml(constructionRuleInterpretation.reformulatedDetail)}</span><span class="aiRuleBadge">Exploitable par l'optimiseur</span></div>` : ""}
-            <button class="addButton" id="addConstructionRuleSetting" ${canUseAddRuleButton ? "" : "disabled"}>${interpretationIsCurrent ? "Valider et ajouter la regle" : "Ajouter la regle"}</button>
-            <div class="alertHelp"><strong>Usage</strong><span>Une regle personnalisee doit etre interpretee puis validee avant ajout. Sinon l'optimiseur ne peut pas l'appliquer de maniere fiable.</span></div>
-          </div>
-          <div class="constructionRulesList">
+          <div class="constructionRulesList" style="grid-column:1 / -1">
             <div class="constructionRulesToolbar">
-              <h3>Regles actives</h3>
-              <button class="ghostButton" id="restoreDefaultConstructionRules">Retablir les regles par defaut</button>
+              <h3>Regles de construction</h3>
             </div>
+            <div class="alertHelp"><strong>Regles systeme</strong><span>Ces regles sont pilotees par les onglets de pre-requis, les services, le programme, les indisponibilites et les installations. Il n'y a rien a ajouter ici.</span></div>
             ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => {
               const isOpen = expandedConstructionRuleCategory === category;
               return `<section class="unavailableGroup">
@@ -6776,38 +6689,14 @@
                 <span>${escapeHtml(category)}</span>
                 <span>${rules.length} · ${isOpen ? "Masquer" : "Afficher"}</span>
               </button>
-              ${isOpen ? `<div class="constructionRulesGrid">${rules.map((rule) => editingConstructionRuleId === rule.id ? `<article class="constructionRuleCard">
-                <div class="eventField">
-                  <label>Categorie</label>
-                  <select data-edit-construction-rule-category="${rule.id}">
-                    ${constructionRuleCategoryChoices.map((choice) => `<option value="${escapeHtml(choice)}" ${rule.category === choice ? "selected" : ""}>${escapeHtml(choice)}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="eventField">
-                  <label>Titre</label>
-                  <input data-edit-construction-rule-title="${rule.id}" value="${escapeHtml(rule.title)}" />
-                </div>
-                <div class="eventField">
-                  <label>Description</label>
-                  <textarea data-edit-construction-rule-detail="${rule.id}">${escapeHtml(rule.detail)}</textarea>
-                </div>
-                <div class="constructionRuleActions">
-                  <button class="ghostButton" data-save-construction-rule-setting="${rule.id}">Enregistrer</button>
-                  <button class="ghostButton" data-cancel-construction-rule-edit>Annuler</button>
-                </div>
-              </article>` : `<article class="constructionRuleCard">
+              ${isOpen ? `<div class="constructionRulesGrid">${rules.map((rule) => `<article class="constructionRuleCard">
                 <div class="constructionRuleCardHead">
                   <strong>${escapeHtml(rule.title)}</strong>
-                  <div class="constructionRuleActions">
-                    <button class="ruleIconButton" data-edit-construction-rule-setting="${rule.id}" title="Modifier" aria-label="Modifier">${editIcon}</button>
-                    <button class="ruleIconButton danger" data-delete-construction-rule-setting="${rule.id}" title="Supprimer" aria-label="Supprimer">${deleteIcon}</button>
-                  </div>
                 </div>
-                <span>${escapeHtml(rule.reformulatedDetail || rule.detail)}</span>
-                ${rule.interpretedRule ? `<small>Optimiseur : ${escapeHtml(rule.interpretedRule.type || "regle structuree")}${Array.isArray(rule.interpretedRules) && rule.interpretedRules.length > 1 ? ` x${rule.interpretedRules.length}` : ""}</small>` : ""}
+                <span>${escapeHtml(rule.detail)}</span>
               </article>`).join("")}</div>` : ""}
             </section>`;
-            }).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
+            }).join("")}</div>` : `<div class="alertEmpty">Aucune regle systeme active.</div>`}
           </div>
         </section>`;
       }
@@ -6894,10 +6783,6 @@
         return `<section class="builderPage">
           <div>
             <div class="constructionModePanel">
-              <div class="constructionModeButtons" aria-label="Mode de construction">
-                <button class="${constructionWorkspaceMode === "manual" ? "active" : ""}" data-construction-workspace-mode="manual">Construction manuelle</button>
-                <button class="optimizeButton ${constructionWorkspaceMode === "optimized" ? "active" : ""}" data-construction-workspace-mode="optimized" title="Remplir automatiquement uniquement les installations et activites par cycle">Construction optimisee</button>
-              </div>
               <div class="constructionVersionControls">
                 <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
               </div>
@@ -6929,6 +6814,9 @@
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
             </div>` : ""}
+            ${constructionBuildMode === "cycleDetails" ? `<div class="constructionVersionControls">
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Construction optimisee</button>
+            </div>` : ""}
             ${constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
               <label class="lockToggle" title="Verrouiller les modifications de cette partie">
                 <input type="checkbox" data-construction-lock="${constructionBuildMode}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
@@ -6948,9 +6836,25 @@
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
           ${constructionVersionPanelOpen ? renderSaveConstructionVersionModal() : ""}
+          ${constructionOptimizeConfirmOpen ? renderConstructionOptimizeConfirmModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
           ${movingBlockGhostHtml()}
         </section>`;
+      }
+
+      function renderConstructionOptimizeConfirmModal() {
+        return `<div class="modalBackdrop" role="presentation">
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="constructionOptimizeTitle">
+            <button class="modalClose" id="cancelConstructionOptimizer" aria-label="Fermer">x</button>
+            <h2 id="constructionOptimizeTitle">Construction optimisee</h2>
+            <p>Affecter automatiquement les installations et les activites a partir des blocs profs/classes existants ?</p>
+            <p class="muted">Les blocs profs/classes ne seront pas modifies. Seuls les details installations/activites des cycles seront remplis selon les contraintes.</p>
+            <div class="modalFooter">
+              <button class="ghostButton" id="cancelConstructionOptimizerFooter">Annuler</button>
+              <button class="addButton" id="confirmConstructionOptimizer">Affecter automatiquement</button>
+            </div>
+          </div>
+        </div>`;
       }
 
       function renderClearConstructionPanel() {
@@ -7535,7 +7439,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderFacilitiesSettings() {
-        const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType);
+        const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType) && Boolean(facilityDraftLocationType);
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Ajouter une installation</h3>
@@ -7544,12 +7448,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${facilityDraftName}" />
             </div>
             <div class="eventField">
-              <label>Type</label>
+              <label>Position par rapport a l'etablissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe a l'etablissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne a l'etablissement</button>
               </div>
               ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre etablissement.</span>` : ""}
+            </div>
+            <div class="eventField">
+              <label>Lieu de pratique</label>
+              <div class="choiceGrid">
+                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En exterieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En interieur</button>
+              </div>
             </div>
             <div class="modalFooter">
               <button class="addButton" id="addFacility" ${canAddFacility ? "" : "disabled"}>Ajouter l'installation</button>
@@ -7559,7 +7470,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <h3>Installations existantes</h3>
             ${facilities.length ? `<div class="compactCardGrid fiveCardGrid">${facilities.map((facility) => `<article class="eventCard">
               <strong>${facility.label}</strong>
-              <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
+              <span>${facilityTypeLabel(facility.type)}</span>
+              <span>${facilityLocationTypeLabel(facility.locationType)}</span>
+              <div class="choiceGrid">
+                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="outdoor">Exterieur</button>
+                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
+              </div>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
           </div>
@@ -7650,7 +7566,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderFacilitiesActivitiesSettings() {
-        const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType);
+        const canAddFacility = facilityDraftName.trim().length > 0 && Boolean(facilityDraftType) && Boolean(facilityDraftLocationType);
         const canAddActivity = activityDraftName.trim().length > 0;
         return `<section class="eventPage">
           <div class="eventForm">
@@ -7660,12 +7576,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${facilityDraftName}" />
             </div>
             <div class="eventField">
-              <label>Type</label>
+              <label>Position par rapport a l'etablissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe a l'etablissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne a l'etablissement</button>
               </div>
               ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre etablissement.</span>` : ""}
+            </div>
+            <div class="eventField">
+              <label>Lieu de pratique</label>
+              <div class="choiceGrid">
+                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En exterieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En interieur</button>
+              </div>
             </div>
             <div class="modalFooter">
               <button class="addButton" id="addFacility" ${canAddFacility ? "" : "disabled"}>Ajouter l'installation</button>
@@ -7675,7 +7598,12 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <h3>Installations existantes</h3>
             ${facilities.length ? `<div class="compactCardGrid fiveCardGrid">${facilities.map((facility) => `<article class="eventCard">
               <strong>${facility.label}</strong>
-              <span>${facility.type === "external" ? "Externe" : "Interne"}</span>
+              <span>${facilityTypeLabel(facility.type)}</span>
+              <span>${facilityLocationTypeLabel(facility.locationType)}</span>
+              <div class="choiceGrid">
+                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="outdoor">Exterieur</button>
+                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
+              </div>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
           </div>
@@ -8672,88 +8600,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
-        const constructionRuleCategory = document.getElementById("constructionRuleCategory");
-        if (constructionRuleCategory) {
-          constructionRuleCategory.addEventListener("change", () => {
-            constructionRuleDraft = { ...constructionRuleDraft, category: constructionRuleCategory.value };
-            resetConstructionRuleInterpretation();
-            render();
-          });
-        }
-        const constructionRuleCustomCategory = document.getElementById("constructionRuleCustomCategory");
-        if (constructionRuleCustomCategory) {
-          constructionRuleCustomCategory.addEventListener("input", () => {
-            constructionRuleDraft = { ...constructionRuleDraft, customCategory: constructionRuleCustomCategory.value };
-            resetConstructionRuleInterpretation();
-          });
-          constructionRuleCustomCategory.addEventListener("change", () => render());
-        }
-        const constructionRuleTitle = document.getElementById("constructionRuleTitle");
-        if (constructionRuleTitle) {
-          constructionRuleTitle.addEventListener("input", () => {
-            constructionRuleDraft = { ...constructionRuleDraft, title: constructionRuleTitle.value };
-            resetConstructionRuleInterpretation();
-          });
-          constructionRuleTitle.addEventListener("change", () => render());
-        }
-        const constructionRuleDetail = document.getElementById("constructionRuleDetail");
-        if (constructionRuleDetail) {
-          constructionRuleDetail.addEventListener("input", () => {
-            constructionRuleDraft = { ...constructionRuleDraft, detail: constructionRuleDetail.value };
-            resetConstructionRuleInterpretation();
-          });
-          constructionRuleDetail.addEventListener("change", () => render());
-        }
-        const interpretConstructionRule = document.getElementById("interpretConstructionRule");
-        if (interpretConstructionRule) {
-          interpretConstructionRule.addEventListener("click", () => {
-            interpretConstructionRuleWithAi();
-          });
-        }
-        const addConstructionRuleSetting = document.getElementById("addConstructionRuleSetting");
-        if (addConstructionRuleSetting) {
-          addConstructionRuleSetting.addEventListener("click", () => {
-            const title = constructionRuleDraft.title.trim();
-            const detail = constructionRuleDraft.detail.trim();
-            if (!title && !detail) return;
-            if (!constructionRuleInterpretation || constructionRuleInterpretationSource !== constructionRuleDraftSource()) {
-              interpretConstructionRuleWithAi();
-              return;
-            }
-            constructionRuleSettings = [
-              ...constructionRuleSettings,
-              {
-                id: `custom-rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                category: constructionRuleDraft.category === "Autre"
-                  ? constructionRuleDraft.customCategory.trim() || "Regle personnalisee"
-                  : constructionRuleDraft.category.trim() || "Regle personnalisee",
-                title: title || "Regle personnalisee",
-                detail,
-                reformulatedDetail: constructionRuleInterpretation.reformulatedDetail,
-                interpretedRule: constructionRuleInterpretation.interpretedRule,
-                interpretedRules: constructionRuleInterpretation.interpretedRules || [constructionRuleInterpretation.interpretedRule].filter(Boolean)
-              }
-            ];
-            constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
-            resetConstructionRuleInterpretation();
-            editingConstructionRuleId = "";
-            saveConstructionRuleSettings();
-            showValidationPopup("Regle ajoutee");
-            render();
-          });
-        }
-        document.querySelectorAll("[data-edit-construction-rule-setting]").forEach((button) => {
-          button.addEventListener("click", () => {
-            editingConstructionRuleId = button.dataset.editConstructionRuleSetting;
-            render();
-          });
-        });
-        document.querySelectorAll("[data-cancel-construction-rule-edit]").forEach((button) => {
-          button.addEventListener("click", () => {
-            editingConstructionRuleId = "";
-            render();
-          });
-        });
         document.querySelectorAll("[data-toggle-construction-rule-category]").forEach((button) => {
           button.addEventListener("click", () => {
             const category = button.dataset.toggleConstructionRuleCategory;
@@ -8761,43 +8607,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
-        document.querySelectorAll("[data-save-construction-rule-setting]").forEach((button) => {
-          button.addEventListener("click", () => {
-            const ruleId = button.dataset.saveConstructionRuleSetting;
-            const category = document.querySelector(`[data-edit-construction-rule-category="${ruleId}"]`)?.value.trim() || "Regle personnalisee";
-            const title = document.querySelector(`[data-edit-construction-rule-title="${ruleId}"]`)?.value.trim() || "Regle personnalisee";
-            const detail = document.querySelector(`[data-edit-construction-rule-detail="${ruleId}"]`)?.value.trim() || "";
-            constructionRuleSettings = constructionRuleSettings.map((rule) => rule.id === ruleId ? { ...rule, category, title, detail } : rule);
-            editingConstructionRuleId = "";
-            saveConstructionRuleSettings();
-            showValidationPopup("Regle modifiee");
-            render();
-          });
-        });
-        document.querySelectorAll("[data-delete-construction-rule-setting]").forEach((button) => {
-          button.addEventListener("click", () => {
-            const rule = constructionRuleSettings.find((item) => item.id === button.dataset.deleteConstructionRuleSetting);
-            if (!rule) return;
-            if (!window.confirm(`Supprimer la regle "${rule.title}" ?`)) return;
-            constructionRuleSettings = constructionRuleSettings.filter((item) => item.id !== rule.id);
-            if (editingConstructionRuleId === rule.id) editingConstructionRuleId = "";
-            saveConstructionRuleSettings();
-            showValidationPopup("Regle supprimee");
-            render();
-          });
-        });
-        const restoreDefaultConstructionRules = document.getElementById("restoreDefaultConstructionRules");
-        if (restoreDefaultConstructionRules) {
-          restoreDefaultConstructionRules.addEventListener("click", () => {
-            if (!window.confirm("Retablir les regles de construction par defaut ?")) return;
-            resetConstructionRuleSettings();
-            constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
-            resetConstructionRuleInterpretation();
-            editingConstructionRuleId = "";
-            showValidationPopup("Regles par defaut retablies");
-            render();
-          });
-        }
         document.querySelectorAll("[data-service-level-hours]").forEach((input) => {
           input.addEventListener("change", () => {
             const level = input.dataset.serviceLevelHours;
@@ -9361,17 +9170,34 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-facility-location-type]").forEach((button) => {
+          button.addEventListener("click", () => {
+            facilityDraftLocationType = button.dataset.facilityLocationType;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-set-facility-location]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const facilityId = button.dataset.setFacilityLocation;
+            const locationType = button.dataset.locationType;
+            if (!["outdoor", "indoor"].includes(locationType)) return;
+            facilities = facilities.map((facility) => facility.id === facilityId ? { ...facility, locationType } : facility);
+            saveFacilities();
+            render();
+          });
+        });
         const addFacility = document.getElementById("addFacility");
         if (addFacility) {
           addFacility.addEventListener("click", () => {
             const label = facilityDraftName.trim();
-            if (!label || !facilityDraftType) return;
-            const facility = { id: facilityIdFromName(label), label, type: facilityDraftType };
+            if (!label || !facilityDraftType || !facilityDraftLocationType) return;
+            const facility = { id: facilityIdFromName(label), label, type: facilityDraftType, locationType: facilityDraftLocationType };
             facilities = [...facilities, facility];
             facilityActivities = { ...facilityActivities, [facility.id]: [] };
             cycleFacilityIds = [...cycleFacilityIds, facility.id];
             facilityDraftName = "";
             facilityDraftType = "";
+            facilityDraftLocationType = "";
             saveFacilities();
             saveFacilityActivities();
             showValidationPopup("Installation validée");
@@ -10240,19 +10066,33 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        document.querySelectorAll("[data-construction-workspace-mode]").forEach((button) => {
-          button.addEventListener("click", () => {
-            if (button.disabled) return;
-            constructionWorkspaceMode = button.dataset.constructionWorkspaceMode === "optimized" ? "optimized" : "manual";
-            if (constructionWorkspaceMode === "optimized") {
-              const result = optimizeConstructionCycleDetails();
-              constructionBuildMode = "cycleDetails";
-              showValidationPopup(result.message);
-            }
-            saveConstructionWorkspaceMode();
+        const openConstructionOptimizer = document.getElementById("openConstructionOptimizer");
+        if (openConstructionOptimizer) {
+          openConstructionOptimizer.addEventListener("click", () => {
+            constructionOptimizeConfirmOpen = true;
             render();
           });
+        }
+        const closeConstructionOptimizer = () => {
+          constructionOptimizeConfirmOpen = false;
+          render();
+        };
+        ["cancelConstructionOptimizer", "cancelConstructionOptimizerFooter"].forEach((id) => {
+          const button = document.getElementById(id);
+          if (button) button.addEventListener("click", closeConstructionOptimizer);
         });
+        const confirmConstructionOptimizer = document.getElementById("confirmConstructionOptimizer");
+        if (confirmConstructionOptimizer) {
+          confirmConstructionOptimizer.addEventListener("click", () => {
+            constructionOptimizeConfirmOpen = false;
+            constructionWorkspaceMode = "optimized";
+            constructionBuildMode = "cycleDetails";
+            const result = optimizeConstructionCycleDetails();
+            saveConstructionWorkspaceMode();
+            showValidationPopup(result.message);
+            render();
+          });
+        }
         document.querySelectorAll("[data-construction-build-mode]").forEach((button) => {
           button.addEventListener("click", () => {
             constructionBuildMode = ["cycleDetails", "versions"].includes(button.dataset.constructionBuildMode) ? button.dataset.constructionBuildMode : "blocks";
