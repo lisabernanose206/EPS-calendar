@@ -1000,7 +1000,7 @@
         { id: "cycle-details-required", category: "Installations / activites", title: "Details par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activite par cycle quand l'installation propose des activites." },
         { id: "as-readonly-construction", category: "AS", title: "AS non modifiables en construction", detail: "Les creneaux AS restent fixes dans Construction ; on ne peut pas les deplacer ni les modifier depuis les blocs." },
         { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le creneau", detail: "En co-intervention, les deux professeurs sont presents sur toute la duree du creneau, dans la meme installation, avec des classes differentes." },
-        { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service theorique peuvent devenir des blocs Option sans classe obligatoire, avec une duree precisee par cycle." },
+        { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service theorique peuvent devenir des blocs Option sans classe obligatoire, avec une duree precisee dans le bloc profs/classes." },
         { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d'atteindre son volume EPS hebdomadaire : 4h en 6eme, 3h en 5eme, 4eme et 3eme." },
         { id: "supabase-source", category: "Sauvegarde", title: "Supabase source officielle", detail: "Les donnees de construction, versions, verrous et liens installations/activites sont rechargees depuis Supabase comme source de reference." }
       ];
@@ -2184,9 +2184,9 @@
         const override = cycleOverrideForRule(rule, cycle.id);
         const facilityId = override.facilityId !== undefined ? override.facilityId : rule.block?.facilityId || "";
         const activityId = override.activityId !== undefined ? override.activityId : rule.block?.activityId || "";
-        const optionId = override.optionId || rule.block?.optionId || "";
+        const optionId = rule.block?.optionId || override.optionId || "";
         const option = optionId ? serviceFreeOptionById(optionId) : null;
-        const optionHours = option ? normalizedOptionHours(optionId, override.optionHours || rule.block?.optionHours || option.hours) : 0;
+        const optionHours = option ? normalizedOptionHours(optionId, rule.block?.optionHours || override.optionHours || option.hours) : 0;
         const facility = facilities.find((item) => item.id === facilityId);
         const activity = activityAllowedForFacility(facilityId, activityId)
           ? constructionActivityById(activityId)
@@ -3767,17 +3767,11 @@
       function updateConstructionRuleCycleDetails(ruleId, cycleId, block) {
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule || !cycleId) return;
-        const option = block.optionId ? serviceFreeOptionById(block.optionId) : null;
         rule.cycleOverrides = {
           ...(rule.cycleOverrides || {}),
           [cycleId]: {
             facilityId: block.facilityId || "",
-            activityId: block.activityId || "",
-            optionId: option?.id || "",
-            optionTeacherId: option?.teacherId || "",
-            optionRowId: option?.rowId || "",
-            optionLabel: option?.label || "",
-            optionHours: option ? normalizedOptionHours(option.id, block.optionHours) : 0
+            activityId: block.activityId || ""
           }
         };
         rebuildConstructionPlan();
@@ -5716,7 +5710,12 @@
 
       function annualRuleHasTeacherClasses(rule) {
         const teacherIds = teacherIdsForBlock(rule.block);
-        if (rule.block?.optionBlock) return optionBlockAvailableForTeachers(teacherIds);
+        if (rule.block?.optionBlock) {
+          const row = yearRows().find((item) => item.id === rule.rowId);
+          const max = optionDurationMax(rule.block.optionId, row?.slot?.hours || currentBlockSlotHours());
+          return optionBlockAvailableForTeachers(teacherIds)
+            && Boolean(rule.block.optionId && rule.block.optionHours > 0 && rule.block.optionHours <= max);
+        }
         return teacherIds.length > 0 && teacherIds.every((teacherId) => teacherClassForBlock(rule.block, teacherId));
       }
 
@@ -5774,7 +5773,7 @@
         if (!rules.length) return false;
         return rules.every((rule) => constructionCyclesForRule(rule).every((cycle) => {
           const block = blockWithCycleOverride(rule, cycle);
-          if (block.optionBlock) return Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId));
+          if (block.optionBlock) return true;
           if (!block.facilityId && serviceFreeActivityById(block.activityId)) return true;
           if (!block.facilityId) return false;
           if (serviceFreeActivityById(block.activityId)) return true;
@@ -6409,8 +6408,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
-        const optionDetailsValid = !editingCycleDetails || !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, row.slot.hours));
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionDetailsValid);
+        const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, row.slot.hours));
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
@@ -6500,7 +6499,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   return `<button class="choiceButton ${facility.id === blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${facility.label}</button>`;
                 }).join("")}</div>
               </div>
-              ${blockIsOption ? `<div class="buildField">
+              ${false && blockIsOption ? `<div class="buildField">
                 <label>Option</label>
                 <div class="choiceGrid">
                   ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
@@ -6521,7 +6520,16 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <span class="muted">Optionnel : les services libres peuvent etre choisis sans installation.</span>
               </div>`}` : ""}
               ${!editingCycleDetails ? (blockIsOption
-                ? `<div class="buildField"><label>Classe</label><span class="muted">Option : aucune classe n'est obligatoire pour valider ce bloc.</span></div>`
+                ? `<div class="buildField">
+                  <label>Option</label>
+                  <div class="choiceGrid">
+                    ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
+                  </div>
+                  ${selectedOption ? `<label>Duree</label>
+                  <input id="blockOptionHours" type="number" min="0.25" max="${selectedOptionMax}" step="0.25" value="${blockOptionHours || selectedOptionMax}" />
+                  <span class="muted">Maximum : ${selectedOptionMax}h, selon le creneau et le service theorique.</span>` : `<span class="muted">Choisissez l'option concernee.</span>`}
+                  <span class="muted">Aucune classe n'est obligatoire pour valider ce bloc.</span>
+                </div>`
                 : blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
             </div>
             ${!editingCycleDetails ? `<div class="buildField" style="margin-top:10px">
@@ -6534,8 +6542,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
               <strong>${classesForBlock(block).length ? blockClassLabel(block) : block.optionBlock ? "Option" : "Classe libre"}</strong>
-              ${constructionBuildMode === "cycleDetails" ? (block.optionBlock ? `<span>${block.optionLabel || "Option a selectionner"}${block.optionHours ? ` · ${block.optionHours}h` : ""}</span>` : `<span>${block.facilityLabel || "Installation a selectionner"}</span>
-              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}`) : ""}
+              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a selectionner"}</span>
+              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
               <span>${block.teacherNames || "Professeur a selectionner"}</span>
               ${blockCoIntervention ? `<span>Co-intervention</span>` : ""}
             </div>
