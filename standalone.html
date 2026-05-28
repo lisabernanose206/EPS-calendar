@@ -3549,7 +3549,7 @@
             (constructionPlan[key] || []).forEach((item) => {
               teacherIdsForBlock(item).forEach((teacherId) => {
                 if (!stats[teacherId]) return;
-                const blockHours = effectiveTeacherHoursForBlock(item, teacherId, row.slot.hours);
+                const blockHours = effectiveTeacherHoursForBlock(item, teacherId, fullServiceSlotHours(row));
                 stats[teacherId].total += blockHours;
                 stats[teacherId].details.push({
                   week: weekItem,
@@ -3608,7 +3608,7 @@
                 const block = blockWithCycleOverride(rule, cycle);
                 const teacherIds = teacherIdsForBlock(block);
                 if (!teacherIds.includes(teacher.id)) return;
-                cycleStats.total += effectiveTeacherHoursForBlock(block, teacher.id, row.slot.hours);
+                cycleStats.total += effectiveTeacherHoursForBlock(block, teacher.id, fullServiceSlotHours(row));
                 classesForBlock(block).forEach((schoolClass) => cycleStats.classes.add(schoolClass));
               });
             });
@@ -4533,10 +4533,17 @@
         return teacherHoursForBlock(block, teacherId, slotHours);
       }
 
+      function fullServiceSlotHours(rowOrSlot) {
+        const slot = rowOrSlot?.slot || rowOrSlot || {};
+        const rawHours = Number(slot.hours) || 0;
+        if (rawHours <= 1.25) return 1;
+        return 2;
+      }
+
       function currentBlockSlotHours() {
         if (!activeBuildCell) return 2;
         const { rowId } = parseYearCellKey(activeBuildCell);
-        return yearRows().find((item) => item.id === rowId)?.slot?.hours || 2;
+        return fullServiceSlotHours(yearRows().find((item) => item.id === rowId));
       }
 
       function secondaryTeacherLabel(block, slotHours) {
@@ -5767,7 +5774,7 @@
         const teacherIds = teacherIdsForBlock(rule.block);
         if (rule.block?.optionBlock) {
           const row = yearRows().find((item) => item.id === rule.rowId);
-          const max = optionDurationMax(rule.block.optionId, row?.slot?.hours || currentBlockSlotHours());
+          const max = optionDurationMax(rule.block.optionId, row ? fullServiceSlotHours(row) : currentBlockSlotHours());
           return optionBlockAvailableForTeachers(teacherIds)
             && Boolean(rule.block.optionId && rule.block.optionHours > 0 && rule.block.optionHours <= max);
         }
@@ -5779,9 +5786,10 @@
         annualConstructionRules().forEach((rule) => {
           const row = yearRows().find((item) => item.id === rule.rowId);
           if (!row?.slot) return;
+          const slotHours = fullServiceSlotHours(row);
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
           teacherIdsForBlock(rule.block).forEach((teacherId) => {
-            totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, row.slot.hours) * multiplier;
+            totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
           });
         });
         return Object.fromEntries(Object.entries(totals).map(([teacherId, total]) => [teacherId, roundHours(total)]));
@@ -5793,10 +5801,11 @@
           if (rule.block?.optionBlock) return;
           const row = yearRows().find((item) => item.id === rule.rowId);
           if (!row?.slot) return;
+          const slotHours = fullServiceSlotHours(row);
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
           classesForBlock(rule.block).forEach((schoolClass) => {
             if (totals[schoolClass] === undefined) totals[schoolClass] = 0;
-            totals[schoolClass] += row.slot.hours * multiplier;
+            totals[schoolClass] += slotHours * multiplier;
           });
         });
         return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundHours(total)]));
@@ -6496,7 +6505,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
-        const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, row.slot.hours));
+        const slotServiceHours = fullServiceSlotHours(row);
+        const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, slotServiceHours));
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
@@ -6507,7 +6517,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const availableFreeActivities = serviceFreeActivities();
         const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
         const selectedOption = blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
-        const selectedOptionMax = selectedOption ? optionDurationMax(selectedOption.id, row.slot.hours) : 0;
+        const selectedOptionMax = selectedOption ? optionDurationMax(selectedOption.id, slotServiceHours) : 0;
         const renderTeacherClassPicker = (teacher) => {
           const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
           const selectedLevel = blockTeacherClassLevels[teacher.id] || selectedTeacherClass.level || "";
