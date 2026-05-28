@@ -693,6 +693,7 @@
       .hoursDetail span { color: #64748b; font-size: 10px; }
       .classPills { border-top: 1px solid rgba(15,23,42,0.12); display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
       .classPill { background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.12); border-radius: 999px; color: #334155; font-size: 10px; font-weight: 900; padding: 3px 6px; }
+      .classPill.needsValidation { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
       button.classPill { cursor: pointer; font: inherit; }
       button.classPill:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
       .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
@@ -3474,7 +3475,7 @@
             (constructionPlan[key] || []).forEach((item) => {
               teacherIdsForBlock(item).forEach((teacherId) => {
                 if (!stats[teacherId]) return;
-                const blockHours = teacherHoursForBlock(item, teacherId, row.slot.hours);
+                const blockHours = effectiveTeacherHoursForBlock(item, teacherId, row.slot.hours);
                 stats[teacherId].total += blockHours;
                 stats[teacherId].details.push({
                   week: weekItem,
@@ -3524,16 +3525,17 @@
           const cycleWeeks = weeksForCycle(cycle).filter((weekItem) => workingRanks.has(weekItem.rank));
           teachers.forEach((teacher) => {
             const cycleStats = { total: 0, weeks: cycleWeeks.length, classes: new Set() };
-            constructionRules.filter((rule) => rule.cycleId === cycle.id).forEach((rule) => {
+            annualConstructionRules().filter((rule) => constructionCyclesForRule(rule).some((item) => item.id === cycle.id)).forEach((rule) => {
               const row = rows.find((item) => item.id === rule.rowId);
               if (!row || row.isAs) return;
               cycleWeeks.forEach((weekItem) => {
                 if (rule.weekLetter && rule.weekLetter !== "all" && rule.weekLetter !== weekItem.letter) return;
                 if (vacationForCell(row, weekItem) || holidayFor(row, weekItem)) return;
-                const teacherIds = teacherIdsForBlock(rule.block);
+                const block = blockWithCycleOverride(rule, cycle);
+                const teacherIds = teacherIdsForBlock(block);
                 if (!teacherIds.includes(teacher.id)) return;
-                cycleStats.total += teacherHoursForBlock(rule.block, teacher.id, row.slot.hours);
-                if (rule.block.schoolClass) cycleStats.classes.add(rule.block.schoolClass);
+                cycleStats.total += effectiveTeacherHoursForBlock(block, teacher.id, row.slot.hours);
+                classesForBlock(block).forEach((schoolClass) => cycleStats.classes.add(schoolClass));
               });
             });
             const average = cycleStats.weeks ? Math.round((cycleStats.total / cycleStats.weeks) * 10) / 10 : 0;
@@ -4449,6 +4451,14 @@
         const ids = teacherIdsForBlock(block);
         if (!ids.includes(teacherId)) return 0;
         return ids.indexOf(teacherId) === 0 ? Number(slotHours) || 0 : coTeacherHoursForBlock(block, teacherId, slotHours);
+      }
+
+      function effectiveTeacherHoursForBlock(block, teacherId, slotHours) {
+        if (block?.optionBlock && block.optionId) {
+          if (block.optionTeacherId && block.optionTeacherId !== teacherId) return 0;
+          return normalizedOptionHours(block.optionId, block.optionHours, slotHours);
+        }
+        return teacherHoursForBlock(block, teacherId, slotHours);
       }
 
       function currentBlockSlotHours() {
@@ -5683,12 +5693,40 @@
         return totals;
       }
 
+      function annualConstructionClassHours() {
+        const totals = Object.fromEntries(classes.map((schoolClass) => [schoolClass, 0]));
+        annualConstructionRules().forEach((rule) => {
+          if (rule.block?.optionBlock) return;
+          const row = yearRows().find((item) => item.id === rule.rowId);
+          if (!row?.slot) return;
+          const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
+          classesForBlock(rule.block).forEach((schoolClass) => {
+            if (totals[schoolClass] === undefined) totals[schoolClass] = 0;
+            totals[schoolClass] = Math.round((totals[schoolClass] + row.slot.hours * multiplier) * 10) / 10;
+          });
+        });
+        return totals;
+      }
+
+      function classHourTargetForConstruction(schoolClass) {
+        return serviceClassTarget(schoolClass);
+      }
+
+      function constructionClassesStepComplete() {
+        const totals = annualConstructionClassHours();
+        return classes.every((schoolClass) => {
+          const target = classHourTargetForConstruction(schoolClass);
+          if (!target) return true;
+          return Math.abs((totals[schoolClass] || 0) - target) < 0.01;
+        });
+      }
+
       function constructionBlocksStepComplete() {
         const rules = annualConstructionRules();
         if (!rules.length) return false;
         if (!rules.every(annualRuleHasTeacherClasses)) return false;
         const totals = annualConstructionTeacherHours();
-        return teachers.every((teacher) => (totals[teacher.id] || 0) >= teacher.weeklyReference);
+        return teachers.every((teacher) => (totals[teacher.id] || 0) >= teacher.weeklyReference) && constructionClassesStepComplete();
       }
 
       function constructionCycleDetailsStepComplete() {
@@ -5735,6 +5773,36 @@
         const items = constructionReadinessItems();
         if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
         return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+      }
+
+      function renderConstructionServiceSummary() {
+        const teacherTotals = annualConstructionTeacherHours();
+        const classTotals = annualConstructionClassHours();
+        return `<div class="servicePanel compactServicePanel">
+          <h3>Service reel construit</h3>
+          <div class="hoursBalanceGrid">
+            ${teachers.map((teacher) => {
+              const total = Math.round((teacherTotals[teacher.id] || 0) * 10) / 10;
+              const target = teacher.weeklyReference;
+              const status = hourStatus(total - target);
+              const progress = target ? Math.min(100, Math.round((total / target) * 100)) : 0;
+              return `<article class="hoursCard" style="background:${teacher.color};border-color:${teacher.border}">
+                <div class="hoursCardTop"><strong>${teacher.name}</strong><span class="hoursStatus ${status.className}">${status.label}</span></div>
+                <div class="hoursMain"><strong>${total}h</strong><span class="muted">/ ${target}h</span></div>
+                <div class="hoursProgress"><span style="width:${progress}%"></span></div>
+              </article>`;
+            }).join("")}
+          </div>
+          <h3>Volumes par classe</h3>
+          <div class="classPills">
+            ${classes.map((schoolClass) => {
+              const total = Math.round((classTotals[schoolClass] || 0) * 10) / 10;
+              const target = classHourTargetForConstruction(schoolClass);
+              const ok = !target || Math.abs(total - target) < 0.01;
+              return `<span class="classPill ${ok ? "" : "needsValidation"}">${compactClassName(schoolClass)} · ${total}h / ${target}h</span>`;
+            }).join("")}
+          </div>
+        </div>`;
       }
 
       function renderPrerequisiteTabs(items, active, datasetName, lockState = () => false) {
@@ -6102,6 +6170,7 @@
             ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillee : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
             ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activites se renseignent ensuite par cycle." : "Details par cycle : les blocs profs/classes sont fixes ; cliquez sur un bloc pour renseigner son installation et son activite sur ce cycle."}</div>`}
             ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
+            ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc selectionne : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
