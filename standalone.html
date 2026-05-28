@@ -1054,6 +1054,8 @@
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
       let editingConstructionRuleId = "";
+      let constructionChecksRevision = 0;
+      let constructionChecksCache = { revision: -1 };
       let prerequisiteMode = "establishment";
       let yearPrerequisiteMode = "unavailable";
       let prerequisiteLocks = {};
@@ -1638,7 +1640,21 @@
         }
       }
 
+      function invalidateConstructionChecksCache() {
+        constructionChecksRevision += 1;
+        constructionChecksCache = { revision: constructionChecksRevision };
+      }
+
+      function cachedConstructionCheck(key, compute) {
+        if (constructionChecksCache.revision !== constructionChecksRevision) {
+          constructionChecksCache = { revision: constructionChecksRevision };
+        }
+        if (!(key in constructionChecksCache)) constructionChecksCache[key] = compute();
+        return constructionChecksCache[key];
+      }
+
       function saveConstructionPlan() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
         saveCloudNowIfPossible(["constructionPlan"]);
       }
@@ -1658,6 +1674,7 @@
       }
 
       function saveTeachers() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsTeachers2026", JSON.stringify(teachers));
         saveCloudNowIfPossible(["teachers"]);
       }
@@ -1966,6 +1983,7 @@
       }
 
       function saveServiceHoursByLevel(immediateCloud = true) {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         if (immediateCloud) saveCloudNowIfPossible(["serviceHoursByLevel"]);
         else scheduleCloudSave(["serviceHoursByLevel"]);
@@ -1981,6 +1999,7 @@
       }
 
       function saveServiceAssignments(immediateCloud = true) {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         if (immediateCloud) saveCloudNowIfPossible(["serviceAssignments"]);
         else scheduleCloudSave(["serviceAssignments"]);
@@ -2041,6 +2060,7 @@
       }
 
       function saveConstructionRules() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         saveCloudNowIfPossible(["constructionRules"]);
       }
@@ -2156,6 +2176,7 @@
       }
 
       function saveBlockExclusions() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
         saveCloudNowIfPossible(["blockExclusions"]);
       }
@@ -2255,6 +2276,7 @@
       }
 
       function saveAsSessions() {
+        invalidateConstructionChecksCache();
         asSessions = normalizePlanningItems(asSessions);
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
         saveCloudNowIfPossible(["asSessions"]);
@@ -2273,6 +2295,7 @@
       }
 
       function saveFacilities() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsFacilities2026", JSON.stringify(facilities));
         saveCloudNowIfPossible(["facilities", "facilityActivities"]);
       }
@@ -2288,6 +2311,7 @@
       }
 
       function saveActivities() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
         saveCloudNowIfPossible(["activities", "facilityActivities", "constructionRules"]);
       }
@@ -2314,6 +2338,7 @@
       }
 
       function saveFacilityActivities(immediateCloud = true) {
+        invalidateConstructionChecksCache();
         pruneFacilityActivities();
         localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(facilityActivities));
         if (immediateCloud) saveCloudNowIfPossible(["facilityActivities"]);
@@ -2330,6 +2355,7 @@
       }
 
       function saveFacilityUnavailability() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
         saveCloudNowIfPossible(["facilityUnavailability"]);
       }
@@ -2358,6 +2384,7 @@
       }
 
       function saveAsExclusions() {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
         saveCloudNowIfPossible(["asExclusions"]);
       }
@@ -3074,6 +3101,7 @@
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
+        invalidateConstructionChecksCache();
       }
 
       function scheduleCloudSave(keys = []) {
@@ -4005,6 +4033,7 @@
       }
 
       function detectConflicts() {
+        return cachedConstructionCheck("conflicts", () => {
         const conflicts = [];
         const rows = yearRows();
         const weeks = schoolYearWeeks();
@@ -4093,6 +4122,7 @@
           });
         });
         return conflicts;
+        });
       }
 
       function eventExclusionsFor(event) {
@@ -4422,7 +4452,7 @@
       }
 
       function conflictMap() {
-        return new Set(detectConflicts().map((conflict) => conflict.key));
+        return cachedConstructionCheck("conflictMap", () => new Set(detectConflicts().map((conflict) => conflict.key)));
       }
 
       function builderCellKey(day, slotId) {
@@ -5769,14 +5799,17 @@
       }
 
       function constructionBlocksStepComplete() {
+        return cachedConstructionCheck("blocksComplete", () => {
         const rules = annualConstructionRules();
         if (!rules.length) return false;
         if (!rules.every(annualRuleHasTeacherClasses)) return false;
         const totals = annualConstructionTeacherHours();
         return teachers.every((teacher) => (totals[teacher.id] || 0) >= teacher.weeklyReference) && constructionClassesStepComplete();
+        });
       }
 
       function constructionCycleDetailsStepComplete() {
+        return cachedConstructionCheck("cycleDetailsComplete", () => {
         const rules = annualConstructionRules();
         if (!rules.length) return false;
         return rules.every((rule) => constructionCyclesForRule(rule).every((cycle) => {
@@ -5787,6 +5820,7 @@
           if (serviceFreeActivityById(block.activityId)) return true;
           return activitiesForFacility(block.facilityId).length ? Boolean(block.activityId) : true;
         }));
+        });
       }
 
       function adminStepComplete(buildMode) {
