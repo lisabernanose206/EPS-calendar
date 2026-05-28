@@ -351,8 +351,10 @@
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
       .constructionRuleCardHead { align-items: start; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
       .constructionRulesToolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
-      .constructionRulesGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-      .constructionRuleGroupsGrid { display: grid; gap: 8px; }
+      .constructionRulesGrid { display: grid; gap: 7px; grid-template-columns: 1fr; }
+      .constructionRuleGroupsGrid { align-items: start; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .constructionRuleGroupsGrid .unavailableGroup { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 0; padding: 8px; }
+      .constructionRuleGroupsGrid .unavailableGroup > button { background: #fff; }
       .constructionRuleCategoryGroup { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; padding: 8px; }
       .constructionRuleCategoryHead { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .constructionRuleCategoryHead strong { color: #0f172a; font-size: 12px; }
@@ -822,7 +824,7 @@
       @media (max-width: 900px) {
         .eventPage { grid-template-columns: 1fr; }
         .constructionRulesPage { grid-template-columns: 1fr; }
-        .constructionRulesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .constructionRuleGroupsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .cycleSummaryHeader { grid-template-columns: 1fr 1fr; }
         .hoursBalanceGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .compactCardGrid { grid-template-columns: 1fr; }
@@ -847,7 +849,7 @@
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: 1fr; }
-        .constructionRulesGrid { grid-template-columns: 1fr; }
+        .constructionRuleGroupsGrid { grid-template-columns: 1fr; }
         .compactActivityGrid, .facilityActivityMatrix { grid-template-columns: 1fr; }
         .guideGrid { grid-template-columns: 1fr; }
         .logGroupGrid { grid-template-columns: 1fr; }
@@ -6856,7 +6858,7 @@
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
             ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
-              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Lancer la construction optimiser</button>
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Lancer la construction optimisee</button>
             </div>` : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
