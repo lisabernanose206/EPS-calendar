@@ -4051,6 +4051,39 @@
         }, 0);
       }
 
+      function optimizedRuleNeedsSixthSwimming(rule, cycle, usage) {
+        if (!constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") || !optimizedCycleIsSixthSwimmingCycle(cycle)) return false;
+        const swimmingIds = optimizedSwimmingActivityIds();
+        if (!swimmingIds.length) return false;
+        return optimizedRuleClassKeys(rule).some((schoolClass) => {
+          if (classParts(schoolClass).level !== "6eme") return false;
+          const classCycleKey = `${schoolClass}::${cycle.id}`;
+          const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
+          return ![...currentActivities].some((activityId) => swimmingIds.includes(activityId));
+        });
+      }
+
+      function optimizedCandidateHasSwimming(candidates) {
+        const swimmingIds = optimizedSwimmingActivityIds();
+        return candidates.some((block) => swimmingIds.includes(block.activityId));
+      }
+
+      function optimizedRuleProgramMissingCount(rule, usage) {
+        if (!constructionRuleSettingEnabled("class-activity-program")) return 0;
+        return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
+          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          if (!programActivityIds.length) return sum;
+          const doneActivityIds = usage.classYearActivities.get(schoolClass) || new Set();
+          return sum + programActivityIds.filter((activityId) => !doneActivityIds.has(activityId)).length;
+        }, 0);
+      }
+
+      function optimizedRulePriority(rule, cycle, candidates, usage) {
+        const swimmingNeed = optimizedRuleNeedsSixthSwimming(rule, cycle, usage) && optimizedCandidateHasSwimming(candidates) ? 10000 : 0;
+        const programNeed = optimizedRuleProgramMissingCount(rule, usage) * 120;
+        return swimmingNeed + programNeed - candidates.length;
+      }
+
       function optimizedAnnualProgramViolations() {
         if (!constructionRuleSettingEnabled("class-activity-program")) return [];
         return classes.flatMap((schoolClass) => {
@@ -4135,6 +4168,8 @@
         const programPenalty = constructionRuleSettingEnabled("class-activity-program") && block.activityId
           ? (usage.levelActivity.get(`${level}::${block.activityId}`) || 0) * 70
           : 0;
+        const swimmingIds = optimizedSwimmingActivityIds();
+        const scarceSwimmingBoost = optimizedRuleNeedsSixthSwimming(rule, cycle, usage) && swimmingIds.includes(block.activityId) ? -9000 : 0;
         return (
           (usage.rowFacility.get(rowFacilityKey) || 0) * 50
           + (usage.facility.get(block.facilityId) || 0) * 8
@@ -4145,6 +4180,7 @@
           + optimizedAnnualProgramPenalty(rule, block, usage)
           + optimizedSwimmingPenalty(rule, cycle, block, usage)
           + optimizedSeasonalLocationPenalty(cycle, block)
+          + scarceSwimmingBoost
         );
       }
 
@@ -4179,7 +4215,10 @@
         const rules = constructionRules
           .filter((rule) => constructionRuleAppliesToCycle(rule, cycle) && rule?.block && !rule.block.optionBlock)
           .map((rule) => ({ rule, candidates: optimizedCycleCandidates(rule, cycle) }))
-          .sort((first, second) => first.candidates.length - second.candidates.length);
+          .sort((first, second) =>
+            optimizedRulePriority(second.rule, cycle, second.candidates, usage) - optimizedRulePriority(first.rule, cycle, first.candidates, usage)
+            || first.candidates.length - second.candidates.length
+          );
         const assignments = [];
         const unresolved = [];
         rules.forEach(({ rule, candidates }) => {
@@ -4222,7 +4261,13 @@
         let saved = 0;
         let unresolved = 0;
         const unresolvedBlocks = [];
-        classicConstructionCycles().forEach((cycle) => {
+        const cyclesToOptimize = classicConstructionCycles();
+        const optimizedCycleIds = new Set(cyclesToOptimize.map((cycle) => cycle.id));
+        constructionRules = constructionRules.map((rule) => ({
+          ...rule,
+          cycleOverrides: Object.fromEntries(Object.entries(rule.cycleOverrides || {}).filter(([cycleId]) => !optimizedCycleIds.has(cycleId)))
+        }));
+        cyclesToOptimize.forEach((cycle) => {
           const result = solveOptimizedCycleDetailsForCycle(cycle, usage);
           unresolved += result.unresolved.length;
           result.unresolved.forEach(({ rule, cycleId, reason }) => {
