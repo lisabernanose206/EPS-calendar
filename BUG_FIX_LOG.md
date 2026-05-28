@@ -1,5 +1,6 @@
 # Log des corrections
 
+- Construction : couleurs de fond limitees aux profs disponibles sur toute la portee de la case, y compris les indisponibilites du cycle.
 - Indisponibilites : prise en compte des profs, classes et installations lors de la reconstruction automatique du planning ; les AS respectent aussi les indisponibilites profs.
 
 - Navigation Admin : onglet Construction remis au fond standard avec une icône travaux.

@@ -4255,21 +4255,27 @@
         return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
       }
 
-      function availableTeacherIdsForConstructionCell(row, weekItem, key) {
+      function availableTeacherIdsForConstructionCell(row, weekItem, key, cycle = null, weekLetter = "all") {
         if (!row || !weekItem || row.isAs) return [];
         const busyTeacherIds = new Set();
-        (constructionPlan[key] || []).forEach((item) => {
-          teacherIdsForBlock(item).forEach((teacherId) => busyTeacherIds.add(teacherId));
+        const weekItems = cycle
+          ? weeksForCycle(cycle).filter((item) => weekLetter === "all" || item.letter === weekLetter)
+          : [weekItem];
+        weekItems.forEach((item) => {
+          const itemKey = yearCellKey(row.id, item.rank);
+          (constructionPlan[itemKey] || []).forEach((block) => {
+            teacherIdsForBlock(block).forEach((teacherId) => busyTeacherIds.add(teacherId));
+          });
+          unavailableTeachersForCell(row, item).forEach((teacherId) => busyTeacherIds.add(teacherId));
         });
-        unavailableTeachersForCell(row, weekItem).forEach((teacherId) => busyTeacherIds.add(teacherId));
         return teachers
           .filter((teacher) => !busyTeacherIds.has(teacher.id))
           .map((teacher) => teacher.id);
       }
 
-      function availableTeacherCellStyle(row, weekItem, key, blocked) {
+      function availableTeacherCellStyle(row, weekItem, key, blocked, cycle = null, weekLetter = "all") {
         if (blocked) return "";
-        const availableTeachers = availableTeacherIdsForConstructionCell(row, weekItem, key)
+        const availableTeachers = availableTeacherIdsForConstructionCell(row, weekItem, key, cycle, weekLetter)
           .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId))
           .filter(Boolean);
         if (!availableTeachers.length) return "";
@@ -4294,8 +4300,8 @@
         ].join("");
       }
 
-      function availableTeacherCellTitle(row, weekItem, key) {
-        const names = availableTeacherIdsForConstructionCell(row, weekItem, key)
+      function availableTeacherCellTitle(row, weekItem, key, cycle = null, weekLetter = "all") {
+        const names = availableTeacherIdsForConstructionCell(row, weekItem, key, cycle, weekLetter)
           .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)?.name)
           .filter(Boolean);
         return names.length ? `Profs disponibles : ${names.join(", ")}` : "Aucun prof disponible";
@@ -6472,8 +6478,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const asItems = asSessionsForConstructionCycle(row, cycle, key, filterSelection);
         const blocked = isWednesdayAfternoonCourse(row);
         const canOpenHere = !row.isAs && !blocked;
-        const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
-        const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
+        const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked, cycle, letter || "all") : "";
+        const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key, cycle, letter || "all") : "";
         const cellTitle = [label, blocked ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
         return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
