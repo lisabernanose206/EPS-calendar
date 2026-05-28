@@ -1032,6 +1032,10 @@
       let constructionMode = "planning";
       let constructionWorkspaceMode = loadConstructionWorkspaceMode();
       let constructionVersions = loadConstructionVersions();
+      let constructionLocks = loadConstructionLocks();
+      let constructionVersionPanelOpen = false;
+      let constructionVersionDraftName = "";
+      let constructionVersionDraftParts = [];
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
       let prerequisiteMode = "establishment";
@@ -1143,6 +1147,7 @@
         "yearPrerequisiteLocks",
         "constructionWorkspaceMode",
         "constructionVersions",
+        "constructionLocks",
         "constructionRuleSettings",
         "constructionRules",
         "constructionPlan",
@@ -2042,6 +2047,41 @@
         scheduleCloudSave(["constructionVersions"]);
       }
 
+      function defaultConstructionLocks() {
+        return { blocks: false, cycleDetails: {} };
+      }
+
+      function normalizeConstructionLocks(value) {
+        const source = value && typeof value === "object" ? value : {};
+        return {
+          blocks: Boolean(source.blocks),
+          cycleDetails: source.cycleDetails && typeof source.cycleDetails === "object"
+            ? Object.fromEntries(Object.entries(source.cycleDetails).map(([key, locked]) => [key, Boolean(locked)]))
+            : {}
+        };
+      }
+
+      function loadConstructionLocks() {
+        try {
+          const saved = localStorage.getItem("planningEpsConstructionLocks2026");
+          return normalizeConstructionLocks(saved ? JSON.parse(saved) : defaultConstructionLocks());
+        } catch {
+          return defaultConstructionLocks();
+        }
+      }
+
+      function saveConstructionLocks() {
+        constructionLocks = normalizeConstructionLocks(constructionLocks);
+        localStorage.setItem("planningEpsConstructionLocks2026", JSON.stringify(constructionLocks));
+        scheduleCloudSave(["constructionLocks"]);
+      }
+
+      function constructionBuildLocked(mode = constructionBuildMode, cycleId = activeConstructionCycleId) {
+        if (mode === "blocks") return Boolean(constructionLocks.blocks);
+        if (mode === "cycleDetails") return Boolean(constructionLocks.cycleDetails?.[cycleId]);
+        return false;
+      }
+
       function normalizeConstructionRuleSettings(items) {
         const source = Array.isArray(items) ? items : defaultConstructionRuleSettings;
         return source
@@ -2900,6 +2940,7 @@
           yearPrerequisiteLocks,
           constructionWorkspaceMode,
           constructionVersions,
+          constructionLocks,
           constructionRuleSettings,
           constructionRules,
           constructionPlan,
@@ -2939,6 +2980,7 @@
         activeCycleId = cycles[0]?.id || activeCycleId;
         constructionWorkspaceMode = ["manual", "optimized"].includes(data.constructionWorkspaceMode) ? data.constructionWorkspaceMode : constructionWorkspaceMode;
         constructionVersions = Array.isArray(data.constructionVersions) ? data.constructionVersions : constructionVersions;
+        constructionLocks = normalizeConstructionLocks(data.constructionLocks || constructionLocks);
         constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
         constructionPlan = data.constructionPlan && typeof data.constructionPlan === "object" ? data.constructionPlan : buildConstructionPlanFromRules();
@@ -2969,6 +3011,7 @@
         localStorage.setItem(PREREQUISITES_LOCK_KEY, prerequisiteSubModes.every((mode) => prerequisiteLocked(mode)) ? "true" : "false");
         localStorage.setItem("planningEpsConstructionWorkspaceMode2026", constructionWorkspaceMode);
         localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(constructionVersions));
+        localStorage.setItem("planningEpsConstructionLocks2026", JSON.stringify(constructionLocks));
         localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(constructionRuleSettings));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
@@ -4245,14 +4288,35 @@
         return [version?.name || "Version manuelle", dateLabel].filter(Boolean).join(" - ");
       }
 
-      function saveCurrentConstructionVersion(name = "") {
+      function constructionVersionPartOptions() {
+        return [
+          { id: "blocks", label: "Blocs profs/classes" },
+          ...classicConstructionCycles().map((cycle, index) => ({ id: `cycle:${cycle.id}`, label: cycle.name || `Cycle ${index + 1}` }))
+        ];
+      }
+
+      function normalizeConstructionVersionParts(parts) {
+        const validIds = constructionVersionPartOptions().map((item) => item.id);
+        if (!Array.isArray(parts) || !parts.length) return [...validIds];
+        const normalized = parts.filter((part, index) => validIds.includes(part) && parts.indexOf(part) === index);
+        return normalized.length ? normalized : [...validIds];
+      }
+
+      function constructionVersionPartsLabel(version) {
+        const labels = new Map(constructionVersionPartOptions().map((item) => [item.id, item.label]));
+        return normalizeConstructionVersionParts(version?.parts).map((part) => labels.get(part) || part.replace("cycle:", "Cycle ")).join(" + ");
+      }
+
+      function saveCurrentConstructionVersion(name = "", parts = constructionVersionPartOptions().map((item) => item.id)) {
         const savedAt = new Date().toISOString();
         const versionName = String(name || "").trim() || `Version ${constructionVersions.length + 1}`;
+        const savedParts = normalizeConstructionVersionParts(parts);
         constructionVersions = [
           {
             id: `construction-version-${Date.now()}-${Math.random().toString(16).slice(2)}`,
             name: versionName,
             mode: constructionWorkspaceMode,
+            parts: savedParts,
             savedAt,
             constructionRules: JSON.parse(JSON.stringify(constructionRules)),
             blockExclusions: JSON.parse(JSON.stringify(blockExclusions))
@@ -4265,10 +4329,39 @@
       function restoreConstructionVersion(versionId) {
         const version = constructionVersions.find((item) => item.id === versionId);
         if (!version) return false;
-        constructionRules = Array.isArray(version.constructionRules) ? JSON.parse(JSON.stringify(version.constructionRules)) : [];
-        blockExclusions = version.blockExclusions && typeof version.blockExclusions === "object" ? JSON.parse(JSON.stringify(version.blockExclusions)) : {};
+        const parts = normalizeConstructionVersionParts(version.parts);
+        const cycleIds = parts.filter((part) => part.startsWith("cycle:")).map((part) => part.slice(6));
+        const savedRules = Array.isArray(version.constructionRules) ? JSON.parse(JSON.stringify(version.constructionRules)) : [];
+        const savedById = new Map(savedRules.map((rule) => [rule.id, rule]));
+        if (parts.includes("blocks")) {
+          const currentOverridesById = new Map(constructionRules.map((rule) => [rule.id, rule.cycleOverrides || {}]));
+          constructionRules = savedRules.map((rule) => {
+            const savedOverrides = rule.cycleOverrides || {};
+            const mergedOverrides = { ...(currentOverridesById.get(rule.id) || {}) };
+            cycleIds.forEach((cycleId) => {
+              if (savedOverrides[cycleId]) mergedOverrides[cycleId] = JSON.parse(JSON.stringify(savedOverrides[cycleId]));
+              else delete mergedOverrides[cycleId];
+            });
+            return { ...rule, cycleOverrides: mergedOverrides };
+          });
+          if (version.blockExclusions && typeof version.blockExclusions === "object") {
+            blockExclusions = JSON.parse(JSON.stringify(version.blockExclusions));
+            saveBlockExclusions();
+          }
+        } else if (cycleIds.length) {
+          constructionRules = constructionRules.map((rule) => {
+            const savedRule = savedById.get(rule.id);
+            if (!savedRule) return rule;
+            const savedOverrides = savedRule.cycleOverrides || {};
+            const mergedOverrides = { ...(rule.cycleOverrides || {}) };
+            cycleIds.forEach((cycleId) => {
+              if (savedOverrides[cycleId]) mergedOverrides[cycleId] = JSON.parse(JSON.stringify(savedOverrides[cycleId]));
+              else delete mergedOverrides[cycleId];
+            });
+            return { ...rule, cycleOverrides: mergedOverrides };
+          });
+        }
         rebuildConstructionPlan();
-        saveBlockExclusions();
         return true;
       }
 
@@ -5851,9 +5944,12 @@
         const selectedCycle = constructionBuildMode === "blocks" || constructionBuildMode === "versions" ? constructionCycles[0] : activeConstructionCycle();
         const blocksComplete = constructionBlocksStepComplete();
         const cycleDetailsComplete = constructionCycleDetailsStepComplete();
+        const currentConstructionLocked = constructionBuildLocked(constructionBuildMode, selectedCycle?.id);
+        const lockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `${selectedCycle.name} verrouille` : "Blocs profs/classes verrouilles";
+        const unlockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `Verrouiller ${selectedCycle.name}` : "Verrouiller les blocs profs/classes";
         const constructionTableContent = constructionBuildMode === "versions"
           ? renderConstructionVersionsView()
-          : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, true)}</div>`;
+          : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
         return `<section class="builderPage">
           <div>
             <div class="constructionModePanel">
@@ -5885,13 +5981,21 @@
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
             <div class="constructionTabs">
-              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="stepStatus" aria-label="${blocksComplete ? "Etape complete" : "Etape incomplete"}"></span></button>
-              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activites<span class="stepStatus" aria-label="${cycleDetailsComplete ? "Etape complete" : "Etape incomplete"}"></span></button>
+              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouille"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Etape complete" : "Etape incomplete"}"></span></span></button>
+              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activites<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Etape complete" : "Etape incomplete"}"></span></span></button>
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
-              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
+              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
             </div>` : ""}
+            ${constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
+              <label class="lockToggle" title="Verrouiller les modifications de cette partie">
+                <input type="checkbox" data-construction-lock="${constructionBuildMode}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
+                <span class="lockToggleTrack"></span>
+                <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
+              </label>
+            </div>
+            ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillee : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
             ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activites se renseignent ensuite par cycle." : "Details par cycle : les blocs profs/classes sont fixes ; cliquez sur un bloc pour renseigner son installation et son activite sur ce cycle."}</div>`}
             ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
@@ -5900,6 +6004,7 @@
             ${constructionTableContent}
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
+          ${constructionVersionPanelOpen ? renderSaveConstructionVersionModal() : ""}
           ${pendingBlockDelete ? renderDeleteBlockModal() : ""}
           ${movingBlockGhostHtml()}
         </section>`;
@@ -5930,6 +6035,7 @@
                 : 0;
               return `<article class="eventCard">
                 <strong>${escapeHtml(constructionVersionLabel(version))}</strong>
+                <span>${escapeHtml(constructionVersionPartsLabel(version))}</span>
                 <span>${ruleCount} bloc(s) · ${exclusionCount} exclusion(s)</span>
                 <span>${version.mode === "optimized" ? "Construction optimisee" : "Construction manuelle"}</span>
                 <div class="constructionRuleActions">
@@ -5940,6 +6046,35 @@
             }).join("")}</div>` : `<div class="alertEmpty">Aucune version sauvegardee pour le moment.</div>`}
           </div>
         </section>`;
+      }
+
+      function renderSaveConstructionVersionModal() {
+        const options = constructionVersionPartOptions();
+        const validIds = options.map((option) => option.id);
+        const selectedParts = constructionVersionDraftParts.filter((part, index) => validIds.includes(part) && constructionVersionDraftParts.indexOf(part) === index);
+        return `<div class="modalOverlay">
+          <div class="blockModal">
+            <button class="modalClose" id="cancelConstructionVersionSaveTop">x</button>
+            <h2>Sauvegarder la construction</h2>
+            <div class="eventField">
+              <label>Nom de la version</label>
+              <input id="constructionVersionName" value="${escapeHtml(constructionVersionDraftName)}" placeholder="Ex. Version conseil peda" />
+            </div>
+            <div class="eventField">
+              <label>Contenu sauvegarde</label>
+              <div class="choiceGrid">
+                ${options.map((option) => `<label class="choiceButton ${selectedParts.includes(option.id) ? "active" : ""}">
+                  <input type="checkbox" data-construction-version-part="${option.id}" ${selectedParts.includes(option.id) ? "checked" : ""} />
+                  ${escapeHtml(option.label)}
+                </label>`).join("")}
+              </div>
+            </div>
+            <div class="modalFooter">
+              <button class="ghostButton" id="cancelConstructionVersionSave">Annuler</button>
+              <button class="addButton" id="confirmConstructionVersionSave" ${selectedParts.length ? "" : "disabled"}>Sauvegarder</button>
+            </div>
+          </div>
+        </div>`;
       }
 
       function renderCloudSettings() {
@@ -6652,10 +6787,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           .filter(({ item }) => (!filterSelection || blockMatchesTeacherSelection(item)) && (!weekLetter || (item.weekLetter || "all") === weekLetter));
       }
 
-      function renderConstructionCycleBlocks(indexedItems, key) {
+      function renderConstructionCycleBlocks(indexedItems, key, editable = true) {
         return indexedItems.map(({ item, index }) => `
-          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" ${constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`} data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
-            ${constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
+            ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(item)}</strong>
             <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
@@ -6682,25 +6817,25 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           .filter((session) => !filterSelection || asMatchesTeacherSelection(session));
       }
 
-      function renderConstructionCycleArea(row, cycle, letter, label, filterSelection = false) {
+      function renderConstructionCycleArea(row, cycle, letter, label, filterSelection = false, editable = true) {
         const weekItem = representativeWeekForCycle(cycle, letter);
         if (!weekItem) return `<div class="cycleConstructionFull"><span class="muted">Cycle sans semaine</span></div>`;
         const key = yearCellKey(row.id, weekItem.rank);
         const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
         const asItems = asSessionsForConstructionCycle(row, cycle, key, filterSelection);
         const blocked = isWednesdayAfternoonCourse(row);
-        const canOpenHere = constructionBuildMode === "blocks" && !row.isAs && !blocked;
+        const canOpenHere = editable && constructionBuildMode === "blocks" && !row.isAs && !blocked;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked, cycle, letter || "all") : "";
         const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key, cycle, letter || "all") : "";
         const cellTitle = [label, blocked ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
         return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
           ${blocked ? "" : row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
-            <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
-              ${constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>` : ""}
+            <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${editable && constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
+              ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>` : ""}
               <strong>${asBlockLabel(session)}</strong>
               <span>${asSessionTeacherLabel(session)}</span>
-            </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key)}
+            </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key, editable)}
         </div>`;
       }
 
@@ -6745,8 +6880,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 return `<td class="cycleConstructionCell">
                   <div class="cycleConstructionCellInner">
                     ${hasQuinzaine
-                      ? `${!blockedRow && allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection)}</div>`
-                      : renderConstructionCycleArea(row, cycle, "", "", filterSelection)}
+                      ? `${!blockedRow && allItems.length ? `<div>${renderConstructionCycleBlocks(allItems, keyAll, editable)}</div>` : ""}<div class="cycleConstructionSplit">${renderConstructionCycleArea(row, cycle, "A", "Semaine A", filterSelection, editable)}${renderConstructionCycleArea(row, cycle, "B", "Semaine B", filterSelection, editable)}</div>`
+                      : renderConstructionCycleArea(row, cycle, "", "", filterSelection, editable)}
                   </div>
                 </td>`;
               }).join("")}
@@ -7509,6 +7644,22 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             yearPrerequisiteLocks = { ...yearPrerequisiteLocks, [mode]: input.checked };
             saveYearPrerequisiteLocks();
             showValidationPopup(input.checked ? "Sous-onglet verrouille" : "Sous-onglet deverrouille");
+            render();
+          });
+        });
+        document.querySelectorAll("[data-construction-lock]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const mode = input.dataset.constructionLock;
+            if (mode === "blocks") constructionLocks = { ...constructionLocks, blocks: input.checked };
+            if (mode === "cycleDetails") {
+              const cycleId = input.dataset.constructionLockCycle || activeConstructionCycleId;
+              constructionLocks = {
+                ...constructionLocks,
+                cycleDetails: { ...(constructionLocks.cycleDetails || {}), [cycleId]: input.checked }
+              };
+            }
+            saveConstructionLocks();
+            showValidationPopup(input.checked ? "Partie verrouillee" : "Partie deverrouillee");
             render();
           });
         });
@@ -8979,10 +9130,41 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const saveConstructionVersionButton = document.getElementById("saveConstructionVersion");
         if (saveConstructionVersionButton) {
           saveConstructionVersionButton.addEventListener("click", () => {
-            const defaultName = `Version ${constructionVersions.length + 1}`;
-            const versionName = window.prompt("Nom de cette version de construction :", defaultName);
-            if (versionName === null) return;
-            saveCurrentConstructionVersion(versionName);
+            constructionVersionDraftName = `Version ${constructionVersions.length + 1}`;
+            constructionVersionDraftParts = constructionVersionPartOptions().map((item) => item.id);
+            constructionVersionPanelOpen = true;
+            render();
+          });
+        }
+        const constructionVersionName = document.getElementById("constructionVersionName");
+        if (constructionVersionName) {
+          constructionVersionName.addEventListener("input", () => {
+            constructionVersionDraftName = constructionVersionName.value;
+          });
+        }
+        document.querySelectorAll("[data-construction-version-part]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const part = input.dataset.constructionVersionPart;
+            constructionVersionDraftParts = input.checked
+              ? [...constructionVersionDraftParts, part].filter((item, index, list) => list.indexOf(item) === index)
+              : constructionVersionDraftParts.filter((item) => item !== part);
+            render();
+          });
+        });
+        document.querySelectorAll("#cancelConstructionVersionSave, #cancelConstructionVersionSaveTop").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionVersionPanelOpen = false;
+            render();
+          });
+        });
+        const confirmConstructionVersionSave = document.getElementById("confirmConstructionVersionSave");
+        if (confirmConstructionVersionSave) {
+          confirmConstructionVersionSave.addEventListener("click", () => {
+            const options = constructionVersionPartOptions().map((item) => item.id);
+            const selectedParts = constructionVersionDraftParts.filter((part, index) => options.includes(part) && constructionVersionDraftParts.indexOf(part) === index);
+            if (!selectedParts.length) return;
+            saveCurrentConstructionVersion(constructionVersionDraftName, selectedParts);
+            constructionVersionPanelOpen = false;
             showValidationPopup("Version de construction sauvegardee");
             constructionBuildMode = "versions";
             render();
