@@ -4811,15 +4811,14 @@
       function optionDurationMax(optionId, slotHours = currentBlockSlotHours()) {
         const option = serviceFreeOptionById(optionId);
         if (!option) return 0;
-        return Math.min(Number(slotHours) || 0, Number(option.hours) || 0);
+        return Number(option.hours) || 0;
       }
 
       function normalizedOptionHours(optionId, value, slotHours = currentBlockSlotHours()) {
-        const max = optionDurationMax(optionId, slotHours);
+        const fallback = optionDurationMax(optionId, slotHours);
         const hours = Number(value);
-        if (!max) return 0;
-        if (!Number.isFinite(hours) || hours <= 0) return max;
-        return Math.min(max, Math.max(0.25, hours));
+        if (!Number.isFinite(hours) || hours <= 0) return fallback || 0;
+        return Math.max(0.25, hours);
       }
 
       function serviceAssignmentFor(teacherId, schoolClass) {
@@ -5773,10 +5772,8 @@
       function annualRuleHasTeacherClasses(rule) {
         const teacherIds = teacherIdsForBlock(rule.block);
         if (rule.block?.optionBlock) {
-          const row = yearRows().find((item) => item.id === rule.rowId);
-          const max = optionDurationMax(rule.block.optionId, row ? fullServiceSlotHours(row) : currentBlockSlotHours());
           return optionBlockAvailableForTeachers(teacherIds)
-            && Boolean(rule.block.optionId && rule.block.optionHours > 0 && rule.block.optionHours <= max);
+            && Boolean(rule.block.optionId && rule.block.optionHours > 0);
         }
         return teacherIds.length > 0 && teacherIds.every((teacherId) => teacherClassForBlock(rule.block, teacherId));
       }
@@ -6505,8 +6502,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
-        const slotServiceHours = fullServiceSlotHours(row);
-        const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, slotServiceHours));
+        const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
@@ -6517,7 +6513,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const availableFreeActivities = serviceFreeActivities();
         const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
         const selectedOption = blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
-        const selectedOptionMax = selectedOption ? optionDurationMax(selectedOption.id, slotServiceHours) : 0;
+        const selectedOptionDefaultHours = selectedOption ? optionDurationMax(selectedOption.id) : 0;
         const renderTeacherClassPicker = (teacher) => {
           const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
           const selectedLevel = blockTeacherClassLevels[teacher.id] || selectedTeacherClass.level || "";
@@ -6603,8 +6599,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
                 </div>
                 ${selectedOption ? `<label>Duree</label>
-                <input id="blockOptionHours" type="number" min="0.25" max="${selectedOptionMax}" step="0.25" value="${blockOptionHours || selectedOptionMax}" />
-                <span class="muted">Maximum : ${selectedOptionMax}h, selon le creneau et le service theorique.</span>` : `<span class="muted">Choisissez l'option concernee pour ce cycle.</span>`}
+                <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${blockOptionHours || selectedOptionDefaultHours}" />
+                <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee pour ce cycle.</span>`}
               </div>` : `<div class="buildField">
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
@@ -6624,8 +6620,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                     ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
                   </div>
                   ${selectedOption ? `<label>Duree</label>
-                  <input id="blockOptionHours" type="number" min="0.25" max="${selectedOptionMax}" step="0.25" value="${blockOptionHours || selectedOptionMax}" />
-                  <span class="muted">Maximum : ${selectedOptionMax}h, selon le creneau et le service theorique.</span>` : `<span class="muted">Choisissez l'option concernee.</span>`}
+                  <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${blockOptionHours || selectedOptionDefaultHours}" />
+                  <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee.</span>`}
                   <span class="muted">Aucune classe n'est obligatoire pour valider ce bloc.</span>
                 </div>`
                 : blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
