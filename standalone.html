@@ -5743,6 +5743,17 @@
         })).filter((section) => section.weeks.length);
       }
 
+      function roundHours(value) {
+        return Math.round((Number(value) || 0) * 60) / 60;
+      }
+
+      function formatHours(value) {
+        const totalMinutes = Math.round((Number(value) || 0) * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return minutes ? `${hours}h${String(minutes).padStart(2, "0")}` : `${hours}h`;
+      }
+
       function serviceStepComplete() {
         if (serviceAlerts().length) return false;
         return teachers.every((teacher) => {
@@ -5776,7 +5787,7 @@
             totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, row.slot.hours) * multiplier;
           });
         });
-        return totals;
+        return Object.fromEntries(Object.entries(totals).map(([teacherId, total]) => [teacherId, roundHours(total)]));
       }
 
       function annualConstructionClassHours() {
@@ -5788,10 +5799,10 @@
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
           classesForBlock(rule.block).forEach((schoolClass) => {
             if (totals[schoolClass] === undefined) totals[schoolClass] = 0;
-            totals[schoolClass] = Math.round((totals[schoolClass] + row.slot.hours * multiplier) * 10) / 10;
+            totals[schoolClass] += row.slot.hours * multiplier;
           });
         });
-        return totals;
+        return Object.fromEntries(Object.entries(totals).map(([schoolClass, total]) => [schoolClass, roundHours(total)]));
       }
 
       function classHourTargetForConstruction(schoolClass) {
@@ -5868,28 +5879,41 @@
       function renderConstructionServiceSummary() {
         const teacherTotals = annualConstructionTeacherHours();
         const classTotals = annualConstructionClassHours();
+        const classSummaries = classes.map((schoolClass) => {
+          const total = classTotals[schoolClass] || 0;
+          const target = classHourTargetForConstruction(schoolClass);
+          const missing = Math.max(0, roundHours((target || 0) - total));
+          const ok = !target || missing < 0.01;
+          return { schoolClass, total, target, missing, ok };
+        });
+        const missingClasses = classSummaries.filter((item) => item.target && !item.ok);
         return `<div class="servicePanel compactServicePanel">
           <h3>Service reel construit</h3>
           <div class="hoursBalanceGrid">
             ${teachers.map((teacher) => {
-              const total = Math.round((teacherTotals[teacher.id] || 0) * 10) / 10;
+              const total = teacherTotals[teacher.id] || 0;
               const target = teacher.weeklyReference;
               const status = hourStatus(total - target);
               const progress = target ? Math.min(100, Math.round((total / target) * 100)) : 0;
               return `<article class="hoursCard" style="background:${teacher.color};border-color:${teacher.border}">
                 <div class="hoursCardTop"><strong>${teacher.name}</strong><span class="hoursStatus ${status.className}">${status.label}</span></div>
-                <div class="hoursMain"><strong>${total}h</strong><span class="muted">/ ${target}h</span></div>
+                <div class="hoursMain"><strong>${formatHours(total)}</strong><span class="muted">/ ${formatHours(target)}</span></div>
                 <div class="hoursProgress"><span style="width:${progress}%"></span></div>
               </article>`;
             }).join("")}
           </div>
+          ${missingClasses.length ? `<h3>Classes a completer</h3>
+          <div class="classPills">
+            ${missingClasses.map((item) => `<span class="classPill needsValidation">${compactClassName(item.schoolClass)} · manque ${formatHours(item.missing)} (${formatHours(item.total)} / ${formatHours(item.target)})</span>`).join("")}
+          </div>` : ""}
           <h3>Volumes par classe</h3>
           <div class="classPills">
-            ${classes.map((schoolClass) => {
-              const total = Math.round((classTotals[schoolClass] || 0) * 10) / 10;
-              const target = classHourTargetForConstruction(schoolClass);
-              const ok = !target || Math.abs(total - target) < 0.01;
-              return `<span class="classPill ${ok ? "" : "needsValidation"}">${compactClassName(schoolClass)} · ${total}h / ${target}h</span>`;
+            ${classSummaries.map((item) => {
+              const total = formatHours(item.total);
+              const target = formatHours(item.target);
+              const ok = item.ok;
+              const schoolClass = item.schoolClass;
+              return `<span class="classPill ${ok ? "" : "needsValidation"}">${compactClassName(schoolClass)} · ${total} / ${target}</span>`;
             }).join("")}
           </div>
         </div>`;
