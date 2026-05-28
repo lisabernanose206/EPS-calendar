@@ -4008,11 +4008,13 @@
         const conflicts = [];
         const rows = yearRows();
         const weeks = schoolYearWeeks();
+        const rowById = new Map(rows.map((row) => [row.id, row]));
+        const weekByRank = new Map(weeks.map((weekItem) => [weekItem.rank, weekItem]));
         Object.entries(constructionPlan).forEach(([key, items]) => {
           if (!Array.isArray(items) || items.length < 2) return;
           const { rowId, weekRank } = parseYearCellKey(key);
-          const row = yearRows().find((item) => item.id === rowId);
-          const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
+          const row = rowById.get(rowId);
+          const weekItem = weekByRank.get(weekRank);
           const byFacility = items.reduce((acc, item, index) => {
             const facility = item.facilityId || item.facilityLabel || "";
             if (!facility) return acc;
@@ -5630,20 +5632,20 @@
                 }
                 const holiday = holidayFor(row, weekItem);
                 const vacation = vacationForCell(row, weekItem);
-                return `<td data-year-cell="${key}" title="${holiday || vacation?.name || ""}" class="${selectedCellClass} ${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">V</span>` : holiday ? `<span class="muted">F</span>` : renderYearCell(cycle, weekItem, row)}</td>`;
+                return `<td data-year-cell="${key}" title="${holiday || vacation?.name || ""}" class="${selectedCellClass} ${weekItem.rank === current.rank ? "currentWeek" : ""} ${effectiveSelectedWeekRank === weekItem.rank ? `selectedWeekColumn ${group.day === days[days.length - 1] && rowIndex === group.rows.length - 1 ? "selectedWeekBottom" : "selectedWeekMiddle"}` : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell" : ""}">${vacation ? `<span class="muted">V</span>` : holiday ? `<span class="muted">F</span>` : renderYearCell(cycle, weekItem, row, conflicts)}</td>`;
               }).join("")}</tr>`).join("")).join("")}
             </tbody>
           </table></div>
         </section>`;
       }
 
-      function renderYearCell(cycle, weekItem, row) {
+      function renderYearCell(cycle, weekItem, row, conflicts = null) {
         const key = yearCellKey(row.id, weekItem.rank);
         const builtItems = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
         const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
         const asItems = asSessionsForCell(row, weekItem).filter(asMatchesTeacherSelection);
         if (!builtItems.length && !events.length && !asItems.length) return `<span class="muted">-</span>`;
-        const hasConflict = conflictMap().has(key);
+        const hasConflict = (conflicts || conflictMap()).has(key);
         return `<div class="yearLessonStack">${builtItems.map((item) => `
           <div class="yearLesson" style="${blockTeacherStyle(item)}">
             <strong>${compactClassName(item.schoolClass) || item.label || "Bloc"}</strong>
@@ -5681,7 +5683,13 @@
       }
 
       function canAccessConstructionPlanning() {
-        return constructionBlockingItems().length === 0;
+        return adminStepComplete("establishment")
+          && teachers.length > 0
+          && classes.length > 0
+          && facilities.length > 0
+          && activities.length > 0
+          && cycles.length > 0
+          && !validateCycles(cycles).length;
       }
 
       function constructionTrimesterSections(weeks) {
