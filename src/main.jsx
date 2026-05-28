@@ -32,5 +32,6 @@ window.__EPS_CLOUD_CONFIG__ = {
 };
 
 window.__EPS_BUG_FIX_LOG__ = bugFixLog;
+window.__EPS_AI_RULE_ENDPOINT__ = import.meta.env.VITE_AI_RULE_ENDPOINT || "";
 
 new Function(script)();

@@ -332,6 +332,12 @@
       .constructionModePanel span { color: #64748b; font-size: 11px; font-weight: 850; }
       .constructionVersionControls { align-items: center; display: inline-flex; flex-wrap: wrap; gap: 6px; }
       .constructionVersionControls select { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; }
+      .optimizeButton { background: #ecfeff; border-color: #67e8f9; color: #155e75; }
+      .optimizeButton:hover { background: #cffafe; }
+      .constructionVersionChoices { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      .constructionVersionChoice { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #172033; cursor: pointer; display: flex; font-size: 12px; font-weight: 850; gap: 8px; min-height: 36px; padding: 7px 9px; }
+      .constructionVersionChoice input { accent-color: #0f766e; flex: 0 0 auto; height: 16px; margin: 0; width: 16px; }
+      .constructionVersionChoice:has(input:checked) { background: #ecfdf5; border-color: #99f6e4; color: #0f766e; }
       .constructionRulesPage { display: grid; gap: 12px; grid-template-columns: 340px minmax(0, 1fr); margin-top: 12px; }
       .constructionRulesForm, .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
       .constructionRulesForm h3, .constructionRulesList h3 { margin: 0; }
@@ -341,6 +347,12 @@
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
       .constructionRuleCardHead { align-items: start; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
       .constructionRuleActions { align-items: center; display: inline-flex; gap: 4px; justify-content: flex-end; }
+      .aiRulePreview { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0f766e; border-radius: 8px; display: grid; gap: 5px; padding: 9px; }
+      .aiRulePreview strong { color: #0f172a; font-size: 12px; }
+      .aiRulePreview span { color: #475569; font-size: 12px; font-weight: 850; line-height: 1.35; }
+      .aiRulePreview.error { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; }
+      .aiRulePreview.error strong, .aiRulePreview.error span { color: #991b1b; }
+      .aiRuleBadge { background: #ccfbf1; border: 1px solid #5eead4; border-radius: 999px; color: #0f766e; display: inline-flex; font-size: 10px; font-weight: 950; margin-top: 4px; padding: 2px 7px; width: max-content; }
       .ruleIconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; padding: 0; width: 28px; }
       .ruleIconButton:hover { border-color: #0f172a; color: #0f172a; }
       .ruleIconButton.danger { color: #991b1b; }
@@ -1060,6 +1072,10 @@
       let constructionVersionDraftParts = [];
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+      let constructionRuleInterpretation = null;
+      let constructionRuleInterpretationError = "";
+      let constructionRuleInterpreting = false;
+      let constructionRuleInterpretationSource = "";
       let editingConstructionRuleId = "";
       let expandedConstructionRuleCategory = "";
       let constructionChecksRevision = 0;
@@ -2149,7 +2165,9 @@
             id: String(item?.id || `rule-setting-${Date.now()}-${Math.random().toString(16).slice(2)}`),
             category: String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
             title: String(item?.title || "").trim(),
-            detail: String(item?.detail || "").trim()
+            detail: String(item?.detail || "").trim(),
+            reformulatedDetail: String(item?.reformulatedDetail || "").trim(),
+            interpretedRule: item?.interpretedRule && typeof item.interpretedRule === "object" ? item.interpretedRule : null
           }))
           .filter((item) => item.title || item.detail);
         const existingIds = new Set(normalized.map((item) => item.id));
@@ -3844,6 +3862,333 @@
           }
         };
         rebuildConstructionPlan();
+      }
+
+      function constructionRuleAppliesToCycle(rule, cycle) {
+        return constructionCyclesForRule(rule).some((item) => item.id === cycle.id);
+      }
+
+      function constructionRuleSettingEnabled(id) {
+        return constructionRuleSettings.some((rule) => rule.id === id);
+      }
+
+      function resetConstructionRuleInterpretation() {
+        constructionRuleInterpretation = null;
+        constructionRuleInterpretationError = "";
+        constructionRuleInterpretationSource = "";
+      }
+
+      function constructionRuleDraftSource() {
+        return [
+          constructionRuleDraft.title || "",
+          constructionRuleDraft.detail || "",
+          constructionRuleDraft.category || "",
+          constructionRuleDraft.customCategory || ""
+        ].join("\n").trim();
+      }
+
+      function normalizeSearchText(value) {
+        return String(value || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim();
+      }
+
+      function findNamedChoiceInText(text, choices) {
+        const normalized = normalizeSearchText(text);
+        return choices
+          .map((choice) => ({ choice, label: normalizeSearchText(choice.label || choice.name || choice.id) }))
+          .filter((item) => item.label && normalized.includes(item.label))
+          .sort((first, second) => second.label.length - first.label.length)[0]?.choice || null;
+      }
+
+      function inferRuleClassLevel(text) {
+        const normalized = normalizeSearchText(text);
+        return classLevels.find((level) => normalized.includes(normalizeSearchText(level))) || "";
+      }
+
+      function inferInterpretedRuleType(text, targetKind) {
+        const normalized = normalizeSearchText(text);
+        const hard = /\b(interdire|interdit|jamais|ne pas|pas de|exclure|bloquer|empecher)\b/.test(normalized);
+        const avoid = /\b(eviter|evite|si possible pas|dernier recours|moins possible)\b/.test(normalized);
+        const prefer = /\b(favoriser|favorise|preferer|prioriser|privilegier|idealement)\b/.test(normalized);
+        const require = /\b(imposer|impose|obligatoire|doit etre|toujours|forcer)\b/.test(normalized);
+        if (hard) return targetKind === "activity" ? "forbid_activity" : "forbid_facility";
+        if (require) return targetKind === "activity" ? "require_activity" : "require_facility";
+        if (prefer) return targetKind === "activity" ? "prefer_activity" : "prefer_facility";
+        if (avoid) return targetKind === "activity" ? "avoid_activity" : "avoid_facility";
+        return "";
+      }
+
+      function localInterpretConstructionRule(text) {
+        const facility = findNamedChoiceInText(text, facilities);
+        const activity = findNamedChoiceInText(text, activities);
+        const cycle = findNamedChoiceInText(text, classicConstructionCycles().map((cycle, index) => ({ ...cycle, label: cycle.name || `Cycle ${index + 1}` })));
+        const teacher = findNamedChoiceInText(text, teachers);
+        const schoolClass = findNamedChoiceInText(text, classes.map((schoolClass) => ({ id: schoolClass, label: compactClassName(schoolClass) })));
+        const classLevel = inferRuleClassLevel(text);
+        const targetKind = activity && !facility ? "activity" : "facility";
+        const type = inferInterpretedRuleType(text, targetKind);
+        const targetId = targetKind === "activity" ? activity?.id : facility?.id;
+        if (!type || !targetId) {
+          return {
+            interpretable: false,
+            error: "La regle doit mentionner une action claire (interdire, eviter, favoriser, imposer) et une installation ou une activite existante."
+          };
+        }
+        const rule = {
+          type,
+          facilityId: targetKind === "facility" ? facility.id : "",
+          activityId: targetKind === "activity" ? activity.id : "",
+          target: {
+            classLevel,
+            schoolClass: schoolClass?.id || "",
+            teacherId: teacher?.id || "",
+            cycleId: cycle?.id || ""
+          },
+          hard: type.startsWith("forbid_") || type.startsWith("require_"),
+          priority: type.startsWith("avoid_") ? 80 : type.startsWith("prefer_") ? 55 : 100
+        };
+        const actionLabel = type.startsWith("forbid_")
+          ? "Interdire"
+          : type.startsWith("require_")
+            ? "Imposer"
+            : type.startsWith("prefer_")
+              ? "Favoriser"
+              : "Eviter";
+        const targetLabel = targetKind === "activity" ? activity.label : facility.label;
+        const scope = [
+          classLevel ? `niveau ${classLevel}` : "",
+          schoolClass ? `classe ${compactClassName(schoolClass.id)}` : "",
+          teacher ? `prof ${teacher.name}` : "",
+          cycle ? cycle.name : ""
+        ].filter(Boolean).join(", ") || "tous les blocs concernes";
+        return {
+          interpretable: true,
+          reformulatedDetail: `${actionLabel} ${targetLabel} pour ${scope}.`,
+          interpretedRule: rule
+        };
+      }
+
+      async function interpretConstructionRuleWithAi() {
+        const source = constructionRuleDraftSource();
+        if (!source) {
+          constructionRuleInterpretationError = "Renseignez une regle avant de lancer l'interpretation.";
+          constructionRuleInterpretation = null;
+          return;
+        }
+        constructionRuleInterpreting = true;
+        constructionRuleInterpretationError = "";
+        render();
+        try {
+          const endpoint = window.__EPS_AI_RULE_ENDPOINT__;
+          const result = endpoint
+            ? await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                rule: {
+                  title: constructionRuleDraft.title,
+                  detail: constructionRuleDraft.detail,
+                  category: constructionRuleDraft.category === "Autre" ? constructionRuleDraft.customCategory : constructionRuleDraft.category
+                },
+                context: {
+                  facilities,
+                  activities,
+                  cycles: classicConstructionCycles(),
+                  teachers,
+                  classes
+                }
+              })
+            }).then((response) => response.ok ? response.json() : Promise.reject(new Error("Interpretation IA indisponible")))
+            : localInterpretConstructionRule(source);
+          if (!result?.interpretable || !result?.interpretedRule) {
+            constructionRuleInterpretation = null;
+            constructionRuleInterpretationError = result?.error || "Cette regle n'est pas encore exploitable par l'optimiseur.";
+          } else {
+            constructionRuleInterpretation = {
+              reformulatedDetail: String(result.reformulatedDetail || constructionRuleDraft.detail || constructionRuleDraft.title).trim(),
+              interpretedRule: result.interpretedRule
+            };
+            constructionRuleInterpretationSource = source;
+          }
+        } catch (error) {
+          constructionRuleInterpretation = null;
+          constructionRuleInterpretationError = String(error?.message || error || "Interpretation IA impossible.");
+        } finally {
+          constructionRuleInterpreting = false;
+          render();
+        }
+      }
+
+      function interpretedOptimizerRules() {
+        return constructionRuleSettings
+          .map((rule) => rule.interpretedRule ? ({ source: rule, rule: rule.interpretedRule }) : null)
+          .filter(Boolean);
+      }
+
+      function optimizerRuleMatchesTarget(customRule, constructionRule, cycle) {
+        const target = customRule.target || {};
+        if (target.cycleId && target.cycleId !== cycle.id) return false;
+        if (target.classLevel && target.classLevel !== (constructionRule.classLevel || classParts(constructionRule.block?.schoolClass || "").level)) return false;
+        if (target.schoolClass && !classesForBlock(constructionRule.block).some((schoolClass) => classesOverlap(schoolClass, target.schoolClass))) return false;
+        if (target.teacherId && !teacherIdsForBlock(constructionRule.block).includes(target.teacherId)) return false;
+        return true;
+      }
+
+      function customRuleBlocksOptimizedCandidate(constructionRule, cycle, block) {
+        return interpretedOptimizerRules().some(({ rule }) => {
+          if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return false;
+          if (rule.type === "forbid_facility") return block.facilityId === rule.facilityId;
+          if (rule.type === "forbid_activity") return block.activityId === rule.activityId;
+          if (rule.type === "require_facility") return block.facilityId !== rule.facilityId;
+          if (rule.type === "require_activity") return block.activityId !== rule.activityId;
+          return false;
+        });
+      }
+
+      function customRuleOptimizedPenalty(constructionRule, cycle, block) {
+        return interpretedOptimizerRules().reduce((score, { rule }) => {
+          if (!optimizerRuleMatchesTarget(rule, constructionRule, cycle)) return score;
+          const priority = Number(rule.priority) || 50;
+          if (rule.type === "avoid_facility" && block.facilityId === rule.facilityId) return score + priority;
+          if (rule.type === "avoid_activity" && block.activityId === rule.activityId) return score + priority;
+          if (rule.type === "prefer_facility" && block.facilityId !== rule.facilityId) return score + priority;
+          if (rule.type === "prefer_activity" && block.activityId !== rule.activityId) return score + priority;
+          return score;
+        }, 0);
+      }
+
+      function rulesShareCycleWeeks(firstRule, secondRule, cycle) {
+        const firstLetter = firstRule.weekLetter || "all";
+        const secondLetter = secondRule.weekLetter || "all";
+        return weeksForCycle(cycle).some((weekItem) =>
+          (firstLetter === "all" || firstLetter === weekItem.letter)
+          && (secondLetter === "all" || secondLetter === weekItem.letter)
+        );
+      }
+
+      function optimizedCandidateBlock(rule, facility, activity) {
+        return {
+          ...rule.block,
+          facilityId: facility?.id || "",
+          facilityLabel: facility?.label || "",
+          activityId: activity?.id || "",
+          activityLabel: activity?.label || ""
+        };
+      }
+
+      function optimizedCycleCandidates(rule, cycle) {
+        if (!rule?.block || rule.block.optionBlock) return [];
+        const enforceActivityLinks = constructionRuleSettingEnabled("facility-activity-link");
+        const enforceUnavailableFacilities = constructionRuleSettingEnabled("facility-unavailable");
+        return facilities.flatMap((facility) => {
+          const linkedActivities = activitiesForFacility(facility.id);
+          const activityChoices = enforceActivityLinks
+            ? (linkedActivities.length ? linkedActivities : [null])
+            : activities;
+          return activityChoices
+            .map((activity) => optimizedCandidateBlock(rule, facility, activity))
+            .filter((block) => !customRuleBlocksOptimizedCandidate(rule, cycle, block))
+            .filter((block) => !enforceUnavailableFacilities || !blockCycleUnavailableMessage(rule.rowId, cycle.id, block, rule.weekLetter || "all"));
+        });
+      }
+
+      function optimizedAssignmentHasConflict(rule, cycle, block, assignments) {
+        if (!constructionRuleSettingEnabled("facility-single-place")) return false;
+        return assignments.some((assignment) => {
+          if (assignment.rule.rowId !== rule.rowId) return false;
+          if (!rulesShareCycleWeeks(assignment.rule, rule, cycle)) return false;
+          if (!assignment.block.facilityId || assignment.block.facilityId !== block.facilityId) return false;
+          return !blocksCanShareFacility(assignment.block, block);
+        });
+      }
+
+      function optimizedCandidateScore(rule, cycle, block, usage) {
+        const rowFacilityKey = `${rule.rowId}::${block.facilityId}`;
+        const teacherIds = teacherIdsForBlock(rule.block);
+        const teacherFacilityPenalty = teacherIds.reduce((sum, teacherId) => sum + (usage.teacherFacility.get(`${teacherId}::${block.facilityId}`) || 0), 0);
+        const teacherActivityPenalty = teacherIds.reduce((sum, teacherId) => sum + (usage.teacherActivity.get(`${teacherId}::${block.activityId}`) || 0), 0);
+        return (
+          (usage.rowFacility.get(rowFacilityKey) || 0) * 50
+          + (usage.facility.get(block.facilityId) || 0) * 8
+          + (usage.activity.get(block.activityId) || 0) * 4
+          + teacherFacilityPenalty * 3
+          + teacherActivityPenalty * 2
+          + customRuleOptimizedPenalty(rule, cycle, block)
+        );
+      }
+
+      function bumpOptimizedUsage(rule, block, usage) {
+        const bump = (map, key) => map.set(key, (map.get(key) || 0) + 1);
+        bump(usage.facility, block.facilityId);
+        bump(usage.activity, block.activityId || "__none__");
+        bump(usage.rowFacility, `${rule.rowId}::${block.facilityId}`);
+        teacherIdsForBlock(rule.block).forEach((teacherId) => {
+          bump(usage.teacherFacility, `${teacherId}::${block.facilityId}`);
+          bump(usage.teacherActivity, `${teacherId}::${block.activityId || "__none__"}`);
+        });
+      }
+
+      function solveOptimizedCycleDetailsForCycle(cycle, usage) {
+        const rules = constructionRules
+          .filter((rule) => constructionRuleAppliesToCycle(rule, cycle) && rule?.block && !rule.block.optionBlock)
+          .map((rule) => ({ rule, candidates: optimizedCycleCandidates(rule, cycle) }))
+          .sort((first, second) => first.candidates.length - second.candidates.length);
+        const assignments = [];
+        const unresolved = [];
+        rules.forEach(({ rule, candidates }) => {
+          const viable = candidates
+            .filter((block) => !optimizedAssignmentHasConflict(rule, cycle, block, assignments))
+            .sort((first, second) => optimizedCandidateScore(rule, cycle, first, usage) - optimizedCandidateScore(rule, cycle, second, usage));
+          const selected = viable[0];
+          if (!selected) {
+            unresolved.push(rule);
+            return;
+          }
+          assignments.push({ rule, block: selected });
+          bumpOptimizedUsage(rule, selected, usage);
+        });
+        return { assignments, unresolved };
+      }
+
+      function optimizeConstructionCycleDetails() {
+        if (!facilities.length || !activities.length) {
+          return { saved: 0, unresolved: constructionRules.length, message: "Ajoutez d'abord des installations et des activites." };
+        }
+        const usage = {
+          facility: new Map(),
+          activity: new Map(),
+          rowFacility: new Map(),
+          teacherFacility: new Map(),
+          teacherActivity: new Map()
+        };
+        let saved = 0;
+        let unresolved = 0;
+        classicConstructionCycles().forEach((cycle) => {
+          const result = solveOptimizedCycleDetailsForCycle(cycle, usage);
+          unresolved += result.unresolved.length;
+          result.assignments.forEach(({ rule, block }) => {
+            rule.cycleOverrides = {
+              ...(rule.cycleOverrides || {}),
+              [cycle.id]: {
+                facilityId: block.facilityId || "",
+                activityId: block.activityId || ""
+              }
+            };
+            saved += 1;
+          });
+        });
+        rebuildConstructionPlan();
+        return {
+          saved,
+          unresolved,
+          message: unresolved
+            ? `${saved} detail(s) optimise(s), ${unresolved} bloc(s) sans solution`
+            : `${saved} detail(s) optimise(s)`
+        };
       }
 
       function blockForRuleStorage(block) {
@@ -6278,6 +6623,10 @@
 
       function renderConstructionRulesView() {
         const selectedCategory = constructionRuleCategoryChoices.includes(constructionRuleDraft.category) ? constructionRuleDraft.category : "Autre";
+        const draftSource = constructionRuleDraftSource();
+        const interpretationIsCurrent = constructionRuleInterpretation && constructionRuleInterpretationSource === draftSource;
+        const canRequestInterpretation = Boolean(draftSource) && !constructionRuleInterpreting;
+        const canUseAddRuleButton = Boolean(draftSource) && !constructionRuleInterpreting;
         const editIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.5 6.5 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         const deleteIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
         const ruleGroups = Object.entries(constructionRuleSettings.reduce((groups, rule) => {
@@ -6309,8 +6658,11 @@
               <label>Description</label>
               <textarea id="constructionRuleDetail" placeholder="Expliquez la regle pour le futur moteur automatique.">${escapeHtml(constructionRuleDraft.detail)}</textarea>
             </div>
-            <button class="addButton" id="addConstructionRuleSetting" ${constructionRuleDraft.title.trim() || constructionRuleDraft.detail.trim() ? "" : "disabled"}>Ajouter la regle</button>
-            <div class="alertHelp"><strong>Usage</strong><span>Cette liste sert de referentiel pour la construction automatique. Les conflits deja codes restent securises dans l'app, meme si une regle est retiree ici.</span></div>
+            <button class="ghostButton" id="interpretConstructionRule" ${canRequestInterpretation ? "" : "disabled"}>${constructionRuleInterpreting ? "Interpretation..." : "Interpreter avec l'IA"}</button>
+            ${constructionRuleInterpretationError ? `<div class="aiRulePreview error"><strong>Regle non interpretable</strong><span>${escapeHtml(constructionRuleInterpretationError)}</span></div>` : ""}
+            ${interpretationIsCurrent ? `<div class="aiRulePreview"><strong>Reformulation a valider</strong><span>${escapeHtml(constructionRuleInterpretation.reformulatedDetail)}</span><span class="aiRuleBadge">Exploitable par l'optimiseur</span></div>` : ""}
+            <button class="addButton" id="addConstructionRuleSetting" ${canUseAddRuleButton ? "" : "disabled"}>${interpretationIsCurrent ? "Valider et ajouter la regle" : "Ajouter la regle"}</button>
+            <div class="alertHelp"><strong>Usage</strong><span>Une regle personnalisee doit etre interpretee puis validee avant ajout. Sinon l'optimiseur ne peut pas l'appliquer de maniere fiable.</span></div>
           </div>
           <div class="constructionRulesList">
             <div class="constructionRulesToolbar">
@@ -6351,7 +6703,8 @@
                     <button class="ruleIconButton danger" data-delete-construction-rule-setting="${rule.id}" title="Supprimer" aria-label="Supprimer">${deleteIcon}</button>
                   </div>
                 </div>
-                <span>${escapeHtml(rule.detail)}</span>
+                <span>${escapeHtml(rule.reformulatedDetail || rule.detail)}</span>
+                ${rule.interpretedRule ? `<small>Optimiseur : ${escapeHtml(rule.interpretedRule.type || "regle structuree")}</small>` : ""}
               </article>`).join("")}</div>` : ""}
             </section>`;
             }).join("")}</div>` : `<div class="alertEmpty">Aucune regle active. Vous pouvez retablir les regles par defaut.</div>`}
@@ -6443,7 +6796,7 @@
             <div class="constructionModePanel">
               <div class="constructionModeButtons" aria-label="Mode de construction">
                 <button class="${constructionWorkspaceMode === "manual" ? "active" : ""}" data-construction-workspace-mode="manual">Construction manuelle</button>
-                <button class="${constructionWorkspaceMode === "optimized" ? "active" : ""}" data-construction-workspace-mode="optimized" disabled title="Disponible plus tard">Construction optimisee</button>
+                <button class="optimizeButton ${constructionWorkspaceMode === "optimized" ? "active" : ""}" data-construction-workspace-mode="optimized" title="Remplir automatiquement uniquement les installations et activites par cycle">Construction optimisee</button>
               </div>
               <div class="constructionVersionControls">
                 <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
@@ -6556,8 +6909,8 @@
             </div>
             <div class="eventField">
               <label>Contenu sauvegarde</label>
-              <div class="choiceGrid">
-                ${options.map((option) => `<label class="choiceButton ${selectedParts.includes(option.id) ? "active" : ""}">
+              <div class="constructionVersionChoices">
+                ${options.map((option) => `<label class="constructionVersionChoice">
                   <input type="checkbox" data-construction-version-part="${option.id}" ${selectedParts.includes(option.id) ? "checked" : ""} />
                   ${escapeHtml(option.label)}
                 </label>`).join("")}
@@ -8198,6 +8551,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (constructionRuleCategory) {
           constructionRuleCategory.addEventListener("change", () => {
             constructionRuleDraft = { ...constructionRuleDraft, category: constructionRuleCategory.value };
+            resetConstructionRuleInterpretation();
             render();
           });
         }
@@ -8205,6 +8559,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (constructionRuleCustomCategory) {
           constructionRuleCustomCategory.addEventListener("input", () => {
             constructionRuleDraft = { ...constructionRuleDraft, customCategory: constructionRuleCustomCategory.value };
+            resetConstructionRuleInterpretation();
           });
           constructionRuleCustomCategory.addEventListener("change", () => render());
         }
@@ -8212,6 +8567,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (constructionRuleTitle) {
           constructionRuleTitle.addEventListener("input", () => {
             constructionRuleDraft = { ...constructionRuleDraft, title: constructionRuleTitle.value };
+            resetConstructionRuleInterpretation();
           });
           constructionRuleTitle.addEventListener("change", () => render());
         }
@@ -8219,8 +8575,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (constructionRuleDetail) {
           constructionRuleDetail.addEventListener("input", () => {
             constructionRuleDraft = { ...constructionRuleDraft, detail: constructionRuleDetail.value };
+            resetConstructionRuleInterpretation();
           });
           constructionRuleDetail.addEventListener("change", () => render());
+        }
+        const interpretConstructionRule = document.getElementById("interpretConstructionRule");
+        if (interpretConstructionRule) {
+          interpretConstructionRule.addEventListener("click", () => {
+            interpretConstructionRuleWithAi();
+          });
         }
         const addConstructionRuleSetting = document.getElementById("addConstructionRuleSetting");
         if (addConstructionRuleSetting) {
@@ -8228,6 +8591,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const title = constructionRuleDraft.title.trim();
             const detail = constructionRuleDraft.detail.trim();
             if (!title && !detail) return;
+            if (!constructionRuleInterpretation || constructionRuleInterpretationSource !== constructionRuleDraftSource()) {
+              interpretConstructionRuleWithAi();
+              return;
+            }
             constructionRuleSettings = [
               ...constructionRuleSettings,
               {
@@ -8236,10 +8603,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   ? constructionRuleDraft.customCategory.trim() || "Regle personnalisee"
                   : constructionRuleDraft.category.trim() || "Regle personnalisee",
                 title: title || "Regle personnalisee",
-                detail
+                detail,
+                reformulatedDetail: constructionRuleInterpretation.reformulatedDetail,
+                interpretedRule: constructionRuleInterpretation.interpretedRule
               }
             ];
             constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+            resetConstructionRuleInterpretation();
             editingConstructionRuleId = "";
             saveConstructionRuleSettings();
             showValidationPopup("Regle ajoutee");
@@ -8296,6 +8666,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (!window.confirm("Retablir les regles de construction par defaut ?")) return;
             resetConstructionRuleSettings();
             constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+            resetConstructionRuleInterpretation();
             editingConstructionRuleId = "";
             showValidationPopup("Regles par defaut retablies");
             render();
@@ -9729,6 +10100,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             if (button.disabled) return;
             constructionWorkspaceMode = button.dataset.constructionWorkspaceMode === "optimized" ? "optimized" : "manual";
+            if (constructionWorkspaceMode === "optimized") {
+              const result = optimizeConstructionCycleDetails();
+              constructionBuildMode = "cycleDetails";
+              showValidationPopup(result.message);
+            }
             saveConstructionWorkspaceMode();
             render();
           });
