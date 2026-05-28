@@ -5083,7 +5083,7 @@
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
                 ${lessons.map((lesson) => `
                   <div class="lesson" style="${blockTeacherStyle(lesson)}">
-                    <div class="lessonTop"><strong>${lesson.schoolClass}</strong></div>
+                    <div class="lessonTop"><strong>${blockClassLabel(lesson)}</strong></div>
                     <div class="lessonMeta"><span class="muted">${lesson.facilityLabel}</span></div>
                   </div>`).join("")}
                 ${events.map((event) => `<div class="lesson eventBlock"><strong>${event.name}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
@@ -5116,7 +5116,7 @@
                     const isUnavailable = unavailableItems.length > 0;
                     return `<td><div class="facilityCell ${isBusy ? "occupied" : isUnavailable ? "unavailable" : "free"}">
                       <strong>${isBusy ? "Occupée" : isUnavailable ? "Indisponible" : row ? "Libre" : "Pas de cours"}</strong>
-                      ${isBusy ? `<span>${facilityLessons.map((lesson) => `${teacherLabelForBlock(lesson)} · ${lesson.schoolClass}`).join(" / ")}</span>` : ""}
+                      ${isBusy ? `<span>${facilityLessons.map((lesson) => `${teacherLabelForBlock(lesson)} · ${blockClassLabel(lesson)}`).join(" / ")}</span>` : ""}
                       ${!isBusy && isUnavailable ? `<span>${unavailableItems.map((item) => item.name || "Contrainte").join(" / ")}</span>` : ""}
                     </div></td>`;
                 }).join("")}
@@ -5250,7 +5250,7 @@
                     ${blocked ? `<div class="emptyLesson">${vacationForCell(row, weekItem) ? "V" : "F"}</div>` : ""}
                     ${items.map((item) => `<div class="lesson" style="${blockTeacherStyle(item)}">
                       <div class="lessonTop"><strong>${teacherLabelForBlock(item)}</strong></div>
-                      <div class="lessonMeta"><span class="muted">${item.schoolClass} · ${item.facilityLabel}</span></div>
+                      <div class="lessonMeta"><span class="muted">${blockClassLabel(item)} · ${item.facilityLabel}</span></div>
                     </div>`).join("")}
                     ${events.map((event) => `<div class="lesson eventBlock"><strong>${event.name}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
                     ${!blocked && !items.length && !events.length ? `<div class="emptyLesson">Libre</div>` : ""}
@@ -5286,7 +5286,7 @@
                   ${dayLessons.length ? dayLessons.map((lesson) => `
                     <div class="miniLesson" style="background:${teacher.color};border-color:${teacher.border}">
                       <strong>${lesson.slot.label}</strong>
-                      <span>${lesson.schoolClass} · ${lesson.facility.label}</span>
+                      <span>${compactClassName(lesson.schoolClass)} · ${lesson.facility.label}</span>
                     </div>`).join("") : `<div class="miniEmpty">Libre</div>`}
                 </section>`;
               }).join("")}</div>
