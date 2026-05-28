@@ -9397,37 +9397,6 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             }, event.clientX, event.clientY);
           });
         });
-        document.querySelectorAll("[data-move-kind]").forEach((block) => {
-          let longPressTimer = null;
-          let startX = 0;
-          let startY = 0;
-          const clearLongPress = () => {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-          };
-          block.addEventListener("pointerdown", (event) => {
-            if (event.target.closest("[data-remove-cell], [data-start-move-kind]")) return;
-            startX = event.clientX;
-            startY = event.clientY;
-            clearLongPress();
-            longPressTimer = setTimeout(() => {
-              startMovingBuildBlock({
-                type: block.dataset.moveKind,
-                key: block.dataset.blockKey,
-                index: Number(block.dataset.moveIndex),
-                id: block.dataset.moveId
-              }, startX, startY, true);
-            }, 550);
-          });
-          block.addEventListener("pointermove", (event) => {
-            if (!longPressTimer) return;
-            const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
-            if (distance > 8) clearLongPress();
-          });
-          ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => {
-            block.addEventListener(eventName, clearLongPress);
-          });
-        });
         document.querySelectorAll("[data-remove-cell]").forEach((button) => {
           button.addEventListener("click", (event) => {
             event.stopPropagation();
