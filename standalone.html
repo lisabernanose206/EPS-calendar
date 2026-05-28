@@ -992,7 +992,14 @@
         { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
         { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
-        { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." }
+        { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." },
+        { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixes sur l'annee ; seules les installations et activites varient par cycle." },
+        { id: "cycle-details-required", category: "Installations / activites", title: "Details par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activite par cycle quand l'installation propose des activites." },
+        { id: "as-readonly-construction", category: "AS", title: "AS non modifiables en construction", detail: "Les creneaux AS restent fixes dans Construction ; on ne peut pas les deplacer ni les modifier depuis les blocs." },
+        { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le creneau", detail: "En co-intervention, les deux professeurs sont presents sur toute la duree du creneau, dans la meme installation, avec des classes differentes." },
+        { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service theorique peuvent devenir des blocs Option sans classe obligatoire, avec une duree precisee par cycle." },
+        { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d'atteindre son volume EPS hebdomadaire : 4h en 6eme, 3h en 5eme, 4eme et 3eme." },
+        { id: "supabase-source", category: "Sauvegarde", title: "Supabase source officielle", detail: "Les donnees de construction, versions, verrous et liens installations/activites sont rechargees depuis Supabase comme source de reference." }
       ];
       const constructionRuleCategoryChoices = [
         "Conflit prof",
@@ -1002,6 +1009,10 @@
         "Installations / activites",
         "Rythme classe",
         "Cycle",
+        "AS",
+        "Co-intervention",
+        "Options",
+        "Sauvegarde",
         "Autre"
       ];
       const schoolYear = {
@@ -1039,6 +1050,7 @@
       let constructionVersionDraftParts = [];
       let constructionRuleSettings = loadConstructionRuleSettings();
       let constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+      let editingConstructionRuleId = "";
       let prerequisiteMode = "establishment";
       let yearPrerequisiteMode = "unavailable";
       let prerequisiteLocks = {};
@@ -2088,7 +2100,7 @@
 
       function normalizeConstructionRuleSettings(items) {
         const source = Array.isArray(items) ? items : defaultConstructionRuleSettings;
-        return source
+        const normalized = source
           .map((item) => ({
             id: String(item?.id || `rule-setting-${Date.now()}-${Math.random().toString(16).slice(2)}`),
             category: String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
@@ -2096,6 +2108,11 @@
             detail: String(item?.detail || "").trim()
           }))
           .filter((item) => item.title || item.detail);
+        const existingIds = new Set(normalized.map((item) => item.id));
+        const missingDefaults = defaultConstructionRuleSettings
+          .filter((item) => !existingIds.has(item.id))
+          .map((item) => ({ ...item }));
+        return [...normalized, ...missingDefaults];
       }
 
       function loadConstructionRuleSettings() {
@@ -6031,10 +6048,30 @@
             </div>
             ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => `<section class="constructionRuleCategoryGroup">
               <div class="constructionRuleCategoryHead"><strong>${escapeHtml(category)}</strong><span>${rules.length}</span></div>
-              <div class="constructionRulesGrid">${rules.map((rule) => `<article class="constructionRuleCard">
+              <div class="constructionRulesGrid">${rules.map((rule) => editingConstructionRuleId === rule.id ? `<article class="constructionRuleCard">
+                <div class="eventField">
+                  <label>Categorie</label>
+                  <select data-edit-construction-rule-category="${rule.id}">
+                    ${constructionRuleCategoryChoices.map((choice) => `<option value="${escapeHtml(choice)}" ${rule.category === choice ? "selected" : ""}>${escapeHtml(choice)}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="eventField">
+                  <label>Titre</label>
+                  <input data-edit-construction-rule-title="${rule.id}" value="${escapeHtml(rule.title)}" />
+                </div>
+                <div class="eventField">
+                  <label>Description</label>
+                  <textarea data-edit-construction-rule-detail="${rule.id}">${escapeHtml(rule.detail)}</textarea>
+                </div>
+                <div class="constructionRuleActions">
+                  <button class="ghostButton" data-save-construction-rule-setting="${rule.id}">Enregistrer</button>
+                  <button class="ghostButton" data-cancel-construction-rule-edit>Annuler</button>
+                </div>
+              </article>` : `<article class="constructionRuleCard">
                 <strong>${escapeHtml(rule.title)}</strong>
                 <span>${escapeHtml(rule.detail)}</span>
                 <div class="constructionRuleActions">
+                  <button class="ghostButton" data-edit-construction-rule-setting="${rule.id}">Modifier</button>
                   <button class="ghostButton" data-delete-construction-rule-setting="${rule.id}">Supprimer</button>
                 </div>
               </article>`).join("")}</div>
@@ -7902,17 +7939,44 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               }
             ];
             constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+            editingConstructionRuleId = "";
             saveConstructionRuleSettings();
             showValidationPopup("Regle ajoutee");
             render();
           });
         }
+        document.querySelectorAll("[data-edit-construction-rule-setting]").forEach((button) => {
+          button.addEventListener("click", () => {
+            editingConstructionRuleId = button.dataset.editConstructionRuleSetting;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-cancel-construction-rule-edit]").forEach((button) => {
+          button.addEventListener("click", () => {
+            editingConstructionRuleId = "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-save-construction-rule-setting]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const ruleId = button.dataset.saveConstructionRuleSetting;
+            const category = document.querySelector(`[data-edit-construction-rule-category="${ruleId}"]`)?.value.trim() || "Regle personnalisee";
+            const title = document.querySelector(`[data-edit-construction-rule-title="${ruleId}"]`)?.value.trim() || "Regle personnalisee";
+            const detail = document.querySelector(`[data-edit-construction-rule-detail="${ruleId}"]`)?.value.trim() || "";
+            constructionRuleSettings = constructionRuleSettings.map((rule) => rule.id === ruleId ? { ...rule, category, title, detail } : rule);
+            editingConstructionRuleId = "";
+            saveConstructionRuleSettings();
+            showValidationPopup("Regle modifiee");
+            render();
+          });
+        });
         document.querySelectorAll("[data-delete-construction-rule-setting]").forEach((button) => {
           button.addEventListener("click", () => {
             const rule = constructionRuleSettings.find((item) => item.id === button.dataset.deleteConstructionRuleSetting);
             if (!rule) return;
             if (!window.confirm(`Supprimer la regle "${rule.title}" ?`)) return;
             constructionRuleSettings = constructionRuleSettings.filter((item) => item.id !== rule.id);
+            if (editingConstructionRuleId === rule.id) editingConstructionRuleId = "";
             saveConstructionRuleSettings();
             showValidationPopup("Regle supprimee");
             render();
@@ -7924,6 +7988,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             if (!window.confirm("Retablir les regles de construction par defaut ?")) return;
             resetConstructionRuleSettings();
             constructionRuleDraft = { title: "", detail: "", category: "Conflit prof", customCategory: "" };
+            editingConstructionRuleId = "";
             showValidationPopup("Regles par defaut retablies");
             render();
           });
