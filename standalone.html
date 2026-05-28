@@ -303,6 +303,10 @@
       .iconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; font-size: 16px; font-weight: 950; height: 34px; justify-content: center; line-height: 1; padding: 0; width: 34px; }
       .iconButton:hover { border-color: #0f172a; }
       .iconButton svg { display: block; height: 20px; width: 20px; }
+      .exportPrintButton { gap: 8px; height: 38px; padding: 0 12px; width: auto; }
+      .exportPrintButton span { font-size: 12px; line-height: 1; white-space: nowrap; }
+      #saveConstructionVersion { background: #0f766e; border-color: #0f766e; color: #fff; font-weight: 950; }
+      #saveConstructionVersion:hover { background: #0d9488; border-color: #0d9488; }
       .printOnly { display: none; }
       .constructionPrintSections { display: contents; }
       .constructionPrintSection { display: grid; gap: 8px; }
@@ -414,6 +418,8 @@
       .blockBuilder h3 { font-size: 15px; margin: 0 0 8px; }
       .buildField { display: grid; gap: 6px; margin-top: 9px; }
       .buildField > label { color: #64748b; font-size: 12px; font-weight: 900; }
+      .coTeacherClassGrid { display: grid; gap: 12px; grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .coTeacherClassGrid .buildField { margin-top: 0; }
       .choiceGrid { display: flex; flex-wrap: wrap; gap: 6px; }
       .choiceButton { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; cursor: pointer; font-size: 11px; font-weight: 900; min-height: 30px; padding: 0 9px; }
       .choiceButton.active { box-shadow: inset 0 0 0 2px #0f172a; }
@@ -1016,6 +1022,7 @@
       let activeCycleScope = "default";
       let activeCycleId = cycles[0].id;
       let activeConstructionCycleId = cycles[0]?.id || "cycle-1";
+      let constructionBuildMode = "blocks";
       let cycleSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
@@ -1048,6 +1055,8 @@
       let blockTeacherIds = [];
       let blockClass = "";
       let blockClassLevel = "";
+      let blockTeacherClasses = {};
+      let blockTeacherClassLevels = {};
       let blockFacilityId = "";
       let blockActivityId = "";
       let blockWeekLetter = "all";
@@ -2083,19 +2092,52 @@
         return Array.isArray(blockExclusions[ruleId]) && blockExclusions[ruleId].includes(key);
       }
 
+      function isAnnualConstructionRule(rule) {
+        return rule?.scope === "year" || rule?.cycleId === "year";
+      }
+
+      function constructionCyclesForRule(rule) {
+        if (!rule) return [];
+        if (!isAnnualConstructionRule(rule)) return [findCycleForRule(rule)].filter(Boolean);
+        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
+        const scopedCycles = cyclesForClassLevel(level);
+        return (scopedCycles.length ? scopedCycles : cycles).slice(0, 4);
+      }
+
+      function cycleOverrideForRule(rule, cycleId) {
+        return rule?.cycleOverrides?.[cycleId] || {};
+      }
+
+      function blockWithCycleOverride(rule, cycle) {
+        const override = cycleOverrideForRule(rule, cycle.id);
+        const facilityId = override.facilityId !== undefined ? override.facilityId : rule.block?.facilityId || "";
+        const activityId = override.activityId !== undefined ? override.activityId : rule.block?.activityId || "";
+        const facility = facilities.find((item) => item.id === facilityId);
+        const activity = activityAllowedForFacility(facilityId, activityId)
+          ? activities.find((item) => item.id === activityId)
+          : null;
+        return {
+          ...rule.block,
+          facilityId: facility?.id || "",
+          facilityLabel: facility?.label || "",
+          activityId: activity?.id || "",
+          activityLabel: activity?.label || ""
+        };
+      }
+
       function buildConstructionPlanFromRules() {
         const plan = {};
         constructionRules.forEach((rule) => {
-          const cycle = findCycleForRule(rule);
-          if (!cycle) return;
-          weeksForCycle(cycle).forEach((weekItem) => {
-            if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
-            if (ruleBlockedByUnavailable(rule, weekItem)) return;
-            const key = yearCellKey(rule.rowId, weekItem.rank);
-            if (isBlockExcluded(rule.id, key)) return;
-            if (isRuleExcluded(rule.id, key)) return;
-            if (!plan[key]) plan[key] = [];
-            plan[key].push({ ...rule.block, ruleId: rule.id, cycleId: cycle.id, cycleName: cycle.name, weekLetter: rule.weekLetter || "all" });
+          constructionCyclesForRule(rule).forEach((cycle) => {
+            weeksForCycle(cycle).forEach((weekItem) => {
+              if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
+              if (ruleBlockedByUnavailable(rule, weekItem)) return;
+              const key = yearCellKey(rule.rowId, weekItem.rank);
+              if (isBlockExcluded(rule.id, key)) return;
+              if (isRuleExcluded(rule.id, key)) return;
+              if (!plan[key]) plan[key] = [];
+              plan[key].push({ ...blockWithCycleOverride(rule, cycle), ruleId: rule.id, cycleId: cycle.id, cycleName: cycle.name, weekLetter: rule.weekLetter || "all" });
+            });
           });
         });
         return plan;
@@ -2310,7 +2352,7 @@
 
       function eventTouchesBlock(event, block) {
         return teacherIdsForBlock(block).some((teacherId) => event.teacherIds.includes(teacherId))
-          || (event.classes || []).some((schoolClass) => classesOverlap(schoolClass, block.schoolClass));
+          || (event.classes || []).some((schoolClass) => classesForBlock(block).some((blockClassItem) => classesOverlap(schoolClass, blockClassItem)));
       }
 
       function eventsForCell(row, weekItem) {
@@ -2423,8 +2465,8 @@
         const unavailableItems = unavailableForCell(row, weekItem);
         const facilityBlocked = unavailableItems.find((item) => unavailableCoversFacility(item, block.facilityId));
         if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce creneau.`;
-        const classBlocked = unavailableItems.find((item) => classCollectionHasOverlap(item.classIds || [], block.schoolClass));
-        if (classBlocked) return `${block.schoolClass || "Cette classe"} est indisponible sur ce creneau.`;
+        const blockedClass = classesForBlock(block).find((schoolClass) => classCollectionHasOverlap(unavailableItems.flatMap((item) => item.classIds || []), schoolClass));
+        if (blockedClass) return `${blockedClass || "Cette classe"} est indisponible sur ce creneau.`;
         const teacherBlocked = unavailableItems.find((item) => teacherIdsForBlock(block).some((teacherId) => (item.teacherIds || []).includes(teacherId)));
         if (teacherBlocked) return `${teacherLabelForBlock(block) || "Ce professeur"} est indisponible sur ce creneau.`;
         return "";
@@ -2435,7 +2477,7 @@
         if (!row || !rule.block) return false;
         return unavailableForCell(row, weekItem).some((item) => {
           const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
-          const classBlocked = classCollectionHasOverlap(item.classIds || [], rule.block.schoolClass);
+          const classBlocked = classesForBlock(rule.block).some((schoolClass) => classCollectionHasOverlap(item.classIds || [], schoolClass));
           const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
           return facilityBlocked || classBlocked || teacherBlocked;
         });
@@ -2457,7 +2499,7 @@
             const shouldRemove = unavailableItems.some((item) => {
               if (!unavailableMatchesCell(item, row, weekItem)) return false;
               const facilityBlocked = unavailableCoversFacility(item, rule.block.facilityId);
-              const classBlocked = classCollectionHasOverlap(item.classIds || [], rule.block.schoolClass);
+              const classBlocked = classesForBlock(rule.block).some((schoolClass) => classCollectionHasOverlap(item.classIds || [], schoolClass));
               const teacherBlocked = teacherIdsForBlock(rule.block).some((teacherId) => (item.teacherIds || []).includes(teacherId));
               return facilityBlocked || classBlocked || teacherBlocked;
             });
@@ -3573,6 +3615,26 @@
         rebuildConstructionPlan();
       }
 
+      function skeletonBlockForStorage(block) {
+        const { facilityId, facilityLabel, activityId, activityLabel, ...storedBlock } = blockForRuleStorage(block);
+        return storedBlock;
+      }
+
+      function applyAnnualConstructionBlock(rowId, block, weekLetter = "all") {
+        const classLevel = classParts(block.schoolClass).level;
+        constructionRules.push({
+          id: `rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          rowId,
+          cycleId: "year",
+          scope: "year",
+          classLevel,
+          weekLetter,
+          block: skeletonBlockForStorage(block),
+          cycleOverrides: {}
+        });
+        rebuildConstructionPlan();
+      }
+
       function updateConstructionRule(ruleId, block, weekLetter = "all", weekItem = null) {
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule) return;
@@ -3582,6 +3644,31 @@
         rule.classLevel = classLevel;
         if (targetCycle) rule.cycleId = targetCycle.id;
         rule.weekLetter = weekLetter;
+        rebuildConstructionPlan();
+      }
+
+      function updateAnnualConstructionRule(ruleId, block, weekLetter = "all") {
+        const rule = constructionRules.find((item) => item.id === ruleId);
+        if (!rule) return;
+        rule.block = skeletonBlockForStorage(block);
+        rule.classLevel = classParts(block.schoolClass).level;
+        rule.cycleId = "year";
+        rule.scope = "year";
+        rule.weekLetter = weekLetter;
+        if (!rule.cycleOverrides) rule.cycleOverrides = {};
+        rebuildConstructionPlan();
+      }
+
+      function updateConstructionRuleCycleDetails(ruleId, cycleId, block) {
+        const rule = constructionRules.find((item) => item.id === ruleId);
+        if (!rule || !cycleId) return;
+        rule.cycleOverrides = {
+          ...(rule.cycleOverrides || {}),
+          [cycleId]: {
+            facilityId: block.facilityId || "",
+            activityId: block.activityId || ""
+          }
+        };
         rebuildConstructionPlan();
       }
 
@@ -3645,10 +3732,15 @@
         const rule = constructionRules.find((item) => item.id === block.ruleId);
         if (rule) {
           rule.rowId = targetRow.id;
-          rule.cycleId = targetCycle.id;
+          if (isAnnualConstructionRule(rule)) {
+            rule.cycleId = "year";
+            rule.scope = "year";
+          } else {
+            rule.cycleId = targetCycle.id;
+          }
           rule.classLevel = classLevel;
           rule.weekLetter = nextWeekLetter;
-          rule.block = storedBlock;
+          rule.block = isAnnualConstructionRule(rule) ? skeletonBlockForStorage(storedBlock) : storedBlock;
           delete blockExclusions[rule.id];
           saveBlockExclusions();
           rebuildConstructionPlan();
@@ -3817,7 +3909,8 @@
           const row = yearRows().find((item) => item.id === rowId);
           const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
           const byFacility = items.reduce((acc, item, index) => {
-            const facility = item.facilityId || item.facilityLabel || "Sans installation";
+            const facility = item.facilityId || item.facilityLabel || "";
+            if (!facility) return acc;
             if (!acc[facility]) acc[facility] = [];
             acc[facility].push({ ...item, index });
             return acc;
@@ -3842,7 +3935,7 @@
             });
           });
           Object.entries(byTeacher).forEach(([teacher, teacherItems]) => {
-            const classesInConflict = [...new Set(teacherItems.map((item) => item.schoolClass).filter(Boolean))];
+            const classesInConflict = [...new Set(teacherItems.map((item) => teacherClassForBlock(item, teacher)).filter(Boolean))];
             if (classesInConflict.length < 2) return;
             conflicts.push({
               type: "teacher",
@@ -3856,12 +3949,12 @@
           items.forEach((item, index) => {
             const classItems = items
               .map((other, otherIndex) => ({ ...other, index: otherIndex }))
-              .filter((other) => other.index !== index && item.schoolClass && other.schoolClass && classesOverlap(item.schoolClass, other.schoolClass));
+              .filter((other) => other.index !== index && classesForBlock(item).some((itemClass) => classesForBlock(other).some((otherClass) => classesOverlap(itemClass, otherClass))));
             if (!classItems.length) return;
             conflicts.push({
               type: "class",
               key,
-              schoolClass: item.schoolClass,
+              schoolClass: blockClassLabel(item),
               row,
               weekItem,
               items: [{ ...item, index }, ...classItems]
@@ -4144,12 +4237,13 @@
         return [version?.name || "Version manuelle", dateLabel].filter(Boolean).join(" - ");
       }
 
-      function saveCurrentConstructionVersion() {
+      function saveCurrentConstructionVersion(name = "") {
         const savedAt = new Date().toISOString();
+        const versionName = String(name || "").trim() || `Version ${constructionVersions.length + 1}`;
         constructionVersions = [
           {
             id: `construction-version-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            name: `Manuelle ${constructionVersions.length + 1}`,
+            name: versionName,
             mode: constructionWorkspaceMode,
             savedAt,
             constructionRules: JSON.parse(JSON.stringify(constructionRules)),
@@ -4192,6 +4286,24 @@
         return ids.filter((id, index) => ids.indexOf(id) === index);
       }
 
+      function teacherClassForBlock(block, teacherId) {
+        return block?.teacherClasses?.[teacherId] || block?.schoolClass || "";
+      }
+
+      function classesForBlock(block) {
+        const classItems = teacherIdsForBlock(block)
+          .map((teacherId) => teacherClassForBlock(block, teacherId))
+          .filter(Boolean);
+        if (block?.schoolClass) classItems.push(block.schoolClass);
+        return classItems.filter((schoolClass, index) => classItems.indexOf(schoolClass) === index);
+      }
+
+      function blockClassLabel(block) {
+        const classItems = classesForBlock(block);
+        if (!classItems.length) return block?.label || "Bloc";
+        return classItems.map(compactClassName).join(" + ");
+      }
+
       function teacherNamesForBlock(block) {
         return teacherIdsForBlock(block).map((id) => teachers.find((teacher) => teacher.id === id)?.name || id);
       }
@@ -4210,10 +4322,7 @@
       function coTeacherHoursForBlock(block, teacherId, slotHours) {
         const ids = teacherIdsForBlock(block);
         if (!teacherId || ids.indexOf(teacherId) <= 0) return Number(slotHours) || 0;
-        const stored = block.coTeacherHours && block.coTeacherHours[teacherId] !== undefined
-          ? block.coTeacherHours[teacherId]
-          : block.secondaryTeacherHours;
-        return clampCourseHours(stored === undefined ? slotHours : stored, slotHours);
+        return Number(slotHours) || 0;
       }
 
       function teacherHoursForBlock(block, teacherId, slotHours) {
@@ -4232,7 +4341,7 @@
         const ids = teacherIdsForBlock(block);
         if (ids.length < 2) return "";
         const name = teachers.find((teacher) => teacher.id === ids[1])?.name || "2e prof";
-        return `${name} : ${coTeacherHoursForBlock(block, ids[1], slotHours)}h`;
+        return `${name} : creneau complet`;
       }
 
       function blockTeacherStyle(block) {
@@ -4316,7 +4425,7 @@
         if (!blockAllowsSharedFacility(first) && !blockAllowsSharedFacility(second)) return false;
         const sharedTeacher = teacherIdsForBlock(first).some((teacherId) => teacherIdsForBlock(second).includes(teacherId));
         if (sharedTeacher) return false;
-        if (first.schoolClass && second.schoolClass && classesOverlap(first.schoolClass, second.schoolClass)) return false;
+        if (classesForBlock(first).some((firstClass) => classesForBlock(second).some((secondClass) => classesOverlap(firstClass, secondClass)))) return false;
         return true;
       }
 
@@ -4365,13 +4474,13 @@
       function blockConflictMessageForItems(items, candidate) {
         const facilityConflict = items.find((item) => item.facilityId && candidate.facilityId && item.facilityId === candidate.facilityId && !blocksCanShareFacility(item, candidate));
         if (facilityConflict) return `Installation deja occupee : ${candidate.facilityLabel}.`;
-        const teacherConflict = items.find((item) =>
-          teacherIdsForBlock(item).some((teacherId) => teacherIdsForBlock(candidate).includes(teacherId))
-          && item.schoolClass !== candidate.schoolClass
-        );
-        if (teacherConflict) return `Professeur deja pris avec ${teacherConflict.schoolClass || "une autre classe"}.`;
-        const classConflict = items.find((item) => item.schoolClass && candidate.schoolClass && classesOverlap(item.schoolClass, candidate.schoolClass));
-        if (classConflict) return `Classe deja prise : ${candidate.schoolClass}.`;
+        const teacherConflict = items.find((item) => teacherIdsForBlock(item).some((teacherId) =>
+          teacherIdsForBlock(candidate).includes(teacherId)
+          && teacherClassForBlock(item, teacherId) !== teacherClassForBlock(candidate, teacherId)
+        ));
+        if (teacherConflict) return `Professeur deja pris avec ${blockClassLabel(teacherConflict) || "une autre classe"}.`;
+        const classConflict = items.find((item) => classesForBlock(item).some((itemClass) => classesForBlock(candidate).some((candidateClass) => classesOverlap(itemClass, candidateClass))));
+        if (classConflict) return `Classe deja prise : ${blockClassLabel(candidate)}.`;
         return "";
       }
 
@@ -4625,24 +4734,24 @@
           .map((id) => teachers.find((item) => item.id === id))
           .filter(Boolean);
         const primaryTeacher = selectedTeachers[0];
-        const secondTeacher = selectedTeachers[1];
         const facility = facilities.find((item) => item.id === blockFacilityId);
         const activity = activityAllowedForFacility(blockFacilityId, blockActivityId)
           ? activities.find((item) => item.id === blockActivityId)
           : null;
-        const slotHours = currentBlockSlotHours();
-        const coTeacherHours = secondTeacher
-          ? { [secondTeacher.id]: clampCourseHours(blockSecondTeacherHours || slotHours, slotHours) }
-          : {};
+        const selectedTeacherClasses = Object.fromEntries(selectedTeachers
+          .map((teacher) => [teacher.id, blockTeacherClasses[teacher.id] || ""])
+          .filter(([, schoolClass]) => schoolClass));
+        const primaryClass = selectedTeachers.map((teacher) => selectedTeacherClasses[teacher.id]).find(Boolean) || blockClass;
         return {
           teacherIds: selectedTeachers.map((teacher) => teacher.id),
           teacherNames: selectedTeachers.map((teacher) => teacher.name).join(" + "),
           teacherId: primaryTeacher?.id || "",
           teacherName: primaryTeacher?.name || "",
-          coTeacherHours,
+          coTeacherHours: {},
           color: primaryTeacher?.color || "#f8fafc",
           border: primaryTeacher?.border || "#cbd5e1",
-          schoolClass: blockClass,
+          schoolClass: primaryClass,
+          teacherClasses: selectedTeacherClasses,
           facilityId: facility?.id || "",
           facilityLabel: facility?.label || "",
           activityId: activity?.id || "",
@@ -4718,6 +4827,35 @@
         const nextGroup = part === "group" ? value : current.group;
         if (!nextLevel || !nextNumber) return;
         blockClass = schoolClassLabel(nextLevel, nextNumber, nextGroup);
+      }
+
+      function syncPrimaryBlockClassFromTeacherClasses() {
+        blockClass = blockTeacherIds.map((teacherId) => blockTeacherClasses[teacherId]).find(Boolean) || "";
+        blockClassLevel = blockClass ? classParts(blockClass).level : "";
+      }
+
+      function updateBlockTeacherClass(teacherId, part, value) {
+        const current = classParts(blockTeacherClasses[teacherId] || "");
+        if (part === "level") {
+          blockTeacherClassLevels = { ...blockTeacherClassLevels, [teacherId]: value };
+          blockTeacherClasses = { ...blockTeacherClasses, [teacherId]: "" };
+          syncPrimaryBlockClassFromTeacherClasses();
+          return;
+        }
+        const nextLevel = current.level || blockTeacherClassLevels[teacherId] || "";
+        const nextNumber = part === "number" ? value : current.number;
+        const nextGroup = part === "group" ? value : current.group;
+        if (!nextLevel || !nextNumber) return;
+        blockTeacherClasses = { ...blockTeacherClasses, [teacherId]: schoolClassLabel(nextLevel, nextNumber, nextGroup) };
+        syncPrimaryBlockClassFromTeacherClasses();
+      }
+
+      function setBlockTeacherClass(teacherId, schoolClass) {
+        blockTeacherClasses = { ...blockTeacherClasses, [teacherId]: schoolClass };
+        const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+        const displayLevel = classParts(baseClassId || schoolClass).level;
+        blockTeacherClassLevels = { ...blockTeacherClassLevels, [teacherId]: displayLevel };
+        syncPrimaryBlockClassFromTeacherClasses();
       }
 
       function updateSpecialBlockClass(id) {
@@ -5321,6 +5459,46 @@
         });
       }
 
+      function annualConstructionRules() {
+        return constructionRules.filter((rule) => isAnnualConstructionRule(rule));
+      }
+
+      function annualRuleHasTeacherClasses(rule) {
+        const teacherIds = teacherIdsForBlock(rule.block);
+        return teacherIds.length > 0 && teacherIds.every((teacherId) => teacherClassForBlock(rule.block, teacherId));
+      }
+
+      function annualConstructionTeacherHours() {
+        const totals = Object.fromEntries(teachers.map((teacher) => [teacher.id, 0]));
+        annualConstructionRules().forEach((rule) => {
+          const row = yearRows().find((item) => item.id === rule.rowId);
+          if (!row?.slot) return;
+          const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
+          teacherIdsForBlock(rule.block).forEach((teacherId) => {
+            totals[teacherId] = (totals[teacherId] || 0) + teacherHoursForBlock(rule.block, teacherId, row.slot.hours) * multiplier;
+          });
+        });
+        return totals;
+      }
+
+      function constructionBlocksStepComplete() {
+        const rules = annualConstructionRules();
+        if (!rules.length) return false;
+        if (!rules.every(annualRuleHasTeacherClasses)) return false;
+        const totals = annualConstructionTeacherHours();
+        return teachers.every((teacher) => (totals[teacher.id] || 0) >= teacher.weeklyReference);
+      }
+
+      function constructionCycleDetailsStepComplete() {
+        const rules = annualConstructionRules();
+        if (!rules.length) return false;
+        return rules.every((rule) => constructionCyclesForRule(rule).every((cycle) => {
+          const block = blockWithCycleOverride(rule, cycle);
+          if (!block.facilityId) return false;
+          return activitiesForFacility(block.facilityId).length ? Boolean(block.activityId) : true;
+        }));
+      }
+
       function adminStepComplete(buildMode) {
         if (buildMode === "prerequisites") {
           return ["establishment", "team", "classes", "facilitiesActivities"].every(adminStepComplete);
@@ -5662,8 +5840,12 @@
           </section>`;
         }
         const constructionCycles = classicConstructionCycles();
-        const selectedCycle = activeConstructionCycle();
-        const constructionTableContent = `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, true)}</div>`;
+        const selectedCycle = constructionBuildMode === "blocks" || constructionBuildMode === "versions" ? constructionCycles[0] : activeConstructionCycle();
+        const blocksComplete = constructionBlocksStepComplete();
+        const cycleDetailsComplete = constructionCycleDetailsStepComplete();
+        const constructionTableContent = constructionBuildMode === "versions"
+          ? renderConstructionVersionsView()
+          : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, true)}</div>`;
         return `<section class="builderPage">
           <div>
             <div class="constructionModePanel">
@@ -5672,8 +5854,7 @@
                 <button class="${constructionWorkspaceMode === "optimized" ? "active" : ""}" data-construction-workspace-mode="optimized" disabled title="Disponible plus tard">Construction optimisee</button>
               </div>
               <div class="constructionVersionControls">
-                <button class="ghostButton" id="saveConstructionVersion">Sauver version</button>
-                ${constructionVersions.length ? `<select id="constructionVersionSelect" aria-label="Versions de construction">${constructionVersions.map((version) => `<option value="${version.id}">${escapeHtml(constructionVersionLabel(version))}</option>`).join("")}</select><button class="ghostButton" id="restoreConstructionVersion">Recuperer</button>` : `<span>Aucune version sauvegardee.</span>`}
+                <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
               </div>
             </div>
             <div class="builderActions">
@@ -5686,21 +5867,28 @@
                 <button class="ghostButton" data-construction-zoom="+">+</button>
               </div>
               <div class="constructionExportControls">
-                <button class="iconButton" data-print-format="A4" title="Exporter en A4" aria-label="Exporter en A4">
+                <button class="iconButton exportPrintButton" data-print-format="A4" title="Exporter / imprimer en A4" aria-label="Exporter / imprimer en A4">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
+                  <span>Exporter/Imprimer</span>
                 </button>
               </div>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
-            <div class="cycleConstructionTabs">
-              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
+            <div class="constructionTabs">
+              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="stepStatus" aria-label="${blocksComplete ? "Etape complete" : "Etape incomplete"}"></span></button>
+              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activites<span class="stepStatus" aria-label="${cycleDetailsComplete ? "Etape complete" : "Etape incomplete"}"></span></button>
+              <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
-            <div class="calendarLegend">Semaine type du cycle - lignes = creneaux de cours d'une journee - colonnes = jours - les creneaux quinzaine sont separes en A/B.</div>
-            ${renderConstructionWarnings()}
+            ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
+              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
+            </div>` : ""}
+            ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activites se renseignent ensuite par cycle." : "Details par cycle : les blocs profs/classes sont fixes ; cliquez sur un bloc pour renseigner son installation et son activite sur ce cycle."}</div>`}
+            ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc selectionne : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
+            ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
             ${constructionTableContent}
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
@@ -5721,6 +5909,29 @@
             <button class="ghostButton" id="confirmClearConstruction">Supprimer la selection</button>
           </div>
         </div>`;
+      }
+
+      function renderConstructionVersionsView() {
+        return `<section class="eventPage">
+          <div class="eventList" style="grid-column:1 / -1">
+            <h3>Versions sauvegardees</h3>
+            ${constructionVersions.length ? `<div class="compactCardGrid">${constructionVersions.map((version) => {
+              const ruleCount = Array.isArray(version.constructionRules) ? version.constructionRules.length : 0;
+              const exclusionCount = version.blockExclusions && typeof version.blockExclusions === "object"
+                ? Object.values(version.blockExclusions).reduce((sum, items) => sum + (Array.isArray(items) ? items.length : 0), 0)
+                : 0;
+              return `<article class="eventCard">
+                <strong>${escapeHtml(constructionVersionLabel(version))}</strong>
+                <span>${ruleCount} bloc(s) · ${exclusionCount} exclusion(s)</span>
+                <span>${version.mode === "optimized" ? "Construction optimisee" : "Construction manuelle"}</span>
+                <div class="constructionRuleActions">
+                  <button class="ghostButton" data-restore-construction-version="${version.id}">Charger</button>
+                  <button class="ghostButton" data-delete-construction-version="${version.id}">Supprimer</button>
+                </div>
+              </article>`;
+            }).join("")}</div>` : `<div class="alertEmpty">Aucune version sauvegardee pour le moment.</div>`}
+          </div>
+        </section>`;
       }
 
       function renderCloudSettings() {
@@ -5805,7 +6016,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
         const cycleUnavailableTeacherIds = cellCycle ? unavailableTeachersForCycleSpan(row, cellCycle, blockWeekLetter) : new Set();
-        const selectedClassUnavailable = classCollectionHasOverlap(occupied.classes, blockClass) || classCollectionHasOverlap(occupied.unavailableClasses, blockClass) || !serviceAllowsClassForTeachers(blockTeacherIds, blockClass);
+        const selectedClassUnavailable = classesForBlock(block).some((schoolClass) =>
+          classCollectionHasOverlap(occupied.classes, schoolClass)
+          || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass)
+        ) || blockTeacherIds.some((teacherId) => {
+          const schoolClass = teacherClassForBlock(block, teacherId);
+          return schoolClass && !serviceAllowsClassForTeacher(teacherId, schoolClass);
+        });
         const selectedFacilityUnavailable = (occupied.facilityIds.has(blockFacilityId) && !blockCoIntervention) || occupied.unavailableFacilityIds.has(blockFacilityId);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId) || cycleUnavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
@@ -5814,15 +6031,43 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const conflictMessage = unavailableMessage || cycleUnavailableMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && blockClass && blockFacilityId && !selectedClassUnavailable && !selectedFacilityUnavailable && !selectedTeachersUnavailable && !conflictMessage);
+        const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
         const presentCount = items.length + events.length + asItems.length;
         const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
-        const secondTeacher = blockTeacherIds.length > 1 ? teachers.find((teacher) => teacher.id === blockTeacherIds[1]) : null;
-        const secondTeacherHours = secondTeacher ? clampCourseHours(blockSecondTeacherHours || row.slot.hours, row.slot.hours) : "";
         const availableActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : activities;
+        const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
+        const renderTeacherClassPicker = (teacher) => {
+          const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
+          const selectedLevel = blockTeacherClassLevels[teacher.id] || selectedTeacherClass.level || "";
+          const visibleClasses = selectedLevel ? serviceClassesForLevel(selectedLevel) : [];
+          return `<div class="buildField">
+            <label>Classe de ${teacher.name}</label>
+            <div class="choiceGrid">
+              <button class="choiceButton ${!blockTeacherClasses[teacher.id] && !selectedLevel ? "active" : ""}" data-clear-teacher-class="${teacher.id}">Sans classe</button>
+              ${classLevels.map((level) => {
+                const levelClasses = serviceClassesForLevel(level);
+                const unavailable = !levelClasses.length || levelClasses.every((schoolClass) => (
+                  classCollectionHasOverlap(occupied.classes, schoolClass)
+                  || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass)
+                  || !serviceAllowsClassForTeacher(teacher.id, schoolClass)
+                ));
+                const reason = unavailable ? `Classes de ${level} deja prises, indisponibles ou hors service theorique pour ${teacher.name}.` : `Afficher les classes de ${level}.`;
+                return `<button class="choiceButton ${level === selectedLevel ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-level="${teacher.id}" data-class-level="${level}" title="${reason}" aria-label="${reason}" ${!levelClasses.length ? "disabled" : ""}>${level}</button>`;
+              }).join("")}
+            </div>
+            ${selectedLevel ? `<div class="choiceGrid">${visibleClasses.map((schoolClass) => {
+              const serviceMessage = serviceClassRestrictionMessage([teacher.id], schoolClass);
+              const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
+              const reason = unavailable ? serviceMessage || `${compactClassName(schoolClass)} est deja prise ou indisponible sur ce creneau.` : `${compactClassName(schoolClass)} disponible.`;
+              const hardUnavailable = classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
+              return `<button class="choiceButton serviceClassButton ${schoolClass === blockTeacherClasses[teacher.id] ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${teacher.id}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${compactClassName(schoolClass)}</button>`;
+            }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
+          </div>`;
+        };
         return `<div class="modalBackdrop">
           <section class="modal">
             <div class="modalHeader">
@@ -5833,8 +6078,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
             </div>
-            ${!row.isAs ? `<div class="modalGrid">
-              <div class="buildField">
+            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span></div>` : `<div class="buildField" style="margin-bottom:10px">
+              <label>Type de bloc</label>
+              <div class="choiceGrid">
+                <button class="choiceButton ${blockCoIntervention ? "active" : ""}" data-toggle-co-intervention>Co-intervention</button>
+                <button class="choiceButton ${!blockCoIntervention ? "active" : ""}" data-toggle-single-intervention>Cours simple</button>
+              </div>
+            </div>`}
+            <div class="modalGrid">
+              ${!editingCycleDetails ? `<div class="buildField">
                 <label>Professeur(s)</label>
                 <div class="choiceGrid">${teachers.map((teacher) => {
                   const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id) || cycleUnavailableTeacherIds.has(teacher.id);
@@ -5847,110 +6099,62 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                       : `${teacher.name} disponible.`;
                   return `<button class="choiceButton ${blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${teacher.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
                 }).join("")}</div>
-                <span class="muted">Jusqu'à 2 profs pour un cours conjoint.</span>
-                ${secondTeacher ? `<div class="coTeacherDurationPanel">
-                  <label>Duree de presence du 2e prof
-                    <span>${secondTeacher.name} peut rester tout le creneau ou seulement une partie.</span>
-                  </label>
-                  <input id="blockSecondTeacherHours" type="number" min="0.25" max="${row.slot.hours}" step="0.25" value="${secondTeacherHours}" />
-                </div>` : ""}
-              </div>
-              <div class="buildField">
+              </div>` : ""}
+              ${constructionBuildMode === "cycleDetails" ? `<div class="buildField">
                 <label>Installation</label>
-                <div class="choiceGrid">${facilities.map((facility) => {
+                <div class="choiceGrid">
+                  <button class="choiceButton ${!blockFacilityId ? "active" : ""}" data-clear-facility>Sans installation</button>
+                  ${facilities.map((facility) => {
                   const occupiedByCourse = occupied.facilityIds.has(facility.id);
-                  const unavailable = (occupiedByCourse && !blockCoIntervention) || occupied.unavailableFacilityIds.has(facility.id);
+                  const hardUnavailable = occupied.unavailableFacilityIds.has(facility.id);
+                  const unavailable = (occupiedByCourse && !blockCoIntervention) || hardUnavailable;
                   const reason = occupied.facilityIds.has(facility.id)
                     ? blockCoIntervention
                       ? `${facility.label} deja occupee : autorisee en co-intervention si profs et classes sont differents.`
                       : `${facility.label} est deja occupee sur ce creneau.`
-                    : occupied.unavailableFacilityIds.has(facility.id)
-                      ? `${facility.label} est indisponible sur ce creneau.`
+                      : occupied.unavailableFacilityIds.has(facility.id)
+                        ? `${facility.label} est indisponible sur ce creneau.`
                       : `${facility.label} disponible.`;
-                  return `<button class="choiceButton ${facility.id === blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${facility.label}</button>`;
+                  return `<button class="choiceButton ${facility.id === blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${facility.label}</button>`;
                 }).join("")}</div>
-                <div class="choiceGrid" style="margin-top:8px">
-                  <button class="choiceButton ${blockCoIntervention ? "active" : ""}" data-toggle-co-intervention>Co-intervention</button>
-                </div>
               </div>
               <div class="buildField">
                 <label>Activité (optionnel)</label>
-                <div class="choiceGrid">${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activite reliee a cette installation." : "Choisissez une installation pour filtrer les activites."}</span>`}</div>
-                <span class="muted">Optionnel : seules les activites reliees a l'installation choisie sont proposees.</span>
-              </div>
-              <div class="buildField">
-                <label>Classe</label>
-                <div class="choiceGrid">${classLevels.map((level) => {
-                  const levelNumbers = classNumbersForLevel(level);
-                  const unavailable = !levelNumbers.length || levelNumbers.every((number) => classGroups.every((group) => {
-                    const schoolClass = schoolClassLabel(level, number, group.id);
-                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
-                  }));
-                  const reason = unavailable ? `Toutes les classes de ${level} sont deja prises, indisponibles ou hors service theorique sur ce creneau.` : `Filtrer les classes de ${level}.`;
-                  return `<button class="choiceButton ${level === selectedClass.level ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="${level}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${level}</button>`;
-                }).join("")}${specialClassInstances().length ? (() => {
-                  const unavailable = specialClassInstances().every((instance) => {
-                    const schoolClass = instance.schoolClass;
-                    return classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeachers(blockTeacherIds, schoolClass);
-                  });
-                  const reason = unavailable ? "Toutes les classes specifiques sont deja prises, indisponibles ou hors service theorique sur ce creneau." : "Filtrer les classes specifiques.";
-                  return `<button class="choiceButton ${selectedClass.level === "special" ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-level="special" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>Specifiques</button>`;
-                })() : ""}</div>
-                ${selectedClass.level === "special" ? `<div class="choiceGrid">${specialClassInstances().map(({ item, schoolClass }) => {
-                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
-                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
-                  const label = compactClassName(schoolClass);
-                  const reason = unavailable ? serviceMessage || `${label} est deja prise ou indisponible sur ce creneau.` : `${label} disponible.`;
-                  return `<button class="choiceButton ${schoolClass === blockClass ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-special-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${label}</button>`;
-                }).join("")}</div>` : ""}
-                ${!selectedClass.level ? `<span class="muted">Choisissez d'abord un niveau.</span>` : selectedClass.level !== "special" ? `<div class="choiceGrid">${classNumbersForLevel(selectedClass.level).map((number) => {
-                  const unavailable = classGroups.every((group) => {
-                    const candidateClass = schoolClassLabel(selectedClass.level, number, group.id);
-                    return classCollectionHasOverlap(occupied.classes, candidateClass) || classCollectionHasOverlap(occupied.unavailableClasses, candidateClass) || !serviceAllowsClassForTeachers(blockTeacherIds, candidateClass);
-                  });
-                  const baseClass = schoolClassLabel(selectedClass.level, number);
-                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, baseClass);
-                  const reason = unavailable ? serviceMessage || `${selectedClass.level} ${number} est deja prise, indisponible ou hors service theorique sur ce creneau.` : `${selectedClass.level} ${number} disponible.`;
-                  return `<button class="choiceButton ${number === selectedClass.number ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-number="${number}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${number}</button>`;
-                }).join("")}</div>` : ""}
-                ${selectedClass.level && selectedClass.level !== "special" && selectedClass.number ? `<div class="choiceGrid">${classGroups.map((group) => {
-                  const schoolClass = schoolClassLabel(selectedClass.level, selectedClass.number, group.id);
-                  const serviceMessage = serviceClassRestrictionMessage(blockTeacherIds, schoolClass);
-                  const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
-                  const reason = unavailable ? serviceMessage || `${schoolClass} est deja prise ou indisponible sur ce creneau.` : `${schoolClass} disponible.`;
-                  return `<button class="choiceButton ${selectedClass.group === group.id ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-class-group="${group.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""}>${group.label}</button>`;
-                }).join("")}</div>` : ""}
-              </div>
+                <div class="choiceGrid">
+                  <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
+                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activite reliee a cette installation." : "Aucune activite renseignee."}</span>`}
+                </div>
+                <span class="muted">Optionnel : vous pouvez laisser vide, meme si une installation est choisie.</span>
+              </div>` : ""}
+              ${!editingCycleDetails ? (blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
             </div>
-            <div class="buildField" style="margin-top:10px">
+            ${!editingCycleDetails ? `<div class="buildField" style="margin-top:10px">
               <label>Rythme</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${blockWeekLetter === "all" ? "active" : ""}" data-pick-week-letter="all">Toutes les semaines</button>
                 <button class="choiceButton ${blockWeekLetter === "A" ? "active" : ""} ${!activeBuildCycleId && weekItem.letter !== "A" ? "unavailable" : ""}" data-pick-week-letter="A" title="${!activeBuildCycleId && weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" aria-label="${!activeBuildCycleId && weekItem.letter !== "A" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine A, cliquez sur une case de semaine A.` : "Cours uniquement en semaine A"}" ${!activeBuildCycleId && weekItem.letter !== "A" ? "disabled" : ""}>Quinzaine A</button>
                 <button class="choiceButton ${blockWeekLetter === "B" ? "active" : ""} ${!activeBuildCycleId && weekItem.letter !== "B" ? "unavailable" : ""}" data-pick-week-letter="B" title="${!activeBuildCycleId && weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" aria-label="${!activeBuildCycleId && weekItem.letter !== "B" ? `Cette case est en semaine ${weekItem.letter}. Pour un cours quinzaine B, cliquez sur une case de semaine B.` : "Cours uniquement en semaine B"}" ${!activeBuildCycleId && weekItem.letter !== "B" ? "disabled" : ""}>Quinzaine B</button>
               </div>
-            </div>
+            </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
-              <strong>${block.schoolClass || "Classe a selectionner"}</strong>
-              <span>${block.facilityLabel || "Installation a selectionner"}</span>
-              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}
+              <strong>${classesForBlock(block).length ? blockClassLabel(block) : "Classe libre"}</strong>
+              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a selectionner"}</span>
+              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
               <span>${block.teacherNames || "Professeur a selectionner"}</span>
-              ${secondTeacher ? `<span>${secondTeacher.name} : ${secondTeacherHours}h</span>` : ""}
               ${blockCoIntervention ? `<span>Co-intervention</span>` : ""}
             </div>
             ${conflictMessage ? `<div class="conflictNotice">${conflictMessage}</div>` : ""}
             <div class="modalFooter">
               <button class="ghostButton" id="closeBuildModalFooter">Annuler</button>
-              <button class="addButton" id="addBuiltBlock" ${canSaveBlock ? "" : "disabled"}>${editingBuildBlock ? "Enregistrer le bloc" : `Ajouter au ${cellCycle ? cellCycle.name : "cycle"}`}</button>
+              <button class="addButton" id="addBuiltBlock" ${canSaveBlock ? "" : "disabled"}>${editingCycleDetails ? "Enregistrer ce cycle" : editingBuildBlock ? "Enregistrer le bloc annuel" : "Ajouter le bloc annuel"}</button>
             </div>` : ""}
             <div class="existingBlocks">
               <h3>Blocs presents sur ce creneau</h3>
               <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
                 <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
-                  <button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>
-                  <strong>${item.schoolClass || "Bloc"}</strong>
+                  ${editingCycleDetails ? "" : `<button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>`}
+                  <strong>${blockClassLabel(item)}</strong>
                   <span>${item.facilityLabel || ""}</span>
-                  ${secondaryTeacherLabel(item, row.slot.hours) ? `<span>${secondaryTeacherLabel(item, row.slot.hours)}</span>` : ""}
                   ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map((event) => `
@@ -6411,13 +6615,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" data-move-kind="course" data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
                 <button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
                 <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
-                <strong>${item.schoolClass || item.label || "Bloc"}</strong>
+                <strong>${blockClassLabel(item)}</strong>
                 <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
               <div class="buildBlock" style="${blockTeacherStyle(item)}">
-                <strong>${item.schoolClass || item.label || "Bloc"}</strong>
+                <strong>${blockClassLabel(item)}</strong>
                 <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
@@ -6428,8 +6632,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               ${eventTeacherDots(event)}
             </div>
           </div>`).join("")}${asItems.map((session) => `
-          <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
-            <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
+          <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
+            ${constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>` : ""}
             <strong>${asBlockLabel(session)}</strong>
           </div>`).join("")}</div>`;
       }
@@ -6442,10 +6646,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderConstructionCycleBlocks(indexedItems, key) {
         return indexedItems.map(({ item, index }) => `
-          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" data-move-kind="course" data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
-            <button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
-            <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
-            <strong>${item.schoolClass || item.label || "Bloc"}</strong>
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""}" ${constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`} data-move-index="${index}" data-block-key="${key}" style="${blockTeacherStyle(item)}">
+            ${constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
+            <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
+            <strong>${blockClassLabel(item)}</strong>
             <span>${[item.facilityLabel || item.type || "", item.activityLabel || ""].filter(Boolean).join(" · ")}</span>
             ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
@@ -6477,15 +6681,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const indexedItems = indexedConstructionItemsForKey(key, filterSelection, letter);
         const asItems = asSessionsForConstructionCycle(row, cycle, key, filterSelection);
         const blocked = isWednesdayAfternoonCourse(row);
-        const canOpenHere = !row.isAs && !blocked;
+        const canOpenHere = constructionBuildMode === "blocks" && !row.isAs && !blocked;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked, cycle, letter || "all") : "";
         const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key, cycle, letter || "all") : "";
         const cellTitle = [label, blocked ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
         return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
           ${blocked ? "" : row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
-            <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" data-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
-              <button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>
+            <div class="buildBlock asBlock ${movingBuildBlock?.type === "as" && movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
+              ${constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Deplacer">↔</button>` : ""}
               <strong>${asBlockLabel(session)}</strong>
               <span>${asSessionTeacherLabel(session)}</span>
             </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key)}
@@ -6716,6 +6920,51 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         </table></div>`;
       }
 
+      function constructionConflictDetails(conflict) {
+        if (conflict.type === "teacher") {
+          const teacherName = teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher;
+          return {
+            label: `Professeur en conflit : ${teacherName}`,
+            detail: conflict.items.map((item) => `${blockClassLabel(item) || "classe non precisee"} · ${item.facilityLabel || "installation non precisee"}`).join(" / ")
+          };
+        }
+        if (conflict.type === "asTeacher") {
+          const teacherName = teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher;
+          return {
+            label: `Professeur en conflit AS : ${teacherName}`,
+            detail: conflict.items.map((item) => `${item.name || "AS"} · ${item.weekdays.join(", ")}`).join(" / ")
+          };
+        }
+        if (conflict.type === "class") {
+          return {
+            label: `Classe en conflit : ${conflict.schoolClass}`,
+            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} · ${item.facilityLabel || "installation non precisee"}`).join(" / ")
+          };
+        }
+        return {
+          label: `Installation en conflit : ${conflict.items[0].facilityLabel || conflict.facility}`,
+            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe non precisee"}`).join(" / ")
+        };
+      }
+
+      function renderConstructionConflictSummary() {
+        const conflicts = detectConflicts();
+        if (!conflicts.length) return `<div class="alertEmpty">Aucun conflit detecte dans la construction.</div>`;
+        const visibleConflicts = conflicts.slice(0, 5);
+        return `<section class="alertsPage">
+          <h2>Conflits detectes</h2>
+          ${visibleConflicts.map((conflict) => {
+            const details = constructionConflictDetails(conflict);
+            return `<article class="alertCard">
+              <strong>${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}</strong>
+              <span>${details.label}</span>
+              <span>${details.detail}</span>
+            </article>`;
+          }).join("")}
+          ${conflicts.length > visibleConflicts.length ? `<div class="conflictNotice">${conflicts.length - visibleConflicts.length} autre(s) conflit(s) visible(s) dans l'onglet Alertes.</div>` : ""}
+        </section>`;
+      }
+
       function renderAlertsView() {
         const conflicts = detectConflicts();
         const conflictTypes = [
@@ -6736,7 +6985,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <strong>${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}</strong>
               ${conflict.type === "teacher" ? `
                 <span>Professeur en conflit : ${teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher}</span>
-                <span>${conflict.items.map((item) => `${item.schoolClass || "classe"} · ${item.facilityLabel || "installation"}`).join(" / ")}</span>
+                <span>${conflict.items.map((item) => `${blockClassLabel(item) || "classe"} · ${item.facilityLabel || "installation"}`).join(" / ")}</span>
                 <span>Règle : un professeur ne peut pas avoir cours avec deux classes en même temps.</span>
               ` : conflict.type === "asTeacher" ? `
                 <span>Professeur en conflit AS : ${teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher}</span>
@@ -6748,7 +6997,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <span>Règle : une classe ne peut pas avoir deux cours différents en même temps. Pour un cours conjoint, sélectionnez deux profs dans un seul bloc.</span>
               ` : `
                 <span>Installation en conflit : ${conflict.items[0].facilityLabel || conflict.facility}</span>
-                <span>${conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${item.schoolClass || "classe"}`).join(" / ")}</span>
+                <span>${conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe"}`).join(" / ")}</span>
                 <span>Règle : une installation ne peut pas accueillir deux blocs sur le même créneau, sauf co-intervention volontaire avec profs et classes différents.</span>
               `}
             </article>
@@ -8000,22 +8249,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               if (blockTeacherIds.length > 1) blockTeacherIds = blockTeacherIds.filter((id) => id !== teacherId);
             } else {
               blockTeacherIds = [...blockTeacherIds, teacherId].slice(-2);
+              if (blockClass && !blockTeacherClasses[teacherId]) blockTeacherClasses = { ...blockTeacherClasses, [teacherId]: blockClass };
             }
+            blockTeacherClasses = Object.fromEntries(Object.entries(blockTeacherClasses).filter(([id]) => blockTeacherIds.includes(id)));
+            blockTeacherClassLevels = Object.fromEntries(Object.entries(blockTeacherClassLevels).filter(([id]) => blockTeacherIds.includes(id)));
+            syncPrimaryBlockClassFromTeacherClasses();
             if (blockTeacherIds.length < 2) blockSecondTeacherHours = "";
-            else if (!blockSecondTeacherHours) blockSecondTeacherHours = String(currentBlockSlotHours());
             render();
           });
         });
-        const blockSecondTeacherHoursInput = document.getElementById("blockSecondTeacherHours");
-        if (blockSecondTeacherHoursInput) {
-          blockSecondTeacherHoursInput.addEventListener("input", () => {
-            blockSecondTeacherHours = blockSecondTeacherHoursInput.value;
-          });
-          blockSecondTeacherHoursInput.addEventListener("change", () => {
-            blockSecondTeacherHours = String(clampCourseHours(blockSecondTeacherHoursInput.value, currentBlockSlotHours()));
-            render();
-          });
-        }
         document.querySelectorAll("[data-pick-facility]").forEach((button) => {
           button.addEventListener("click", () => {
             if (button.disabled) return;
@@ -8024,15 +8266,33 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-clear-facility]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockFacilityId = "";
+            render();
+          });
+        });
         document.querySelectorAll("[data-toggle-co-intervention]").forEach((button) => {
           button.addEventListener("click", () => {
-            blockCoIntervention = !blockCoIntervention;
+            blockCoIntervention = true;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-single-intervention]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockCoIntervention = false;
             render();
           });
         });
         document.querySelectorAll("[data-pick-activity]").forEach((button) => {
           button.addEventListener("click", () => {
             blockActivityId = blockActivityId === button.dataset.pickActivity ? "" : button.dataset.pickActivity;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-clear-activity]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockActivityId = "";
             render();
           });
         });
@@ -8061,6 +8321,38 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           button.addEventListener("click", () => {
             if (button.disabled) return;
             updateSpecialBlockClass(button.dataset.pickSpecialClass);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pick-teacher-class-level]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            updateBlockTeacherClass(button.dataset.pickTeacherClassLevel, "level", button.dataset.classLevel);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pick-teacher-class]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled) return;
+            setBlockTeacherClass(button.dataset.pickTeacherClass, button.dataset.schoolClass);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-clear-teacher-class]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacherId = button.dataset.clearTeacherClass;
+            blockTeacherClasses = { ...blockTeacherClasses };
+            blockTeacherClassLevels = { ...blockTeacherClassLevels };
+            delete blockTeacherClasses[teacherId];
+            delete blockTeacherClassLevels[teacherId];
+            syncPrimaryBlockClassFromTeacherClasses();
+            render();
+          });
+        });
+        document.querySelectorAll("[data-clear-class]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockClass = "";
+            blockClassLevel = "";
             render();
           });
         });
@@ -8352,23 +8644,28 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               render();
               return;
             }
-            if (blockCycleConflictMessage(rowId, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter)) {
-              render();
-              return;
-            }
             if (blockCycleUnavailableMessage(rowId, cellCycle.id, block, blockWeekLetter)) {
               render();
               return;
             }
-            if (editingBuildBlock?.ruleId) updateConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter, weekItem);
-            else applyBlockToCycle(rowId, cellCycle.id, block, blockWeekLetter);
-            showValidationPopup(editingBuildBlock ? "Créneau modifié" : "Créneau validé");
+            if (constructionBuildMode === "cycleDetails" && editingBuildBlock?.ruleId) {
+              updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, block.cycleId || activeConstructionCycleId, block);
+              showValidationPopup("Installation / activite mises a jour");
+            } else if (editingBuildBlock?.ruleId) {
+              updateAnnualConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter);
+              showValidationPopup("Bloc annuel modifie");
+            } else {
+              applyAnnualConstructionBlock(rowId, block, blockWeekLetter);
+              showValidationPopup("Bloc annuel valide");
+            }
             editingBuildBlock = null;
             activeBuildCell = null;
             activeBuildCycleId = null;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
+            blockTeacherClasses = {};
+            blockTeacherClassLevels = {};
             render();
           });
         }
@@ -8380,6 +8677,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
+            blockTeacherClasses = {};
+            blockTeacherClassLevels = {};
             render();
           });
         });
@@ -8434,6 +8733,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               activeBuildCycleId = null;
               editingBuildBlock = null;
               blockCoIntervention = false;
+              blockTeacherClasses = {};
+              blockTeacherClassLevels = {};
               render();
               return;
             }
@@ -8446,6 +8747,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockActivityId = "";
             blockClass = "";
             blockClassLevel = "";
+            blockTeacherClasses = {};
+            blockTeacherClassLevels = {};
             blockWeekLetter = cell.dataset.openWeekLetter || "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
@@ -8492,8 +8795,43 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockActivityId = item.activityId || "";
             blockClass = item.schoolClass;
             blockClassLevel = classParts(item.schoolClass).level;
+            blockTeacherClasses = item.teacherClasses && typeof item.teacherClasses === "object"
+              ? Object.fromEntries(blockTeacherIds.map((teacherId) => [teacherId, item.teacherClasses[teacherId] || item.schoolClass || ""]).filter(([, schoolClass]) => schoolClass))
+              : Object.fromEntries(blockTeacherIds.map((teacherId) => [teacherId, item.schoolClass || ""]).filter(([, schoolClass]) => schoolClass));
+            blockTeacherClassLevels = Object.fromEntries(Object.entries(blockTeacherClasses).map(([teacherId, schoolClass]) => {
+              const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+              return [teacherId, classParts(baseClassId || schoolClass).level];
+            }));
             blockWeekLetter = item.weekLetter || "all";
-            blockSecondTeacherHours = teacherIdsForBlock(item).length > 1 ? String(coTeacherHoursForBlock(item, teacherIdsForBlock(item)[1], currentBlockSlotHours())) : "";
+            blockSecondTeacherHours = "";
+            blockCoIntervention = Boolean(item.coIntervention);
+            editingBuildBlock = { index, ruleId: item.ruleId };
+            render();
+          });
+        });
+        document.querySelectorAll("[data-edit-cycle-details]").forEach((block) => {
+          block.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const key = block.dataset.blockKey;
+            const index = Number(block.dataset.editCycleDetails);
+            const item = constructionPlan[key]?.[index];
+            if (!item) return;
+            activeBuildCell = key;
+            activeBuildCycleId = item.cycleId || activeConstructionCycleId;
+            blockTeacherIds = teacherIdsForBlock(item);
+            blockFacilityId = item.facilityId || "";
+            blockActivityId = item.activityId || "";
+            blockClass = item.schoolClass || "";
+            blockClassLevel = classParts(item.schoolClass || "").level;
+            blockTeacherClasses = item.teacherClasses && typeof item.teacherClasses === "object"
+              ? Object.fromEntries(blockTeacherIds.map((teacherId) => [teacherId, item.teacherClasses[teacherId] || item.schoolClass || ""]).filter(([, schoolClass]) => schoolClass))
+              : Object.fromEntries(blockTeacherIds.map((teacherId) => [teacherId, item.schoolClass || ""]).filter(([, schoolClass]) => schoolClass));
+            blockTeacherClassLevels = Object.fromEntries(Object.entries(blockTeacherClasses).map(([teacherId, schoolClass]) => {
+              const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+              return [teacherId, classParts(baseClassId || schoolClass).level];
+            }));
+            blockWeekLetter = item.weekLetter || "all";
+            blockSecondTeacherHours = "";
             blockCoIntervention = Boolean(item.coIntervention);
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
@@ -8620,24 +8958,46 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-construction-build-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionBuildMode = ["cycleDetails", "versions"].includes(button.dataset.constructionBuildMode) ? button.dataset.constructionBuildMode : "blocks";
+            activeBuildCell = null;
+            activeBuildCycleId = null;
+            editingBuildBlock = null;
+            movingBuildBlock = null;
+            render();
+          });
+        });
         const saveConstructionVersionButton = document.getElementById("saveConstructionVersion");
         if (saveConstructionVersionButton) {
           saveConstructionVersionButton.addEventListener("click", () => {
-            saveCurrentConstructionVersion();
+            const defaultName = `Version ${constructionVersions.length + 1}`;
+            const versionName = window.prompt("Nom de cette version de construction :", defaultName);
+            if (versionName === null) return;
+            saveCurrentConstructionVersion(versionName);
             showValidationPopup("Version de construction sauvegardee");
+            constructionBuildMode = "versions";
             render();
           });
         }
-        const restoreConstructionVersionButton = document.getElementById("restoreConstructionVersion");
-        if (restoreConstructionVersionButton) {
-          restoreConstructionVersionButton.addEventListener("click", () => {
-            const versionId = document.getElementById("constructionVersionSelect")?.value || "";
-            if (!versionId) return;
-            if (!window.confirm("Recuperer cette version dans la construction manuelle actuelle ?")) return;
-            if (restoreConstructionVersion(versionId)) showValidationPopup("Version recuperee");
+        document.querySelectorAll("[data-restore-construction-version]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!window.confirm("Charger cette version dans la construction actuelle ?")) return;
+            if (restoreConstructionVersion(button.dataset.restoreConstructionVersion)) showValidationPopup("Version recuperee");
+            constructionBuildMode = "blocks";
             render();
           });
-        }
+        });
+        document.querySelectorAll("[data-delete-construction-version]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const version = constructionVersions.find((item) => item.id === button.dataset.deleteConstructionVersion);
+            if (!version || !window.confirm(`Supprimer la version ${constructionVersionLabel(version)} ?`)) return;
+            constructionVersions = constructionVersions.filter((item) => item.id !== version.id);
+            saveConstructionVersions();
+            showValidationPopup("Version supprimee");
+            render();
+          });
+        });
         document.querySelectorAll("[data-teacher]").forEach((button) => {
           button.addEventListener("click", () => {
             const teacherId = button.dataset.teacher;
