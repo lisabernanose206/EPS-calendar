@@ -1066,6 +1066,9 @@
       let blockWeekLetter = "all";
       let blockSecondTeacherHours = "";
       let blockCoIntervention = false;
+      let blockIsOption = false;
+      let blockOptionId = "";
+      let blockOptionHours = "";
       let facilityDraftName = "";
       let facilityDraftType = "";
       let activityDraftName = "";
@@ -2152,6 +2155,9 @@
         const override = cycleOverrideForRule(rule, cycle.id);
         const facilityId = override.facilityId !== undefined ? override.facilityId : rule.block?.facilityId || "";
         const activityId = override.activityId !== undefined ? override.activityId : rule.block?.activityId || "";
+        const optionId = override.optionId || rule.block?.optionId || "";
+        const option = optionId ? serviceFreeOptionById(optionId) : null;
+        const optionHours = option ? normalizedOptionHours(optionId, override.optionHours || rule.block?.optionHours || option.hours) : 0;
         const facility = facilities.find((item) => item.id === facilityId);
         const activity = activityAllowedForFacility(facilityId, activityId)
           ? constructionActivityById(activityId)
@@ -2160,8 +2166,14 @@
           ...rule.block,
           facilityId: facility?.id || "",
           facilityLabel: facility?.label || "",
-          activityId: activity?.id || "",
-          activityLabel: activity?.label || ""
+          activityId: activity?.id || (option ? serviceFreeActivityId(option.label) : ""),
+          activityLabel: activity?.label || option?.label || "",
+          optionBlock: Boolean(rule.block?.optionBlock || option),
+          optionId: option?.id || "",
+          optionTeacherId: option?.teacherId || "",
+          optionRowId: option?.rowId || "",
+          optionLabel: option?.label || "",
+          optionHours
         };
       }
 
@@ -3713,11 +3725,17 @@
       function updateConstructionRuleCycleDetails(ruleId, cycleId, block) {
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule || !cycleId) return;
+        const option = block.optionId ? serviceFreeOptionById(block.optionId) : null;
         rule.cycleOverrides = {
           ...(rule.cycleOverrides || {}),
           [cycleId]: {
             facilityId: block.facilityId || "",
-            activityId: block.activityId || ""
+            activityId: block.activityId || "",
+            optionId: option?.id || "",
+            optionTeacherId: option?.teacherId || "",
+            optionRowId: option?.rowId || "",
+            optionLabel: option?.label || "",
+            optionHours: option ? normalizedOptionHours(option.id, block.optionHours) : 0
           }
         };
         rebuildConstructionPlan();
@@ -4401,6 +4419,7 @@
 
       function blockClassLabel(block) {
         const classItems = classesForBlock(block);
+        if (!classItems.length && block?.optionBlock) return block.optionLabel || block.activityLabel || "Option";
         if (!classItems.length) return block?.label || "Bloc";
         return classItems.map(compactClassName).join(" + ");
       }
@@ -4677,6 +4696,43 @@
         return activities.find((activity) => activity.id === activityId) || serviceFreeActivityById(activityId);
       }
 
+      function serviceFreeOptionId(teacherId, rowId) {
+        return `service-option::${teacherId}::${rowId}`;
+      }
+
+      function serviceFreeOptionsForTeachers(teacherIds = []) {
+        return teacherIds.flatMap((teacherId) => serviceFreeRowsForTeacher(teacherId).map((row) => ({
+          id: serviceFreeOptionId(teacherId, row.id),
+          teacherId,
+          rowId: row.id,
+          label: row.label,
+          hours: Number(row.hours) || 0,
+          teacherName: teachers.find((teacher) => teacher.id === teacherId)?.name || teacherId
+        })));
+      }
+
+      function serviceFreeOptionById(optionId) {
+        return serviceFreeOptionsForTeachers(teachers.map((teacher) => teacher.id)).find((option) => option.id === optionId) || null;
+      }
+
+      function optionBlockAvailableForTeachers(teacherIds = blockTeacherIds) {
+        return teacherIds.length > 0 && teacherIds.every((teacherId) => serviceFreeRowsForTeacher(teacherId).length > 0);
+      }
+
+      function optionDurationMax(optionId, slotHours = currentBlockSlotHours()) {
+        const option = serviceFreeOptionById(optionId);
+        if (!option) return 0;
+        return Math.min(Number(slotHours) || 0, Number(option.hours) || 0);
+      }
+
+      function normalizedOptionHours(optionId, value, slotHours = currentBlockSlotHours()) {
+        const max = optionDurationMax(optionId, slotHours);
+        const hours = Number(value);
+        if (!max) return 0;
+        if (!Number.isFinite(hours) || hours <= 0) return max;
+        return Math.min(max, Math.max(0.25, hours));
+      }
+
       function serviceAssignmentFor(teacherId, schoolClass) {
         return serviceClassRowsForTeacher(teacherId).find((item) => item.classId === schoolClass);
       }
@@ -4872,6 +4928,8 @@
           .filter(Boolean);
         const primaryTeacher = selectedTeachers[0];
         const facility = facilities.find((item) => item.id === blockFacilityId);
+        const option = blockIsOption && blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
+        const optionHours = option ? normalizedOptionHours(option.id, blockOptionHours) : 0;
         const activity = activityAllowedForFacility(blockFacilityId, blockActivityId)
           ? constructionActivityById(blockActivityId)
           : null;
@@ -4891,8 +4949,14 @@
           teacherClasses: selectedTeacherClasses,
           facilityId: facility?.id || "",
           facilityLabel: facility?.label || "",
-          activityId: activity?.id || "",
-          activityLabel: activity?.label || "",
+          activityId: activity?.id || (option ? serviceFreeActivityId(option.label) : ""),
+          activityLabel: activity?.label || option?.label || "",
+          optionBlock: blockIsOption,
+          optionId: option?.id || "",
+          optionTeacherId: option?.teacherId || "",
+          optionRowId: option?.rowId || "",
+          optionLabel: option?.label || "",
+          optionHours,
           coIntervention: blockCoIntervention
         };
       }
@@ -5602,6 +5666,7 @@
 
       function annualRuleHasTeacherClasses(rule) {
         const teacherIds = teacherIdsForBlock(rule.block);
+        if (rule.block?.optionBlock) return optionBlockAvailableForTeachers(teacherIds);
         return teacherIds.length > 0 && teacherIds.every((teacherId) => teacherClassForBlock(rule.block, teacherId));
       }
 
@@ -5631,6 +5696,7 @@
         if (!rules.length) return false;
         return rules.every((rule) => constructionCyclesForRule(rule).every((cycle) => {
           const block = blockWithCycleOverride(rule, cycle);
+          if (block.optionBlock) return Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId));
           if (!block.facilityId && serviceFreeActivityById(block.activityId)) return true;
           if (!block.facilityId) return false;
           if (serviceFreeActivityById(block.activityId)) return true;
@@ -6213,7 +6279,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch);
+        const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
+        const optionDetailsValid = !editingCycleDetails || !block.optionBlock || Boolean(block.optionId && block.optionHours > 0 && block.optionHours <= optionDurationMax(block.optionId, row.slot.hours));
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionDetailsValid);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
@@ -6221,7 +6289,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
         const availableActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : activities;
         const availableFreeActivities = serviceFreeActivities();
-        const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
+        const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
+        const selectedOption = blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
+        const selectedOptionMax = selectedOption ? optionDurationMax(selectedOption.id, row.slot.hours) : 0;
         const renderTeacherClassPicker = (teacher) => {
           const selectedTeacherClass = classParts(blockTeacherClasses[teacher.id] || "");
           const selectedLevel = blockTeacherClassLevels[teacher.id] || selectedTeacherClass.level || "";
@@ -6263,8 +6333,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span></div>` : `<div class="buildField" style="margin-bottom:10px">
               <label>Type de bloc</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${blockCoIntervention ? "active" : ""}" data-toggle-co-intervention>Co-intervention</button>
-                <button class="choiceButton ${!blockCoIntervention ? "active" : ""}" data-toggle-single-intervention>Cours simple</button>
+                <button class="choiceButton ${blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-co-intervention ${blockIsOption ? "disabled" : ""}>Co-intervention</button>
+                <button class="choiceButton ${!blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-single-intervention>Cours simple</button>
+                <button class="choiceButton ${blockIsOption ? "active" : ""} ${blockTeacherIds.length && !optionBlockAvailableForTeachers() ? "unavailable" : ""}" data-toggle-option-block ${optionBlockAvailableForTeachers() ? "" : "disabled"}>Option</button>
               </div>
             </div>`}
             <div class="modalGrid">
@@ -6300,7 +6371,15 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   return `<button class="choiceButton ${facility.id === blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${facility.label}</button>`;
                 }).join("")}</div>
               </div>
-              <div class="buildField">
+              ${blockIsOption ? `<div class="buildField">
+                <label>Option</label>
+                <div class="choiceGrid">
+                  ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
+                </div>
+                ${selectedOption ? `<label>Duree</label>
+                <input id="blockOptionHours" type="number" min="0.25" max="${selectedOptionMax}" step="0.25" value="${blockOptionHours || selectedOptionMax}" />
+                <span class="muted">Maximum : ${selectedOptionMax}h, selon le creneau et le service theorique.</span>` : `<span class="muted">Choisissez l'option concernee pour ce cycle.</span>`}
+              </div>` : `<div class="buildField">
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
@@ -6311,8 +6390,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                   ${availableFreeActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("")}
                 </div>` : ""}
                 <span class="muted">Optionnel : les services libres peuvent etre choisis sans installation.</span>
-              </div>` : ""}
-              ${!editingCycleDetails ? (blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
+              </div>`}` : ""}
+              ${!editingCycleDetails ? (blockIsOption
+                ? `<div class="buildField"><label>Classe</label><span class="muted">Option : aucune classe n'est obligatoire pour valider ce bloc.</span></div>`
+                : blockTeacherIds.length ? `<div class="coTeacherClassGrid">${blockTeacherIds.map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>`) : ""}
             </div>
             ${!editingCycleDetails ? `<div class="buildField" style="margin-top:10px">
               <label>Rythme</label>
@@ -6323,9 +6404,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               </div>
             </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
-              <strong>${classesForBlock(block).length ? blockClassLabel(block) : "Classe libre"}</strong>
-              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a selectionner"}</span>
-              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
+              <strong>${classesForBlock(block).length ? blockClassLabel(block) : block.optionBlock ? "Option" : "Classe libre"}</strong>
+              ${constructionBuildMode === "cycleDetails" ? (block.optionBlock ? `<span>${block.optionLabel || "Option a selectionner"}${block.optionHours ? ` · ${block.optionHours}h` : ""}</span>` : `<span>${block.facilityLabel || "Installation a selectionner"}</span>
+              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}`) : ""}
               <span>${block.teacherNames || "Professeur a selectionner"}</span>
               ${blockCoIntervention ? `<span>Co-intervention</span>` : ""}
             </div>
@@ -8456,6 +8537,11 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockTeacherClasses = Object.fromEntries(Object.entries(blockTeacherClasses).filter(([id]) => blockTeacherIds.includes(id)));
             blockTeacherClassLevels = Object.fromEntries(Object.entries(blockTeacherClassLevels).filter(([id]) => blockTeacherIds.includes(id)));
             syncPrimaryBlockClassFromTeacherClasses();
+            if (blockIsOption && !optionBlockAvailableForTeachers()) {
+              blockIsOption = false;
+              blockOptionId = "";
+              blockOptionHours = "";
+            }
             if (blockTeacherIds.length < 2) blockSecondTeacherHours = "";
             render();
           });
@@ -8477,12 +8563,30 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         document.querySelectorAll("[data-toggle-co-intervention]").forEach((button) => {
           button.addEventListener("click", () => {
             blockCoIntervention = true;
+            blockIsOption = false;
+            blockOptionId = "";
+            blockOptionHours = "";
             render();
           });
         });
         document.querySelectorAll("[data-toggle-single-intervention]").forEach((button) => {
           button.addEventListener("click", () => {
             blockCoIntervention = false;
+            blockIsOption = false;
+            blockOptionId = "";
+            blockOptionHours = "";
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-option-block]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (button.disabled || !optionBlockAvailableForTeachers()) return;
+            blockIsOption = true;
+            blockCoIntervention = false;
+            blockClass = "";
+            blockClassLevel = "";
+            blockTeacherClasses = {};
+            blockTeacherClassLevels = {};
             render();
           });
         });
@@ -8498,6 +8602,23 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         });
+        document.querySelectorAll("[data-pick-option]").forEach((button) => {
+          button.addEventListener("click", () => {
+            blockOptionId = blockOptionId === button.dataset.pickOption ? "" : button.dataset.pickOption;
+            blockOptionHours = blockOptionId ? String(optionDurationMax(blockOptionId)) : "";
+            render();
+          });
+        });
+        const blockOptionHoursInput = document.getElementById("blockOptionHours");
+        if (blockOptionHoursInput) {
+          blockOptionHoursInput.addEventListener("input", () => {
+            blockOptionHours = blockOptionHoursInput.value;
+          });
+          blockOptionHoursInput.addEventListener("change", () => {
+            blockOptionHours = String(normalizedOptionHours(blockOptionId, blockOptionHoursInput.value));
+            render();
+          });
+        }
         document.querySelectorAll("[data-pick-class-level]").forEach((button) => {
           button.addEventListener("click", () => {
             if (button.disabled) return;
@@ -8866,6 +8987,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
+            blockIsOption = false;
+            blockOptionId = "";
+            blockOptionHours = "";
             blockTeacherClasses = {};
             blockTeacherClassLevels = {};
             render();
@@ -8879,6 +9003,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
+            blockIsOption = false;
+            blockOptionId = "";
+            blockOptionHours = "";
             blockTeacherClasses = {};
             blockTeacherClassLevels = {};
             render();
@@ -8935,6 +9062,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               activeBuildCycleId = null;
               editingBuildBlock = null;
               blockCoIntervention = false;
+              blockIsOption = false;
+              blockOptionId = "";
+              blockOptionHours = "";
               blockTeacherClasses = {};
               blockTeacherClassLevels = {};
               render();
@@ -8954,6 +9084,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = cell.dataset.openWeekLetter || "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = false;
+            blockIsOption = false;
+            blockOptionId = "";
+            blockOptionHours = "";
             render();
           });
         });
@@ -9007,6 +9140,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = item.weekLetter || "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = Boolean(item.coIntervention);
+            blockIsOption = Boolean(item.optionBlock);
+            blockOptionId = item.optionId || "";
+            blockOptionHours = item.optionHours ? String(item.optionHours) : "";
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
           });
@@ -9035,6 +9171,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             blockWeekLetter = item.weekLetter || "all";
             blockSecondTeacherHours = "";
             blockCoIntervention = Boolean(item.coIntervention);
+            blockIsOption = Boolean(item.optionBlock);
+            blockOptionId = item.optionId || "";
+            blockOptionHours = item.optionHours ? String(item.optionHours) : "";
             editingBuildBlock = { index, ruleId: item.ruleId };
             render();
           });
