@@ -335,7 +335,8 @@
       .constructionModePanel span { color: #64748b; font-size: 11px; font-weight: 850; }
       .constructionVersionControls { align-items: center; display: inline-flex; flex-wrap: wrap; gap: 6px; }
       .constructionVersionControls select { border: 1px solid #cbd5e1; border-radius: 7px; color: #334155; font-size: 12px; font-weight: 850; min-height: 32px; padding: 0 8px; }
-      .optimizeButton { background: #ecfeff; border-color: #67e8f9; color: #155e75; }
+      .constructionOptimizeActions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; min-height: 34px; }
+      .optimizeButton { align-items: center; background: #ecfeff; border: 1px solid #67e8f9; border-radius: 7px; color: #155e75; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; justify-content: center; line-height: 1; min-height: 32px; padding: 0 10px; }
       .optimizeButton:hover { background: #cffafe; }
       .constructionVersionChoices { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
       .constructionVersionChoice { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #172033; cursor: pointer; display: flex; font-size: 12px; font-weight: 850; gap: 8px; line-height: 1.2; min-height: 34px; min-width: 0; padding: 7px 9px; }
@@ -6854,11 +6855,11 @@
               <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activites<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Etape complete" : "Etape incomplete"}"></span></span></button>
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
+            ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Lancer la construction optimiser</button>
+            </div>` : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
-            </div>` : ""}
-            ${constructionBuildMode === "cycleDetails" ? `<div class="constructionVersionControls">
-              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Construction optimisee</button>
             </div>` : ""}
             ${constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
               <label class="lockToggle" title="Verrouiller les modifications de cette partie">
