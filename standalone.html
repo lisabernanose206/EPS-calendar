@@ -1580,6 +1580,14 @@
         return combined;
       }
 
+      function homeTimetableSlots() {
+        return [
+          ...slots.slice(0, 2),
+          { id: "__as__", label: "AS", isAsSummary: true },
+          ...slots.slice(2)
+        ];
+      }
+
       function yearRows() {
         return days.flatMap((day) => {
           const daySlots = daySlotsFor(day);
@@ -2459,6 +2467,18 @@
           const teacherBlocked = (session.teacherIds || []).some((teacherId) => blockedTeacherIds.has(teacherId));
           return rowDate >= start && rowDate <= end && session.weekdays.includes(row.day) && (!slotIds.length || slotIds.includes(row.slot.id)) && !teacherBlocked && !itemExcludedForCell(asExclusions, session.id, key);
         });
+      }
+
+      function asSessionsForDay(rows, day, weekItem) {
+        const seen = new Set();
+        return rows
+          .filter((row) => row.day === day && row.isAs)
+          .flatMap((row) => asSessionsForCell(row, weekItem))
+          .filter((session) => {
+            if (seen.has(session.id)) return false;
+            seen.add(session.id);
+            return true;
+          });
       }
 
       function teacherNamesFromIds(ids) {
@@ -5155,23 +5175,23 @@
       function renderCalendar(cycle) {
         const weekItem = displayedSchoolWeek();
         const rows = yearRows();
-        const calendarSlots = [
-          ...timetableSlots()
-        ];
+        const calendarSlots = homeTimetableSlots();
         return `${renderDateInfo()}${renderTeacherLegend("homeTeacherLegend")}<div class="homeTimetableWrap"><table class="homeTimetable">
           <thead><tr><th class="timeColumn">Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
           <tbody>${calendarSlots.map((slot) => `<tr>
             <th class="timeColumn">${slot.label}</th>
             ${days.map((day) => {
-              const row = rows.find((item) => item.day === day && item.slot.id === slot.id && item.slot.label === slot.label);
+              const row = slot.isAsSummary
+                ? rows.find((item) => item.day === day && item.isAs)
+                : rows.find((item) => item.day === day && item.slot.id === slot.id && item.slot.label === slot.label);
               const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
               if (!row) return `<td class="${nonWorkingCell ? "nonWorkingCell" : ""}"><div class="homeTimetableSlot"></div></td>`;
               const key = yearCellKey(row.id, weekItem.rank);
               const holiday = holidayFor(row, weekItem);
               const vacation = vacationForCell(row, weekItem);
-              const lessons = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
-              const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
-              const asItems = asSessionsForCell(row, weekItem).filter(asMatchesTeacherSelection);
+              const lessons = slot.isAsSummary ? [] : (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
+              const events = slot.isAsSummary ? [] : eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
+              const asItems = (slot.isAsSummary ? asSessionsForDay(rows, day, weekItem) : asSessionsForCell(row, weekItem)).filter(asMatchesTeacherSelection);
               return `<td><div class="homeTimetableSlot">
                 ${vacation ? `<div class="emptyLesson">${vacation.name}</div>` : ""}
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
