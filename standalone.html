@@ -2304,7 +2304,80 @@
         return plan;
       }
 
+      function constructionRuleActiveKeys(rule) {
+        const keys = [];
+        constructionCyclesForRule(rule).forEach((cycle) => {
+          weeksForCycle(cycle).forEach((weekItem) => {
+            if (rule.weekLetter && rule.weekLetter !== "all" && weekItem.letter !== rule.weekLetter) return;
+            keys.push(yearCellKey(rule.rowId, weekItem.rank));
+          });
+        });
+        return [...new Set(keys)];
+      }
+
+      function constructionRuleVisibleKeys(rule) {
+        return constructionRuleActiveKeys(rule).filter((key) => !isBlockExcluded(rule.id, key) && !isRuleExcluded(rule.id, key));
+      }
+
+      function normalizedConstructionRuleSignature(rule) {
+        if (!isAnnualConstructionRule(rule) || !rule?.block || rule.block.optionBlock) return "";
+        const teacherClassPairs = teacherIdsForBlock(rule.block)
+          .map((teacherId) => {
+            const rawClass = teacherClassForBlock(rule.block, teacherId);
+            const schoolClass = rawClass ? serviceClassIdForBaseClass(rawClass) : "";
+            return teacherId && schoolClass ? `${teacherId}:${schoolClass}` : "";
+          })
+          .filter(Boolean)
+          .sort()
+          .join("|");
+        if (!teacherClassPairs) return "";
+        return `${rule.rowId}::${rule.weekLetter || "all"}::${teacherClassPairs}`;
+      }
+
+      function mergeCycleOverrides(targetRule, sourceRule) {
+        targetRule.cycleOverrides = {
+          ...(sourceRule.cycleOverrides || {}),
+          ...(targetRule.cycleOverrides || {})
+        };
+      }
+
+      function pruneHiddenAndDuplicateConstructionRules() {
+        const duplicateBySignature = new Map();
+        const removedIds = new Set();
+        constructionRules.forEach((rule) => {
+          if (!rule?.id) return;
+          const activeKeys = constructionRuleActiveKeys(rule);
+          if (activeKeys.length && !constructionRuleVisibleKeys(rule).length) {
+            removedIds.add(rule.id);
+            return;
+          }
+          const signature = normalizedConstructionRuleSignature(rule);
+          if (!signature) return;
+          const existing = duplicateBySignature.get(signature);
+          if (!existing) {
+            duplicateBySignature.set(signature, rule);
+            return;
+          }
+          mergeCycleOverrides(existing, rule);
+          removedIds.add(rule.id);
+        });
+        if (!removedIds.size) return false;
+        constructionRules = constructionRules.filter((rule) => !removedIds.has(rule.id));
+        removedIds.forEach((ruleId) => delete blockExclusions[ruleId]);
+        return true;
+      }
+
+      function refreshConstructionPlanFromRulesLocalOnly() {
+        pruneHiddenAndDuplicateConstructionRules();
+        constructionPlan = buildConstructionPlanFromRules();
+        localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
+        localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
+        invalidateConstructionChecksCache();
+      }
+
       function rebuildConstructionPlan() {
+        pruneHiddenAndDuplicateConstructionRules();
         constructionPlan = buildConstructionPlanFromRules();
         saveConstructionRules();
         saveConstructionPlan();
@@ -3180,7 +3253,6 @@
         constructionLocks = normalizeConstructionLocks(data.constructionLocks || constructionLocks);
         constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
         constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
-        constructionPlan = data.constructionPlan && typeof data.constructionPlan === "object" ? data.constructionPlan : buildConstructionPlanFromRules();
         blockExclusions = data.blockExclusions || blockExclusions;
         sportEvents = Array.isArray(data.sportEvents) ? normalizePlanningItems(data.sportEvents) : normalizePlanningItems(sportEvents);
         asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
@@ -3189,6 +3261,7 @@
         asExclusions = data.asExclusions || asExclusions;
         pruneClassReferences();
         purgeConstructionForUnavailableItems(facilityUnavailability);
+        refreshConstructionPlanFromRulesLocalOnly();
         selectedTeacherIds = teachers.map((teacher) => teacher.id);
         cycleTeacherIds = teachers.map((teacher) => teacher.id);
         cycleFacilityIds = facilities.map((facility) => facility.id);
@@ -4498,8 +4571,8 @@
 
       function removeBlockFromSingleSlot(key, block) {
         if (!block.ruleId) return removeBlockFromCycle(parseYearCellKey(key).rowId, 0, block);
-        const existing = blockExclusions[block.ruleId] || [];
-        if (!existing.includes(key)) blockExclusions[block.ruleId] = [...existing, key];
+        constructionRules = constructionRules.filter((rule) => rule.id !== block.ruleId);
+        delete blockExclusions[block.ruleId];
         saveBlockExclusions();
         rebuildConstructionPlan();
       }
@@ -10326,6 +10399,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           render();
         });
       });
+      refreshConstructionPlanFromRulesLocalOnly();
       render();
       if (cloudReady() && cloudConfig.autoLoad) {
         setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
