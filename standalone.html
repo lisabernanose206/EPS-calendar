@@ -7879,6 +7879,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       function renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds = []) {
         const indexedItems = items.map((item, index) => ({ item, index }));
         const orderedTeacherIds = editable ? alignmentTeacherIds : teachers.map((teacher) => teacher.id);
+        const showCycleDetails = constructionBuildMode !== "blocks";
         const lessonBlocks = row.isAs ? "" : editable
           ? orderedTeacherIds.map((teacherId) => {
             const matches = indexedItems.filter(({ item }) => teacherIdsForBlock(item)[0] === teacherId);
@@ -7887,13 +7888,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
                 <button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
                 <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>
                 <strong>${blockClassLabel(item)}</strong>
-                <span>${blockDetailLabel(item)}</span>
+                ${showCycleDetails ? `<span>${blockDetailLabel(item)}</span>` : ""}
               </div>`).join("") || `<div class="buildSlotSpacer"></div>`}</div>`;
           }).join("")
           : items.map((item) => `
               <div class="buildBlock" style="${blockTeacherStyle(item)}">
                 <strong>${blockClassLabel(item)}</strong>
-                <span>${blockDetailLabel(item)}</span>
+                ${showCycleDetails ? `<span>${blockDetailLabel(item)}</span>` : ""}
               </div>`).join("");
         return `<div class="buildCellStack">${lessonBlocks}${events.map((event) => `
           <div class="buildBlock eventBlock ${movingBuildBlock?.type === "event" && movingBuildBlock?.id === event.id ? "moveSelected" : ""}" data-move-kind="event" data-move-id="${event.id}" data-block-key="${key}">
@@ -7924,12 +7925,13 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (!indexedItems.length) return "";
         return `<div class="cycleBlockGrid">${indexedItems.map(({ item, index }) => {
           const optimizationIssue = constructionOptimizationIssueForBlock(item, cycle);
+          const showCycleDetails = constructionBuildMode !== "blocks";
           return `
           <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(item)}">
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(item)}</strong>
-            <span>${blockDetailLabel(item)}</span>
+            ${showCycleDetails ? `<span>${blockDetailLabel(item)}</span>` : ""}
             ${optimizationIssue ? `<span class="optimizationIssueReason">${escapeHtml(optimizationIssue.reason)}</span>` : ""}
             ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
