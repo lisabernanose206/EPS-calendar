@@ -6113,7 +6113,7 @@
         const details = [
           ...builtItems.map((item) => `<div class="selectedCellDetail">
             <strong>Cours</strong>
-            <span>Classe : ${item.schoolClass || "non renseignee"}</span>
+            <span>Classe : ${item.schoolClass ? compactClassName(item.schoolClass) : "non renseignee"}</span>
             <span>Prof : ${teacherLabelForBlock(item)}</span>
             <span>Installation : ${item.facilityLabel || item.type || "non renseignee"}</span>
             ${item.activityLabel ? `<span>Activite : ${item.activityLabel}</span>` : ""}
@@ -6124,7 +6124,7 @@
             <span>Nom : ${event.name}</span>
             <span>Dates : ${event.start} -> ${event.end}</span>
             <span>Periode : ${eventPeriodLabel(event)}</span>
-            <span>Classes : ${(event.classes || []).join(", ") || "aucune"}</span>
+            <span>Classes : ${(event.classes || []).map(compactClassName).join(", ") || "aucune"}</span>
             <span>Profs : ${teacherNamesFromIds(event.teacherIds || []).join(", ") || "aucun"}</span>
           </div>`),
           ...asItems.map((session) => `<div class="selectedCellDetail">
@@ -6327,6 +6327,7 @@
 
       function annualConstructionClassHours() {
         const totals = Object.fromEntries(classes.map((schoolClass) => [schoolClass, 0]));
+        const countedClassSlots = new Set();
         annualConstructionRules().forEach((rule) => {
           if (rule.block?.optionBlock) return;
           const row = yearRows().find((item) => item.id === rule.rowId);
@@ -6337,6 +6338,9 @@
             .map((schoolClass) => serviceClassIdForBaseClass(schoolClass))
             .filter(Boolean))];
           blockClasses.forEach((schoolClass) => {
+            const countKey = `${rule.rowId}::${rule.weekLetter || "all"}::${schoolClass}`;
+            if (countedClassSlots.has(countKey)) return;
+            countedClassSlots.add(countKey);
             if (totals[schoolClass] === undefined) totals[schoolClass] = 0;
             totals[schoolClass] += slotHours * multiplier;
           });
@@ -6358,16 +6362,24 @@
 
       function annualConstructionTeacherClassHours() {
         const totals = Object.fromEntries(teachers.map((teacher) => [teacher.id, {}]));
+        const countedTeacherClassSlots = new Set();
         annualConstructionRules().forEach((rule) => {
           if (rule.block?.optionBlock) return;
           const row = yearRows().find((item) => item.id === rule.rowId);
           if (!row?.slot) return;
           const slotHours = fullServiceSlotHours(row);
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
+          const countedTeacherClasses = new Set();
           teacherIdsForBlock(rule.block).forEach((teacherId) => {
             const rawClass = teacherClassForBlock(rule.block, teacherId);
             const schoolClass = rawClass ? serviceClassIdForBaseClass(rawClass) : "";
             if (!schoolClass) return;
+            const countKey = `${teacherId}::${schoolClass}`;
+            if (countedTeacherClasses.has(countKey)) return;
+            countedTeacherClasses.add(countKey);
+            const slotCountKey = `${rule.rowId}::${rule.weekLetter || "all"}::${teacherId}::${schoolClass}`;
+            if (countedTeacherClassSlots.has(slotCountKey)) return;
+            countedTeacherClassSlots.add(slotCountKey);
             if (!totals[teacherId]) totals[teacherId] = {};
             totals[teacherId][schoolClass] = (totals[teacherId][schoolClass] || 0) + teacherHoursForBlock(rule.block, teacherId, slotHours) * multiplier;
           });
