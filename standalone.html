@@ -6333,7 +6333,10 @@
           if (!row?.slot) return;
           const slotHours = fullServiceSlotHours(row);
           const multiplier = rule.weekLetter && rule.weekLetter !== "all" ? 0.5 : 1;
-          classesForBlock(rule.block).forEach((schoolClass) => {
+          const blockClasses = [...new Set(classesForBlock(rule.block)
+            .map((schoolClass) => serviceClassIdForBaseClass(schoolClass))
+            .filter(Boolean))];
+          blockClasses.forEach((schoolClass) => {
             if (totals[schoolClass] === undefined) totals[schoolClass] = 0;
             totals[schoolClass] += slotHours * multiplier;
           });
