@@ -2347,6 +2347,10 @@
         constructionRules.forEach((rule) => {
           if (!rule?.id) return;
           const activeKeys = constructionRuleActiveKeys(rule);
+          if (isAnnualConstructionRule(rule) && Array.isArray(blockExclusions[rule.id]) && blockExclusions[rule.id].length) {
+            removedIds.add(rule.id);
+            return;
+          }
           if (activeKeys.length && !constructionRuleVisibleKeys(rule).length) {
             removedIds.add(rule.id);
             return;
