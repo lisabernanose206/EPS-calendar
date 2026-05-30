@@ -5002,7 +5002,10 @@
       }
 
       function teacherClassForBlock(block, teacherId) {
-        return block?.teacherClasses?.[teacherId] || block?.schoolClass || "";
+        if (teacherId && block?.teacherClasses?.[teacherId]) return block.teacherClasses[teacherId];
+        const ids = teacherIdsForBlock(block);
+        if (!teacherId || ids.length <= 1 || ids[0] === teacherId) return block?.schoolClass || "";
+        return "";
       }
 
       function classesForBlock(block) {
@@ -6347,8 +6350,6 @@
       }
 
       function constructionClassSummaryTotal(schoolClass, classTotals) {
-        const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
-        if (baseClassId) return roundConstructedHours((classTotals[schoolClass] || 0) + (classTotals[baseClassId] || 0));
         return classTotals[schoolClass] || 0;
       }
 
