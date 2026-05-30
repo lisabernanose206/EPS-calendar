@@ -4967,8 +4967,20 @@
         return true;
       }
 
-      function conflictMap() {
-        return cachedConstructionCheck("conflictMap", () => new Set(detectConflicts().map((conflict) => conflict.key)));
+      function conflictBelongsToBuildMode(conflict, buildMode) {
+        if (buildMode === "blocks") return ["teacher", "class", "asTeacher"].includes(conflict.type);
+        if (buildMode === "cycleDetails") return conflict.type === "facility";
+        return true;
+      }
+
+      function conflictsForBuildMode(buildMode = "") {
+        if (!buildMode) return detectConflicts();
+        return cachedConstructionCheck(`conflicts:${buildMode}`, () => detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode)));
+      }
+
+      function conflictMap(buildMode = "") {
+        const cacheKey = buildMode ? `conflictMap:${buildMode}` : "conflictMap";
+        return cachedConstructionCheck(cacheKey, () => new Set(conflictsForBuildMode(buildMode).map((conflict) => conflict.key)));
       }
 
       function builderCellKey(day, slotId) {
@@ -8028,7 +8040,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderConstructionTable(weeks, current, monthLabels, rows, editable, filterSelection = false) {
-        const conflicts = conflictMap();
+        const conflicts = conflictMap(constructionBuildMode);
         const rowsByDay = days.map((day) => ({
           day,
           rows: rows.filter((row) => row.day === day)
@@ -8128,7 +8140,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       }
 
       function renderConstructionConflictSummary() {
-        const conflicts = detectConflicts();
+        const conflicts = conflictsForBuildMode(constructionBuildMode);
         if (!conflicts.length) return `<div class="alertEmpty">Aucun conflit detecte dans la construction.</div>`;
         const visibleConflicts = conflicts.slice(0, 5);
         return `<section class="alertsPage">
