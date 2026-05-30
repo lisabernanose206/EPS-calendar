@@ -2341,18 +2341,53 @@
         };
       }
 
+      function hiddenConstructionRuleReport(rule, reason) {
+        const row = yearRows().find((item) => item.id === rule.rowId);
+        const exclusionCount = Array.isArray(blockExclusions[rule.id]) ? blockExclusions[rule.id].length : 0;
+        return {
+          id: rule.id,
+          reason,
+          day: row?.day || "",
+          slot: row?.slot?.label || "",
+          rhythm: rule.weekLetter && rule.weekLetter !== "all" ? `Semaine ${rule.weekLetter}` : "Toutes les semaines",
+          teachers: teacherLabelForBlock(rule.block),
+          classes: blockClassLabel(rule.block),
+          hiddenSlots: exclusionCount
+        };
+      }
+
+      function saveHiddenConstructionReport(items) {
+        if (!items.length) return;
+        localStorage.setItem("planningEpsHiddenConstructionBlocksReport2026", JSON.stringify({
+          savedAt: new Date().toISOString(),
+          items
+        }));
+      }
+
+      function loadHiddenConstructionReport() {
+        try {
+          const saved = localStorage.getItem("planningEpsHiddenConstructionBlocksReport2026");
+          return saved ? JSON.parse(saved) : null;
+        } catch {
+          return null;
+        }
+      }
+
       function pruneHiddenAndDuplicateConstructionRules() {
         const duplicateBySignature = new Map();
         const removedIds = new Set();
+        const reportItems = [];
         constructionRules.forEach((rule) => {
           if (!rule?.id) return;
           const activeKeys = constructionRuleActiveKeys(rule);
           if (isAnnualConstructionRule(rule) && Array.isArray(blockExclusions[rule.id]) && blockExclusions[rule.id].length) {
             removedIds.add(rule.id);
+            reportItems.push(hiddenConstructionRuleReport(rule, "Bloc annuel masque par une suppression de creneau"));
             return;
           }
           if (activeKeys.length && !constructionRuleVisibleKeys(rule).length) {
             removedIds.add(rule.id);
+            reportItems.push(hiddenConstructionRuleReport(rule, "Bloc entierement invisible"));
             return;
           }
           const signature = normalizedConstructionRuleSignature(rule);
@@ -2364,10 +2399,12 @@
           }
           mergeCycleOverrides(existing, rule);
           removedIds.add(rule.id);
+          reportItems.push(hiddenConstructionRuleReport(rule, "Doublon annuel equivalent apres fusion des classes specifiques"));
         });
         if (!removedIds.size) return false;
         constructionRules = constructionRules.filter((rule) => !removedIds.has(rule.id));
         removedIds.forEach((ruleId) => delete blockExclusions[ruleId]);
+        saveHiddenConstructionReport(reportItems);
         return true;
       }
 
@@ -8236,9 +8273,18 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
 
       function renderConstructionConflictSummary() {
         const conflicts = conflictsForBuildMode(constructionBuildMode);
-        if (!conflicts.length) return `<div class="alertEmpty">Aucun conflit detecte dans la construction.</div>`;
+        const hiddenReport = loadHiddenConstructionReport();
+        const hiddenReportHtml = constructionBuildMode === "blocks" && hiddenReport?.items?.length ? `<section class="alertsPage">
+          <h2>Blocs caches trouves</h2>
+          ${hiddenReport.items.map((item) => `<article class="alertCard">
+            <strong>${item.day} ${item.slot} · ${item.rhythm}</strong>
+            <span>${item.classes || "Classe non renseignee"} · ${item.teachers || "Prof non renseigne"}</span>
+            <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} creneau(x) masque(s)` : ""}</span>
+          </article>`).join("")}
+        </section>` : "";
+        if (!conflicts.length) return `${hiddenReportHtml}<div class="alertEmpty">Aucun conflit detecte dans la construction.</div>`;
         const visibleConflicts = conflicts.slice(0, 5);
-        return `<section class="alertsPage">
+        return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
           ${visibleConflicts.map((conflict) => {
             const details = constructionConflictDetails(conflict);
