@@ -1306,7 +1306,7 @@
       let authInviteMenuOpen = false;
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
-      let authStatus = adminSession ? "Connexion Supabase active." : "";
+      let authStatus = "";
       if (adminSession && currentEtabRole === "owner") {
         week = "build";
         constructionMode = "planning";
@@ -3272,11 +3272,11 @@
         const token = authInviteToken || localStorage.getItem(AUTH_INVITE_KEY) || "";
         if (token) {
           await acceptEtabInvite(token);
-          authStatus = "Connexion OAuth active. Invitation acceptee.";
+          authStatus = "Invitation acceptee.";
           cleanAuthUrl(true);
         } else {
           await ensureCurrentUserEtab();
-          authStatus = "Connexion OAuth active.";
+          authStatus = "";
           cleanAuthUrl(false);
         }
         if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
@@ -9449,6 +9449,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         renderAuthBox();
         const adminNavGroup = document.getElementById("adminNavGroup");
         if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
+        if (!isSignedIn()) {
+          updateNavigationActive();
+          legend.style.display = "none";
+          legend.innerHTML = "";
+          root.innerHTML = `
+            <section class="panel">
+              <h2>Connexion requise</h2>
+              <p class="muted">Connectez-vous avec Google pour charger l'espace EPS de votre etablissement.</p>
+            </section>`;
+          root.insertAdjacentHTML("beforeend", renderValidationPopup());
+          return;
+        }
         try {
           updateNavigationActive();
           const cycle = generateCycle();
