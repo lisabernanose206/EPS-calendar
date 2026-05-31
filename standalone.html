@@ -1336,6 +1336,7 @@
       let cloudRefreshTimer = null;
       let cloudSyncing = false;
       let cloudSourceLoaded = false;
+      let cloudInitialLoadKey = "";
       let adminSession = loadAdminSession();
       let authEmail = "";
       let authPassword = "";
@@ -3017,8 +3018,31 @@
         }
       }
 
+      function cloudConfigIdentity(config) {
+        return [config?.url || "", config?.etabId || "", config?.planningId || ""].join("|");
+      }
+
+      function resetCloudLoadState() {
+        cloudSourceLoaded = false;
+        cloudInitialLoadKey = "";
+        cloudLastUpdatedAt = "";
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
+        cloudSaveQueued = false;
+      }
+
       function saveCloudConfig() {
+        const previousConfig = (() => {
+          try {
+            return JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY) || "null");
+          } catch {
+            return null;
+          }
+        })();
+        const previousIdentity = cloudConfigIdentity(previousConfig);
+        const nextIdentity = cloudConfigIdentity(cloudConfig);
         localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+        if (previousIdentity && previousIdentity !== nextIdentity) resetCloudLoadState();
       }
 
       function defaultPrerequisiteLocks(value = false) {
@@ -3108,8 +3132,19 @@
         cloudSaveTimer = null;
         cloudSaveQueued = false;
         clearLocalChangedForCloud();
-        if (!cloudReady() || cloudSyncing) return;
-        setTimeout(() => cloudLoadFromRemote(true, true, true), 0);
+      }
+
+      function cloudCurrentLoadKey() {
+        return [adminSession?.user?.id || "", cloudConfig.etabId || "", cloudConfig.planningId || ""].join("|");
+      }
+
+      function requestInitialCloudLoad(silent = false, forceApply = true) {
+        if (!cloudReady() || !cloudConfig.autoLoad || !isSignedIn()) return false;
+        const loadKey = cloudCurrentLoadKey();
+        if (!loadKey || cloudInitialLoadKey === loadKey || cloudSourceLoaded || cloudSyncing) return false;
+        cloudInitialLoadKey = loadKey;
+        setTimeout(() => cloudLoadFromRemote(true, silent, forceApply), 0);
+        return true;
       }
 
       function saveCloudNowIfPossible(keys = []) {
@@ -3339,7 +3374,7 @@
           authStatus = "";
           cleanAuthUrl(false);
         }
-        if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+        requestInitialCloudLoad(false, true);
         return true;
       }
 
@@ -3578,7 +3613,7 @@
             : cloudReady()
             ? "Connexion Supabase active."
             : "Connexion Supabase active. Renseignez l'etab_id pour charger les données.";
-          if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+          requestInitialCloudLoad(false, true);
         } catch (error) {
           saveAdminSession(null);
           authStatus = `Connexion refusée : ${error.message || "identifiants incorrects"}`;
@@ -3650,7 +3685,7 @@
           authStatus = hadInvite
             ? "Compte créé et rattaché à l’équipe EPS."
             : "Compte et Établissement créés. Vous pouvez sauvegarder ce planning.";
-          if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, true, true), 0);
+          requestInitialCloudLoad(true, true);
         } catch (error) {
           saveAdminSession(null);
           authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
@@ -9642,7 +9677,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           try {
             await acceptEtabInvite(authInviteToken);
             authStatus = "Vous avez rejoint l'équipe EPS.";
-            if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+            requestInitialCloudLoad(false, true);
           } catch (error) {
             authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
           } finally {
@@ -11513,7 +11548,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (isSignedIn()) {
           setTimeout(() => ensureCurrentUserEtab().then(() => {
             render();
-            if (cloudReady() && cloudConfig.autoLoad) cloudLoadFromRemote(true, false, true);
+            requestInitialCloudLoad(false, true);
           }), 0);
         }
         if (!cloudReady() || !cloudConfig.autoLoad || !isSignedIn()) {
