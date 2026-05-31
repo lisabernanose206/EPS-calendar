@@ -3948,11 +3948,18 @@
               dataToSave[key] = currentData[key];
             });
           }
-          const response = await fetch(`${cloudEndpoint()}?on_conflict=etab_id,id`, {
-            method: "POST",
-            headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-            body: JSON.stringify({ etab_id: cloudConfig.etabId, id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt })
-          });
+          const rowPayload = { etab_id: cloudConfig.etabId, id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt };
+          const response = remoteRows.length
+            ? await fetch(`${cloudEndpoint()}?${planningQuery()}`, {
+              method: "PATCH",
+              headers: cloudHeaders({ Prefer: "return=minimal" }),
+              body: JSON.stringify({ data: dataToSave, updated_at: updatedAt })
+            })
+            : await fetch(cloudEndpoint(), {
+              method: "POST",
+              headers: cloudHeaders({ Prefer: "return=minimal" }),
+              body: JSON.stringify(rowPayload)
+            });
           if (!response.ok) throw new Error(await response.text());
           cloudSaveSucceeded = true;
           cloudLastUpdatedAt = updatedAt;
