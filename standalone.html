@@ -2575,7 +2575,7 @@
       function saveSportEvents() {
         sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
-        saveCloudNowIfPossible(["sportEvents"]);
+        saveCloudPatchNow(["sportEvents"]);
       }
 
       function loadAsSessions() {
@@ -2591,7 +2591,7 @@
         invalidateConstructionChecksCache();
         asSessions = normalizePlanningItems(asSessions);
         localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(asSessions));
-        saveCloudNowIfPossible(["asSessions"]);
+        saveCloudPatchNow(["asSessions"]);
       }
 
       function inferredFacilityLocationType(facility) {
@@ -2740,7 +2740,7 @@
 
       function saveEventExclusions() {
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
-        saveCloudNowIfPossible(["eventExclusions"]);
+        saveCloudPatchNow(["eventExclusions"]);
       }
 
       function loadAsExclusions() {
@@ -2755,7 +2755,7 @@
       function saveAsExclusions() {
         invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(asExclusions));
-        saveCloudNowIfPossible(["asExclusions"]);
+        saveCloudPatchNow(["asExclusions"]);
       }
 
       function itemExcludedForCell(exclusions, itemId, key) {
@@ -3255,7 +3255,7 @@
         return true;
       }
 
-      function saveLocksToCloudNow(keys = ["prerequisiteLocks", "yearPrerequisiteLocks"]) {
+      function saveCloudPatchNow(keys = []) {
         const normalizedKeys = normalizeCloudDirtyKeys(keys);
         if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) {
           return saveCloudNowIfPossible(normalizedKeys);
@@ -3273,6 +3273,10 @@
         }
         cloudSaveToRemote(false, { allowBeforeSourceLoaded: true });
         return true;
+      }
+
+      function saveLocksToCloudNow(keys = ["prerequisiteLocks", "yearPrerequisiteLocks"]) {
+        return saveCloudPatchNow(keys);
       }
 
       function readCloudConfigInputs() {
@@ -4017,7 +4021,7 @@
           const remoteRows = await remoteResponse.json();
           const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
           if (!remoteData && allowBeforeSourceLoaded && cloudConfig.autoLoad && !cloudSourceLoaded) {
-            throw new Error("Source Supabase introuvable pour sauvegarder les verrous.");
+            throw new Error("Source Supabase introuvable pour sauvegarder cette modification.");
           }
           const dataToSave = remoteData
             ? { ...remoteData, version: currentData.version, etabId: cloudConfig.etabId, planningId: cloudConfig.planningId, savedAt: updatedAt }
@@ -4041,6 +4045,7 @@
             });
           if (!response.ok) throw new Error(await response.text());
           cloudSaveSucceeded = true;
+          if (allowBeforeSourceLoaded) cloudSourceLoaded = true;
           cloudLastUpdatedAt = updatedAt;
           cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
         } catch (error) {
