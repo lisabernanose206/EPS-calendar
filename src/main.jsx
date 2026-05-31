@@ -1,5 +1,4 @@
 import standaloneHtml from "../standalone.html?raw";
-import bugFixLog from "../BUG_FIX_LOG.md?raw";
 
 function extractFirst(pattern, source, fallback = "") {
   return source.match(pattern)?.[1] ?? fallback;
@@ -32,5 +31,5 @@ window.__EPS_CLOUD_CONFIG__ = {
   autoLoad: false
 };
 
-window.__EPS_BUG_FIX_LOG__ = bugFixLog;
+window.__EPS_BUG_FIX_LOG__ = "";
 new Function(script)();
