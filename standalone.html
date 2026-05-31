@@ -3959,7 +3959,6 @@
             cloudLastUpdatedAt = rows[0].updated_at;
             cloudSourceLoaded = true;
             cloudStatus = `Données cloud chargées (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
-            if (silent) showValidationPopup("Synchronisation cloud reçue");
           }
         } catch (error) {
           if (!silent) cloudStatus = `Erreur cloud : ${error.message || "chargement impossible"}`;
@@ -11499,9 +11498,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             if (cloudReady() && cloudConfig.autoLoad) cloudLoadFromRemote(true, false, true);
           }), 0);
         }
-        if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) {
-          setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
-        } else {
+        if (!cloudReady() || !cloudConfig.autoLoad || !isSignedIn()) {
           restartCloudAutoRefresh();
         }
       }
