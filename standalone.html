@@ -817,6 +817,8 @@
       .requestStatus.pending { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
       .validationPopup { align-items: center; background: #0f172a; border: 1px solid #020617; border-radius: 10px; bottom: 18px; box-shadow: 0 14px 35px rgba(15, 23, 42, 0.22); color: #fff; display: inline-flex; font-size: 13px; font-weight: 950; gap: 8px; min-height: 42px; padding: 0 14px; position: fixed; right: 18px; z-index: 1200; }
       .validationPopup::before { background: #22c55e; border-radius: 999px; content: "\2713"; display: inline-grid; height: 20px; place-items: center; width: 20px; }
+      .validationPopup.error { background: #7f1d1d; border-color: #991b1b; }
+      .validationPopup.error::before { background: #ef4444; content: "!"; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
       body.printA3, body.printA2, body.printA4 { background: #fff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .weekArrow, body.printA2 .weekArrow, body.printA4 .weekArrow, body.printA3 [data-print-format], body.printA2 [data-print-format], body.printA4 [data-print-format], body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend, body.printA3 .zoomControls, body.printA2 .zoomControls, body.printA4 .zoomControls, body.printA3 .cycleSummaryControl, body.printA2 .cycleSummaryControl, body.printA4 .cycleSummaryControl { display: none !important; }
@@ -1220,6 +1222,7 @@
       let requestStatus = "";
       let requestSubmitting = false;
       let validationPopupMessage = "";
+      let validationPopupType = "success";
       let validationPopupTimer = null;
       let activeDateRangePicker = "";
       let dateRangeDraftStart = "";
@@ -4057,6 +4060,7 @@
           cloudStatus = message.includes("42501") || message.includes("permission denied")
             ? "Erreur cloud : droits Supabase/RLS manquants. Verifiez que l'utilisateur est membre de cet etab_id."
             : `Erreur cloud : ${message}`;
+          showValidationPopup(cloudStatus, "error");
           shouldDiscardLocalChanges = true;
         } finally {
           cloudSyncing = false;
@@ -9573,17 +9577,19 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         </section>`;
       }
 
-      function showValidationPopup(message) {
+      function showValidationPopup(message, type = "success") {
         validationPopupMessage = message;
+        validationPopupType = type === "error" ? "error" : "success";
         clearTimeout(validationPopupTimer);
         validationPopupTimer = setTimeout(() => {
           validationPopupMessage = "";
+          validationPopupType = "success";
           render();
-        }, 2400);
+        }, validationPopupType === "error" ? 5200 : 2400);
       }
 
       function renderValidationPopup() {
-        return validationPopupMessage ? `<div class="validationPopup">${validationPopupMessage}</div>` : "";
+        return validationPopupMessage ? `<div class="validationPopup ${validationPopupType === "error" ? "error" : ""}">${validationPopupMessage}</div>` : "";
       }
 
       function renderAppError(error) {
