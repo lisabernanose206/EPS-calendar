@@ -3331,6 +3331,19 @@
 
       async function refreshCurrentEtabRole() {
         if (!isSignedIn() || !cloudConfig.etabId) return "";
+        const userEtabResponse = await fetch(rpcEndpoint("get_current_user_etab"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({})
+        });
+        if (userEtabResponse.ok) {
+          const userEtab = await userEtabResponse.json().catch(() => null);
+          const userEtabId = userEtab?.etab_id || userEtab?.id || "";
+          if (userEtabId === cloudConfig.etabId) {
+            setCurrentEtabName(userEtab?.etab_name || userEtab?.name || currentEtabName);
+            return setCurrentEtabRole(userEtab?.role || "");
+          }
+        }
         const rpcResponse = await fetch(rpcEndpoint("get_current_etab_role"), {
           method: "POST",
           headers: cloudHeaders(),
@@ -3381,16 +3394,17 @@
 
       async function ensureCurrentUserEtab() {
         if (!isSignedIn()) return "";
+        try {
+          const resolvedEtabId = await resolveCurrentUserEtab();
+          if (resolvedEtabId) return resolvedEtabId;
+        } catch (error) {
+          authStatus = `Etablissement non retrouve automatiquement : ${error.message || "erreur Supabase"}`;
+        }
         if (cloudConfig.etabId) {
           await refreshCurrentEtabRoleSafe();
           return cloudConfig.etabId;
         }
-        try {
-          return await resolveCurrentUserEtab();
-        } catch (error) {
-          authStatus = `Etablissement non retrouve : ${error.message || "erreur Supabase"}`;
-          return "";
-        }
+        return "";
       }
 
       async function claimConfiguredEtabForCurrentUser() {
@@ -9305,7 +9319,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="claimExistingEtabForm"><input id="existingEtabId" value="" placeholder="UUID etab existant" aria-label="UUID de l'etablissement existant" /><button class="authButton" type="submit">Lier cet etab existant</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nouvel etablissement" aria-label="Nom du nouvel etablissement" /><button class="authButton secondary" type="submit">Creer un nouvel etab</button></form>` : ""}
-            ${cloudConfig.etabId && !currentEtabRole ? `<form class="authForm" id="claimEtabForm"><button class="authButton" type="submit">Lier mon compte a cet etab</button></form>` : ""}
+            ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Verification du role en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm"><button class="authButton secondary" data-create-invite-link="member">Inviter member</button><button class="authButton secondary" data-create-invite-link="owner">Inviter owner</button>${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
           `;
