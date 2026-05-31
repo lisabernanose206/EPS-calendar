@@ -1899,8 +1899,8 @@
           const baseClassId = normalizeSchoolClassId(parts.slice(1).join("::"));
           return `special::${id}${baseClassId ? `::${baseClassId}` : ""}`;
         }
-        const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const match = normalized.match(/^([3-6])\s*(?:eme|e)\s*([a-z0-9]+)(?:\s+(whole|a|b))?$/i);
+        const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+        const match = normalized.match(/^([3-6])(?:eme|e)([a-z0-9]+?)(whole|a|b)?$/i);
         if (!match) return value;
         const level = `${match[1]}e`;
         const number = match[2];
@@ -6391,7 +6391,10 @@
           const baseClassId = specialClassBaseIdFromSchoolId(normalizedClass);
           return { level: "special", number: specialClassSchoolId(id, baseClassId), group: "whole", special: true, specialId: id, baseClassId, label: item?.label || id };
         }
-        const [level, number, group = "whole"] = normalizedClass.split(" ");
+        const match = normalizedClass.match(/^([3-6]e)([a-z0-9]+?)(whole|A|B)?$/i);
+        const level = match?.[1] || "";
+        const number = match?.[2] || "";
+        const group = match?.[3] ? match[3].toUpperCase() : "whole";
         return {
           level: classLevels.includes(level) ? level : "",
           number: classNumbersForLevel(level).includes(number) ? number : "",
@@ -6400,7 +6403,7 @@
       }
 
       function schoolClassLabel(level, number, group = "whole") {
-        return group === "whole" ? `${level} ${number}` : `${level} ${number} ${group}`;
+        return group === "whole" ? `${level}${number}` : `${level}${number}${group}`;
       }
 
       function classesOverlap(firstClass, secondClass) {
