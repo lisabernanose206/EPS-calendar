@@ -1224,6 +1224,7 @@
       const AUTH_SESSION_KEY = "planningEpsAdminSession2026";
       const AUTH_INVITE_KEY = "planningEpsInviteToken2026";
       const AUTH_ROLE_KEY = "planningEpsEtabRole2026";
+      const AUTH_ETAB_NAME_KEY = "planningEpsEtabName2026";
       const fallbackBugFixLog = `# Log des corrections
 
 - Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
@@ -1291,6 +1292,7 @@
       let authInviteLink = "";
       let authInviteStatus = authInviteToken ? "Invitation equipe detectee." : "";
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
+      let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
       let authStatus = adminSession ? "Connexion Supabase active." : "";
       if (adminSession && currentEtabRole === "owner") {
         week = "build";
@@ -3260,7 +3262,7 @@
           authStatus = "Connexion OAuth active. Invitation acceptee.";
           cleanAuthUrl(true);
         } else {
-          if (cloudConfig.etabId) await refreshCurrentEtabRole();
+          await ensureCurrentUserEtab();
           authStatus = "Connexion OAuth active.";
           cleanAuthUrl(false);
         }
@@ -3286,7 +3288,9 @@
         else {
           localStorage.removeItem(AUTH_SESSION_KEY);
           currentEtabRole = "";
+          currentEtabName = "";
           localStorage.removeItem(AUTH_ROLE_KEY);
+          localStorage.removeItem(AUTH_ETAB_NAME_KEY);
         }
       }
 
@@ -3305,6 +3309,13 @@
         return currentEtabRole;
       }
 
+      function setCurrentEtabName(name) {
+        currentEtabName = String(name || "").trim();
+        if (currentEtabName) localStorage.setItem(AUTH_ETAB_NAME_KEY, currentEtabName);
+        else localStorage.removeItem(AUTH_ETAB_NAME_KEY);
+        return currentEtabName;
+      }
+
       function isAdmin() {
         return isSignedIn() && currentEtabRole === "owner";
       }
@@ -3312,6 +3323,10 @@
       function currentEtabRoleLabel() {
         if (!cloudConfig.etabId) return "";
         return currentEtabRole || "non lie";
+      }
+
+      function currentEtabDisplayName() {
+        return currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "";
       }
 
       async function refreshCurrentEtabRole() {
@@ -3340,6 +3355,41 @@
         } catch (error) {
           authStatus = `Role etablissement non relu : ${error.message || "erreur Supabase"}`;
           return currentEtabRole;
+        }
+      }
+
+      async function resolveCurrentUserEtab() {
+        if (!isSignedIn()) return "";
+        const response = await fetch(rpcEndpoint("get_current_user_etab"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({})
+        });
+        if (!response.ok) {
+          if (response.status === 404) return "";
+          throw new Error(await response.text());
+        }
+        const result = await response.json().catch(() => null);
+        const etabId = result?.etab_id || result?.id || "";
+        if (!etabId) return "";
+        cloudConfig = { ...cloudConfig, etabId };
+        saveCloudConfig();
+        setCurrentEtabRole(result?.role || "");
+        setCurrentEtabName(result?.etab_name || result?.name || "");
+        return etabId;
+      }
+
+      async function ensureCurrentUserEtab() {
+        if (!isSignedIn()) return "";
+        if (cloudConfig.etabId) {
+          await refreshCurrentEtabRoleSafe();
+          return cloudConfig.etabId;
+        }
+        try {
+          return await resolveCurrentUserEtab();
+        } catch (error) {
+          authStatus = `Etablissement non retrouve : ${error.message || "erreur Supabase"}`;
+          return "";
         }
       }
 
@@ -3376,6 +3426,7 @@
         cloudConfig = { ...cloudConfig, etabId };
         saveCloudConfig();
         setCurrentEtabRole(result?.role || "member");
+        setCurrentEtabName(result?.etab_name || result?.name || currentEtabName);
         authInviteToken = "";
         localStorage.removeItem(AUTH_INVITE_KEY);
         return etabId;
@@ -3451,6 +3502,7 @@
         if (!etabId) throw new Error("etab_id non retourne par Supabase");
         cloudConfig = { ...cloudConfig, etabId };
         saveCloudConfig();
+        setCurrentEtabName(label);
         return etabId;
       }
 
@@ -7775,6 +7827,44 @@ $$;
 
 grant execute on function public.get_current_etab_role(uuid) to authenticated;
 
+create or replace function public.get_current_user_etab()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  found_etab_id uuid;
+  found_role text;
+  found_etab_name text;
+begin
+  if auth.uid() is null then
+    return jsonb_build_object();
+  end if;
+
+  select etab_id, role
+  into found_etab_id, found_role
+  from public.etab_members
+  where user_id = auth.uid()
+  order by created_at asc
+  limit 1;
+
+  if found_etab_id is null then
+    return jsonb_build_object();
+  end if;
+
+  select name
+  into found_etab_name
+  from public.etabs
+  where id = found_etab_id
+  limit 1;
+
+  return jsonb_build_object('etab_id', found_etab_id, 'role', found_role, 'etab_name', found_etab_name);
+end;
+$$;
+
+grant execute on function public.get_current_user_etab() to authenticated;
+
 create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
 returns text
 language plpgsql
@@ -9211,6 +9301,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (isSignedIn()) {
           authBox.innerHTML = `
             <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
+            ${cloudConfig.etabId ? `<div class="authStatus">Connecte a l'etab : ${escapeHtml(currentEtabDisplayName())}</div>` : ""}
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="claimExistingEtabForm"><input id="existingEtabId" value="" placeholder="UUID etab existant" aria-label="UUID de l'etablissement existant" /><button class="authButton" type="submit">Lier cet etab existant</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nouvel etablissement" aria-label="Nom du nouvel etablissement" /><button class="authButton secondary" type="submit">Creer un nouvel etab</button></form>` : ""}
@@ -11236,8 +11327,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authStatus = `Retour OAuth impossible : ${error.message || "erreur inconnue"}`;
         }
         render();
-        if (isSignedIn() && cloudConfig.etabId) {
-          setTimeout(() => refreshCurrentEtabRoleSafe().then(render), 0);
+        if (isSignedIn()) {
+          setTimeout(() => ensureCurrentUserEtab().then(() => {
+            render();
+            if (cloudReady() && cloudConfig.autoLoad) cloudLoadFromRemote(true, false, true);
+          }), 0);
         }
         if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) {
           setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
