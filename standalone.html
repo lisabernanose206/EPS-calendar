@@ -1044,7 +1044,7 @@
       let facilities = loadFacilities();
       let activities = loadActivities();
       let facilityActivities = loadFacilityActivities();
-      const classLevels = ["6ème", "5ème", "4ème", "3ème"];
+      const classLevels = ["6e", "5e", "4e", "3e"];
       let activityProgramByLevel = loadActivityProgramByLevel();
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
       const defaultClassConfig = Object.fromEntries(classLevels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
@@ -1055,7 +1055,7 @@
       ];
       let classConfig = loadClassConfig();
       let classes = classesFromConfig();
-      const defaultServiceHours = { "6ème": 4, "5ème": 3, "4ème": 3, "3ème": 3 };
+      const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3 };
       const defaultConstructionRuleSettings = [
         { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquée indisponible sur le créneau." },
         { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le créneau." },
@@ -1067,15 +1067,15 @@
         { id: "facility-activity-link", category: "Installations / activités", title: "Activités compatibles", detail: "Une installation ne propose que les activités qui lui sont reliées dans Installations & activités." },
         { id: "seasonal-location-preference", category: "Règles définies par l’établissement", title: "Saisonnalité des lieux", detail: "Privilégier les lieux en extérieur au premier et au dernier cycle, et les lieux en intérieur sur les cycles intermédiaires." },
         { id: "class-activity-program", category: "Installations / activités", title: "Programme annuel des classes", detail: "Chaque classe doit faire toutes les activités prévues dans son programme annuel." },
-        { id: "class-single-activity-per-cycle", category: "Règles définies par l’établissement", title: "Activité unique hors 6ème", detail: "Sur un même cycle, les classes de 5ème, 4ème et 3ème font une seule activité. Les 6ème suivent leur règle spécifique." },
-        { id: "sixth-grade-dual-activity-swimming", category: "Règles définies par l’établissement", title: "Programme spécifique 6ème", detail: "Les classes de 6ème font exactement deux activités distinctes par cycle. La natation, associée à la piscine, est obligatoire sur les trois premiers cycles." },
+        { id: "class-single-activity-per-cycle", category: "Règles définies par l’établissement", title: "Activité unique hors 6e", detail: "Sur un même cycle, les classes de 5e, 4e et 3e font une seule activité. Les 6e suivent leur règle spécifique." },
+        { id: "sixth-grade-dual-activity-swimming", category: "Règles définies par l’établissement", title: "Programme spécifique 6e", detail: "Les classes de 6e font exactement deux activités distinctes par cycle. La natation, associée à la piscine, est obligatoire sur les trois premiers cycles." },
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS à moins de 24h d'intervalle." },
         { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se répercuter sur les semaines du cycle concerné." },
         { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixés sur l'année ; seules les installations et activités varient par cycle." },
         { id: "cycle-details-required", category: "Installations / activités", title: "Détails par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activité par cycle quand l'installation propose des activités." },
         { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le créneau", detail: "En co-intervention, les deux professeurs sont présents sur toute la durée du créneau, dans la même installation, avec des classes différentes." },
         { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service théorique peuvent devenir des blocs Option sans classe obligatoire, avec une dur?e pr?cis?e dans le bloc profs/classes." },
-        { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d’atteindre son volume EPS hebdomadaire : 4h en 6ème, 3h en 5ème, 4ème et 3ème." },
+        { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d’atteindre son volume EPS hebdomadaire : 4h en 6e, 3h en 5e, 4e et 3e." },
         { id: "supabase-source", category: "Sauvegarde", title: "Supabase source officielle", detail: "Les données de construction, versions, verrous et liens installations/activités sont rechargées depuis Supabase comme source de référence." }
       ];
       const constructionRuleCategoryChoices = [
@@ -1884,6 +1884,39 @@
         return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => mode === "letter" ? String.fromCharCode(65 + index) : String(index + 1));
       }
 
+      function canonicalClassLevel(level) {
+        const value = String(level || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = value.match(/^([3-6])\s*(?:eme|e)?$/);
+        return match ? `${match[1]}e` : "";
+      }
+
+      function normalizeSchoolClassId(schoolClass) {
+        const value = String(schoolClass || "").trim().replace(/\s+/g, " ");
+        if (!value) return "";
+        if (value.startsWith("special::")) {
+          const parts = value.slice("special::".length).split("::");
+          const id = parts[0] || "";
+          const baseClassId = normalizeSchoolClassId(parts.slice(1).join("::"));
+          return `special::${id}${baseClassId ? `::${baseClassId}` : ""}`;
+        }
+        const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = normalized.match(/^([3-6])\s*(?:eme|e)\s*([a-z0-9]+)(?:\s+(whole|a|b))?$/i);
+        if (!match) return value;
+        const level = `${match[1]}e`;
+        const number = match[2];
+        const group = match[3] ? match[3].toUpperCase() : "whole";
+        return schoolClassLabel(level, number, group === "WHOLE" ? "whole" : group);
+      }
+
+      function normalizeLevelKeyedObject(source, defaults = {}, normalizeValue = (value) => value) {
+        const output = { ...defaults };
+        Object.entries(source || {}).forEach(([key, value]) => {
+          const level = canonicalClassLevel(key);
+          if (classLevels.includes(level)) output[level] = normalizeValue(value, level);
+        });
+        return Object.fromEntries(classLevels.map((level) => [level, output[level]]));
+      }
+
       function specialClassSlug(label) {
         return String(label || "")
           .normalize("NFD")
@@ -1895,8 +1928,9 @@
       }
 
       function normalizeClassConfig(config) {
+        const canonicalConfig = normalizeLevelKeyedObject(config || {});
         const normalized = Object.fromEntries(classLevels.map((level) => {
-          const item = config?.[level] || defaultClassConfig[level];
+          const item = canonicalConfig[level] || defaultClassConfig[level];
           const mode = item.mode === "letter" ? "letter" : "number";
           const labels = Array.isArray(item.labels)
             ? item.labels.map((label) => String(label).trim()).filter(Boolean)
@@ -1919,8 +1953,9 @@
             const baseClassIds = [...new Set([
               ...(Array.isArray(item?.baseClassIds) ? item.baseClassIds : []),
               item?.baseClassId || ""
-            ].filter((schoolClass) => standardClassSet.has(schoolClass)))];
+            ].map(normalizeSchoolClassId).filter((schoolClass) => standardClassSet.has(schoolClass)))];
             const hoursByClass = Object.fromEntries(Object.entries(item?.hoursByClass || {})
+              .map(([schoolClass, hours]) => [normalizeSchoolClassId(schoolClass), hours])
               .filter(([schoolClass]) => standardClassSet.has(schoolClass))
               .map(([schoolClass, hours]) => [schoolClass, Math.max(0, Number(hours) || 0)]));
             return { id, label, baseClassIds, hours: Math.max(0, Number(item?.hours) || 0), hoursByClass };
@@ -2038,15 +2073,46 @@
         return parts.level && parts.number ? schoolClassLabel(parts.level, parts.number) : schoolClass;
       }
 
+      function normalizeBlockClassReferences(block) {
+        if (!block || typeof block !== "object") return block;
+        const teacherClasses = block.teacherClasses && typeof block.teacherClasses === "object"
+          ? Object.fromEntries(Object.entries(block.teacherClasses).map(([teacherId, schoolClass]) => [teacherId, normalizeSchoolClassId(schoolClass)]))
+          : block.teacherClasses;
+        return {
+          ...block,
+          schoolClass: normalizeSchoolClassId(block.schoolClass),
+          teacherClasses
+        };
+      }
+
+      function normalizeConstructionRuleClassReferences(rule) {
+        if (!rule || typeof rule !== "object") return rule;
+        const cycleOverrides = rule.cycleOverrides && typeof rule.cycleOverrides === "object"
+          ? Object.fromEntries(Object.entries(rule.cycleOverrides).map(([cycleId, override]) => [cycleId, normalizeBlockClassReferences(override)]))
+          : rule.cycleOverrides;
+        return {
+          ...rule,
+          block: normalizeBlockClassReferences(rule.block),
+          cycleOverrides
+        };
+      }
+
       function pruneClassReferences() {
         const valid = validClassSet();
+        constructionRules = constructionRules.map(normalizeConstructionRuleClassReferences);
+        constructionPlan = Object.fromEntries(Object.entries(constructionPlan).map(([key, items]) => [
+          key,
+          (items || []).map((item) => normalizeBlockClassReferences(item))
+        ]));
         serviceAssignments = Object.fromEntries(Object.entries(serviceAssignments).map(([teacherId, rows]) => [
           teacherId,
-          Array.isArray(rows) ? rows.filter((row) => !row.classId || valid.has(row.classId)) : []
+          Array.isArray(rows) ? rows
+            .map((row) => ({ ...row, classId: normalizeSchoolClassId(row.classId) }))
+            .filter((row) => !row.classId || valid.has(row.classId)) : []
         ]));
-        unavailableClassIds = unavailableClassIds.filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass)));
-        facilityUnavailability = facilityUnavailability.map((item) => ({ ...item, classIds: (item.classIds || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
-        sportEvents = sportEvents.map((event) => ({ ...event, classes: (event.classes || []).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
+        unavailableClassIds = unavailableClassIds.map(normalizeSchoolClassId).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass)));
+        facilityUnavailability = facilityUnavailability.map((item) => ({ ...item, classIds: (item.classIds || []).map(normalizeSchoolClassId).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
+        sportEvents = sportEvents.map((event) => ({ ...event, classes: (event.classes || []).map(normalizeSchoolClassId).filter((schoolClass) => valid.has(schoolClass) || valid.has(baseClassFromGroupedClass(schoolClass))) }));
         constructionRules = constructionRules.filter((rule) => rule.block?.optionBlock || valid.has(baseClassFromGroupedClass(rule.block?.schoolClass || "")));
         constructionPlan = Object.fromEntries(Object.entries(constructionPlan).map(([key, items]) => [
           key,
@@ -2070,7 +2136,7 @@
       function loadServiceHoursByLevel() {
         try {
           const saved = localStorage.getItem("planningEpsServiceHoursByLevel2026");
-          return { ...defaultServiceHours, ...(saved ? JSON.parse(saved) : {}) };
+          return normalizeLevelKeyedObject(saved ? JSON.parse(saved) : {}, defaultServiceHours, (value) => Math.max(0, Number(value) || 0));
         } catch {
           return { ...defaultServiceHours };
         }
@@ -2078,15 +2144,23 @@
 
       function saveServiceHoursByLevel(immediateCloud = true) {
         invalidateConstructionChecksCache();
+        serviceHoursByLevel = normalizeLevelKeyedObject(serviceHoursByLevel, defaultServiceHours, (value) => Math.max(0, Number(value) || 0));
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         if (immediateCloud) saveCloudNowIfPossible(["serviceHoursByLevel"]);
         else scheduleCloudSave(["serviceHoursByLevel"]);
       }
 
+      function normalizeServiceAssignments(assignments) {
+        return Object.fromEntries(Object.entries(assignments || {}).map(([teacherId, rows]) => [
+          teacherId,
+          Array.isArray(rows) ? rows.map((row) => ({ ...row, classId: normalizeSchoolClassId(row.classId) })) : []
+        ]));
+      }
+
       function loadServiceAssignments() {
         try {
           const saved = localStorage.getItem("planningEpsServiceAssignments2026");
-          return saved ? JSON.parse(saved) : {};
+          return normalizeServiceAssignments(saved ? JSON.parse(saved) : {});
         } catch {
           return {};
         }
@@ -2094,6 +2168,7 @@
 
       function saveServiceAssignments(immediateCloud = true) {
         invalidateConstructionChecksCache();
+        serviceAssignments = normalizeServiceAssignments(serviceAssignments);
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         if (immediateCloud) saveCloudNowIfPossible(["serviceAssignments"]);
         else scheduleCloudSave(["serviceAssignments"]);
@@ -2607,8 +2682,9 @@
 
       function normalizeActivityProgramByLevel(program) {
         const activityIds = new Set(activities.map((activity) => activity.id));
+        const canonicalProgram = normalizeLevelKeyedObject(program || {});
         return Object.fromEntries(classLevels.map((level) => {
-          const ids = Array.isArray(program?.[level]) ? program[level] : [];
+          const ids = Array.isArray(canonicalProgram?.[level]) ? canonicalProgram[level] : [];
           return [level, ids.filter((id, index) => activityIds.has(id) && ids.indexOf(id) === index)];
         }));
       }
@@ -3804,9 +3880,11 @@
         pruneFacilityActivities();
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
-        cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
-        serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
-        serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
+        cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? normalizeLevelKeyedObject(data.cyclesByLevel, cyclesByLevel) : cyclesByLevel;
+        serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object"
+          ? normalizeLevelKeyedObject(data.serviceHoursByLevel, defaultServiceHours, (value) => Math.max(0, Number(value) || 0))
+          : serviceHoursByLevel;
+        serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? normalizeServiceAssignments(data.serviceAssignments) : serviceAssignments;
         schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
         prerequisiteLocks = data.prerequisiteLocks && typeof data.prerequisiteLocks === "object"
           ? { ...defaultPrerequisiteLocks(false), ...data.prerequisiteLocks }
@@ -3822,7 +3900,7 @@
         constructionVersions = Array.isArray(data.constructionVersions) ? data.constructionVersions : constructionVersions;
         constructionLocks = normalizeConstructionLocks(data.constructionLocks || constructionLocks);
         constructionRuleSettings = normalizeConstructionRuleSettings(data.constructionRuleSettings || constructionRuleSettings);
-        constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules : constructionRules;
+        constructionRules = Array.isArray(data.constructionRules) ? data.constructionRules.map(normalizeConstructionRuleClassReferences) : constructionRules;
         blockExclusions = data.blockExclusions || blockExclusions;
         sportEvents = Array.isArray(data.sportEvents) ? normalizePlanningItems(data.sportEvents) : normalizePlanningItems(sportEvents);
         asSessions = Array.isArray(data.asSessions) ? normalizePlanningItems(data.asSessions) : normalizePlanningItems(asSessions);
@@ -4638,7 +4716,7 @@
       }
 
       function optimizedCycleActivityLimitForClass(schoolClass) {
-        return classParts(schoolClass).level === "6ème" && constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") ? 2 : 1;
+        return classParts(schoolClass).level === "6e" && constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") ? 2 : 1;
       }
 
       function optimizedSwimmingActivityIds() {
@@ -4666,7 +4744,7 @@
         return optimizedRuleClassKeys(rule).some((schoolClass) => {
           const key = `${schoolClass}::${cycle.id}`;
           const existing = usage.classCycleActivities.get(key) || new Set();
-          const isSixth = classParts(schoolClass).level === "6ème" && enforceSixthProgram;
+          const isSixth = classParts(schoolClass).level === "6e" && enforceSixthProgram;
           if (isSixth && existing.size === 1 && existing.has(block.activityId)) return true;
           if (existing.has(block.activityId)) return false;
           return existing.size >= optimizedCycleActivityLimitForClass(schoolClass);
@@ -4678,7 +4756,7 @@
         const swimmingIds = optimizedSwimmingActivityIds();
         if (!swimmingIds.length) return 0;
         return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
-          if (classParts(schoolClass).level !== "6ème") return sum;
+          if (classParts(schoolClass).level !== "6e") return sum;
           const isSwimming = swimmingIds.includes(block.activityId);
           const classCycleKey = `${schoolClass}::${cycle.id}`;
           const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
@@ -4720,7 +4798,7 @@
         const swimmingIds = optimizedSwimmingActivityIds();
         if (!swimmingIds.length) return false;
         return optimizedRuleClassKeys(rule).some((schoolClass) => {
-          if (classParts(schoolClass).level !== "6ème") return false;
+          if (classParts(schoolClass).level !== "6e") return false;
           const classCycleKey = `${schoolClass}::${cycle.id}`;
           const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
           return ![...currentActivities].some((activityId) => swimmingIds.includes(activityId));
@@ -4774,7 +4852,7 @@
       function optimizedSixthProgramViolations() {
         if (!constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming")) return [];
         const swimmingIds = optimizedSwimmingActivityIds();
-        const sixthClasses = classes.filter((schoolClass) => classParts(schoolClass).level === "6ème");
+        const sixthClasses = classes.filter((schoolClass) => classParts(schoolClass).level === "6e");
         const cyclesToCheck = classicConstructionCycles();
         return sixthClasses.flatMap((schoolClass) => cyclesToCheck.flatMap((cycle, cycleIndex) => {
           const activityIds = new Set();
@@ -4815,9 +4893,9 @@
         if (!withoutConflicts.length) return "Toutes les installations compatibles sont déjà occupées sur ce créneau.";
         const withoutActivityLimit = withoutConflicts.filter((block) => !optimizedCandidateViolatesClassCycleActivity(rule, cycle, block, usage));
         if (!withoutActivityLimit.length) {
-          const hasSixth = optimizedRuleClassKeys(rule).some((schoolClass) => classParts(schoolClass).level === "6ème");
+          const hasSixth = optimizedRuleClassKeys(rule).some((schoolClass) => classParts(schoolClass).level === "6e");
           return hasSixth
-            ? "La classe de 6ème a déjà atteint ses deux activités distinctes sur ce cycle."
+            ? "La classe de 6e a déjà atteint ses deux activités distinctes sur ce cycle."
             : "La classe a déjà une activité affectée sur ce cycle.";
         }
         return "Aucune affectation n'a respecte toutes les contraintes actives.";
@@ -4863,7 +4941,7 @@
             usage.classCycleActivities.get(classCycleKey).add(block.activityId);
             if (!usage.classYearActivities.has(schoolClass)) usage.classYearActivities.set(schoolClass, new Set());
             usage.classYearActivities.get(schoolClass).add(block.activityId);
-            if (classParts(schoolClass).level === "6ème" && swimmingIds.includes(block.activityId)) {
+            if (classParts(schoolClass).level === "6e" && swimmingIds.includes(block.activityId)) {
               if (!usage.sixthSwimmingCycles.has(schoolClass)) usage.sixthSwimmingCycles.set(schoolClass, new Set());
               usage.sixthSwimmingCycles.get(schoolClass).add(cycle.id);
             }
@@ -5622,7 +5700,9 @@
         if (!version) return false;
         const parts = normalizeConstructionVersionParts(version.parts);
         const cycleIds = parts.filter((part) => part.startsWith("cycle:")).map((part) => part.slice(6));
-        const savedRules = Array.isArray(version.constructionRules) ? JSON.parse(JSON.stringify(version.constructionRules)) : [];
+        const savedRules = Array.isArray(version.constructionRules)
+          ? JSON.parse(JSON.stringify(version.constructionRules)).map(normalizeConstructionRuleClassReferences)
+          : [];
         const savedById = new Map(savedRules.map((rule) => [rule.id, rule]));
         if (parts.includes("blocks")) {
           const currentOverridesById = new Map(constructionRules.map((rule) => [rule.id, rule.cycleOverrides || {}]));
@@ -6303,14 +6383,15 @@
       }
 
       function classParts(schoolClass) {
-        if (!schoolClass) return { level: blockClassLevel || "", number: "", group: "whole" };
-        if (String(schoolClass).startsWith("special::")) {
-          const item = specialClassFromSchoolId(schoolClass);
-          const id = specialClassTypeIdFromSchoolId(schoolClass);
-          const baseClassId = specialClassBaseIdFromSchoolId(schoolClass);
+        const normalizedClass = normalizeSchoolClassId(schoolClass);
+        if (!normalizedClass) return { level: blockClassLevel || "", number: "", group: "whole" };
+        if (String(normalizedClass).startsWith("special::")) {
+          const item = specialClassFromSchoolId(normalizedClass);
+          const id = specialClassTypeIdFromSchoolId(normalizedClass);
+          const baseClassId = specialClassBaseIdFromSchoolId(normalizedClass);
           return { level: "special", number: specialClassSchoolId(id, baseClassId), group: "whole", special: true, specialId: id, baseClassId, label: item?.label || id };
         }
-        const [level, number, group = "whole"] = schoolClass.split(" ");
+        const [level, number, group = "whole"] = normalizedClass.split(" ");
         return {
           level: classLevels.includes(level) ? level : "",
           number: classNumbersForLevel(level).includes(number) ? number : "",
