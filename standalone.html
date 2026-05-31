@@ -514,6 +514,8 @@
       .classLevelLabel.active { box-shadow: inset 0 0 0 2px #0f172a; }
       .classNumberGrid { display: grid; gap: 5px; grid-template-columns: repeat(7, minmax(28px, 1fr)); }
       .classNumberGrid .choiceButton { min-width: 0; padding: 0 6px; }
+      .choiceButton.specificClassChoice { font-size: 8px; line-height: 0.95; min-height: 28px; padding: 0 3px; white-space: normal; }
+      .serviceClassButton.specificClassChoice { font-size: 8px; line-height: 0.95; padding: 0 4px; }
       .availabilityGrid { border: 1px solid #cbd5e1; border-collapse: collapse; width: 100%; }
       .availabilityGrid th, .availabilityGrid td { border: 1px solid #cbd5e1; padding: 5px; text-align: center; }
       .availabilityGrid th { background: #f1f5f9; color: #334155; font-size: 11px; font-weight: 950; }
@@ -4531,6 +4533,12 @@
         return parts.group === "whole" ? typedLabel : `${typedLabel} ${parts.group}`;
       }
 
+      function classSelectionButtonClass(schoolClass) {
+        const parts = classParts(schoolClass);
+        if (!parts.level || !parts.number) return "";
+        return specialClassInstanceForBaseClass(schoolClassLabel(parts.level, parts.number)) ? " specificClassChoice" : "";
+      }
+
       function eventClassSummary(event) {
         const selectedClasses = [...new Set(event.classes || [])];
         if (!selectedClasses.length) return "Classes";
@@ -8387,7 +8395,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
               const reason = unavailable ? serviceMessage || `${compactClassName(schoolClass)} est déjà prise ou indisponible sur ce créneau.` : `${compactClassName(schoolClass)} disponible.`;
               const hardUnavailable = classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
-              return `<button class="choiceButton serviceClassButton ${schoolClass === blockTeacherClasses[teacher.id] ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${teacher.id}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${compactClassName(schoolClass)}</button>`;
+              return `<button class="choiceButton serviceClassButton${classSelectionButtonClass(schoolClass)} ${schoolClass === blockTeacherClasses[teacher.id] ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${teacher.id}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${compactClassName(schoolClass)}</button>`;
             }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
           </div>`;
         };
@@ -8657,7 +8665,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <div class="classNumberGrid">${classNumbersForLevel(level).map((number) => {
                   return classGroups.map((group) => {
                     const schoolClass = schoolClassLabel(level, number, group.id);
-                    return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
+                    return `<button class="choiceButton${classSelectionButtonClass(schoolClass)} ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
                   }).join("");
                 }).join("")}</div>
               </div>`).join("")}</div>
@@ -9230,7 +9238,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <div class="choiceGrid">${classLevels.map((level) => `<button class="choiceButton ${unavailableClassLevelFilter === level ? "active" : ""}" data-unavailable-class-level-filter="${level}">${level}</button>`).join("")}</div>
               ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbersForLevel(unavailableClassLevelFilter).map((number) => classGroups.map((group) => {
                 const schoolClass = schoolClassLabel(unavailableClassLevelFilter, number, group.id);
-                return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
+                return `<button class="choiceButton${classSelectionButtonClass(schoolClass)} ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
               }).join("")).join("")}</div>` : `<span class="muted">Choisissez un niveau puis un numéro de classe.</span>`}
               <span class="muted">${unavailableClassIds.length ? `Classes sélectionnées : ${unavailableClassIds.map(classSelectionButtonLabel).join(", ")}` : "Aucune classe sélectionnée"}</span>
               <label>Créneaux indisponibles</label>
