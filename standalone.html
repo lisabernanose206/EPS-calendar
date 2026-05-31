@@ -1335,6 +1335,7 @@
       let cloudDirtyKeys = new Set(loadCloudDirtyKeys());
       let cloudRefreshTimer = null;
       let cloudSyncing = false;
+      let cloudSourceLoaded = false;
       let adminSession = loadAdminSession();
       let authEmail = "";
       let authPassword = "";
@@ -2967,10 +2968,10 @@
       function saveCycles(saveCloudNow = false) {
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
-        cycleSaveStatus = cloudWriteAllowed() && isAdmin()
+        cycleSaveStatus = cloudSourceReadyForWrite() && isAdmin()
           ? "Cycles sauvegardes localement. Sauvegarde cloud en cours."
           : "Cycles sauvegardes localement.";
-        if (saveCloudNow && isAdmin() && cloudWriteAllowed()) {
+        if (saveCloudNow && isAdmin() && cloudSourceReadyForWrite()) {
           clearTimeout(cloudSaveTimer);
           markLocalChangedForCloud(["cycles", "cyclesByLevel"]);
           cloudSaveToRemote(false);
@@ -3121,7 +3122,7 @@
           cloudStatus = "Modification refusée : cloud non configuré.";
           return false;
         }
-        if (!cloudWriteAllowed()) {
+        if (!cloudSourceReadyForWrite()) {
           cloudStatus = cloudWriteBlockedMessage();
           discardLocalChangesFromCloudSoon();
           return false;
@@ -3176,7 +3177,12 @@
         return cloudReady() && !isLocalRuntime();
       }
 
+      function cloudSourceReadyForWrite() {
+        return cloudWriteAllowed() && (!cloudConfig.autoLoad || cloudSourceLoaded);
+      }
+
       function cloudWriteBlockedMessage() {
+        if (cloudReady() && cloudConfig.autoLoad && !cloudSourceLoaded) return "Chargement Supabase requis avant toute sauvegarde.";
         return "Mode local : lecture cloud possible, ecriture Supabase bloquee. Seul le vrai site peut sauvegarder dans le cloud.";
       }
 
@@ -3735,19 +3741,6 @@
         };
       }
 
-      function hasServiceAssignmentRows(value) {
-        return value && typeof value === "object" && Object.values(value).some((rows) => Array.isArray(rows) && rows.length > 0);
-      }
-
-      function hasCustomSchoolSchedule(value) {
-        if (!value || typeof value !== "object") return false;
-        const normalized = normalizeSchoolConstraints(value);
-        const defaults = normalizeSchoolConstraints(defaultSchoolConstraints);
-        return JSON.stringify(normalized.courseSlots || []) !== JSON.stringify(defaults.courseSlots || [])
-          || JSON.stringify(normalized.asSlots || []) !== JSON.stringify(defaults.asSlots || [])
-          || Boolean(String(normalized.establishmentName || "").trim());
-      }
-
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
@@ -3762,16 +3755,8 @@
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
         cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
         serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
-        if (data.serviceAssignments && typeof data.serviceAssignments === "object") {
-          const remoteHasService = hasServiceAssignmentRows(data.serviceAssignments);
-          const localHasService = hasServiceAssignmentRows(serviceAssignments);
-          if (remoteHasService || !localHasService) serviceAssignments = data.serviceAssignments;
-        }
-        if (data.schoolConstraints && typeof data.schoolConstraints === "object") {
-          const remoteHasCustomSchedule = hasCustomSchoolSchedule(data.schoolConstraints);
-          const localHasCustomSchedule = hasCustomSchoolSchedule(schoolConstraints);
-          if (remoteHasCustomSchedule || !localHasCustomSchedule) schoolConstraints = normalizeSchoolConstraints(data.schoolConstraints);
-        }
+        serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
+        schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
         prerequisiteLocks = data.prerequisiteLocks && typeof data.prerequisiteLocks === "object"
           ? { ...defaultPrerequisiteLocks(false), ...data.prerequisiteLocks }
           : typeof data.prerequisitesLocked === "boolean"
@@ -3844,7 +3829,7 @@
           discardLocalChangesFromCloudSoon();
           return;
         }
-        if (!cloudWriteAllowed()) {
+        if (!cloudSourceReadyForWrite()) {
           cloudStatus = cloudWriteBlockedMessage();
           discardLocalChangesFromCloudSoon();
           return;
@@ -3876,7 +3861,7 @@
           if (shouldRender) render();
           return;
         }
-        if (!cloudWriteAllowed()) {
+        if (!cloudSourceReadyForWrite()) {
           cloudStatus = cloudWriteBlockedMessage();
           discardLocalChangesFromCloudSoon();
           if (shouldRender) render();
@@ -3965,11 +3950,14 @@
           const rows = await response.json();
           if (!rows.length) {
             if (!silent) cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
+            cloudSourceLoaded = true;
           } else if (!forceApply && !cloudRemoteIsNewer(rows[0].updated_at)) {
             if (!silent) cloudStatus = `Données déjà à jour (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
+            cloudSourceLoaded = true;
           } else {
             applyPlanningData(rows[0].data);
             cloudLastUpdatedAt = rows[0].updated_at;
+            cloudSourceLoaded = true;
             cloudStatus = `Données cloud chargées (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
             if (silent) showValidationPopup("Synchronisation cloud reçue");
           }
@@ -8120,7 +8108,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </div>
             <div class="cloudActions">
               <button class="ghostButton" id="saveCloudConfig">Enregistrer la configuration</button>
-              <button class="ghostButton" id="pushCloudNow" ${!cloudWriteAllowed() || cloudSyncing ? "disabled" : ""} title="${cloudWriteAllowed() ? "Envoyer vers Supabase" : cloudWriteBlockedMessage()}">Envoyer ce planning vers le cloud</button>
+              <button class="ghostButton" id="pushCloudNow" ${!cloudSourceReadyForWrite() || cloudSyncing ? "disabled" : ""} title="${cloudSourceReadyForWrite() ? "Envoyer vers Supabase" : cloudWriteBlockedMessage()}">Envoyer ce planning vers le cloud</button>
               <button class="ghostButton" id="pullCloudNow" ${!cloudReady() || cloudSyncing ? "disabled" : ""}>Charger le planning cloud</button>
             </div>
             <div class="cloudStatus">${cloudStatus}</div>
