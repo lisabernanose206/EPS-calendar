@@ -40,6 +40,7 @@
       .shareInviteMenu { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 12px 26px rgba(15, 23, 42, .16); display: grid; gap: 4px; padding: 6px; position: absolute; right: 0; top: 44px; width: 150px; z-index: 30; }
       .shareInviteMenu button { background: transparent; border: 0; border-radius: 6px; color: #0f172a; cursor: pointer; font-weight: 900; min-height: 34px; padding: 0 10px; text-align: left; }
       .shareInviteMenu button:hover { background: #e2e8f0; }
+      .mailInviteButton { align-items: center; background: #e2e8f0; border: 0; border-radius: 8px; color: #0f172a; display: inline-flex; font-size: 12px; font-weight: 900; min-height: 38px; padding: 0 10px; text-decoration: none; white-space: nowrap; }
       .googleAuthButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(15, 23, 42, .08); color: #0f172a; display: inline-flex; gap: 10px; min-height: 44px; padding: 0 16px; }
       .googleAuthIcon { align-items: center; border-radius: 999px; display: inline-flex; font-family: Arial, sans-serif; font-size: 18px; font-weight: 900; height: 24px; justify-content: center; width: 24px; }
       .authStatus { color: #64748b; font-size: 12px; font-weight: 850; text-align: right; }
@@ -3341,6 +3342,23 @@
         return currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "";
       }
 
+      function inviteMailtoLink() {
+        if (!authInviteLink) return "";
+        const etabName = currentEtabDisplayName() || "l'equipe EPS";
+        const subject = `Invitation equipe EPS - ${etabName}`;
+        const body = [
+          "Bonjour,",
+          "",
+          `Je t'invite a rejoindre l'espace EPS de l'etablissement ${etabName}.`,
+          "",
+          "Lien d'acces :",
+          authInviteLink,
+          "",
+          "Tu pourras te connecter avec ton compte Google."
+        ].join("\n");
+        return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      }
+
       function renderShareInviteControl() {
         if (!cloudConfig.etabId || !isAdmin()) return "";
         return `<div class="shareInviteWrap">
@@ -3353,7 +3371,7 @@
             <button type="button" data-create-invite-link="member">Consultation</button>
             <button type="button" data-create-invite-link="owner">Admin</button>
           </div>` : ""}
-          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}
+          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" /><a class="mailInviteButton" href="${inviteMailtoLink()}">Envoyer par mail</a>` : ""}
         </div>`;
       }
 
