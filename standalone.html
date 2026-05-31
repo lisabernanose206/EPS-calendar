@@ -2987,12 +2987,12 @@
           url: "",
           anonKey: "",
           etabId: "",
-          planningId: "vaucanson-2026-2027",
+          planningId: "planning-eps-2026-2027",
           ...BUILT_IN_CLOUD_CONFIG,
           ...(window.__EPS_CLOUD_CONFIG__ || {})
         };
         if (CLOUD_AUTO_LOAD_DISABLED) defaults.autoLoad = false;
-        if (!defaults.planningId) defaults.planningId = "vaucanson-2026-2027";
+        if (!defaults.planningId) defaults.planningId = "planning-eps-2026-2027";
         if (defaults.url && defaults.anonKey) defaults.enabled = defaults.enabled || true;
         try {
           const saved = localStorage.getItem(CLOUD_CONFIG_KEY);
@@ -3157,7 +3157,7 @@
           url: urlInput?.value.trim() || cloudConfig.url || "",
           anonKey: anonKeyInput?.value.trim() || cloudConfig.anonKey || "",
           etabId: etabIdInput?.value.trim() || cloudConfig.etabId || "",
-          planningId: planningIdInput?.value.trim() || cloudConfig.planningId || "vaucanson-2026-2027"
+          planningId: planningIdInput?.value.trim() || cloudConfig.planningId || "planning-eps-2026-2027"
         };
         return cloudConfig;
       }
@@ -3735,6 +3735,19 @@
         };
       }
 
+      function hasServiceAssignmentRows(value) {
+        return value && typeof value === "object" && Object.values(value).some((rows) => Array.isArray(rows) && rows.length > 0);
+      }
+
+      function hasCustomSchoolSchedule(value) {
+        if (!value || typeof value !== "object") return false;
+        const normalized = normalizeSchoolConstraints(value);
+        const defaults = normalizeSchoolConstraints(defaultSchoolConstraints);
+        return JSON.stringify(normalized.courseSlots || []) !== JSON.stringify(defaults.courseSlots || [])
+          || JSON.stringify(normalized.asSlots || []) !== JSON.stringify(defaults.asSlots || [])
+          || Boolean(String(normalized.establishmentName || "").trim());
+      }
+
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
@@ -3749,8 +3762,16 @@
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
         cyclesByLevel = data.cyclesByLevel && typeof data.cyclesByLevel === "object" ? data.cyclesByLevel : cyclesByLevel;
         serviceHoursByLevel = data.serviceHoursByLevel && typeof data.serviceHoursByLevel === "object" ? { ...defaultServiceHours, ...data.serviceHoursByLevel } : serviceHoursByLevel;
-        serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? data.serviceAssignments : serviceAssignments;
-        schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
+        if (data.serviceAssignments && typeof data.serviceAssignments === "object") {
+          const remoteHasService = hasServiceAssignmentRows(data.serviceAssignments);
+          const localHasService = hasServiceAssignmentRows(serviceAssignments);
+          if (remoteHasService || !localHasService) serviceAssignments = data.serviceAssignments;
+        }
+        if (data.schoolConstraints && typeof data.schoolConstraints === "object") {
+          const remoteHasCustomSchedule = hasCustomSchoolSchedule(data.schoolConstraints);
+          const localHasCustomSchedule = hasCustomSchoolSchedule(schoolConstraints);
+          if (remoteHasCustomSchedule || !localHasCustomSchedule) schoolConstraints = normalizeSchoolConstraints(data.schoolConstraints);
+        }
         prerequisiteLocks = data.prerequisiteLocks && typeof data.prerequisiteLocks === "object"
           ? { ...defaultPrerequisiteLocks(false), ...data.prerequisiteLocks }
           : typeof data.prerequisitesLocked === "boolean"
@@ -8086,7 +8107,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </div>
               <div class="cloudField">
                 <label>Identifiant du planning</label>
-                <input id="cloudPlanningId" value="${cloudConfig.planningId || "vaucanson-2026-2027"}" />
+                <input id="cloudPlanningId" value="${cloudConfig.planningId || "planning-eps-2026-2027"}" />
               </div>
               <div class="cloudField">
                 <label>Options</label>
