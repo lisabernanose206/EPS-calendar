@@ -1023,7 +1023,7 @@
       ];
       const defaultSchoolConstraints = {
         establishmentName: "",
-        establishmentType: "coll?ge",
+        establishmentType: "collège",
         schoolZone: "B",
         courseSlots: defaultCourseSlots,
         asSlots: defaultAsSlots,
@@ -1303,7 +1303,7 @@
 - Choix des dates : validation possible pour les périodes qui traversent week-ends, jours fériés ou vacances, tout en gardant ces jours non sélectionnables comme bornes.
 - Service libre : saisie stabilisée sans rechargement du panneau a chaque caractere.
 - Établissement : créneaux de cours et AS configurés par heures de début/fin, avec dur?e calcul?e automatiquement.
-- Établissement : ajout du nom d’établissement, du type coll?ge et de la zone scolaire A/B/C avec vacances 2026-2027 mises à jour automatiquement selon la zone.
+- Établissement : ajout du nom d’établissement, du type collège et de la zone scolaire A/B/C avec vacances 2026-2027 mises à jour automatiquement selon la zone.
 - Établissement : renommage de l'onglet Contraintes Établissement.
 - Choix des dates : calendrier maintenu ouvert jusqu'a validation explicite par bouton.
 - Service théorique : ajout du service libre pour affecter des heures non rattachées à une classe.
@@ -1462,7 +1462,7 @@
       }
 
       function facilityBadge(type) {
-        return `<span class="badge ${type === "external" ? "external" : "internal"}">${type === "external" ? "Ext." : "Coll?ge"}</span>`;
+        return `<span class="badge ${type === "external" ? "external" : "internal"}">${type === "external" ? "Ext." : "Collège"}</span>`;
       }
 
       function getIsoWeekInfo(date) {
@@ -1844,7 +1844,7 @@
         const schoolZone = ["A", "B", "C"].includes(value.schoolZone) ? value.schoolZone : defaultSchoolConstraints.schoolZone;
         return {
           establishmentName: (value.establishmentName || defaultSchoolConstraints.establishmentName).trim(),
-          establishmentType: "coll?ge",
+          establishmentType: "collège",
           schoolZone,
           courseSlots,
           asSlots,
@@ -2617,7 +2617,7 @@
       }
 
       function facilityTypeLabel(type) {
-        return type === "external" ? "Externe ? l’établissement" : "Interne ? l’établissement";
+        return type === "external" ? "Externe à l’établissement" : "Interne à l’établissement";
       }
 
       function facilityLocationTypeLabel(locationType) {
@@ -5080,7 +5080,7 @@
           level: unresolved ? "warning" : "ready",
           detail: checkDetail || (saved
             ? "Les installations et activités manquantes ont été renseignées dans les cycles, sans modifier les blocs profs/classes ni les détails déjà saisis."
-            : "Aucun d?tail n?a ?t? ajout?. Les détails déjà saisis sont conservés ; vous pouvez vider les installations/activités pour repartir de z?ro.")
+            : "Aucun détail n’a été ajouté. Les détails déjà saisis sont conservés ; vous pouvez vider les installations/activités pour repartir de zéro.")
         };
         return result;
       }
@@ -6880,7 +6880,7 @@
           <div class="list">${teachers.map((teacher) => {
             const stats = selectedWeek === "year" ? statFor(cycle, teacher.id) : selected.stats[teacher.id];
             const target = selectedWeek === "year" ? "" : ` / ${teacher.weekTargets[selectedWeek]}h`;
-            return `<article class="stat"><strong style="color:${teacher.border}">${teacher.name}</strong><span>${stats.total}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${stats.external}${selectedWeek === "year" ? "" : "h"} ext. · ${stats.internal}${selectedWeek === "year" ? "" : "h"} coll?ge</small></article>`;
+            return `<article class="stat"><strong style="color:${teacher.border}">${teacher.name}</strong><span>${stats.total}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${stats.external}${selectedWeek === "year" ? "" : "h"} ext. · ${stats.internal}${selectedWeek === "year" ? "" : "h"} collège</small></article>`;
           }).join("")}</div>
         </section>`;
       }
@@ -7463,14 +7463,14 @@
             <p class="muted">Paramétrez les horaires utilisés dans les cours, les indisponibilités, les événements et les AS en indiquant simplement l'heure de début et l'heure de fin.</p>
             <div class="eventField">
               <label>Nom de l’établissement</label>
-              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. Coll?ge Loustic" />
+              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. Collège Loustic" />
             </div>
             <div class="eventField">
               <label>Type d’établissement</label>
               <select id="establishmentType" disabled>
-                <option value="coll?ge" selected>Coll?ge</option>
+                <option value="collège" selected>Collège</option>
               </select>
-              <span class="muted">Configuration coll?ge active pour le moment.</span>
+              <span class="muted">Configuration collège active pour le moment.</span>
             </div>
             <div class="eventField">
               <label>Zone scolaire</label>
@@ -7751,7 +7751,7 @@
             <button class="modalClose" id="cancelConstructionOptimizer" aria-label="Fermer">x</button>
             <h2 id="constructionOptimizeTitle">Construction optimisée</h2>
             <p>Affecter automatiquement les installations et les activités à partir des blocs profs/classes existants ?</p>
-            <p class="muted">Les blocs profs/classes et les d?tails installations/activités déjà saisis ne seront pas modifi?s. Seuls les d?tails vides seront remplis selon les contraintes.</p>
+            <p class="muted">Les blocs profs/classes et les détails installations/activités déjà saisis ne seront pas modifiés. Seuls les détails vides seront remplis selon les contraintes.</p>
             <div class="modalFooter">
               <button class="ghostButton" id="cancelConstructionOptimizerFooter">Annuler</button>
               <button class="addButton" id="confirmConstructionOptimizer">Affecter automatiquement</button>
@@ -8418,7 +8418,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
-                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activité reli?e ? cette installation." : "Aucune activité renseignée."}</span>`}
+                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activité reliée à cette installation." : "Aucune activité renseignée."}</span>`}
                 </div>
                 ${availableFreeActivities.length ? `<label>Service libre</label>
                 <div class="choiceGrid">
@@ -8734,8 +8734,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <div class="eventField">
               <label>Position par rapport a l’établissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe ? l’établissement</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne ? l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe à l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne à l’établissement</button>
               </div>
               ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre Établissement.</span>` : ""}
             </div>
@@ -8862,8 +8862,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <div class="eventField">
               <label>Position par rapport a l’établissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe ? l’établissement</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne ? l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe à l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne à l’établissement</button>
               </div>
               ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre Établissement.</span>` : ""}
             </div>
