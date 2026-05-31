@@ -3314,6 +3314,16 @@
 
       async function refreshCurrentEtabRole() {
         if (!isSignedIn() || !cloudConfig.etabId) return "";
+        const rpcResponse = await fetch(rpcEndpoint("get_current_etab_role"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({ check_etab_id: cloudConfig.etabId })
+        });
+        if (rpcResponse.ok) {
+          const result = await rpcResponse.json().catch(() => "");
+          const role = typeof result === "string" ? result : result?.role || "";
+          return setCurrentEtabRole(role);
+        }
         const response = await fetch(`${etabMembersEndpoint()}?select=role&etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&limit=1`, {
           headers: cloudHeaders()
         });
@@ -7736,6 +7746,32 @@ end;
 $$;
 
 grant execute on function public.claim_etab_for_current_user(uuid, text) to authenticated;
+
+create or replace function public.get_current_etab_role(check_etab_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  found_role text;
+begin
+  if auth.uid() is null then
+    return '';
+  end if;
+
+  select role
+  into found_role
+  from public.etab_members
+  where etab_id = check_etab_id
+    and user_id = auth.uid()
+  limit 1;
+
+  return coalesce(found_role, '');
+end;
+$$;
+
+grant execute on function public.get_current_etab_role(uuid) to authenticated;
 
 create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
 returns text
