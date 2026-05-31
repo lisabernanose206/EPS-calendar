@@ -319,6 +319,10 @@
       .yearActionsRight { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .yearHeaderCompact { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; margin: 0 0 8px; }
       .calendarLegend { color: #64748b; font-size: 10px; font-weight: 850; margin: -4px 0 8px; text-align: right; }
+      .constructionHelpRow { align-items: start; display: flex; gap: 8px; justify-content: flex-end; margin: -2px 0 8px; }
+      .constructionHelpButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; height: 28px; justify-content: center; width: 28px; }
+      .constructionHelpButton.active { background: #0f172a; border-color: #0f172a; color: #fff; }
+      .constructionHelpText { background: #fff; border: 1px solid #d6e2ef; border-radius: 10px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); color: #475569; font-size: 11px; font-weight: 850; line-height: 1.35; max-width: 560px; padding: 8px 10px; text-align: left; }
       .ghostButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 34px; padding: 0 10px; }
       .primaryWeekButton { background: #0f172a; border-color: #0f172a; color: #fff; font-size: 13px; min-height: 42px; padding: 0 14px; }
       .weekSelect { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: inherit; font-weight: 950; padding: 2px 4px; width: 100%; }
@@ -362,6 +366,14 @@
       .paletteList { display: flex; flex-wrap: wrap; gap: 6px; }
       .paletteItem { cursor: grab; -webkit-user-select: none; user-select: none; }
       .builderActions { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; }
+      .constructionBuilderBody { display: grid; gap: 16px; }
+      .constructionBuilderBody > .constructionTabs,
+      .constructionBuilderBody > .builderActions,
+      .constructionBuilderBody > .constructionOptimizeActions,
+      .constructionBuilderBody > .cycleConstructionTabs,
+      .constructionBuilderBody > .prerequisitesLockRow,
+      .constructionBuilderBody > .constructionHelpRow,
+      .constructionBuilderBody > .calendarLegend { margin-bottom: 0; margin-top: 0; }
       .constructionExportControls { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
       .iconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; font-size: 16px; font-weight: 950; height: 34px; justify-content: center; line-height: 1; padding: 0; width: 34px; }
       .iconButton:hover { border-color: #0f172a; }
@@ -635,6 +647,82 @@
       .cycleLegendSwatch { background: #7f1d1d; border-radius: 4px; display: inline-block; height: 12px; width: 18px; }
       .cycleCoverageTable { min-width: 0; table-layout: fixed; }
       .cycleCoverageTable th, .cycleCoverageTable td { font-size: 10px; min-width: 0; padding: 5px 3px; }
+      .homeTimetable,
+      .facilitySchedule,
+      .yearTable,
+      .cycleTwoWeekTable,
+      .availabilityGrid,
+      .cycleCoverage table {
+        background: #fff;
+        border: 1px solid #d6e2ef;
+        border-collapse: separate;
+        border-radius: 12px;
+        border-spacing: 0;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+      }
+      .homeTimetable th,
+      .homeTimetable td,
+      .facilitySchedule th,
+      .facilitySchedule td,
+      .yearTable th,
+      .yearTable td,
+      .cycleTwoWeekTable th,
+      .cycleTwoWeekTable td,
+      .availabilityGrid th,
+      .availabilityGrid td,
+      .cycleCoverage th,
+      .cycleCoverage td {
+        border: 1px solid #d6e2ef;
+      }
+      .homeTimetable thead th,
+      .cycleTwoWeekTable thead th {
+        background: #172033 !important;
+        color: #fff !important;
+      }
+      .facilitySchedule th,
+      .yearTable th,
+      .availabilityGrid th,
+      .cycleCoverage th,
+      .constructionTable thead th {
+        background: #f8fafc;
+        color: #334155;
+      }
+      .homeTimetable .timeColumn,
+      .facilitySchedule .slotName,
+      .yearTable .rowHead,
+      .yearTable .timeHead,
+      .cycleTwoWeekTable .weekTypeHead,
+      .cycleTwoWeekTable tbody .timeHead {
+        background: #f8fafc;
+        color: #172033;
+      }
+      .constructionTable th,
+      .constructionTable td,
+      .cycleTwoWeekTable th,
+      .cycleTwoWeekTable td {
+        border: 1px solid #cbd5e1;
+      }
+      .constructionTable .rowHead,
+      .constructionTable .timeHead {
+        border-right: 2px solid #b8c7d9;
+      }
+      .homeTimetable tbody tr:last-child td,
+      .facilitySchedule tbody tr:last-child td,
+      .yearTable tbody tr:last-child td,
+      .cycleTwoWeekTable tbody tr:last-child td,
+      .availabilityGrid tbody tr:last-child td,
+      .cycleCoverage tbody tr:last-child td {
+        border-bottom-color: transparent;
+      }
+      .homeTimetable tr > :last-child,
+      .facilitySchedule tr > :last-child,
+      .yearTable tr > :last-child,
+      .cycleTwoWeekTable tr > :last-child,
+      .availabilityGrid tr > :last-child,
+      .cycleCoverage tr > :last-child {
+        border-right-color: transparent;
+      }
       .cycleCoverageTable .rowHead { min-width: 92px; width: 92px; }
       .cycleCoverageTable .timeHead { left: auto; min-width: 90px; position: static; width: 90px; z-index: auto; }
       .cycleCoverageBlock { display: grid; gap: 2px; line-height: 1.15; }
@@ -1589,6 +1677,7 @@
       let activeCycleId = cycles[0].id;
       let activeConstructionCycleId = cycles[0]?.id || "cycle-1";
       let constructionBuildMode = "blocks";
+      let constructionHelpOpen = false;
       let cycleSaveStatus = "";
       let constructionRules = loadConstructionRules();
       let eventExclusions = loadEventExclusions();
@@ -8257,13 +8346,16 @@
         const blocksComplete = constructionBlocksStepComplete();
         const cycleDetailsComplete = constructionCycleDetailsStepComplete();
         const currentConstructionLocked = constructionBuildLocked(constructionBuildMode, selectedCycle?.id);
-        const lockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `${selectedCycle.name} verrouillé` : "Blocs profs/classes verrouillés";
-        const unlockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `Verrouiller ${selectedCycle.name}` : "Verrouiller les blocs profs/classes";
+        const lockLabel = "Sous-onglet verrouill&eacute;";
+        const unlockLabel = "Verrouiller ce sous-onglet";
+        const constructionHelpText = constructionBuildMode === "blocks"
+          ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activités se renseignent ensuite par cycle."
+          : "Installations/activités : choisissez un cycle, puis cliquez sur un bloc pour lui affecter une installation et une activité. Les choix sont enregistrés pour le cycle sélectionné.";
         const constructionTableContent = constructionBuildMode === "versions"
           ? renderConstructionVersionsView()
           : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
         return `<section class="builderPage">
-          <div>
+          <div class="constructionBuilderBody">
             <h2 class="prerequisitesPageTitle">Construction</h2>
             <div class="constructionTabs">
               <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
@@ -8303,8 +8395,11 @@
                 <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
               </label>
             </div>
-            ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillée : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
-            ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activités se renseignent ensuite par cycle." : "Détails par cycle : les blocs profs/classes sont fixés ; cliquez sur un bloc pour renseigner son installation et son activité sur ce cycle."}</div>`}
+            ${currentConstructionLocked ? `<div class="lockNotice">Sous-onglet verrouill&eacute; : vous pouvez consulter et naviguer, mais pas modifier cette partie.</div>` : ""}` : ""}
+            ${constructionBuildMode === "versions" ? "" : `<div class="constructionHelpRow">
+              ${constructionHelpOpen ? `<div class="constructionHelpText">${constructionHelpText}</div>` : ""}
+              <button class="constructionHelpButton ${constructionHelpOpen ? "active" : ""}" type="button" data-toggle-construction-help aria-label="Afficher l'aide de ce sous-onglet" title="Afficher l'aide">?</button>
+            </div>`}
             ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionStatusRow()}
             ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
@@ -10175,7 +10270,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l’établissement" aria-label="Nom de l’établissement" /><button class="authButton" type="submit">Creer l’établissement</button></form>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Vérification du rôle en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
-            ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">Déconnexion</button>
           `;
@@ -12148,10 +12242,17 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         document.querySelectorAll("[data-construction-build-mode]").forEach((button) => {
           button.addEventListener("click", () => {
             constructionBuildMode = ["cycleDetails", "versions"].includes(button.dataset.constructionBuildMode) ? button.dataset.constructionBuildMode : "blocks";
+            constructionHelpOpen = false;
             activeBuildCell = null;
             activeBuildCycleId = null;
             editingBuildBlock = null;
             movingBuildBlock = null;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-construction-help]").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionHelpOpen = !constructionHelpOpen;
             render();
           });
         });
