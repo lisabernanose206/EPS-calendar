@@ -22,6 +22,8 @@
       .top p { color: #64748b; font-size: 12px; font-weight: 800; margin: 0 0 4px; text-transform: uppercase; }
       .brandTitle { align-items: center; display: flex; gap: 10px; }
       .brandNavCluster { align-items: flex-start; display: grid; gap: 2px; justify-items: start; min-width: 0; }
+      .brandIdentity { align-items: center; display: flex; gap: 8px; min-width: 0; }
+      .brandEtabName { color: #0f172a; font-size: 13px; font-weight: 950; line-height: 1.1; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .brandCat { background: #0f172a; border-radius: 45% 45% 42% 42%; display: inline-block; height: 23px; opacity: 0.86; position: relative; width: 25px; }
       .brandCat::before { border-bottom: 9px solid #0f172a; border-left: 5px solid transparent; border-right: 4px solid transparent; content: ""; left: 3px; position: absolute; top: -5px; transform: rotate(-18deg); }
       .brandCat::after { border-bottom: 9px solid #0f172a; border-left: 4px solid transparent; border-right: 5px solid transparent; content: ""; position: absolute; right: 3px; top: -5px; transform: rotate(18deg); }
@@ -32,6 +34,12 @@
       .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
       .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
       .authButton.secondary { background: #e2e8f0; color: #0f172a; }
+      .shareInviteWrap { align-items: center; display: inline-flex; gap: 8px; position: relative; }
+      .shareInviteButton { align-items: center; background: #0f172a; border: 0; border-radius: 999px; color: #fff; cursor: pointer; display: inline-flex; height: 38px; justify-content: center; padding: 0; width: 38px; }
+      .shareInviteButton svg { height: 19px; width: 19px; }
+      .shareInviteMenu { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 12px 26px rgba(15, 23, 42, .16); display: grid; gap: 4px; padding: 6px; position: absolute; right: 0; top: 44px; width: 150px; z-index: 30; }
+      .shareInviteMenu button { background: transparent; border: 0; border-radius: 6px; color: #0f172a; cursor: pointer; font-weight: 900; min-height: 34px; padding: 0 10px; text-align: left; }
+      .shareInviteMenu button:hover { background: #e2e8f0; }
       .googleAuthButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(15, 23, 42, .08); color: #0f172a; display: inline-flex; gap: 10px; min-height: 44px; padding: 0 16px; }
       .googleAuthIcon { align-items: center; border-radius: 999px; display: inline-flex; font-family: Arial, sans-serif; font-size: 18px; font-weight: 900; height: 24px; justify-content: center; width: 24px; }
       .authStatus { color: #64748b; font-size: 12px; font-weight: 850; text-align: right; }
@@ -868,7 +876,10 @@
     <main class="app">
       <header class="top">
         <div class="brandNavCluster">
-          <h1 class="brandTitle" aria-label="EPS Loustic"><span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span></h1>
+          <div class="brandIdentity">
+            <h1 class="brandTitle" aria-label="EPS Loustic"><span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span></h1>
+            <span class="brandEtabName" id="brandEtabName"></span>
+          </div>
           <section class="navGroup questionNavGroup utilityNav">
             <section class="weeks">
               <button data-week="guide">Mode d'emploi</button>
@@ -1291,6 +1302,7 @@
       let authInviteToken = inviteTokenFromUrl() || localStorage.getItem(AUTH_INVITE_KEY) || "";
       let authInviteLink = "";
       let authInviteStatus = authInviteToken ? "Invitation equipe detectee." : "";
+      let authInviteMenuOpen = false;
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
       let authStatus = adminSession ? "Connexion Supabase active." : "";
@@ -3329,6 +3341,29 @@
         return currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "";
       }
 
+      function renderShareInviteControl() {
+        if (!cloudConfig.etabId || !isAdmin()) return "";
+        return `<div class="shareInviteWrap">
+          <button class="shareInviteButton" type="button" id="shareInviteToggle" aria-label="Partager une invitation" title="Partager une invitation">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M18 8a3 3 0 1 0-2.83-4H15a3 3 0 0 0 1.17 2.37l-7.1 3.55a3 3 0 1 0 0 4.16l7.1 3.55A3 3 0 1 0 17 16.1l-7.1-3.55a3.2 3.2 0 0 0 0-1.1l7.1-3.55c.32.06.65.08 1 .08Z" fill="currentColor"/>
+            </svg>
+          </button>
+          ${authInviteMenuOpen ? `<div class="shareInviteMenu">
+            <button type="button" data-create-invite-link="member">Consultation</button>
+            <button type="button" data-create-invite-link="owner">Admin</button>
+          </div>` : ""}
+          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}
+        </div>`;
+      }
+
+      function renderBrandEtabName() {
+        const label = document.getElementById("brandEtabName");
+        if (!label) return;
+        label.textContent = cloudConfig.etabId ? currentEtabDisplayName() : "";
+        label.title = label.textContent;
+      }
+
       async function refreshCurrentEtabRole() {
         if (!isSignedIn() || !cloudConfig.etabId) return "";
         const userEtabResponse = await fetch(rpcEndpoint("get_current_user_etab"), {
@@ -3405,24 +3440,6 @@
           return cloudConfig.etabId;
         }
         return "";
-      }
-
-      async function claimConfiguredEtabForCurrentUser() {
-        if (!isSignedIn()) throw new Error("connexion requise");
-        if (!cloudConfig.etabId) throw new Error("etab_id manquant");
-        const response = await fetch(rpcEndpoint("claim_etab_for_current_user"), {
-          method: "POST",
-          headers: cloudHeaders(),
-          body: JSON.stringify({
-            claim_etab_id: cloudConfig.etabId,
-            etab_name: schoolConstraints.establishmentName || "Etablissement EPS"
-          })
-        });
-        const result = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
-        const role = result?.role || "owner";
-        setCurrentEtabRole(role);
-        return role;
       }
 
       async function acceptEtabInvite(token = authInviteToken) {
@@ -9311,16 +9328,17 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function renderAuthBox() {
         const authBox = document.getElementById("authBox");
+        renderBrandEtabName();
         if (!authBox) return;
         if (isSignedIn()) {
           authBox.innerHTML = `
             <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
-            ${cloudConfig.etabId ? `<div class="authStatus">Connecte a l'etab : ${escapeHtml(currentEtabDisplayName())}</div>` : ""}
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
-            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="claimExistingEtabForm"><input id="existingEtabId" value="" placeholder="UUID etab existant" aria-label="UUID de l'etablissement existant" /><button class="authButton" type="submit">Lier cet etab existant</button></form>` : ""}
-            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nouvel etablissement" aria-label="Nom du nouvel etablissement" /><button class="authButton secondary" type="submit">Creer un nouvel etab</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l'etablissement" aria-label="Nom de l'etablissement" /><button class="authButton" type="submit">Creer l'etablissement</button></form>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Verification du role en cours...</div>` : ""}
-            ${cloudConfig.etabId && isAdmin() ? `<div class="authForm"><button class="authButton secondary" data-create-invite-link="member">Inviter member</button><button class="authButton secondary" data-create-invite-link="owner">Inviter owner</button>${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}</div>` : ""}
+            ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
+            ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
+            ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
           `;
           authBox.querySelector(".authStatus").innerHTML = `Connect&eacute; : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`;
@@ -9409,6 +9427,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         document.querySelectorAll("[data-oauth-provider]").forEach((button) => {
           button.addEventListener("click", () => startOAuthProvider(button.dataset.oauthProvider));
         });
+        const shareInviteToggle = document.getElementById("shareInviteToggle");
+        if (shareInviteToggle) shareInviteToggle.addEventListener("click", () => {
+          authInviteMenuOpen = !authInviteMenuOpen;
+          render();
+        });
         const adminEmailInput = document.getElementById("adminEmail");
         if (adminEmailInput) adminEmailInput.addEventListener("input", () => authEmail = adminEmailInput.value);
         const adminPasswordInput = document.getElementById("adminPassword");
@@ -9431,33 +9454,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             render();
           }
         });
-        const claimExistingEtabForm = document.getElementById("claimExistingEtabForm");
-        if (claimExistingEtabForm) claimExistingEtabForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const existingEtabId = document.getElementById("existingEtabId")?.value.trim() || "";
-          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(existingEtabId)) {
-            authStatus = "Collez l'UUID complet de l'etablissement existant.";
-            render();
-            return;
-          }
-          cloudConfig = { ...cloudConfig, etabId: existingEtabId };
-          saveCloudConfig();
-          authStatus = "Liaison du compte a l'etablissement existant...";
-          render();
-          try {
-            await claimConfiguredEtabForCurrentUser();
-            await refreshCurrentEtabRoleSafe();
-            if (!currentEtabRole) setCurrentEtabRole("owner");
-            authStatus = currentEtabRole === "owner"
-              ? "Compte lie a cet etablissement en owner. Vous pouvez maintenant charger le planning cloud."
-              : `Compte lie a cet etablissement avec le role ${currentEtabRole}.`;
-            if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
-          } catch (error) {
-            authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
-          } finally {
-            render();
-          }
-        });
         const acceptInviteForm = document.getElementById("acceptInviteForm");
         if (acceptInviteForm) acceptInviteForm.addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -9473,32 +9469,21 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             render();
           }
         });
-        const claimEtabForm = document.getElementById("claimEtabForm");
-        if (claimEtabForm) claimEtabForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          authStatus = "Liaison du compte a l'etablissement...";
-          render();
-          try {
-            await claimConfiguredEtabForCurrentUser();
-            await refreshCurrentEtabRoleSafe();
-            if (!currentEtabRole) setCurrentEtabRole("owner");
-            authStatus = currentEtabRole === "owner"
-              ? "Compte lie a cet etablissement en owner. Vous pouvez charger le planning cloud."
-              : `Compte lie a cet etablissement avec le role ${currentEtabRole}.`;
-          } catch (error) {
-            authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
-          } finally {
-            render();
-          }
-        });
         document.querySelectorAll("[data-create-invite-link]").forEach((button) => {
           button.addEventListener("click", async () => {
             const role = button.dataset.createInviteLink === "owner" ? "owner" : "member";
-            authInviteStatus = `Generation du lien ${role}...`;
+            const label = role === "owner" ? "admin" : "consultation";
+            authInviteMenuOpen = false;
+            authInviteStatus = `Generation du lien ${label}...`;
+            authInviteLink = "";
             render();
             try {
-              await createEtabInvite(role);
-              authInviteStatus = `Lien d'invitation ${role} pret a partager.`;
+              const link = await createEtabInvite(role);
+              authInviteStatus = `Lien d'invitation ${label} pret a partager.`;
+              if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(link).catch(() => {});
+                authInviteStatus = `Lien d'invitation ${label} pret a partager et copie.`;
+              }
             } catch (error) {
               authInviteStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
             } finally {
