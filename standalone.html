@@ -9819,6 +9819,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-prerequisites-lock]").forEach((input) => {
           input.addEventListener("change", () => {
+            if (!cloudSourceReadyForWrite()) {
+              input.checked = !input.checked;
+              cloudStatus = cloudWriteBlockedMessage();
+              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
+              render();
+              return;
+            }
             const mode = input.dataset.prerequisitesLock || prerequisiteMode;
             prerequisiteLocks = { ...prerequisiteLocks, [mode]: input.checked };
             savePrerequisiteLocks();
@@ -9828,6 +9835,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-year-prerequisites-lock]").forEach((input) => {
           input.addEventListener("change", () => {
+            if (!cloudSourceReadyForWrite()) {
+              input.checked = !input.checked;
+              cloudStatus = cloudWriteBlockedMessage();
+              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
+              render();
+              return;
+            }
             const mode = input.dataset.yearPrerequisitesLock || yearPrerequisiteMode;
             yearPrerequisiteLocks = { ...yearPrerequisiteLocks, [mode]: input.checked };
             saveYearPrerequisiteLocks();
@@ -9837,6 +9851,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-construction-lock]").forEach((input) => {
           input.addEventListener("change", () => {
+            if (!cloudSourceReadyForWrite()) {
+              input.checked = !input.checked;
+              cloudStatus = cloudWriteBlockedMessage();
+              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
+              render();
+              return;
+            }
             const mode = input.dataset.constructionLock;
             if (mode === "blocks") constructionLocks = { ...constructionLocks, blocks: input.checked };
             if (mode === "cycleDetails") {
