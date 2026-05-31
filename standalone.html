@@ -2572,10 +2572,10 @@
         }
       }
 
-      function saveSportEvents() {
+      function saveSportEvents(immediateCloud = true) {
         sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
-        saveCloudPatchNow(["sportEvents"]);
+        if (immediateCloud) saveCloudPatchNow(["sportEvents"]);
       }
 
       function loadAsSessions() {
@@ -2738,9 +2738,9 @@
         }
       }
 
-      function saveEventExclusions() {
+      function saveEventExclusions(immediateCloud = true) {
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
-        saveCloudPatchNow(["eventExclusions"]);
+        if (immediateCloud) saveCloudPatchNow(["eventExclusions"]);
       }
 
       function loadAsExclusions() {
@@ -4047,7 +4047,11 @@
           cloudSaveSucceeded = true;
           if (allowBeforeSourceLoaded) cloudSourceLoaded = true;
           cloudLastUpdatedAt = updatedAt;
-          cloudStatus = `Sauvegardé dans le cloud à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
+          const savedDate = new Date(updatedAt);
+          const savedTimeLabel = savedDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+          const savedDateLabel = savedDate.toLocaleDateString("fr-FR");
+          cloudStatus = `Sauvegardé dans le cloud à ${savedTimeLabel} le ${savedDateLabel} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
+          showValidationPopup(`Sauvegardé dans le cloud à ${savedTimeLabel} le ${savedDateLabel}`);
         } catch (error) {
           const message = error.message || "sauvegarde impossible";
           cloudStatus = message.includes("42501") || message.includes("permission denied")
@@ -4063,7 +4067,7 @@
           } else if (shouldDiscardLocalChanges) {
             discardLocalChangesFromCloudSoon();
           }
-          if (shouldRender) render();
+          if (shouldRender || cloudSaveSucceeded) render();
         }
       }
 
@@ -5457,8 +5461,9 @@
         delete eventExclusions[event.id];
         if (exclusions.length) eventExclusions[event.id] = exclusions;
 
-        saveSportEvents();
-        saveEventExclusions();
+        saveSportEvents(false);
+        saveEventExclusions(false);
+        saveCloudPatchNow(["sportEvents", "eventExclusions"]);
         rebuildConstructionPlan();
       }
 
