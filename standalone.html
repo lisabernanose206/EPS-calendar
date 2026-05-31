@@ -4,9 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EPS Loustic</title>
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3" />
     <style>
       :root {
         background: #f8fafc;
@@ -72,9 +70,8 @@
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
       .workspace { display: block; margin-top: 6px; }
       .homeShell { background: #eff7f2; border: 1px solid #d8e7dd; border-radius: 8px; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) 420px; min-height: calc(100vh - 96px); overflow: hidden; }
-      .homeHero { background: #113f36; color: #f8fafc; display: grid; min-height: 560px; padding: clamp(28px, 5vw, 72px); position: relative; }
-      .homeHero::before { background-image: url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1400&q=80"); background-position: center; background-size: cover; content: ""; inset: 0; opacity: .28; position: absolute; }
-      .homeHeroContent { align-content: space-between; display: grid; gap: 32px; max-width: 720px; position: relative; z-index: 1; }
+      .homeHero { background: #123f36; color: #f8fafc; display: grid; min-height: 560px; padding: clamp(24px, 4vw, 56px); position: relative; }
+      .homeHeroContent { align-content: center; display: grid; gap: 22px; justify-items: center; position: relative; z-index: 1; }
       .homeBrand { align-items: center; display: inline-flex; gap: 16px; margin-bottom: 44px; }
       .homeBrand .brandCat { background: #f8fafc; height: 54px; opacity: 1; width: 58px; }
       .homeBrand .brandCat::before { border-bottom-color: #f8fafc; border-left-width: 12px; border-right-width: 10px; border-bottom-width: 20px; left: 7px; top: -11px; }
@@ -85,12 +82,7 @@
       .homeKicker { color: #b8e2cf; font-size: 12px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .homeHero h2 { color: #fff; font-size: clamp(38px, 7vw, 86px); line-height: .98; margin: 0; max-width: 760px; }
       .homeHero p { color: #e4f3ec; font-size: clamp(16px, 2vw, 20px); font-weight: 750; line-height: 1.55; margin: 14px 0 0; max-width: 560px; }
-      .homePreview { background: rgba(248, 250, 252, .9); border: 1px solid rgba(255,255,255,.55); border-radius: 8px; color: #0f172a; display: grid; gap: 10px; max-width: 460px; padding: 14px; }
-      .homePreviewHeader { align-items: center; display: flex; justify-content: space-between; font-size: 12px; font-weight: 950; }
-      .homePreviewGrid { display: grid; gap: 6px; grid-template-columns: repeat(5, 1fr); }
-      .homePreviewGrid span { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 999px; display: block; height: 18px; }
-      .homePreviewGrid span:nth-child(2n) { background: #bbf7d0; border-color: #86efac; }
-      .homePreviewGrid span:nth-child(3n) { background: #fecaca; border-color: #fca5a5; }
+      .homePoster { background: #fffaf0; border: 8px solid #0f172a; border-radius: 8px; box-shadow: 0 24px 60px rgba(0,0,0,.34); display: block; max-height: min(78vh, 820px); max-width: min(92%, 620px); object-fit: contain; width: auto; }
       .homePanel { align-content: center; background: #f8fafc; display: grid; gap: 22px; padding: clamp(24px, 4vw, 48px); }
       .homePanel h3 { font-size: 28px; line-height: 1.08; margin: 0; }
       .homePanel p { color: #64748b; font-size: 14px; font-weight: 750; line-height: 1.55; margin: 0; }
@@ -9454,18 +9446,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   <span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span>
                   <span class="homeBrandName">Loustic</span>
                 </div>
-                <div class="homeKicker">Planning EPS collaboratif</div>
-                <h2>Une equipe. Un planning clair.</h2>
-                <p>Organisez les emplois du temps, les cycles, les installations et les roles de l'equipe EPS dans un espace separe pour chaque etablissement.</p>
               </div>
-              <div class="homePreview" aria-hidden="true">
-                <div class="homePreviewHeader"><span>Semaine EPS</span><span>5 jours</span></div>
-                <div class="homePreviewGrid">
-                  <span></span><span></span><span></span><span></span><span></span>
-                  <span></span><span></span><span></span><span></span><span></span>
-                  <span></span><span></span><span></span><span></span><span></span>
-                </div>
-              </div>
+              <img class="homePoster" src="./home-loustic-poster.svg" alt="Loustic presente le planning EPS simplifie" />
             </div>
           </div>
           <aside class="homePanel">
