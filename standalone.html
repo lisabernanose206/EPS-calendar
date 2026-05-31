@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EPS Loustic</title>
-    <link rel="icon" type="image/png" href="./icon_app.png?v=1" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon_app.png?v=2" />
+    <link rel="apple-touch-icon" href="./icon_app.png?v=2" />
+    <link rel="shortcut icon" href="./icon_app.png?v=2" />
     <style>
       :root {
         background: #f8fafc;
@@ -22,11 +24,7 @@
       .brandNavCluster { align-items: flex-start; display: grid; gap: 2px; justify-items: start; min-width: 0; }
       .brandIdentity { align-items: center; display: flex; gap: 8px; min-width: 0; }
       .brandEtabName { color: #0f172a; font-size: 13px; font-weight: 950; line-height: 1.1; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .brandCat { background: #0f172a; border-radius: 45% 45% 42% 42%; display: inline-block; height: 23px; opacity: 0.86; position: relative; width: 25px; }
-      .brandCat::before { border-bottom: 9px solid #0f172a; border-left: 5px solid transparent; border-right: 4px solid transparent; content: ""; left: 3px; position: absolute; top: -5px; transform: rotate(-18deg); }
-      .brandCat::after { border-bottom: 9px solid #0f172a; border-left: 4px solid transparent; border-right: 5px solid transparent; content: ""; position: absolute; right: 3px; top: -5px; transform: rotate(18deg); }
-      .brandCatEyes { display: flex; gap: 6px; left: 5px; position: absolute; top: 9px; }
-      .brandCatEyes i { background: #f8fafc; border-radius: 999px; display: block; height: 4px; width: 4px; }
+      .brandLogo { display: block; height: 30px; object-fit: contain; width: 30px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
       .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
@@ -73,11 +71,7 @@
       .homeHero { background: #f8fafc; color: #0f172a; display: grid; min-height: 560px; padding: clamp(24px, 4vw, 56px); position: relative; }
       .homeHeroContent { align-content: center; display: grid; gap: 26px; position: relative; z-index: 1; }
       .homeBrand { align-items: center; display: inline-flex; gap: 16px; margin-bottom: 44px; }
-      .homeBrand .brandCat { background: #0f172a; height: 54px; opacity: 1; width: 58px; }
-      .homeBrand .brandCat::before { border-bottom-color: #0f172a; border-left-width: 12px; border-right-width: 10px; border-bottom-width: 20px; left: 7px; top: -11px; }
-      .homeBrand .brandCat::after { border-bottom-color: #0f172a; border-left-width: 10px; border-right-width: 12px; border-bottom-width: 20px; right: 7px; top: -11px; }
-      .homeBrand .brandCatEyes { gap: 14px; left: 12px; top: 22px; }
-      .homeBrand .brandCatEyes i { background: #f8fafc; height: 8px; width: 8px; }
+      .homeBrand .brandLogo { height: 58px; width: 58px; }
       .homeBrandName { color: #0f172a; font-size: clamp(34px, 5vw, 62px); font-weight: 950; letter-spacing: 0; line-height: .95; }
       .homeBeforeAfter { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
       .homeComparisonCard { background: rgba(248, 250, 252, .96); border: 1px solid rgba(255,255,255,.72); border-radius: 8px; box-shadow: 0 18px 44px rgba(0,0,0,.25); display: grid; gap: 10px; padding: 12px; }
@@ -925,7 +919,7 @@
       <header class="top">
         <div class="brandNavCluster">
           <div class="brandIdentity">
-            <h1 class="brandTitle" aria-label="EPS Loustic"><span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span></h1>
+            <h1 class="brandTitle" aria-label="EPS Loustic"><img class="brandLogo" src="./icon_app.png?v=2" alt="Loustic" /></h1>
             <span class="brandEtabName" id="brandEtabName"></span>
           </div>
           <section class="navGroup questionNavGroup utilityNav">
@@ -3504,7 +3498,7 @@
       }
 
       function setCurrentEtabName(name) {
-        currentEtabName = String(name || "").trim();
+        currentEtabName = normalizeEtabDisplayName(name);
         if (currentEtabName) localStorage.setItem(AUTH_ETAB_NAME_KEY, currentEtabName);
         else localStorage.removeItem(AUTH_ETAB_NAME_KEY);
         return currentEtabName;
@@ -3520,7 +3514,13 @@
       }
 
       function currentEtabDisplayName() {
-        return currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "";
+        return normalizeEtabDisplayName(currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "");
+      }
+
+      function normalizeEtabDisplayName(name) {
+        const value = String(name || "").trim();
+        if (/^louise\s+michele$/i.test(value)) return "Louise Michel";
+        return value;
       }
 
       function inviteMailtoLink() {
