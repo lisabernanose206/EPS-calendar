@@ -4325,15 +4325,34 @@
         });
       }
 
+      function cycleOverrideHasDetails(rule, cycleId) {
+        const override = rule?.cycleOverrides?.[cycleId];
+        return Boolean(override && (override.facilityId || override.activityId));
+      }
+
+      function clearConstructionCycleDetails() {
+        constructionRules = constructionRules.map((rule) => {
+          if (!rule.cycleOverrides || !Object.keys(rule.cycleOverrides).length) return rule;
+          return { ...rule, cycleOverrides: {} };
+        });
+        constructionOptimizationResult = null;
+        rebuildConstructionPlan();
+      }
+
       function solveOptimizedCycleDetailsForCycle(cycle, usage) {
+        const preservedAssignments = constructionRules
+          .filter((rule) => constructionRuleAppliesToCycle(rule, cycle) && rule?.block && !rule.block.optionBlock && cycleOverrideHasDetails(rule, cycle.id))
+          .map((rule) => ({ rule, block: blockWithCycleOverride(rule, cycle) }));
+        preservedAssignments.forEach(({ rule, block }) => bumpOptimizedUsage(rule, cycle, block, usage));
         const rules = constructionRules
-          .filter((rule) => constructionRuleAppliesToCycle(rule, cycle) && rule?.block && !rule.block.optionBlock)
+          .filter((rule) => constructionRuleAppliesToCycle(rule, cycle) && rule?.block && !rule.block.optionBlock && !cycleOverrideHasDetails(rule, cycle.id))
           .map((rule) => ({ rule, candidates: optimizedCycleCandidates(rule, cycle) }))
           .sort((first, second) =>
             optimizedRulePriority(second.rule, cycle, second.candidates, usage) - optimizedRulePriority(first.rule, cycle, first.candidates, usage)
             || first.candidates.length - second.candidates.length
           );
-        const assignments = [];
+        const assignments = [...preservedAssignments];
+        const newAssignments = [];
         const unresolved = [];
         rules.forEach(({ rule, candidates }) => {
           const viable = candidates
@@ -4350,9 +4369,10 @@
             return;
           }
           assignments.push({ rule, block: selected });
+          newAssignments.push({ rule, block: selected });
           bumpOptimizedUsage(rule, cycle, selected, usage);
         });
-        return { assignments, unresolved };
+        return { assignments: newAssignments, preserved: preservedAssignments.length, unresolved };
       }
 
       function optimizeConstructionCycleDetails() {
@@ -4373,16 +4393,13 @@
           teacherActivity: new Map()
         };
         let saved = 0;
+        let preserved = 0;
         let unresolved = 0;
         const unresolvedBlocks = [];
         const cyclesToOptimize = classicConstructionCycles();
-        const optimizedCycleIds = new Set(cyclesToOptimize.map((cycle) => cycle.id));
-        constructionRules = constructionRules.map((rule) => ({
-          ...rule,
-          cycleOverrides: Object.fromEntries(Object.entries(rule.cycleOverrides || {}).filter(([cycleId]) => !optimizedCycleIds.has(cycleId)))
-        }));
         cyclesToOptimize.forEach((cycle) => {
           const result = solveOptimizedCycleDetailsForCycle(cycle, usage);
+          preserved += result.preserved || 0;
           unresolved += result.unresolved.length;
           result.unresolved.forEach(({ rule, cycleId, reason }) => {
             unresolvedBlocks.push({
@@ -4421,16 +4438,16 @@
           saved,
           unresolved,
           message: unresolved
-            ? `${saved} detail(s) optimise(s), ${unresolved} point(s) a verifier`
-            : `${saved} detail(s) optimise(s)`
+            ? `${saved} detail(s) optimise(s), ${preserved} conserve(s), ${unresolved} point(s) a verifier`
+            : `${saved} detail(s) optimise(s), ${preserved} conserve(s)`
         };
         constructionOptimizationResult = {
           ...result,
           unresolvedBlocks,
           level: unresolved ? "warning" : "ready",
           detail: checkDetail || (saved
-            ? "Les installations et activites ont ete renseignees dans les cycles, sans modifier les blocs profs/classes."
-            : "Aucun detail n'a ete ajoute. Verifiez qu'il existe des blocs profs/classes et des couples installation/activite compatibles.")
+            ? "Les installations et activites manquantes ont ete renseignees dans les cycles, sans modifier les blocs profs/classes ni les details deja saisis."
+            : "Aucun detail n'a ete ajoute. Les details deja saisis sont conserves ; vous pouvez vider les installations/activites pour repartir de zero.")
         };
         return result;
       }
@@ -4985,6 +5002,9 @@
       }
 
       function clearPlanningParts(options) {
+        if (options.constructionDetails) {
+          clearConstructionCycleDetails();
+        }
         if (options.construction) {
           constructionRules = [];
           constructionPlan = {};
@@ -7081,7 +7101,7 @@
             <button class="modalClose" id="cancelConstructionOptimizer" aria-label="Fermer">x</button>
             <h2 id="constructionOptimizeTitle">Construction optimisee</h2>
             <p>Affecter automatiquement les installations et les activites a partir des blocs profs/classes existants ?</p>
-            <p class="muted">Les blocs profs/classes ne seront pas modifies. Seuls les details installations/activites des cycles seront remplis selon les contraintes.</p>
+            <p class="muted">Les blocs profs/classes et les details installations/activites deja saisis ne seront pas modifies. Seuls les details vides seront remplis selon les contraintes.</p>
             <div class="modalFooter">
               <button class="ghostButton" id="cancelConstructionOptimizerFooter">Annuler</button>
               <button class="addButton" id="confirmConstructionOptimizer">Affecter automatiquement</button>
@@ -7092,10 +7112,11 @@
 
       function renderClearConstructionPanel() {
         return `<div class="clearConstructionPanel">
-          <h3>Vider la construction manuelle</h3>
+          <h3>Vider la construction</h3>
           <div class="alertHelp"><strong>Conserve</strong><span>Les pre-requis, regles de construction, AS, evenements sportifs, services, installations et activites restent intacts.</span></div>
           <div class="clearConstructionOptions">
-            <label><input type="checkbox" data-clear-option="construction" checked /> Creneau prof</label>
+            <label><input type="checkbox" data-clear-option="constructionDetails" checked /> Installations / activites</label>
+            <label><input type="checkbox" data-clear-option="construction" /> Blocs profs/classes</label>
           </div>
           <div class="clearConstructionFooter">
             <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
@@ -10307,15 +10328,19 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (confirmClearConstruction) {
           confirmClearConstruction.addEventListener("click", () => {
             const options = {
+              constructionDetails: Boolean(document.querySelector("[data-clear-option='constructionDetails']")?.checked),
               construction: Boolean(document.querySelector("[data-clear-option='construction']")?.checked)
             };
-            if (!options.construction) return;
-            const firstConfirm = window.confirm("Supprimer uniquement les creneaux prof construits ?\n\nLes pre-requis, regles, AS et evenements sportifs seront conserves.");
+            if (!options.constructionDetails && !options.construction) return;
+            const onlyDetails = options.constructionDetails && !options.construction;
+            const firstConfirm = window.confirm(onlyDetails
+              ? "Supprimer uniquement les installations/activites de la construction optimisee ?\n\nLes blocs profs/classes seront conserves."
+              : "Supprimer les elements selectionnes de la construction ?\n\nLes pre-requis, regles, AS et evenements sportifs seront conserves.");
             if (!firstConfirm) return;
             const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
             if (typedConfirm !== "VIDER") return;
             clearPlanningParts(options);
-            showValidationPopup("Construction videe, pre-requis conserves");
+            showValidationPopup(onlyDetails ? "Installations / activites videes, squelette conserve" : "Construction videe, pre-requis conserves");
             render();
           });
         }
