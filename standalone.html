@@ -38,6 +38,16 @@
       .shareInviteMenu button { background: transparent; border: 0; border-radius: 6px; color: #0f172a; cursor: pointer; font-weight: 900; min-height: 34px; padding: 0 10px; text-align: left; }
       .shareInviteMenu button:hover { background: #e2e8f0; }
       .mailInviteButton { align-items: center; background: #e2e8f0; border: 0; border-radius: 8px; color: #0f172a; display: inline-flex; font-size: 12px; font-weight: 900; min-height: 38px; padding: 0 10px; text-decoration: none; white-space: nowrap; }
+      .inviteModalCard { max-width: min(560px, calc(100vw - 28px)); width: 560px; }
+      .inviteModalBody { display: grid; gap: 12px; }
+      .inviteRoleGrid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inviteRoleButton { align-items: start; background: #fff; border: 3px solid var(--edu-border, #2d3748); border-radius: 16px; box-shadow: 3px 3px 0 var(--edu-border, #2d3748); color: #0f172a; cursor: pointer; display: grid; gap: 4px; min-height: 72px; padding: 10px; text-align: left; }
+      .inviteRoleButton strong { font-size: 14px; font-weight: 950; }
+      .inviteRoleButton span { color: #64748b; font-size: 12px; font-weight: 850; line-height: 1.25; }
+      .inviteRoleButton:hover, .inviteRoleButton.active { background: var(--edu-mint, #98ff98); }
+      .inviteLinkBox { display: grid; gap: 8px; }
+      .inviteLinkBox input { border: 2px solid #cbd5e1; border-radius: 14px; color: #0f172a; font-size: 13px; font-weight: 850; min-height: 42px; min-width: 0; padding: 0 10px; width: 100%; }
+      .inviteActions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .googleAuthButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(15, 23, 42, .08); color: #0f172a; display: inline-flex; gap: 10px; min-height: 44px; padding: 0 16px; }
       .googleAuthIcon { align-items: center; border-radius: 999px; display: inline-flex; font-family: Arial, sans-serif; font-size: 18px; font-weight: 900; height: 24px; justify-content: center; width: 24px; }
       .authStatus { color: #64748b; font-size: 12px; font-weight: 850; text-align: right; }
@@ -68,40 +78,50 @@
       .legendItem.selected { box-shadow: inset 0 0 0 2px #0f172a; }
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
       .workspace { display: block; margin-top: 6px; }
-      .homeShell { background: #f8fafc; border: 1px solid #d8e7dd; border-radius: 8px; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) 430px; min-height: calc(100vh - 96px); overflow: hidden; }
-      .homeHero { background: #f8fafc; color: #0f172a; display: grid; min-height: 560px; padding: clamp(24px, 4vw, 56px); position: relative; }
-      .homeHeroContent { align-content: center; display: grid; gap: 26px; position: relative; z-index: 1; }
+      .homeShell { background: #f8fafc; border: 1px solid #d8e7dd; border-radius: 8px; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) minmax(360px, 430px); height: calc(100vh - 28px); min-height: 620px; overflow: hidden; }
+      .homeHero { background: #f8fafc; color: #0f172a; display: grid; min-height: 0; padding: clamp(18px, 2.4vw, 42px); position: relative; }
+      .homeHeroContent { align-content: center; display: grid; gap: 16px; min-height: 0; position: relative; z-index: 1; }
       .homeBrand { align-items: center; display: inline-flex; gap: 16px; margin-bottom: 44px; }
       .homeBrand .brandLogo { height: 58px; width: 58px; }
       .homeBrandName { color: #0f172a; font-size: clamp(34px, 5vw, 62px); font-weight: 950; letter-spacing: 0; line-height: .95; }
-      .homeBeforeAfter { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
-      .homeComparisonCard { background: rgba(248, 250, 252, .96); border: 1px solid rgba(255,255,255,.72); border-radius: 8px; box-shadow: 0 18px 44px rgba(0,0,0,.25); display: grid; gap: 10px; padding: 12px; }
-      .homeComparisonCard img { aspect-ratio: 1 / 1; border-radius: 6px; display: block; object-fit: cover; width: 100%; }
-      .homeComparisonCard strong { color: #0f172a; font-size: 17px; font-weight: 950; }
-      .homeComparisonCard span { color: #64748b; font-size: 13px; font-weight: 800; line-height: 1.35; }
+      .homeBeforeAfter { align-items: stretch; display: grid; gap: clamp(10px, 1.5vw, 18px); grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; min-height: 0; width: 100%; }
+      .homeComparisonCard { background: rgba(248, 250, 252, .96); border: 1px solid rgba(255,255,255,.72); border-radius: 8px; box-shadow: 0 18px 44px rgba(0,0,0,.18); display: grid; gap: 8px; grid-template-rows: minmax(0, 1fr) auto auto; min-height: 0; padding: clamp(8px, 1vw, 12px); }
+      .homeComparisonCard img { border-radius: 6px; display: block; height: 100%; max-height: calc(100vh - 190px); min-height: 0; object-fit: cover; object-position: top center; width: 100%; }
+      .homeComparisonCard strong { color: #0f172a; font-size: clamp(15px, 1.45vw, 19px); font-weight: 950; }
+      .homeComparisonCard span { color: #64748b; font-size: clamp(11px, 1vw, 13px); font-weight: 800; line-height: 1.28; }
       .homeKicker { color: #b8e2cf; font-size: 12px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .homeHero h2 { color: #fff; font-size: clamp(38px, 7vw, 86px); line-height: .98; margin: 0; max-width: 760px; }
       .homeHero p { color: #e4f3ec; font-size: clamp(16px, 2vw, 20px); font-weight: 750; line-height: 1.55; margin: 14px 0 0; max-width: 560px; }
-      .homePanel { align-content: center; background: #fff; display: grid; gap: 22px; padding: clamp(26px, 4vw, 50px); }
+      .homePanel { align-content: center; background: #fff; display: grid; gap: clamp(12px, 1.8vh, 18px); min-height: 0; overflow: hidden; padding: clamp(18px, 3vw, 42px); }
       .homePanelLogo { align-items: center; display: flex; gap: 12px; }
-      .homePanelLogo img { border-radius: 18px; box-shadow: 0 10px 26px rgba(15, 23, 42, .16); height: 64px; width: 64px; }
-      .homePanelLogo strong { color: #0f172a; display: block; font-size: 22px; font-weight: 950; line-height: 1; }
+      .homePanelLogo img { border-radius: 18px; box-shadow: 0 10px 26px rgba(15, 23, 42, .16); height: clamp(48px, 7vh, 64px); width: clamp(48px, 7vh, 64px); }
+      .homePanelLogo strong { color: #0f172a; display: block; font-size: clamp(19px, 2vw, 22px); font-weight: 950; line-height: 1; }
       .homePanelLogo span { color: #64748b; display: block; font-size: 12px; font-weight: 850; margin-top: 4px; }
-      .homePanel h3 { color: #0f172a; font-size: 34px; line-height: 1.02; margin: 0; }
-      .homePanel p { color: #475569; font-size: 15px; font-weight: 750; line-height: 1.55; margin: 0; }
-      .homePanel .googleAuthButton { justify-content: center; min-height: 52px; width: 100%; }
-      .homeFeatures { display: grid; gap: 12px; }
-      .homeFeature { align-items: start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; grid-template-columns: 34px 1fr; padding: 12px; }
-      .homeFeatureIcon { align-items: center; background: #d9f99d; border-radius: 999px; color: #113f36; display: inline-flex; font-size: 17px; font-weight: 950; height: 34px; justify-content: center; width: 34px; }
+      .homePanel h3 { color: #0f172a; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.02; margin: 0; }
+      .homePanel p { color: #475569; font-size: clamp(13px, 1.2vw, 15px); font-weight: 750; line-height: 1.45; margin: 0; }
+      .homePanel .googleAuthButton { justify-content: center; min-height: 48px; width: 100%; }
+      .homeFeatures { display: grid; gap: 10px; }
+      .homeFeature { align-items: start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; grid-template-columns: 30px 1fr; padding: 10px; }
+      .homeFeatureIcon { align-items: center; background: #d9f99d; border-radius: 999px; color: #113f36; display: inline-flex; font-size: 15px; font-weight: 950; height: 30px; justify-content: center; width: 30px; }
       .homeFeature:nth-child(2) .homeFeatureIcon { background: #bae6fd; color: #075985; }
       .homeFeature:nth-child(3) .homeFeatureIcon { background: #fbcfe8; color: #9d174d; }
       .homeFeatureText { display: grid; gap: 4px; min-width: 0; }
-      .homeFeature strong { color: #0f172a; font-size: 14px; font-weight: 950; }
-      .homeFeatureText span { color: #64748b; display: block; font-size: 13px; font-weight: 750; line-height: 1.35; }
+      .homeFeature strong { color: #0f172a; font-size: 13px; font-weight: 950; }
+      .homeFeatureText span { color: #64748b; display: block; font-size: 12px; font-weight: 750; line-height: 1.28; }
       .homeInviteNotice { background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 8px; color: #075985; font-size: 13px; font-weight: 850; padding: 10px 12px; }
+      @media (max-height: 760px) and (min-width: 901px) {
+        .homeShell { min-height: 560px; }
+        .homePanel { gap: 10px; padding-bottom: 18px; padding-top: 18px; }
+        .homePanel p { line-height: 1.34; }
+        .homeFeature:nth-child(3) { display: none; }
+        .homeComparisonCard span { display: none; }
+        .homeComparisonCard img { max-height: calc(100vh - 118px); }
+      }
       @media (max-width: 900px) {
-        .homeShell { grid-template-columns: 1fr; }
-        .homeHero { min-height: 420px; }
+        .homeShell { height: auto; grid-template-columns: 1fr; min-height: 100vh; overflow: visible; }
+        .homeHero { min-height: 360px; }
+        .homeComparisonCard img { max-height: none; }
+        .homePanel { overflow: visible; }
       }
       .sideNav { align-content: center; background: transparent; border: 0; border-radius: 0; display: grid; gap: 4px; min-width: 0; overflow: hidden; padding: 0; position: static; z-index: 70; }
       .navGroup { align-items: center; display: grid; gap: 4px; grid-template-columns: 80px minmax(0, max-content); min-width: 0; }
@@ -360,6 +380,11 @@
       .constructionWarning.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
+      .constructionWarningPanel.constructionStatusPanel { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+      .constructionStatusPanel .constructionWarning { align-items: center; background: #fff; border: 2px solid #d6e2ef; border-left-width: 2px; border-radius: 999px; box-shadow: none; display: inline-flex; gap: 8px; min-height: 34px; padding: 0 12px; }
+      .constructionStatusPanel .constructionWarning.ready { background: #f0fdf4; border-color: #bbf7d0; color: #047857; }
+      .constructionStatusPanel .constructionWarning.ready span { display: none; }
+      .constructionStatusPanel .constructionWarning.ready strong::before { content: "\2713"; margin-right: 6px; }
       .constructionOptimizeNotice { background: #ecfeff; border: 1px solid #67e8f9; border-left: 5px solid #0891b2; border-radius: 8px; color: #155e75; display: grid; font-size: 12px; font-weight: 900; gap: 2px; margin: 8px 0; padding: 8px 10px; }
       .constructionOptimizeNotice.blocking { background: #fef2f2; border-color: #fca5a5; border-left-color: #dc2626; color: #991b1b; }
       .constructionOptimizeNotice span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
@@ -548,11 +573,12 @@
       .establishmentSlotColumn .cycleRow label { color: #0f172a; font-size: 13px; }
       .establishmentSlotColumn > .ghostButton { background: #e0f2fe; border-color: #7dd3fc; color: #075985; font-weight: 950; }
       .establishmentSlotColumn > .ghostButton:hover { background: #bae6fd; }
-      .asSlotGrid { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(360px, 1.6fr); }
+      .asSlotGrid { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(100px, 150px) minmax(100px, 150px) minmax(0, 1fr); min-width: 0; }
       .asSlotGrid input[type="time"] { text-align: center; }
-      .asSlotDays { align-items: center; display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow-x: auto; }
+      .asSlotDays { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; overflow: visible; }
+      .asSlotDays .choiceButton { flex: 0 1 auto; min-width: 0; }
       .asSlotDelete { margin-top: 2px; width: 100%; }
-      .establishmentSlotsGrid { display: grid; gap: 12px; grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.35fr); }
+      .establishmentSlotsGrid { display: grid; gap: 12px; grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr); min-width: 0; }
       .establishmentSlotColumn { align-content: start; display: grid; gap: 8px; min-width: 0; }
       .establishmentSlotColumn h3, .establishmentSlotColumn h4 { margin: 0; }
       .establishmentSlotColumn .muted { margin: 0; }
@@ -620,11 +646,18 @@
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
+      .constructionOkBadge { align-items: center; background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 999px; color: #047857; display: inline-flex; font-size: 13px; font-weight: 950; gap: 7px; margin: 6px 0 8px; min-height: 34px; padding: 0 12px; width: fit-content; }
+      .constructionOkBadge::before { content: "\2713"; }
       .guidePage { display: grid; gap: 10px; margin-top: 16px; max-width: none; width: 100%; }
+      .guideOverviewGrid { align-items: start; display: grid; gap: 12px; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr); }
+      .guideOverviewColumn { display: grid; gap: 8px; min-width: 0; }
       .guideGrid { align-items: stretch; display: grid; gap: 8px 20px; grid-template-columns: repeat(10, minmax(92px, 1fr)); }
+      .guideOverviewColumn .guideGrid { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .guideProfessorGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .guideOverviewColumn .guideProfessorGrid { grid-template-columns: 1fr; }
       .guideCard { background: #fff; border: 2px solid #cbd5e1; border-top: 5px solid #0f172a; border-radius: 8px; display: grid; gap: 6px; min-height: 118px; padding: 9px; position: relative; }
       .guideCard:not(:last-child)::after { color: #0f172a; content: ">>"; font-size: 16px; font-weight: 950; position: absolute; right: -17px; top: 50%; transform: translateY(-50%); }
+      .guideOverviewColumn .guideCard::after { display: none; }
       .guideProfessorGrid .guideCard { min-height: 96px; }
       .guideProfessorGrid .guideCard::after { display: none; }
       .guideCard strong { color: #0f172a; font-size: 12px; line-height: 1.1; }
@@ -650,7 +683,7 @@
       .holidayCell, .vacationCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #e2e8f0 6px, #e2e8f0 12px) !important; color: #64748b; }
       .vacationHeader { background: repeating-linear-gradient(135deg, #e5e7eb 0, #e5e7eb 6px, #cbd5e1 6px, #cbd5e1 12px) !important; color: #334155 !important; font-weight: 950; }
       .eventPage { display: grid; gap: 14px; grid-template-columns: 360px minmax(0, 1fr); margin-top: 12px; }
-      .eventForm, .eventList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+      .eventForm, .eventList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 0; padding: 12px; }
       .eventForm h3, .eventList h3 { margin: 0 0 10px; }
       .prerequisitesPage { display: grid; gap: 16px; }
       .prerequisitesPage > .eventPage { margin-top: 0; }
@@ -767,6 +800,16 @@
       button.classPill:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
       .servicePanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
       .servicePanel.compactServicePanel { gap: 6px; padding: 8px 10px; }
+      .servicePanel.constructionServicePanel { background: #fff; border: 2px solid #dbe4ee; border-radius: 18px; box-shadow: 3px 3px 0 #2d3748; gap: 10px; margin: 10px 0; padding: 12px; }
+      .constructionServicePanel.isCollapsed { align-items: center; display: flex; justify-content: space-between; min-height: 54px; }
+      .constructionServicePanel .hoursBalanceHeader { border-bottom: 1px solid #e5edf5; padding-bottom: 8px; }
+      .constructionServicePanel.isCollapsed .hoursBalanceHeader { border-bottom: 0; flex: 1; padding-bottom: 0; }
+      .constructionServicePanel h3 { font-size: 15px; }
+      .constructionServicePanel .ghostButton { min-height: 34px; padding: 0 12px; }
+      .constructionServicePanel .hoursBalanceGrid { gap: 8px; }
+      .constructionServicePanel .hoursCard { border-width: 2px; box-shadow: none; padding: 10px; }
+      .constructionServicePanel .classPills { gap: 5px; }
+      .constructionServicePanel .classPill { background: #f8fafc; border-color: #dbe4ee; }
       .compactServicePanel h3 { color: #334155; font-size: 13px; margin: 0; }
       .serviceTargets { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .compactServicePanel .serviceTargets { gap: 6px; max-width: 520px; }
@@ -982,6 +1025,7 @@
       .primary,
       .googleAuthButton,
       .mailInviteButton,
+      .inviteRoleButton,
       .ghostButton,
       .serviceValidateButton,
       .constructionModeButtons button,
@@ -1019,6 +1063,7 @@
       .primary:hover,
       .googleAuthButton:hover,
       .mailInviteButton:hover,
+      .inviteRoleButton:hover,
       .ghostButton:hover,
       .serviceValidateButton:hover,
       .constructionModeButtons button:hover,
@@ -1034,6 +1079,7 @@
       .primary:disabled,
       .googleAuthButton:disabled,
       .mailInviteButton:disabled,
+      .inviteRoleButton:disabled,
       .ghostButton:disabled,
       .serviceValidateButton:disabled,
       .constructionModeButtons button:disabled,
@@ -1285,6 +1331,7 @@
         .compactCardGrid { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .compactActivityGrid, .facilityActivityMatrix { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .guideOverviewGrid { grid-template-columns: 1fr; }
         .guideGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .guideCard:not(:last-child)::after { display: none; }
         .logGroupGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1347,7 +1394,7 @@
         <button class="sidebarToggle" id="sidebarToggle" type="button" aria-label="Masquer le menu" title="Masquer le menu">‹</button>
         <div class="brandNavCluster">
           <div class="brandIdentity">
-            <h1 class="brandTitle" aria-label="EPS Loustic"><img class="brandLogo" src="./icon_app.png?v=2" alt="Loustic" /></h1>
+            <h1 class="brandTitle" aria-label="EPS Loustic"><img class="brandLogo" src="./icon_app_small.png?v=1" alt="Loustic" /></h1>
             <span class="brandEtabName" id="brandEtabName"></span>
           </div>
           <section class="navGroup questionNavGroup utilityNav">
@@ -1775,6 +1822,8 @@
       let authInviteLink = "";
       let authInviteStatus = authInviteToken ? "Invitation équipe détectée." : "";
       let authInviteMenuOpen = false;
+      let authInviteModalOpen = false;
+      let authInviteRole = "member";
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
       let authStatus = "";
@@ -3002,6 +3051,7 @@
 
       function saveSportEvents(immediateCloud = true) {
         sportEvents = normalizePlanningItems(sportEvents);
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
         if (immediateCloud) saveCloudPatchNow(["sportEvents"]);
       }
@@ -3167,6 +3217,7 @@
       }
 
       function saveEventExclusions(immediateCloud = true) {
+        invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(eventExclusions));
         if (immediateCloud) saveCloudPatchNow(["eventExclusions"]);
       }
@@ -3256,8 +3307,20 @@
       }
 
       function eventTouchesBlock(event, block) {
-        return teacherIdsForBlock(block).some((teacherId) => event.teacherIds.includes(teacherId))
+        const eventTeacherIds = event.teacherIds || [];
+        return teacherIdsForBlock(block).some((teacherId) => eventTeacherIds.includes(teacherId))
           || (event.classes || []).some((schoolClass) => classesForBlock(block).some((blockClassItem) => classesOverlap(schoolClass, blockClassItem)));
+      }
+
+      function blockCancelledByEvent(row, weekItem, block) {
+        return eventsForPeriod(row, weekItem).some((event) => eventTouchesBlock(event, block));
+      }
+
+      function visibleCourseBlocksForCell(row, weekItem, filterSelection = true) {
+        const key = yearCellKey(row.id, weekItem.rank);
+        return (constructionPlan[key] || [])
+          .filter((block) => !blockCancelledByEvent(row, weekItem, block))
+          .filter((block) => !filterSelection || blockMatchesTeacherSelection(block));
       }
 
       function eventsForCell(row, weekItem) {
@@ -3274,8 +3337,7 @@
 
       function canMergeEventCell(event, rows, weekItem) {
         return rows.filter((row) => rowMatchesEventHalfDay(row, event)).every((row) => {
-          const key = yearCellKey(row.id, weekItem.rank);
-          return !(constructionPlan[key] || []).length && !asSessionsForCell(row, weekItem).length;
+          return !visibleCourseBlocksForCell(row, weekItem, false).length && !asSessionsForCell(row, weekItem).length;
         });
       }
 
@@ -3977,11 +4039,43 @@
               <path d="M18 8a3 3 0 1 0-2.83-4H15a3 3 0 0 0 1.17 2.37l-7.1 3.55a3 3 0 1 0 0 4.16l7.1 3.55A3 3 0 1 0 17 16.1l-7.1-3.55a3.2 3.2 0 0 0 0-1.1l7.1-3.55c.32.06.65.08 1 .08Z" fill="currentColor"/>
             </svg>
           </button>
-          ${authInviteMenuOpen ? `<div class="shareInviteMenu">
-            <button type="button" data-create-invite-link="member">Consultation</button>
-            <button type="button" data-create-invite-link="owner">Admin</button>
-          </div>` : ""}
-          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation équipe EPS" /><a class="mailInviteButton" href="${inviteMailtoLink()}">Envoyer par mail</a>` : ""}
+        </div>`;
+      }
+
+      function renderShareInviteModal() {
+        if (!authInviteModalOpen || !cloudConfig.etabId || !isAdmin()) return "";
+        const selectedRoleLabel = authInviteRole === "owner" ? "admin" : "consultation";
+        return `<div class="modalBackdrop" data-close-invite-modal role="presentation">
+          <div class="modal inviteModalCard" role="dialog" aria-modal="true" aria-label="Partager une invitation équipe EPS" data-modal-card>
+            <div class="modalHeader">
+              <div>
+                <h3>Partager l'accès à ${escapeHtml(currentEtabDisplayName() || "l'établissement")}</h3>
+                <p class="muted">Créez un lien d'invitation, puis copiez-le ou envoyez-le directement par mail.</p>
+              </div>
+              <button class="modalClose" type="button" data-close-invite-modal aria-label="Fermer">x</button>
+            </div>
+            <div class="inviteModalBody">
+              <div class="inviteRoleGrid">
+                <button class="inviteRoleButton ${authInviteRole === "member" ? "active" : ""}" type="button" data-create-invite-link="member">
+                  <strong>Consultation</strong>
+                  <span>Accès professeur uniquement, sans partie Admin.</span>
+                </button>
+                <button class="inviteRoleButton ${authInviteRole === "owner" ? "active" : ""}" type="button" data-create-invite-link="owner">
+                  <strong>Admin</strong>
+                  <span>Accès complet à la configuration de l'équipe EPS.</span>
+                </button>
+              </div>
+              <div class="inviteLinkBox">
+                <label class="muted">Lien ${selectedRoleLabel}</label>
+                <input id="inviteLinkInput" value="${escapeHtml(authInviteLink)}" readonly placeholder="Choisissez Consultation ou Admin pour générer un lien." aria-label="Lien d'invitation équipe EPS" />
+              </div>
+              ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
+              <div class="inviteActions">
+                <button class="ghostButton" type="button" data-copy-invite-link ${authInviteLink ? "" : "disabled"}>Copier le lien</button>
+                <a class="mailInviteButton ${authInviteLink ? "" : "disabled"}" ${authInviteLink ? `href="${inviteMailtoLink()}"` : `aria-disabled="true"`}>Envoyer par mail</a>
+              </div>
+            </div>
+          </div>
         </div>`;
       }
 
@@ -5780,11 +5874,15 @@
         const weeks = schoolYearWeeks();
         const rowById = new Map(rows.map((row) => [row.id, row]));
         const weekByRank = new Map(weeks.map((weekItem) => [weekItem.rank, weekItem]));
-        Object.entries(constructionPlan).forEach(([key, items]) => {
-          if (!Array.isArray(items) || items.length < 2) return;
+        Object.entries(constructionPlan).forEach(([key, rawItems]) => {
+          if (!Array.isArray(rawItems)) return;
           const { rowId, weekRank } = parseYearCellKey(key);
           const row = rowById.get(rowId);
           const weekItem = weekByRank.get(weekRank);
+          const items = row && weekItem
+            ? rawItems.filter((item) => !blockCancelledByEvent(row, weekItem, item))
+            : rawItems;
+          if (!Array.isArray(items) || items.length < 2) return;
           const byFacility = items.reduce((acc, item, index) => {
             const facility = item.facilityId || item.facilityLabel || "";
             if (!facility) return acc;
@@ -7026,7 +7124,7 @@
               const key = yearCellKey(row.id, weekItem.rank);
               const holiday = holidayFor(row, weekItem);
               const vacation = vacationForCell(row, weekItem);
-              const lessons = slot.isAsSummary ? [] : (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
+              const lessons = slot.isAsSummary ? [] : visibleCourseBlocksForCell(row, weekItem);
               const events = slot.isAsSummary ? [] : eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
               const asItems = (slot.isAsSummary ? asSessionsForDay(rows, day, weekItem) : asSessionsForCell(row, weekItem)).filter(asMatchesTeacherSelection);
               return `<td><div class="homeTimetableSlot">
@@ -7061,7 +7159,7 @@
                 ${days.map((day) => {
                     const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
                     const key = row ? yearCellKey(row.id, weekItem.rank) : "";
-                    const facilityLessons = row ? (constructionPlan[key] || []).filter((item) => item.facilityId === facility.id) : [];
+                    const facilityLessons = row ? visibleCourseBlocksForCell(row, weekItem, false).filter((item) => item.facilityId === facility.id) : [];
                     const unavailableItems = row ? unavailableForCell(row, weekItem).filter((item) => unavailableCoversFacility(item, facility.id)) : [];
                     const isBusy = facilityLessons.length > 0;
                     const isUnavailable = unavailableItems.length > 0;
@@ -7192,7 +7290,7 @@
               <h2>${day}</h2>
               ${rows.filter((row) => row.day === day).map((row) => {
                 const key = yearCellKey(row.id, weekItem.rank);
-                const items = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
+                const items = visibleCourseBlocksForCell(row, weekItem);
                 const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
                 const blocked = vacationForCell(row, weekItem) || holidayFor(row, weekItem);
                 return `<article class="slot">
@@ -7352,7 +7450,7 @@
         const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
         if (!row || !weekItem) return "";
         const key = yearCellKey(row.id, weekItem.rank);
-        const builtItems = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
+        const builtItems = visibleCourseBlocksForCell(row, weekItem);
         const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
         const asItems = asSessionsForCell(row, weekItem).filter(asMatchesTeacherSelection);
         const holiday = holidayFor(row, weekItem);
@@ -7458,7 +7556,7 @@
 
       function renderYearCell(cycle, weekItem, row, conflicts = null) {
         const key = yearCellKey(row.id, weekItem.rank);
-        const builtItems = (constructionPlan[key] || []).filter(blockMatchesTeacherSelection);
+        const builtItems = visibleCourseBlocksForCell(row, weekItem);
         const events = eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
         const asItems = asSessionsForCell(row, weekItem).filter(asMatchesTeacherSelection);
         if (!builtItems.length && !events.length && !asItems.length) return `<span class="muted">-</span>`;
@@ -7781,13 +7879,13 @@
 
       function renderConstructionWarnings() {
         const items = constructionReadinessItems();
-        if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Paramétrage prêt</strong><span>Les éléments essentiels sont renseignés pour construire l'emploi du temps.</span></div></div>`;
-        return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+        if (!items.length) return `<div class="constructionWarningPanel constructionStatusPanel"><div class="constructionWarning ready"><strong>Paramétrage prêt</strong><span>Les éléments essentiels sont renseignés pour construire l'emploi du temps.</span></div></div>`;
+        return `<div class="constructionWarningPanel constructionStatusPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
       function renderConstructionServiceSummary() {
         if (constructionServiceSummaryHidden) {
-          return `<div class="servicePanel compactServicePanel">
+          return `<div class="servicePanel compactServicePanel constructionServicePanel isCollapsed">
             <div class="hoursBalanceHeader">
               <h3>Service réel construit</h3>
               <button class="ghostButton" data-toggle-construction-service-summary>Afficher</button>
@@ -7807,7 +7905,7 @@
           const ok = !target || Math.abs(diff) < 0.01;
           return { schoolClass, total, target, missing, excess, ok };
         });
-        return `<div class="servicePanel compactServicePanel">
+        return `<div class="servicePanel compactServicePanel constructionServicePanel">
           <div class="hoursBalanceHeader">
             <h3>Service réel construit</h3>
             <button class="ghostButton" data-toggle-construction-service-summary>Masquer</button>
@@ -8156,11 +8254,6 @@
           : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
         return `<section class="builderPage">
           <div>
-            <div class="constructionModePanel">
-              <div class="constructionVersionControls">
-                <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
-              </div>
-            </div>
             <div class="builderActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
@@ -8178,6 +8271,7 @@
                   <span>Exporter/Imprimer</span>
                 </button>
               </div>
+              <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
             <div class="constructionTabs">
@@ -9755,7 +9849,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                     </div>
                   </td>`;
                 }
-                const items = (constructionPlan[key] || []).filter((item) => !filterSelection || blockMatchesTeacherSelection(item));
+                const items = visibleCourseBlocksForCell(row, weekItem, filterSelection);
                 const events = eventsForPeriod(row, weekItem).filter((event) => !filterSelection || eventMatchesTeacherSelection(event));
                 const asItems = asSessionsForCell(row, weekItem).filter((session) => !filterSelection || asMatchesTeacherSelection(session));
                 const holiday = holidayFor(row, weekItem);
@@ -9818,7 +9912,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
-        if (!conflicts.length) return `${hiddenReportHtml}<div class="alertEmpty">Aucun conflit détecté dans la construction.</div>`;
+        if (!conflicts.length) return `${hiddenReportHtml}<div class="constructionOkBadge">Aucun conflit détecté</div>`;
         const visibleConflicts = conflicts.slice(0, 5);
         return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
@@ -9887,22 +9981,28 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           ["Résumé cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
         ];
         const adminGuide = isAdmin() ? `
-          <article class="alertHelp">
-            <strong>Parcours Admin conseillé</strong>
-            <span>Les étapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
-          </article>
-          <div class="guideGrid">
-            ${adminSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+          <div class="guideOverviewColumn">
+            <article class="alertHelp">
+              <strong>Parcours Admin conseillé</strong>
+              <span>Suivez ces étapes pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
+            </article>
+            <div class="guideGrid">
+              ${adminSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+            </div>
           </div>` : "";
         return `<section class="guidePage">
           <h2>Mode d'emploi</h2>
-          ${adminGuide}
-          <article class="alertHelp">
-            <strong>Vue Professeur</strong>
-            <span>${isAdmin() ? "Ces trois onglets servent surtout à consulter le planning construit, sans modifier le paramétrage Admin." : "Vous voyez ici les onglets utiles pour consulter le planning construit."}</span>
-          </article>
-          <div class="guideGrid guideProfessorGrid">
-            ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+          <div class="guideOverviewGrid">
+            ${adminGuide}
+            <div class="guideOverviewColumn">
+              <article class="alertHelp">
+                <strong>Vue Professeur</strong>
+                <span>${isAdmin() ? "Ces onglets servent surtout à consulter le planning construit." : "Vous voyez ici les onglets utiles pour consulter le planning construit."}</span>
+              </article>
+              <div class="guideGrid guideProfessorGrid">
+                ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
+              </div>
+            </div>
           </div>
           ${renderConstructionRulesView()}
         </section>`;
@@ -9993,7 +10093,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <label>Type</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${requestKind === "bug" ? "active" : ""}" data-request-kind="bug">Bug</button>
-                <button class="choiceButton ${requestKind === "improvement" ? "active" : ""}" data-request-kind="improvement">Am?lioration</button>
+                <button class="choiceButton ${requestKind === "improvement" ? "active" : ""}" data-request-kind="improvement">Amélioration</button>
               </div>
             </div>
             <div class="requestField">
@@ -10141,7 +10241,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         const shareInviteToggle = document.getElementById("shareInviteToggle");
         if (shareInviteToggle) shareInviteToggle.addEventListener("click", () => {
-          authInviteMenuOpen = !authInviteMenuOpen;
+          authInviteModalOpen = true;
+          authInviteMenuOpen = false;
           render();
         });
         const logoutAdmin = document.getElementById("logoutAdmin");
@@ -10179,6 +10280,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           legend.innerHTML = "";
           root.innerHTML = renderLoggedOutHome();
           root.insertAdjacentHTML("beforeend", renderValidationPopup());
+          root.insertAdjacentHTML("beforeend", renderShareInviteModal());
           attachAuthControls();
           return;
         }
@@ -10187,7 +10289,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         try {
           updateNavigationActive();
           const cycle = generateCycle();
-          const hideLegend = week === "build" || week === "guide" || week === "cycle" || week === "year" || week === "current";
+          const hideLegend = week === "build" || week === "guide" || week === "request" || week === "cycle" || week === "year" || week === "current";
           legend.style.display = hideLegend ? "none" : "flex";
           legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
           if (week === "year") root.innerHTML = renderYearView(cycle);
@@ -10203,6 +10305,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           root.innerHTML = renderAppError(error);
         }
         root.insertAdjacentHTML("beforeend", renderValidationPopup());
+        root.insertAdjacentHTML("beforeend", renderShareInviteModal());
         applyPrerequisitesLockState();
         const adminLoginForm = document.getElementById("adminLoginForm");
         if (adminLoginForm) {
@@ -10259,16 +10362,43 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             render();
           }
         });
+        document.querySelectorAll("[data-close-invite-modal]").forEach((target) => {
+          target.addEventListener("click", (event) => {
+            if (target.classList.contains("modalBackdrop") && event.target !== target) return;
+            authInviteModalOpen = false;
+            render();
+          });
+        });
+        const inviteLinkInput = document.getElementById("inviteLinkInput");
+        if (inviteLinkInput && authInviteLink) inviteLinkInput.addEventListener("click", () => inviteLinkInput.select());
+        const copyInviteLink = document.querySelector("[data-copy-invite-link]");
+        if (copyInviteLink) copyInviteLink.addEventListener("click", async () => {
+          if (!authInviteLink) return;
+          try {
+            if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(authInviteLink);
+            else if (inviteLinkInput) {
+              inviteLinkInput.select();
+              document.execCommand("copy");
+            }
+            authInviteStatus = "Lien copié.";
+          } catch (error) {
+            authInviteStatus = "Copie impossible : sélectionnez le lien puis copiez-le manuellement.";
+          } finally {
+            render();
+          }
+        });
         document.querySelectorAll("[data-create-invite-link]").forEach((button) => {
           button.addEventListener("click", async () => {
             const role = button.dataset.createInviteLink === "owner" ? "owner" : "member";
             const label = role === "owner" ? "admin" : "consultation";
+            authInviteRole = role;
             authInviteMenuOpen = false;
             authInviteStatus = `Generation du lien ${label}...`;
             authInviteLink = "";
             render();
             try {
               const link = await createEtabInvite(role);
+              authInviteModalOpen = true;
               authInviteStatus = `Lien d'invitation ${label} prêt à partager.`;
               if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(link).catch(() => {});
