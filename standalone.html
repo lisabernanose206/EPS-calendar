@@ -9438,6 +9438,19 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
       }
 
+      function attachAuthControls() {
+        document.querySelectorAll("[data-oauth-provider]").forEach((button) => {
+          button.addEventListener("click", () => startOAuthProvider(button.dataset.oauthProvider));
+        });
+        const shareInviteToggle = document.getElementById("shareInviteToggle");
+        if (shareInviteToggle) shareInviteToggle.addEventListener("click", () => {
+          authInviteMenuOpen = !authInviteMenuOpen;
+          render();
+        });
+        const logoutAdmin = document.getElementById("logoutAdmin");
+        if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
+      }
+
       function render() {
         if (!isAdmin() && (week === "build" || week === "alerts" || week === "log")) week = "current";
         const root = document.getElementById("root");
@@ -9459,6 +9472,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <p class="muted">Connectez-vous avec Google pour charger l'espace EPS de votre etablissement.</p>
             </section>`;
           root.insertAdjacentHTML("beforeend", renderValidationPopup());
+          attachAuthControls();
           return;
         }
         try {
@@ -9500,14 +9514,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authStatus = "";
           render();
         });
-        document.querySelectorAll("[data-oauth-provider]").forEach((button) => {
-          button.addEventListener("click", () => startOAuthProvider(button.dataset.oauthProvider));
-        });
-        const shareInviteToggle = document.getElementById("shareInviteToggle");
-        if (shareInviteToggle) shareInviteToggle.addEventListener("click", () => {
-          authInviteMenuOpen = !authInviteMenuOpen;
-          render();
-        });
+        attachAuthControls();
         const adminEmailInput = document.getElementById("adminEmail");
         if (adminEmailInput) adminEmailInput.addEventListener("input", () => authEmail = adminEmailInput.value);
         const adminPasswordInput = document.getElementById("adminPassword");
@@ -9567,8 +9574,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             }
           });
         });
-        const logoutAdmin = document.getElementById("logoutAdmin");
-        if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
         document.querySelectorAll("[data-warning-build-mode]").forEach((warning) => {
           warning.addEventListener("click", () => {
             week = "build";
