@@ -381,6 +381,9 @@
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
       .constructionWarningPanel.constructionStatusPanel { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+      .constructionStatusRow { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+      .constructionStatusRow .constructionWarningPanel { margin: 0; }
+      .constructionStatusRow .constructionOkBadge { margin: 0; }
       .constructionStatusPanel .constructionWarning { align-items: center; background: #fff; border: 2px solid #d6e2ef; border-left-width: 2px; border-radius: 999px; box-shadow: none; display: inline-flex; gap: 8px; min-height: 34px; padding: 0 12px; }
       .constructionStatusPanel .constructionWarning.ready { background: #f0fdf4; border-color: #bbf7d0; color: #047857; }
       .constructionStatusPanel .constructionWarning.ready span { display: none; }
@@ -692,7 +695,7 @@
       .prerequisitesPage > .constructionTabs button { align-items: center; display: grid; flex: 0 0 auto; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; justify-items: start; min-width: 150px; padding: 0 14px; text-align: left; }
       .prerequisitesPage > .constructionTabs .subtabStatusStack { margin-left: 0; }
       .prerequisitesHeader { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
-      .prerequisitesLockRow { align-items: center; display: flex; justify-content: flex-start; margin-top: -10px; }
+      .prerequisitesLockRow { align-items: center; display: flex; justify-content: flex-start; margin-top: 0; }
       .lockToggle { align-items: center; color: #334155; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; gap: 8px; white-space: nowrap; }
       .lockToggle input { display: none; }
       .lockToggleTrack { background: #cbd5e1; border: 1px solid #94a3b8; border-radius: 999px; display: inline-flex; height: 22px; padding: 2px; transition: background 0.18s ease; width: 42px; }
@@ -7883,6 +7886,13 @@
         return `<div class="constructionWarningPanel constructionStatusPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
+      function renderConstructionStatusRow() {
+        const readiness = renderConstructionWarnings();
+        const conflicts = conflictsForBuildMode(constructionBuildMode);
+        const conflictBadge = !conflicts.length ? `<div class="constructionOkBadge">Aucun conflit détecté</div>` : "";
+        return `<div class="constructionStatusRow">${readiness}${conflictBadge}</div>`;
+      }
+
       function renderConstructionServiceSummary() {
         if (constructionServiceSummaryHidden) {
           return `<div class="servicePanel compactServicePanel constructionServicePanel isCollapsed">
@@ -8254,7 +8264,13 @@
           : `<div class="constructionZoomWrap" style="--table-zoom:${constructionZoom};--table-offset:150px;zoom:${constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
         return `<section class="builderPage">
           <div>
-            <div class="builderActions">
+            <h2 class="prerequisitesPageTitle">Construction</h2>
+            <div class="constructionTabs">
+              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
+              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activités<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
+              <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
+            </div>
+            ${constructionBuildMode !== "versions" ? `<div class="builderActions constructionSubtabActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
               </div>
@@ -8273,12 +8289,7 @@
               </div>
               <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
-            </div>
-            <div class="constructionTabs">
-              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
-              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activités<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
-              <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
-            </div>
+            </div>` : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
               <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activités">Lancer la construction optimisée</button>
             </div>` : ""}
@@ -8295,10 +8306,10 @@
             ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillée : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
             ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activités se renseignent ensuite par cycle." : "Détails par cycle : les blocs profs/classes sont fixés ; cliquez sur un bloc pour renseigner son installation et son activité sur ce cycle."}</div>`}
             ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
-            ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
+            ${constructionBuildMode === "versions" ? "" : renderConstructionStatusRow()}
             ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
-            ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
-            ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
+            ${constructionBuildMode !== "versions" && clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
+            ${constructionBuildMode !== "versions" && movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
             ${constructionTableContent}
           </div>
@@ -9912,7 +9923,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
-        if (!conflicts.length) return `${hiddenReportHtml}<div class="constructionOkBadge">Aucun conflit détecté</div>`;
+        if (!conflicts.length) return hiddenReportHtml;
         const visibleConflicts = conflicts.slice(0, 5);
         return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
