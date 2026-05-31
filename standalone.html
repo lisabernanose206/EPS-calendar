@@ -1123,6 +1123,7 @@
       let constructionVersions = loadConstructionVersions();
       let constructionLocks = loadConstructionLocks();
       let constructionOptimizeConfirmOpen = false;
+      let constructionServiceSummaryHidden = localStorage.getItem("planningEpsConstructionServiceSummaryHidden2026") === "true";
       let constructionVersionPanelOpen = false;
       let constructionVersionDraftName = "";
       let constructionVersionDraftParts = [];
@@ -7326,6 +7327,14 @@
       }
 
       function renderConstructionServiceSummary() {
+        if (constructionServiceSummaryHidden) {
+          return `<div class="servicePanel compactServicePanel">
+            <div class="hoursBalanceHeader">
+              <h3>Service réel construit</h3>
+              <button class="ghostButton" data-toggle-construction-service-summary>Afficher</button>
+            </div>
+          </div>`;
+        }
         const teacherTotals = annualConstructionTeacherHours();
         const teacherClassTotals = annualConstructionTeacherClassHours();
         const teacherOptionTotals = annualConstructionTeacherOptionHours();
@@ -7340,7 +7349,10 @@
           return { schoolClass, total, target, missing, excess, ok };
         });
         return `<div class="servicePanel compactServicePanel">
-          <h3>Service reel construit</h3>
+          <div class="hoursBalanceHeader">
+            <h3>Service réel construit</h3>
+            <button class="ghostButton" data-toggle-construction-service-summary>Masquer</button>
+          </div>
           <div class="hoursBalanceGrid">
             ${teachers.map((teacher) => {
               const total = teacherTotals[teacher.id] || 0;
@@ -11527,6 +11539,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             activeBuildCycleId = null;
             editingBuildBlock = null;
             movingBuildBlock = null;
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-construction-service-summary]").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionServiceSummaryHidden = !constructionServiceSummaryHidden;
+            localStorage.setItem("planningEpsConstructionServiceSummaryHidden2026", constructionServiceSummaryHidden ? "true" : "false");
             render();
           });
         });
