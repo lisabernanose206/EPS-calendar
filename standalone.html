@@ -8489,7 +8489,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
               <strong>${classesForBlock(block).length ? blockClassLabel(block) : block.optionBlock ? "Option" : "Classe libre"}</strong>
-              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a sélectionnér"}</span>
+              ${constructionBuildMode === "cycleDetails" && block.facilityLabel ? `<span>${block.facilityLabel}</span>
               ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
               <span>${block.teacherNames || "Professeur a sélectionnér"}</span>
               ${blockCoIntervention ? `<span>Co-intervention</span>` : ""}
@@ -9073,7 +9073,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(displayItem)}</strong>
-            ${showCycleDetails ? `<span>${blockDetailLabel(displayItem) || "Aucune installation / activité"}</span>` : ""}
+            ${showCycleDetails && blockDetailLabel(displayItem) ? `<span>${blockDetailLabel(displayItem)}</span>` : ""}
             ${optimizationIssue ? `<span class="optimizationIssueReason">${escapeHtml(optimizationIssue.reason)}</span>` : ""}
             ${displayItem.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
