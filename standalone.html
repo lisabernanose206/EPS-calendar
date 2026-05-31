@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EPS Loustic</title>
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3" />
+    <link rel="icon" type="image/png" href="./icon_app.png?v=1" />
     <style>
       :root {
         background: #f8fafc;
@@ -70,27 +70,39 @@
       .dot { border: 2px solid rgba(15, 23, 42, 0.16); border-radius: 0; display: inline-block; height: 16px; width: 16px; }
       .workspace { display: block; margin-top: 6px; }
       .homeShell { background: #f8fafc; border: 1px solid #d8e7dd; border-radius: 8px; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) 430px; min-height: calc(100vh - 96px); overflow: hidden; }
-      .homeHero { background: #123f36; color: #f8fafc; display: grid; min-height: 560px; padding: clamp(24px, 4vw, 56px); position: relative; }
-      .homeHero::before { background: url("./fond_app.png") center / contain no-repeat; content: ""; inset: clamp(18px, 4vw, 54px); position: absolute; }
-      .homeHeroContent { align-content: start; display: grid; gap: 22px; justify-items: start; position: relative; z-index: 1; }
+      .homeHero { background: #f8fafc; color: #0f172a; display: grid; min-height: 560px; padding: clamp(24px, 4vw, 56px); position: relative; }
+      .homeHeroContent { align-content: center; display: grid; gap: 26px; position: relative; z-index: 1; }
       .homeBrand { align-items: center; display: inline-flex; gap: 16px; margin-bottom: 44px; }
-      .homeBrand .brandCat { background: #f8fafc; height: 54px; opacity: 1; width: 58px; }
-      .homeBrand .brandCat::before { border-bottom-color: #f8fafc; border-left-width: 12px; border-right-width: 10px; border-bottom-width: 20px; left: 7px; top: -11px; }
-      .homeBrand .brandCat::after { border-bottom-color: #f8fafc; border-left-width: 10px; border-right-width: 12px; border-bottom-width: 20px; right: 7px; top: -11px; }
+      .homeBrand .brandCat { background: #0f172a; height: 54px; opacity: 1; width: 58px; }
+      .homeBrand .brandCat::before { border-bottom-color: #0f172a; border-left-width: 12px; border-right-width: 10px; border-bottom-width: 20px; left: 7px; top: -11px; }
+      .homeBrand .brandCat::after { border-bottom-color: #0f172a; border-left-width: 10px; border-right-width: 12px; border-bottom-width: 20px; right: 7px; top: -11px; }
       .homeBrand .brandCatEyes { gap: 14px; left: 12px; top: 22px; }
-      .homeBrand .brandCatEyes i { background: #113f36; height: 8px; width: 8px; }
-      .homeBrandName { color: #fff; font-size: clamp(34px, 5vw, 62px); font-weight: 950; letter-spacing: 0; line-height: .95; }
+      .homeBrand .brandCatEyes i { background: #f8fafc; height: 8px; width: 8px; }
+      .homeBrandName { color: #0f172a; font-size: clamp(34px, 5vw, 62px); font-weight: 950; letter-spacing: 0; line-height: .95; }
+      .homeBeforeAfter { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+      .homeComparisonCard { background: rgba(248, 250, 252, .96); border: 1px solid rgba(255,255,255,.72); border-radius: 8px; box-shadow: 0 18px 44px rgba(0,0,0,.25); display: grid; gap: 10px; padding: 12px; }
+      .homeComparisonCard img { aspect-ratio: 1 / 1; border-radius: 6px; display: block; object-fit: cover; width: 100%; }
+      .homeComparisonCard strong { color: #0f172a; font-size: 17px; font-weight: 950; }
+      .homeComparisonCard span { color: #64748b; font-size: 13px; font-weight: 800; line-height: 1.35; }
       .homeKicker { color: #b8e2cf; font-size: 12px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .homeHero h2 { color: #fff; font-size: clamp(38px, 7vw, 86px); line-height: .98; margin: 0; max-width: 760px; }
       .homeHero p { color: #e4f3ec; font-size: clamp(16px, 2vw, 20px); font-weight: 750; line-height: 1.55; margin: 14px 0 0; max-width: 560px; }
       .homePanel { align-content: center; background: #fff; display: grid; gap: 22px; padding: clamp(26px, 4vw, 50px); }
+      .homePanelLogo { align-items: center; display: flex; gap: 12px; }
+      .homePanelLogo img { border-radius: 18px; box-shadow: 0 10px 26px rgba(15, 23, 42, .16); height: 64px; width: 64px; }
+      .homePanelLogo strong { color: #0f172a; display: block; font-size: 22px; font-weight: 950; line-height: 1; }
+      .homePanelLogo span { color: #64748b; display: block; font-size: 12px; font-weight: 850; margin-top: 4px; }
       .homePanel h3 { color: #0f172a; font-size: 34px; line-height: 1.02; margin: 0; }
       .homePanel p { color: #475569; font-size: 15px; font-weight: 750; line-height: 1.55; margin: 0; }
       .homePanel .googleAuthButton { justify-content: center; min-height: 52px; width: 100%; }
       .homeFeatures { display: grid; gap: 12px; }
-      .homeFeature { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 3px; padding: 12px; }
+      .homeFeature { align-items: start; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; grid-template-columns: 34px 1fr; padding: 12px; }
+      .homeFeatureIcon { align-items: center; background: #d9f99d; border-radius: 999px; color: #113f36; display: inline-flex; font-size: 17px; font-weight: 950; height: 34px; justify-content: center; width: 34px; }
+      .homeFeature:nth-child(2) .homeFeatureIcon { background: #bae6fd; color: #075985; }
+      .homeFeature:nth-child(3) .homeFeatureIcon { background: #fbcfe8; color: #9d174d; }
+      .homeFeatureText { display: grid; gap: 4px; min-width: 0; }
       .homeFeature strong { color: #0f172a; font-size: 14px; font-weight: 950; }
-      .homeFeature span { color: #64748b; font-size: 13px; font-weight: 750; line-height: 1.35; }
+      .homeFeatureText span { color: #64748b; display: block; font-size: 13px; font-weight: 750; line-height: 1.35; }
       .homeInviteNotice { background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 8px; color: #075985; font-size: 13px; font-weight: 850; padding: 10px 12px; }
       @media (max-width: 900px) {
         .homeShell { grid-template-columns: 1fr; }
@@ -2316,9 +2328,7 @@
         const option = optionId ? serviceFreeOptionById(optionId) : null;
         const optionHours = option ? normalizedOptionHours(optionId, rule.block?.optionHours || override.optionHours || option.hours) : 0;
         const facility = facilities.find((item) => item.id === facilityId);
-        const activity = activityAllowedForFacility(facilityId, activityId)
-          ? constructionActivityById(activityId)
-          : null;
+        const activity = constructionActivityById(activityId);
         return {
           ...rule.block,
           facilityId: facility?.id || "",
@@ -4491,7 +4501,7 @@
 
       function updateConstructionRuleCycleDetails(ruleId, cycleId, block) {
         const rule = constructionRules.find((item) => item.id === ruleId);
-        if (!rule || !cycleId) return;
+        if (!rule || !cycleId) return false;
         rule.cycleOverrides = {
           ...(rule.cycleOverrides || {}),
           [cycleId]: {
@@ -4499,7 +4509,9 @@
             activityId: block.activityId || ""
           }
         };
+        constructionOptimizationResult = null;
         rebuildConstructionPlan();
+        return true;
       }
 
       function constructionRuleAppliesToCycle(rule, cycle) {
@@ -6171,9 +6183,7 @@
         const option = blockIsOption && blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
         const optionHours = option ? normalizedOptionHours(option.id, blockOptionHours) : 0;
         const optionCycleIds = blockIsOption ? normalizedOptionCycleIds() : [];
-        const activity = activityAllowedForFacility(blockFacilityId, blockActivityId)
-          ? constructionActivityById(blockActivityId)
-          : null;
+        const activity = constructionActivityById(blockActivityId);
         const selectedTeacherClasses = Object.fromEntries(selectedTeachers
           .map((teacher) => [teacher.id, blockTeacherClasses[teacher.id] || ""])
           .filter(([, schoolClass]) => schoolClass));
@@ -8138,7 +8148,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const asItems = asSessionsForCell(row, weekItem);
         const presentCount = items.length + events.length + asItems.length;
         const editingLabel = editingCycleDetails ? "Mode cycle : les installations et activites seront appliquees a tout ce cycle." : editingBuildBlock ? "Mode modification : double-clic applique sur un bloc existant." : "";
-        const availableActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : activities;
+        const linkedActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : [];
+        const availableActivities = blockFacilityId ? (linkedActivities.length ? linkedActivities : activities) : activities;
         const availableFreeActivities = serviceFreeActivities();
         const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
         const selectedOption = blockOptionId ? serviceFreeOptionById(blockOptionId) : null;
@@ -8288,7 +8299,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
                   ${editingCycleDetails ? "" : `<button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>`}
                   <strong>${blockClassLabel(item)}</strong>
-                  <span>${item.facilityLabel || ""}</span>
+                  <span>${blockDetailLabel(item)}</span>
                   ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map((event) => `
@@ -9441,13 +9452,25 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return `<section class="homeShell">
           <div class="homeHero">
             <div class="homeHeroContent">
-              <div class="homeBrand">
-                <span class="brandCat" aria-hidden="true"><span class="brandCatEyes"><i></i><i></i></span></span>
-                <span class="homeBrandName">Loustic</span>
+              <div class="homeBeforeAfter">
+                <article class="homeComparisonCard">
+                  <img src="./before_loustic.png" alt="Avant Loustic" />
+                  <strong>Avant Loustic</strong>
+                  <span>Des contraintes partout, un planning difficile a stabiliser.</span>
+                </article>
+                <article class="homeComparisonCard">
+                  <img src="./after_loustic.png" alt="Apres Loustic" />
+                  <strong>Apres Loustic</strong>
+                  <span>Un espace clair pour construire, consulter et partager l'organisation EPS.</span>
+                </article>
               </div>
             </div>
           </div>
           <aside class="homePanel">
+            <div class="homePanelLogo">
+              <img src="./icon_app.png" alt="Logo Loustic" />
+              <div><strong>Loustic</strong><span>Planning EPS collaboratif</span></div>
+            </div>
             <div>
               <div class="homeKicker">Planning EPS simplifie</div>
               <h3>Construisez votre planning sans y passer vos soirees.</h3>
@@ -9456,9 +9479,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${authInviteToken ? `<div class="homeInviteNotice">Lien d'invitation detecte. Connectez-vous pour rejoindre l'equipe.</div>` : ""}
             <button class="authButton googleAuthButton" type="button" data-oauth-provider="google"><span class="googleAuthIcon" aria-hidden="true">G</span><span>Connexion via Google</span></button>
             <div class="homeFeatures">
-              <div class="homeFeature"><strong>Emploi du temps lisible</strong><span>Visualisez les semaines, les profs, les classes et les creneaux en un coup d'oeil.</span></div>
-              <div class="homeFeature"><strong>Cycles et installations</strong><span>Construisez vos cycles avec les activites, les lieux disponibles et les contraintes de l'etablissement.</span></div>
-              <div class="homeFeature"><strong>Travail d'equipe</strong><span>Invitez les collegues en consultation ou en admin, chacun dans le meme espace EPS securise.</span></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">✓</span><div class="homeFeatureText"><strong>Emploi du temps lisible</strong><span>Visualisez les semaines, les profs, les classes et les creneaux en un coup d'oeil.</span></div></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">↻</span><div class="homeFeatureText"><strong>Cycles et installations</strong><span>Construisez vos cycles avec les activites, les lieux disponibles et les contraintes de l'etablissement.</span></div></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">+</span><div class="homeFeatureText"><strong>Travail d'equipe</strong><span>Invitez les collegues en consultation ou en admin, chacun dans le meme espace EPS securise.</span></div></div>
             </div>
             ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
@@ -10571,7 +10594,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           button.addEventListener("click", () => {
             if (button.disabled) return;
             blockFacilityId = button.dataset.pickFacility;
-            if (blockActivityId && !activityAllowedForFacility(blockFacilityId, blockActivityId)) blockActivityId = "";
+            if (blockActivityId && !constructionActivityById(blockActivityId) && !serviceFreeActivityById(blockActivityId)) blockActivityId = "";
             render();
           });
         });
@@ -11010,8 +11033,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               return;
             }
             if (editingCycleDetails) {
-              updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, activeBuildCycleId || block.cycleId || activeConstructionCycleId, block);
-              showValidationPopup("Installation / activite mises a jour");
+              const saved = updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, activeBuildCycleId || block.cycleId || activeConstructionCycleId, block);
+              showValidationPopup(saved ? "Installation / activite mises a jour" : "Bloc introuvable : modification non enregistree");
             } else if (editingBuildBlock?.ruleId) {
               updateAnnualConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter);
               showValidationPopup("Bloc annuel modifie");
