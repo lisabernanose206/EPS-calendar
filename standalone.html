@@ -9160,7 +9160,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authBox.innerHTML = `
             <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${isAdmin() ? "owner" : "member"}` : ""}</div>
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
-            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Etablissement" aria-label="Nom de l'etablissement" /><button class="authButton" type="submit">Creer mon etab</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="claimExistingEtabForm"><input id="existingEtabId" value="" placeholder="UUID etab existant" aria-label="UUID de l'etablissement existant" /><button class="authButton" type="submit">Lier cet etab existant</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nouvel etablissement" aria-label="Nom du nouvel etablissement" /><button class="authButton secondary" type="submit">Creer un nouvel etab</button></form>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<form class="authForm" id="claimEtabForm"><button class="authButton" type="submit">Lier mon compte a cet etab</button></form>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm"><button class="authButton secondary" data-create-invite-link="member">Inviter member</button><button class="authButton secondary" data-create-invite-link="owner">Inviter owner</button>${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
@@ -9277,6 +9278,29 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authStatus = "Etablissement cree.";
           } catch (error) {
             authStatus = `Creation impossible : ${error.message || "erreur inconnue"}`;
+          } finally {
+            render();
+          }
+        });
+        const claimExistingEtabForm = document.getElementById("claimExistingEtabForm");
+        if (claimExistingEtabForm) claimExistingEtabForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const existingEtabId = document.getElementById("existingEtabId")?.value.trim() || "";
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(existingEtabId)) {
+            authStatus = "Collez l'UUID complet de l'etablissement existant.";
+            render();
+            return;
+          }
+          cloudConfig = { ...cloudConfig, etabId: existingEtabId };
+          saveCloudConfig();
+          authStatus = "Liaison du compte a l'etablissement existant...";
+          render();
+          try {
+            await claimConfiguredEtabForCurrentUser();
+            authStatus = "Compte lie a cet etablissement en owner. Vous pouvez maintenant charger le planning cloud.";
+            if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+          } catch (error) {
+            authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
           } finally {
             render();
           }
