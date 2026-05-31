@@ -4330,10 +4330,15 @@
         return Boolean(override && (override.facilityId || override.activityId));
       }
 
-      function clearConstructionCycleDetails() {
+      function clearConstructionCycleDetails(cycleIds = null) {
+        const selectedCycleIds = Array.isArray(cycleIds) ? new Set(cycleIds) : null;
         constructionRules = constructionRules.map((rule) => {
           if (!rule.cycleOverrides || !Object.keys(rule.cycleOverrides).length) return rule;
-          return { ...rule, cycleOverrides: {} };
+          if (!selectedCycleIds) return { ...rule, cycleOverrides: {} };
+          return {
+            ...rule,
+            cycleOverrides: Object.fromEntries(Object.entries(rule.cycleOverrides).filter(([cycleId]) => !selectedCycleIds.has(cycleId)))
+          };
         });
         constructionOptimizationResult = null;
         rebuildConstructionPlan();
@@ -5003,7 +5008,7 @@
 
       function clearPlanningParts(options) {
         if (options.constructionDetails) {
-          clearConstructionCycleDetails();
+          clearConstructionCycleDetails(options.constructionDetailCycleIds || null);
         }
         if (options.construction) {
           constructionRules = [];
@@ -7111,16 +7116,29 @@
       }
 
       function renderClearConstructionPanel() {
-        return `<div class="clearConstructionPanel">
-          <h3>Vider la construction</h3>
-          <div class="alertHelp"><strong>Conserve</strong><span>Les pre-requis, regles de construction, AS, evenements sportifs, services, installations et activites restent intacts.</span></div>
-          <div class="clearConstructionOptions">
-            <label><input type="checkbox" data-clear-option="constructionDetails" checked /> Installations / activites</label>
-            <label><input type="checkbox" data-clear-option="construction" /> Blocs profs/classes</label>
-          </div>
-          <div class="clearConstructionFooter">
-            <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
-            <button class="ghostButton" id="confirmClearConstruction">Supprimer la selection</button>
+        const constructionCycles = classicConstructionCycles();
+        return `<div class="modalBackdrop" role="presentation">
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clearConstructionTitle">
+            <button class="modalClose" id="cancelClearConstructionTop" aria-label="Fermer">x</button>
+            <h2 id="clearConstructionTitle">Vider la construction</h2>
+            <div class="alertHelp"><strong>Conserve</strong><span>Les pre-requis, regles de construction, AS, evenements sportifs, services, installations et activites restent intacts.</span></div>
+            <div class="clearConstructionPanel">
+              <h3>Installations / activites</h3>
+              <div class="clearConstructionOptions">
+                <label><input type="checkbox" data-clear-option="constructionDetailsAll" /> Tous les cycles</label>
+                ${constructionCycles.map((cycle) => `<label><input type="checkbox" data-clear-cycle-detail="${cycle.id}" /> ${escapeHtml(cycle.name || cycle.id)}</label>`).join("")}
+              </div>
+            </div>
+            <div class="clearConstructionPanel">
+              <h3>Squelette</h3>
+              <div class="clearConstructionOptions">
+                <label><input type="checkbox" data-clear-option="construction" /> Blocs profs/classes</label>
+              </div>
+            </div>
+            <div class="modalFooter">
+              <button class="ghostButton" id="cancelClearConstruction">Annuler</button>
+              <button class="ghostButton" id="confirmClearConstruction">Supprimer la selection</button>
+            </div>
           </div>
         </div>`;
       }
@@ -10317,24 +10335,30 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        const cancelClearConstruction = document.getElementById("cancelClearConstruction");
-        if (cancelClearConstruction) {
-          cancelClearConstruction.addEventListener("click", () => {
+        ["cancelClearConstruction", "cancelClearConstructionTop"].forEach((id) => {
+          const button = document.getElementById(id);
+          if (button) button.addEventListener("click", () => {
             clearConstructionPanelOpen = false;
             render();
           });
-        }
+        });
         const confirmClearConstruction = document.getElementById("confirmClearConstruction");
         if (confirmClearConstruction) {
           confirmClearConstruction.addEventListener("click", () => {
+            const clearAllDetails = Boolean(document.querySelector("[data-clear-option='constructionDetailsAll']")?.checked);
+            const selectedDetailCycleIds = [...document.querySelectorAll("[data-clear-cycle-detail]:checked")].map((input) => input.dataset.clearCycleDetail);
             const options = {
-              constructionDetails: Boolean(document.querySelector("[data-clear-option='constructionDetails']")?.checked),
+              constructionDetails: clearAllDetails || selectedDetailCycleIds.length > 0,
+              constructionDetailCycleIds: clearAllDetails ? null : selectedDetailCycleIds,
               construction: Boolean(document.querySelector("[data-clear-option='construction']")?.checked)
             };
             if (!options.constructionDetails && !options.construction) return;
             const onlyDetails = options.constructionDetails && !options.construction;
+            const detailScope = clearAllDetails
+              ? "tous les cycles"
+              : selectedDetailCycleIds.map((cycleId) => classicConstructionCycles().find((cycle) => cycle.id === cycleId)?.name || cycleId).join(", ");
             const firstConfirm = window.confirm(onlyDetails
-              ? "Supprimer uniquement les installations/activites de la construction optimisee ?\n\nLes blocs profs/classes seront conserves."
+              ? `Supprimer uniquement les installations/activites (${detailScope}) ?\n\nLes blocs profs/classes seront conserves.`
               : "Supprimer les elements selectionnes de la construction ?\n\nLes pre-requis, regles, AS et evenements sportifs seront conserves.");
             if (!firstConfirm) return;
             const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
