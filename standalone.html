@@ -394,6 +394,9 @@
       .constructionRulesList { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
       .constructionRulesList h3 { margin: 0; }
       .constructionRuleCard { border: 1px solid #cbd5e1; border-left: 5px solid #0f766e; border-radius: 8px; display: grid; gap: 5px; padding: 10px; }
+      .constructionRuleCard.establishmentRuleCard { background: #fff1f2; border-color: #fecdd3; border-left-color: #e11d48; }
+      .constructionRuleCard.establishmentRuleCard strong { color: #9f1239; }
+      .constructionRuleCard.establishmentRuleCard span { color: #881337; }
       .constructionRuleCard strong { color: #0f172a; font-size: 13px; }
       .constructionRuleCard span { color: #475569; font-size: 12px; font-weight: 850; }
       .constructionRuleCard small { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
@@ -403,6 +406,9 @@
       .constructionRuleGroupsGrid { align-items: start; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
       .constructionRuleGroupsGrid .unavailableGroup { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 0; padding: 8px; }
       .constructionRuleGroupsGrid .unavailableGroup > button { background: #fff; }
+      .constructionRuleGroupsGrid .establishmentRuleGroup { background: #fff1f2; border-color: #fecdd3; }
+      .constructionRuleGroupsGrid .establishmentRuleGroup > button { background: #ffe4e6; border-color: #fb7185; color: #9f1239; }
+      .constructionRuleGroupsGrid .establishmentRuleGroup > button.active { background: #be123c; border-color: #be123c; color: #fff; }
       .constructionRuleCategoryGroup { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: grid; gap: 8px; padding: 8px; }
       .constructionRuleCategoryHead { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .constructionRuleCategoryHead strong { color: #0f172a; font-size: 12px; }
@@ -921,8 +927,6 @@
           <section class="navGroup questionNavGroup utilityNav">
             <section class="weeks">
               <button data-week="guide">Mode d'emploi</button>
-              <button data-week="alerts">Alertes</button>
-              <button data-week="log">Log</button>
               <button data-week="request">Une question ?</button>
             </section>
           </section>
@@ -942,8 +946,7 @@
             <section class="weeks">
               <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
               <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
-              <button data-week="build" data-build-mode="rules"><span class="stepNav"><span class="stepBadge">3</span>Règles de construction<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
-              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">4</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
+              <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">3</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
             </section>
           </section>
         </nav>
@@ -3685,7 +3688,7 @@
         authInviteMenuOpen = false;
         currentEtabRole = "";
         currentEtabName = "";
-        if (week === "build" || week === "alerts") week = "current";
+        if (week === "build" || week === "alerts" || week === "log") week = "current";
         window.location.reload();
       }
 
@@ -7398,38 +7401,38 @@
       }
 
       function renderConstructionRulesView() {
-        const ruleGroups = Object.entries(constructionRuleSettings.reduce((groups, rule) => {
-          const category = rule.category || "Regle systeme";
+        const establishmentCategory = "Règles définies par l’établissement";
+        const systemCategory = "Règles système par défaut";
+        const groupedRules = constructionRuleSettings.reduce((groups, rule) => {
+          const category = rule.category === establishmentCategory ? establishmentCategory : systemCategory;
           groups[category] = [...(groups[category] || []), rule];
           return groups;
-        }, {})).sort(([first], [second]) => {
-          const firstIndex = constructionRuleCategoryChoices.indexOf(first);
-          const secondIndex = constructionRuleCategoryChoices.indexOf(second);
-          const firstRank = firstIndex === -1 ? 999 : firstIndex;
-          const secondRank = secondIndex === -1 ? 999 : secondIndex;
-          return firstRank - secondRank || first.localeCompare(second, "fr");
-        }).map(([category, rules]) => [category, [...rules].sort((first, second) => first.title.localeCompare(second.title, "fr"))]);
+        }, {});
+        const ruleGroups = [establishmentCategory, systemCategory]
+          .map((category) => [category, [...(groupedRules[category] || [])].sort((first, second) => first.title.localeCompare(second.title, "fr"))])
+          .filter(([, rules]) => rules.length);
         return `<section class="constructionRulesPage">
           <div class="constructionRulesList" style="grid-column:1 / -1">
             <div class="constructionRulesToolbar">
               <h3>Règles de construction</h3>
             </div>
-            <div class="alertHelp"><strong>Règles système</strong><span>Ces règles sont pilotées par les onglets de pré-requis, les services, le programme, les indisponibilités et les installations. Il n’y a rien à ajouter ici.</span></div>
+            <div class="alertHelp"><strong>Règles système par défaut</strong><span>Ces règles sont pilotées par les onglets de pré-requis, les services, le programme, les indisponibilités et les installations.</span></div>
             ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => {
-              const isOpen = expandedConstructionRuleCategory === category;
-              return `<section class="unavailableGroup">
+              const isEstablishmentGroup = category === establishmentCategory;
+              const isOpen = expandedConstructionRuleCategory === category || (!expandedConstructionRuleCategory && isEstablishmentGroup);
+              return `<section class="unavailableGroup ${isEstablishmentGroup ? "establishmentRuleGroup" : ""}">
               <button class="${isOpen ? "active" : ""}" data-toggle-construction-rule-category="${escapeHtml(category)}">
                 <span>${escapeHtml(category)}</span>
                 <span>${rules.length} · ${isOpen ? "Masquer" : "Afficher"}</span>
               </button>
-              ${isOpen ? `<div class="constructionRulesGrid">${rules.map((rule) => `<article class="constructionRuleCard">
+              ${isOpen ? `<div class="constructionRulesGrid">${rules.map((rule) => `<article class="constructionRuleCard ${isEstablishmentGroup ? "establishmentRuleCard" : ""}">
                 <div class="constructionRuleCardHead">
                   <strong>${escapeHtml(rule.title)}</strong>
                 </div>
                 <span>${escapeHtml(rule.detail)}</span>
               </article>`).join("")}</div>` : ""}
             </section>`;
-            }).join("")}</div>` : `<div class="alertEmpty">Aucune regle systeme active.</div>`}
+            }).join("")}</div>` : `<div class="alertEmpty">Aucune règle active.</div>`}
           </div>
         </section>`;
       }
@@ -7491,9 +7494,6 @@
           return `<section>
             ${renderHoursBalance()}
           </section>`;
-        }
-        if (constructionMode === "rules") {
-          return renderConstructionRulesView();
         }
         if (!canAccessConstructionPlanning()) {
           return `<section class="builderPage">
@@ -9175,7 +9175,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <span>${details.detail}</span>
             </article>`;
           }).join("")}
-          ${conflicts.length > visibleConflicts.length ? `<div class="conflictNotice">${conflicts.length - visibleConflicts.length} autre(s) conflit(s) visible(s) dans l'onglet Alertes.</div>` : ""}
+          ${conflicts.length > visibleConflicts.length ? `<div class="conflictNotice">${conflicts.length - visibleConflicts.length} autre(s) conflit(s) visible(s) dans la construction.</div>` : ""}
         </section>`;
       }
 
@@ -9220,51 +9220,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       }
 
       function renderGuideView() {
-        const steps = [
-          ["1. Pré-requis établissement", "Renseignez l’établissement, les profs, les classes, les installations et les activités via les sous-onglets. Verrouillez cette partie une fois stabilisée."],
-          ["2. Pré-requis année scolaire", "Renseignez les indisponibilités, cycles, AS, événements sportifs et le service via les sous-onglets."],
-          ["3. Construction", "Cliquez sur une case du tableau pour créer un créneau de cours quand les pré-requis sont valides et déverrouillés si besoin."],
-          ["Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
-        ];
-        const professorSteps = [
-          ["Emploi du temps", "Consultez la semaine sélectionnée avec les cours, AS et événements visibles."],
-          ["Année scolaire", "Visualisez toute l'annee, sélectionnéz une semaine et ouvrez le détail des cases."],
-          ["Résumé cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
-        ];
-        return `<section class="guidePage">
-          <h2>Mode d'emploi</h2>
-          <article class="alertHelp">
-            <strong>Parcours Admin conseille</strong>
-            <span>Les étapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
-          </article>
-          <div class="guideGrid">
-            ${steps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
-          </div>
-          <article class="alertHelp">
-            <strong>Vue Professeur</strong>
-            <span>Ces trois onglets servent surtout à consulter le planning construit, sans modifier le paramétrage Admin.</span>
-          </article>
-          <div class="guideGrid guideProfessorGrid">
-            ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
-          </div>
-        </section>`;
-      }
-
-      function renderGuideView() {
         const adminSteps = [
           ["1. Pré-requis établissement", "Renseignez l’établissement, les profs, les classes, les installations et les activités via les sous-onglets. Verrouillez cette partie une fois stabilisée."],
           ["2. Pré-requis année scolaire", "Renseignez les indisponibilités, cycles, AS, événements sportifs et le service via les sous-onglets."],
           ["3. Construction", "Cliquez sur une case du tableau pour créer un créneau de cours quand les pré-requis sont valides et déverrouillés si besoin."],
-          ["Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
+          ["Vérification", "Consultez Année scolaire, Emploi du temps et Résumé cycle avant export."]
         ];
         const professorSteps = [
           ["Emploi du temps", "Consultez la semaine sélectionnée avec les cours, AS et événements visibles."],
-          ["Annee scolaire", "Visualisez toute l'annee, sélectionnéz une semaine et ouvrez le détail des cases."],
-          ["Resume cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
+          ["Année scolaire", "Visualisez toute l'année, sélectionnez une semaine et ouvrez le détail des cases."],
+          ["Résumé cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
         ];
         const adminGuide = isAdmin() ? `
           <article class="alertHelp">
-            <strong>Parcours Admin conseille</strong>
+            <strong>Parcours Admin conseillé</strong>
             <span>Les étapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
           </article>
           <div class="guideGrid">
@@ -9280,6 +9249,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <div class="guideGrid guideProfessorGrid">
             ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
           </div>
+          ${renderConstructionRulesView()}
         </section>`;
       }
 
@@ -9522,7 +9492,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       }
 
       function render() {
-        if (!isAdmin() && (week === "build" || week === "alerts" || week === "log")) week = "current";
+        if (week === "alerts" || week === "log") week = "current";
+        if (!isAdmin() && week === "build") week = "current";
         const root = document.getElementById("root");
         const dateInfo = document.getElementById("dateInfo");
         const legend = document.getElementById("legend");
@@ -9548,15 +9519,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         try {
           updateNavigationActive();
           const cycle = generateCycle();
-          const hideLegend = week === "build" || week === "guide" || week === "alerts" || week === "log" || week === "cycle" || week === "year" || week === "current";
+          const hideLegend = week === "build" || week === "guide" || week === "cycle" || week === "year" || week === "current";
           legend.style.display = hideLegend ? "none" : "flex";
           legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
           if (week === "year") root.innerHTML = renderYearView(cycle);
           else if (week === "cycle") root.innerHTML = renderCycleView();
           else if (week === "build") root.innerHTML = renderConstructionView();
           else if (week === "guide") root.innerHTML = renderGuideView();
-          else if (week === "alerts") root.innerHTML = renderAlertsView();
-          else if (week === "log") root.innerHTML = renderBugFixLogView();
           else if (week === "request") root.innerHTML = renderRequestView();
           else root.innerHTML = renderCalendar(cycle);
         } catch (error) {
@@ -11457,7 +11426,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       document.querySelectorAll("[data-week]").forEach((button) => {
         button.addEventListener("click", () => {
           if (button.disabled) return;
-          if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts" || button.dataset.week === "log")) {
+          if (!isAdmin() && button.dataset.week === "build") {
             authStatus = "Connexion Supabase requise.";
             render();
             return;
