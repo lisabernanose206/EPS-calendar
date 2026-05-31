@@ -4513,6 +4513,16 @@
         return `${level.replace("eme", "e")}${number}${group === "whole" ? "" : group}`;
       }
 
+      function classSelectionButtonLabel(schoolClass) {
+        const parts = classParts(schoolClass);
+        if (!parts.level || !parts.number) return compactClassName(schoolClass);
+        const baseClass = schoolClassLabel(parts.level, parts.number);
+        const specialInstance = specialClassInstanceForBaseClass(baseClass);
+        if (!specialInstance) return compactClassName(schoolClass);
+        const typedLabel = compactClassName(specialInstance.schoolClass);
+        return parts.group === "whole" ? typedLabel : `${typedLabel} ${parts.group}`;
+      }
+
       function eventClassSummary(event) {
         const selectedClasses = [...new Set(event.classes || [])];
         if (!selectedClasses.length) return "Classes";
@@ -8638,11 +8648,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <div class="classNumberGrid">${classNumbersForLevel(level).map((number) => {
                   return classGroups.map((group) => {
                     const schoolClass = schoolClassLabel(level, number, group.id);
-                    return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${number}${group.short}</button>`;
+                    return `<button class="choiceButton ${eventClasses.includes(schoolClass) ? "active" : ""}" data-event-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
                   }).join("");
                 }).join("")}</div>
               </div>`).join("")}</div>
-              <span class="muted">${eventClasses.length ? `Classes sélectionnées : ${eventClasses.join(", ")}` : "Aucune classe sélectionnée"}</span>
+              <span class="muted">${eventClasses.length ? `Classes sélectionnées : ${eventClasses.map(classSelectionButtonLabel).join(", ")}` : "Aucune classe sélectionnée"}</span>
             </div>
             <div class="modalFooter">
               ${editingEventId ? `<button class="ghostButton" id="cancelEventEdit">Annuler</button>` : ""}
@@ -9211,9 +9221,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <div class="choiceGrid">${classLevels.map((level) => `<button class="choiceButton ${unavailableClassLevelFilter === level ? "active" : ""}" data-unavailable-class-level-filter="${level}">${level}</button>`).join("")}</div>
               ${unavailableClassLevelFilter ? `<div class="choiceGrid">${classNumbersForLevel(unavailableClassLevelFilter).map((number) => classGroups.map((group) => {
                 const schoolClass = schoolClassLabel(unavailableClassLevelFilter, number, group.id);
-                return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${number}${group.short}</button>`;
+                return `<button class="choiceButton ${unavailableClassIds.includes(schoolClass) ? "active" : ""}" data-unavailable-class="${schoolClass}">${classSelectionButtonLabel(schoolClass)}</button>`;
               }).join("")).join("")}</div>` : `<span class="muted">Choisissez un niveau puis un numéro de classe.</span>`}
-              <span class="muted">${unavailableClassIds.length ? `Classes sélectionnées : ${unavailableClassIds.join(", ")}` : "Aucune classe sélectionnée"}</span>
+              <span class="muted">${unavailableClassIds.length ? `Classes sélectionnées : ${unavailableClassIds.map(classSelectionButtonLabel).join(", ")}` : "Aucune classe sélectionnée"}</span>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
