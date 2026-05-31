@@ -3322,6 +3322,15 @@
         return setCurrentEtabRole(rows[0]?.role || "");
       }
 
+      async function refreshCurrentEtabRoleSafe() {
+        try {
+          return await refreshCurrentEtabRole();
+        } catch (error) {
+          authStatus = `Role etablissement non relu : ${error.message || "erreur Supabase"}`;
+          return currentEtabRole;
+        }
+      }
+
       async function claimConfiguredEtabForCurrentUser() {
         if (!isSignedIn()) throw new Error("connexion requise");
         if (!cloudConfig.etabId) throw new Error("etab_id manquant");
@@ -9302,7 +9311,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           render();
           try {
             await claimConfiguredEtabForCurrentUser();
-            authStatus = "Compte lie a cet etablissement en owner. Vous pouvez maintenant charger le planning cloud.";
+            await refreshCurrentEtabRoleSafe();
+            if (!currentEtabRole) setCurrentEtabRole("owner");
+            authStatus = currentEtabRole === "owner"
+              ? "Compte lie a cet etablissement en owner. Vous pouvez maintenant charger le planning cloud."
+              : `Compte lie a cet etablissement avec le role ${currentEtabRole}.`;
             if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
           } catch (error) {
             authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
@@ -9332,7 +9345,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           render();
           try {
             await claimConfiguredEtabForCurrentUser();
-            authStatus = "Compte lie a cet etablissement en owner. Vous pouvez envoyer le planning local vers le cloud.";
+            await refreshCurrentEtabRoleSafe();
+            if (!currentEtabRole) setCurrentEtabRole("owner");
+            authStatus = currentEtabRole === "owner"
+              ? "Compte lie a cet etablissement en owner. Vous pouvez charger le planning cloud."
+              : `Compte lie a cet etablissement avec le role ${currentEtabRole}.`;
           } catch (error) {
             authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
           } finally {
@@ -11190,7 +11207,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         }
         render();
         if (isSignedIn() && cloudConfig.etabId) {
-          setTimeout(() => refreshCurrentEtabRole().then(render).catch(() => {}), 0);
+          setTimeout(() => refreshCurrentEtabRoleSafe().then(render), 0);
         }
         if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) {
           setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
