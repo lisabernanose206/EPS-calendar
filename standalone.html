@@ -28,7 +28,10 @@
       .brandLogo { display: block; height: 30px; object-fit: contain; width: 30px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
       .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-      .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
+      .authForm input, .authForm select { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
+      .authForm select { background: #fff; color: #0f172a; font-weight: 850; min-width: 210px; }
+      .defaultEtabButton { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 38px; padding: 0 10px; }
+      .defaultEtabButton.active { background: #dcfce7; border-color: #86efac; color: #047857; }
       .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
       .authButton.secondary { background: #e2e8f0; color: #0f172a; }
       .shareInviteWrap { align-items: center; display: inline-flex; gap: 8px; position: relative; }
@@ -263,6 +266,7 @@
       .constructionTable thead tr:nth-child(3) th { top: 68px; z-index: 31; }
       .constructionTable thead .rowHead, .constructionTable thead .timeHead { background: #fff; z-index: 42; }
       .consultationYearTable { min-width: 0; table-layout: fixed; }
+      .yearTable.consultationYearTable { overflow: visible; }
       .consultationYearTable th, .consultationYearTable td { font-size: 9px; min-width: 0; padding: 3px 2px; }
       .consultationYearTable .rowHead { min-width: 62px; width: 62px; }
       .consultationYearTable .timeHead { left: 62px; min-width: 68px; width: 68px; }
@@ -848,6 +852,9 @@
       .classConfigPills { display: flex; flex-wrap: wrap; gap: 5px; }
       .classConfigPill { align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 999px; color: #172033; display: inline-flex; font-size: 11px; font-weight: 900; gap: 5px; min-height: 28px; padding: 0 7px; }
       .classConfigPill button { background: transparent; border: 0; color: #991b1b; cursor: pointer; font-weight: 950; padding: 0; }
+      .classImportBox { background: #f8fafc; border: 1px solid #d6e2ef; border-radius: 10px; display: grid; gap: 8px; margin-bottom: 12px; padding: 10px; }
+      .classImportBox label { color: #172033; display: grid; font-size: 12px; font-weight: 950; gap: 6px; }
+      .classImportBox input { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 12px; font-weight: 850; min-height: 36px; padding: 7px; }
       .specialClassPanel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; display: grid; gap: 10px; padding: 12px; }
       .specialClassForm { display: grid; gap: 8px; grid-template-columns: minmax(180px, 1fr); }
       .specialClassForm input { border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; font-size: 13px; font-weight: 800; min-height: 36px; padding: 0 10px; width: 100%; }
@@ -1635,6 +1642,7 @@
       ];
       let classConfig = loadClassConfig();
       let classes = classesFromConfig();
+      let activityProgramByClass = loadActivityProgramByClass();
       const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3, "2de": 2, "1ere": 2, "Tle": 2 };
       const defaultConstructionRuleSettings = [
         { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquée indisponible sur le créneau." },
@@ -1820,6 +1828,7 @@
         "activities",
         "facilityActivities",
         "activityProgramByLevel",
+        "activityProgramByClass",
         "yearPlan",
         "cycles",
         "cyclesByLevel",
@@ -1861,6 +1870,7 @@
       const AUTH_INVITE_KEY = "planningEpsInviteToken2026";
       const AUTH_ROLE_KEY = "planningEpsEtabRole2026";
       const AUTH_ETAB_NAME_KEY = "planningEpsEtabName2026";
+      const AUTH_DEFAULT_ETAB_BY_USER_KEY = "planningEpsDefaultEtabByUser2026";
       const fallbackBugFixLog = `# Log des corrections
 
 - Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
@@ -1934,6 +1944,7 @@
       let authInviteRole = "member";
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
+      let currentUserEtabs = [];
       let authStatus = "";
       if (adminSession && currentEtabRole === "owner") {
         week = "build";
@@ -2466,6 +2477,7 @@
         classConfig = normalizeClassConfig(defaultClassConfigForLevels());
         classes = classesFromConfig();
         activityProgramByLevel = normalizeActivityProgramByLevel({});
+        activityProgramByClass = normalizeActivityProgramByClass({});
         serviceHoursByLevel = normalizeLevelKeyedObject({}, defaultServiceHours, (value) => Math.max(0, Number(value) || 0));
         serviceAssignments = {};
         cyclesByLevel = {};
@@ -2478,6 +2490,7 @@
         localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
         localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
         localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
+        localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(activityProgramByClass));
         localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
@@ -2489,6 +2502,7 @@
           "schoolConstraints",
           "classConfig",
           "activityProgramByLevel",
+          "activityProgramByClass",
           "serviceHoursByLevel",
           "serviceAssignments",
           "cyclesByLevel",
@@ -2515,6 +2529,22 @@
         return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => mode === "letter" ? String.fromCharCode(65 + index) : String(index + 1));
       }
 
+      function simplifyClassImportValue(value) {
+        return String(value || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "");
+      }
+
+      function cleanImportedClassLabel(label) {
+        return String(label || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9]+/g, "")
+          .toUpperCase();
+      }
+
       function canonicalClassLevel(level) {
         const value = String(level || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         if (/^(2de|seconde|secondes?)$/.test(value)) return "2de";
@@ -2537,14 +2567,16 @@
         const lycéeMatch = normalized.match(/^(2de|seconde|1ere|1re|premiere|tle|terminale)([a-z0-9]+?)(whole|a|b)?$/i);
         if (lycéeMatch) {
           const level = canonicalClassLevel(lycéeMatch[1]);
-          const number = lycéeMatch[2];
+          const rawNumber = lycéeMatch[2];
+          const number = classNumbersForLevel(level).find((label) => simplifyClassImportValue(label) === simplifyClassImportValue(rawNumber)) || rawNumber;
           const group = lycéeMatch[3] ? lycéeMatch[3].toUpperCase() : "whole";
           return schoolClassLabel(level, number, group === "WHOLE" ? "whole" : group);
         }
         const match = normalized.match(/^([3-6])(?:eme|e)([a-z0-9]+?)(whole|a|b)?$/i);
         if (!match) return value;
         const level = `${match[1]}e`;
-        const number = match[2];
+        const rawNumber = match[2];
+        const number = classNumbersForLevel(level).find((label) => simplifyClassImportValue(label) === simplifyClassImportValue(rawNumber)) || rawNumber;
         const group = match[3] ? match[3].toUpperCase() : "whole";
         return schoolClassLabel(level, number, group === "WHOLE" ? "whole" : group);
       }
@@ -2603,6 +2635,93 @@
           })
           .filter(Boolean);
         return normalized;
+      }
+
+      function parseCsvRows(text) {
+        const rows = [];
+        let row = [];
+        let cell = "";
+        let quoted = false;
+        const content = String(text || "").replace(/^\uFEFF/, "");
+        for (let index = 0; index < content.length; index += 1) {
+          const char = content[index];
+          const next = content[index + 1];
+          if (quoted) {
+            if (char === '"' && next === '"') {
+              cell += '"';
+              index += 1;
+            } else if (char === '"') {
+              quoted = false;
+            } else {
+              cell += char;
+            }
+          } else if (char === '"') {
+            quoted = true;
+          } else if (char === ";" || char === "," || char === "\t") {
+            row.push(cell);
+            cell = "";
+          } else if (char === "\n") {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+          } else if (char !== "\r") {
+            cell += char;
+          }
+        }
+        row.push(cell);
+        rows.push(row);
+        return rows;
+      }
+
+      function importedClassFromText(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return null;
+        const simple = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const compact = simple.replace(/[^a-z0-9]+/g, "");
+        const patterns = [
+          { level: "6e", regex: /(?:^|\b)6\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
+          { level: "5e", regex: /(?:^|\b)5\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
+          { level: "4e", regex: /(?:^|\b)4\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
+          { level: "3e", regex: /(?:^|\b)3\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
+          { level: "2de", regex: /(?:^|\b)(?:2\s*(?:de|nde|nd)?|seconde)\s*([a-z0-9]+)\b/i },
+          { level: "1ere", regex: /(?:^|\b)(?:1\s*(?:ere|re)?|premiere)\s*([a-z0-9]+)\b/i },
+          { level: "Tle", regex: /(?:^|\b)(?:t\s*(?:le)?|terminale)\s*([a-z0-9]+)\b/i }
+        ];
+        for (const pattern of patterns) {
+          if (!classLevels.includes(pattern.level)) continue;
+          const match = simple.match(pattern.regex) || compact.match(new RegExp(`^${simplifyClassImportValue(pattern.level)}(.+)$`, "i"));
+          const label = cleanImportedClassLabel(match?.[1] || "");
+          if (label) return { level: pattern.level, label };
+        }
+        if (classLevels.includes("1ere")) {
+          const firstMatch = compact.match(/^1([a-z]{1,5}\d+[a-z0-9]*)$/i);
+          if (firstMatch) return { level: "1ere", label: cleanImportedClassLabel(firstMatch[1]) };
+        }
+        if (classLevels.includes("Tle")) {
+          const terminaleMatch = compact.match(/^t([a-z]{0,5}\d+[a-z0-9]*)$/i);
+          if (terminaleMatch) return { level: "Tle", label: cleanImportedClassLabel(terminaleMatch[1]) };
+        }
+        return null;
+      }
+
+      function importClassesFromCsvText(text) {
+        const found = Object.fromEntries(classLevels.map((level) => [level, new Set()]));
+        parseCsvRows(text).flat().forEach((cell) => {
+          const parsed = importedClassFromText(cell);
+          if (parsed && found[parsed.level]) found[parsed.level].add(parsed.label);
+        });
+        const total = Object.values(found).reduce((sum, labels) => sum + labels.size, 0);
+        if (!total) throw new Error("Aucune classe reconnue dans le CSV. Vérifiez que le type d'établissement choisi correspond au fichier.");
+        const nextConfig = Object.fromEntries(classLevels.map((level) => {
+          const labels = [...found[level]].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+          const mode = labels.length && labels.every((label) => /^[A-Z]$/.test(label)) ? "letter" : "number";
+          return [level, { mode, labels }];
+        }));
+        nextConfig.specialClasses = specialClasses();
+        classConfig = normalizeClassConfig(nextConfig);
+        saveClassConfig();
+        return total;
       }
 
       function loadClassConfig() {
@@ -2764,14 +2883,16 @@
       function saveClassConfig() {
         classes = classesFromConfig();
         pruneClassReferences();
+        activityProgramByClass = normalizeActivityProgramByClass(activityProgramByClass);
         sportEvents = normalizePlanningItems(sportEvents);
         localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
+        localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(activityProgramByClass));
         localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
         localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(facilityUnavailability));
         localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(sportEvents));
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
-        saveCloudNowIfPossible(["classConfig", "serviceAssignments", "facilityUnavailability", "sportEvents", "constructionRules", "constructionPlan"]);
+        saveCloudNowIfPossible(["classConfig", "activityProgramByClass", "serviceAssignments", "facilityUnavailability", "sportEvents", "constructionRules", "constructionPlan"]);
       }
 
       function loadServiceHoursByLevel() {
@@ -3284,6 +3405,24 @@
         saveCloudNowIfPossible(["facilities", "facilityActivities"]);
       }
 
+      function syncConstructionFacilityLabel(facilityId, label) {
+        const updateBlock = (block) => {
+          if (!block || block.facilityId !== facilityId) return block;
+          return { ...block, facilityLabel: label };
+        };
+        constructionRules = constructionRules.map((rule) => ({
+          ...rule,
+          block: updateBlock(rule.block),
+          cycleOverrides: rule.cycleOverrides && typeof rule.cycleOverrides === "object"
+            ? Object.fromEntries(Object.entries(rule.cycleOverrides).map(([cycleId, override]) => [cycleId, updateBlock(override)]))
+            : rule.cycleOverrides
+        }));
+        constructionPlan = Object.fromEntries(Object.entries(constructionPlan).map(([key, items]) => [
+          key,
+          (items || []).map(updateBlock)
+        ]));
+      }
+
       function loadActivities() {
         try {
           const saved = localStorage.getItem("planningEpsActivities2026");
@@ -3318,8 +3457,9 @@
           .map(([facilityId, ids]) => [
             facilityId,
             Array.isArray(ids) ? ids.filter((id) => activityIds.has(id)) : []
-          ]));
+        ]));
         activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
+        activityProgramByClass = normalizeActivityProgramByClass(activityProgramByClass);
       }
 
       function normalizeActivityProgramByLevel(program) {
@@ -3331,6 +3471,33 @@
         }));
       }
 
+      function normalizeActivityProgramByClass(program) {
+        const activityIds = new Set(activities.map((activity) => activity.id));
+        const validClasses = new Set(classesFromConfig());
+        return Object.fromEntries(Object.entries(program || {})
+          .map(([schoolClass, ids]) => [normalizeSchoolClassId(schoolClass), Array.isArray(ids) ? ids : []])
+          .filter(([schoolClass]) => validClasses.has(schoolClass))
+          .map(([schoolClass, ids]) => [
+            schoolClass,
+            ids.filter((id, index) => activityIds.has(id) && ids.indexOf(id) === index)
+          ])
+          .filter(([, ids]) => ids.length));
+      }
+
+      function activityProgramForClass(schoolClass) {
+        const normalizedClass = normalizeSchoolClassId(schoolClass);
+        const classProgram = activityProgramByClass[normalizedClass] || [];
+        if (classProgram.length) return classProgram;
+        return activityProgramByLevel[classParts(normalizedClass).level] || [];
+      }
+
+      function activityProgramForRule(rule) {
+        const classItems = classesForBlock(rule?.block).filter(Boolean);
+        if (classItems.length) return [...new Set(classItems.flatMap(activityProgramForClass))];
+        const level = rule?.classLevel || classParts(rule?.block?.schoolClass || "").level || "";
+        return activityProgramByLevel[level] || [];
+      }
+
       function loadActivityProgramByLevel() {
         try {
           const saved = localStorage.getItem("planningEpsActivityProgramByLevel2026");
@@ -3340,11 +3507,27 @@
         }
       }
 
+      function loadActivityProgramByClass() {
+        try {
+          const saved = localStorage.getItem("planningEpsActivityProgramByClass2026");
+          return normalizeActivityProgramByClass(saved ? JSON.parse(saved) : {});
+        } catch {
+          return normalizeActivityProgramByClass({});
+        }
+      }
+
       function saveActivityProgramByLevel() {
         invalidateConstructionChecksCache();
         activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
         localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
         saveCloudNowIfPossible(["activityProgramByLevel"]);
+      }
+
+      function saveActivityProgramByClass() {
+        invalidateConstructionChecksCache();
+        activityProgramByClass = normalizeActivityProgramByClass(activityProgramByClass);
+        localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(activityProgramByClass));
+        saveCloudNowIfPossible(["activityProgramByClass"]);
       }
 
       function saveFacilityActivities(immediateCloud = true) {
@@ -4100,8 +4283,11 @@
         });
         const token = authInviteToken || localStorage.getItem(AUTH_INVITE_KEY) || "";
         if (token) {
+          const previousEtabId = cloudConfig.etabId;
           await acceptEtabInvite(token);
-          authStatus = "Invitation acceptée.";
+          authStatus = previousEtabId
+            ? "Invitation acceptée. Le nouvel établissement a été ajouté à votre compte."
+            : "Invitation acceptée.";
           cleanAuthUrl(true);
         } else {
           await ensureCurrentUserEtab();
@@ -4131,6 +4317,7 @@
           localStorage.removeItem(AUTH_SESSION_KEY);
           currentEtabRole = "";
           currentEtabName = "";
+          currentUserEtabs = [];
           localStorage.removeItem(AUTH_ROLE_KEY);
           localStorage.removeItem(AUTH_ETAB_NAME_KEY);
         }
@@ -4156,6 +4343,34 @@
         if (currentEtabName) localStorage.setItem(AUTH_ETAB_NAME_KEY, currentEtabName);
         else localStorage.removeItem(AUTH_ETAB_NAME_KEY);
         return currentEtabName;
+      }
+
+      function currentAuthUserId() {
+        return adminSession?.user?.id || adminSession?.user?.email || "";
+      }
+
+      function loadDefaultEtabMap() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(AUTH_DEFAULT_ETAB_BY_USER_KEY) || "{}");
+          return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function getDefaultEtabId() {
+        const userId = currentAuthUserId();
+        if (!userId) return "";
+        return String(loadDefaultEtabMap()[userId] || "");
+      }
+
+      function setDefaultEtabId(etabId) {
+        const userId = currentAuthUserId();
+        if (!userId || !etabId) return "";
+        const defaults = loadDefaultEtabMap();
+        defaults[userId] = etabId;
+        localStorage.setItem(AUTH_DEFAULT_ETAB_BY_USER_KEY, JSON.stringify(defaults));
+        return etabId;
       }
 
       function isAdmin() {
@@ -4278,6 +4493,11 @@
 
       async function refreshCurrentEtabRole() {
         if (!isSignedIn() || !cloudConfig.etabId) return "";
+        const knownEtab = currentUserEtabs.find((item) => item.etab_id === cloudConfig.etabId || item.id === cloudConfig.etabId);
+        if (knownEtab) {
+          setCurrentEtabName(knownEtab.etab_name || knownEtab.name || currentEtabName);
+          return setCurrentEtabRole(knownEtab.role || "");
+        }
         const userEtabResponse = await fetch(rpcEndpoint("get_current_user_etab"), {
           method: "POST",
           headers: cloudHeaders(),
@@ -4309,6 +4529,66 @@
         return setCurrentEtabRole(rows[0]?.role || "");
       }
 
+      function normalizeUserEtabRow(row) {
+        const etabId = row?.etab_id || row?.id || "";
+        if (!etabId) return null;
+        const joinedEtab = Array.isArray(row.etabs) ? row.etabs[0] : row.etabs;
+        return {
+          etab_id: etabId,
+          role: normalizeEtabRole(row.role || ""),
+          etab_name: normalizeEtabDisplayName(row.etab_name || row.name || joinedEtab?.name || etabId)
+        };
+      }
+
+      async function fetchCurrentUserEtabs() {
+        if (!isSignedIn()) return [];
+        try {
+          const response = await fetch(rpcEndpoint("list_current_user_etabs"), {
+            method: "POST",
+            headers: cloudHeaders(),
+            body: JSON.stringify({})
+          });
+          if (response.ok) {
+            const result = await response.json().catch(() => []);
+            const rows = Array.isArray(result) ? result : result?.items || [];
+            return rows.map(normalizeUserEtabRow).filter(Boolean);
+          }
+        } catch (error) {
+          // Fallback below for projects where the RPC has not been installed yet.
+        }
+        try {
+          const response = await fetch(`${etabMembersEndpoint()}?select=etab_id,role,etabs(name)&user_id=eq.${encodeURIComponent(adminSession?.user?.id || "")}&order=created_at.asc`, {
+            headers: cloudHeaders()
+          });
+          if (response.ok) {
+            const rows = await response.json().catch(() => []);
+            return rows.map(normalizeUserEtabRow).filter(Boolean);
+          }
+        } catch (error) {
+          // Fallback below.
+        }
+        const fallbackId = await resolveCurrentUserEtabLegacy();
+        return fallbackId ? [{ etab_id: fallbackId, role: currentEtabRole, etab_name: currentEtabName || fallbackId }] : [];
+      }
+
+      function setActiveEtabFromRow(row) {
+        const item = normalizeUserEtabRow(row);
+        if (!item) return "";
+        cloudConfig = { ...cloudConfig, etabId: item.etab_id };
+        saveCloudConfig();
+        setCurrentEtabRole(item.role || "");
+        setCurrentEtabName(item.etab_name || "");
+        return item.etab_id;
+      }
+
+      function choosePreferredUserEtab(rows = []) {
+        const defaultEtabId = getDefaultEtabId();
+        return rows.find((item) => item.etab_id === defaultEtabId)
+          || rows.find((item) => item.etab_id === cloudConfig.etabId)
+          || rows[0]
+          || null;
+      }
+
       async function refreshCurrentEtabRoleSafe() {
         try {
           return await refreshCurrentEtabRole();
@@ -4318,7 +4598,7 @@
         }
       }
 
-      async function resolveCurrentUserEtab() {
+      async function resolveCurrentUserEtabLegacy() {
         if (!isSignedIn()) return "";
         const response = await fetch(rpcEndpoint("get_current_user_etab"), {
           method: "POST",
@@ -4339,10 +4619,18 @@
         return etabId;
       }
 
+      async function resolveCurrentUserEtabs() {
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        if (!currentUserEtabs.length) return "";
+        if (!getDefaultEtabId() && currentUserEtabs.length === 1) setDefaultEtabId(currentUserEtabs[0].etab_id);
+        const active = choosePreferredUserEtab(currentUserEtabs);
+        return setActiveEtabFromRow(active);
+      }
+
       async function ensureCurrentUserEtab() {
         if (!isSignedIn()) return "";
         try {
-          const resolvedEtabId = await resolveCurrentUserEtab();
+          const resolvedEtabId = await resolveCurrentUserEtabs();
           if (resolvedEtabId) return resolvedEtabId;
         } catch (error) {
           authStatus = `Établissement non retrouvé automatiquement : ${error.message || "erreur Supabase"}`;
@@ -4354,9 +4642,15 @@
         return "";
       }
 
-      async function acceptEtabInvite(token = authInviteToken) {
+      async function acceptEtabInvite(token = authInviteToken, options = {}) {
         const cleanToken = String(token || "").trim();
         if (!cleanToken) return "";
+        const previousEtab = {
+          etab_id: cloudConfig.etabId,
+          role: currentEtabRole,
+          etab_name: currentEtabName
+        };
+        const shouldPreserveCurrent = options.preserveCurrent ?? Boolean(previousEtab.etab_id);
         const response = await fetch(rpcEndpoint("accept_etab_invite"), {
           method: "POST",
           headers: cloudHeaders(),
@@ -4366,10 +4660,20 @@
         if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
         const etabId = typeof result === "string" ? result : result?.id || result;
         if (!etabId) throw new Error("etab_id non retourné par Supabase");
-        cloudConfig = { ...cloudConfig, etabId };
-        saveCloudConfig();
-        setCurrentEtabRole(result?.role || "member");
-        setCurrentEtabName(result?.etab_name || result?.name || currentEtabName);
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        const invitedEtab = currentUserEtabs.find((item) => item.etab_id === etabId) || {
+          etab_id: etabId,
+          role: result?.role || "member",
+          etab_name: result?.etab_name || result?.name || etabId
+        };
+        if (shouldPreserveCurrent && previousEtab.etab_id) {
+          const previousKnownEtab = currentUserEtabs.find((item) => item.etab_id === previousEtab.etab_id) || previousEtab;
+          setActiveEtabFromRow(previousKnownEtab);
+          if (!getDefaultEtabId()) setDefaultEtabId(previousEtab.etab_id);
+        } else {
+          setActiveEtabFromRow(invitedEtab);
+          if (!getDefaultEtabId()) setDefaultEtabId(etabId);
+        }
         authInviteToken = "";
         localStorage.removeItem(AUTH_INVITE_KEY);
         return etabId;
@@ -4404,11 +4708,14 @@
           if (!response.ok) throw new Error(result.error_description || result.msg || result.message || "connexion impossible");
           saveAdminSession(result);
           const hadInvite = Boolean(authInviteToken);
+          const previousEtabId = cloudConfig.etabId;
           if (hadInvite) await acceptEtabInvite(authInviteToken);
-          else if (cloudConfig.etabId) await refreshCurrentEtabRole();
+          else await resolveCurrentUserEtabs();
           authPassword = "";
           authStatus = hadInvite
-            ? "Connexion Supabase active. Invitation acceptée."
+            ? previousEtabId
+              ? "Connexion Supabase active. Nouvel établissement ajouté à votre compte."
+              : "Connexion Supabase active. Invitation acceptée."
             : cloudReady()
             ? "Connexion Supabase active."
             : "Connexion Supabase active. Renseignez l'etab_id pour charger les données.";
@@ -4453,6 +4760,9 @@
         cloudConfig = { ...cloudConfig, etabId };
         saveCloudConfig();
         setCurrentEtabName(label);
+        setCurrentEtabRole("owner");
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        setDefaultEtabId(etabId);
         return etabId;
       }
 
@@ -4482,6 +4792,7 @@
           }
           saveAdminSession(result);
           const hadInvite = Boolean(authInviteToken);
+          const previousEtabId = cloudConfig.etabId;
           if (hadInvite) await acceptEtabInvite(authInviteToken);
           else {
             await createEtabForCurrentUser(authEtabName);
@@ -4489,7 +4800,9 @@
           }
           authPassword = "";
           authStatus = hadInvite
-            ? "Compte créé et rattaché à l’équipe EPS."
+            ? previousEtabId
+              ? "Compte connecté. Nouvel établissement ajouté à votre compte."
+              : "Compte créé et rattaché à l’équipe EPS."
             : "Compte et Établissement créés. Vous pouvez sauvegarder ce planning.";
           requestInitialCloudLoad(true, true);
         } catch (error) {
@@ -4514,6 +4827,7 @@
           "planningEpsActivities2026",
           "planningEpsFacilityActivities2026",
           "planningEpsActivityProgramByLevel2026",
+          "planningEpsActivityProgramByClass2026",
           "planningEpsYearPlan2026",
           "planningEpsCycles2026",
           "planningEpsCyclesByLevel2026",
@@ -4575,6 +4889,7 @@
           activities,
           facilityActivities,
           activityProgramByLevel,
+          activityProgramByClass,
           yearPlan,
           cycles,
           cyclesByLevel,
@@ -4610,6 +4925,7 @@
         activities = Array.isArray(data.activities) ? data.activities : activities;
         facilityActivities = data.facilityActivities && typeof data.facilityActivities === "object" ? data.facilityActivities : {};
         activityProgramByLevel = normalizeActivityProgramByLevel(data.activityProgramByLevel || activityProgramByLevel);
+        activityProgramByClass = normalizeActivityProgramByClass(data.activityProgramByClass || activityProgramByClass);
         pruneFacilityActivities();
         yearPlan = data.yearPlan || yearPlan;
         cycles = Array.isArray(data.cycles) && data.cycles.length ? data.cycles : cycles;
@@ -4651,6 +4967,7 @@
         localStorage.setItem("planningEpsActivities2026", JSON.stringify(activities));
         localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(facilityActivities));
         localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
+        localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(activityProgramByClass));
         localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(yearPlan));
         localStorage.setItem("planningEpsCycles2026", JSON.stringify(cycles));
         localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
@@ -5468,8 +5785,7 @@
         const enforceActivityLinks = constructionRuleSettingEnabled("facility-activity-link");
         const enforceUnavailableFacilities = constructionRuleSettingEnabled("facility-unavailable");
         const enforceProgram = constructionRuleSettingEnabled("class-activity-program");
-        const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
-        const programActivityIds = enforceProgram ? (activityProgramByLevel[level] || []) : [];
+        const programActivityIds = enforceProgram ? activityProgramForRule(rule) : [];
         return facilities.flatMap((facility) => {
           const linkedActivities = activitiesForFacility(facility.id);
           const activityChoices = enforceActivityLinks
@@ -5557,7 +5873,7 @@
       function optimizedAnnualProgramPenalty(rule, block, usage) {
         if (!constructionRuleSettingEnabled("class-activity-program") || !block.activityId) return 0;
         return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
-          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          const programActivityIds = activityProgramForClass(schoolClass);
           if (!programActivityIds.includes(block.activityId)) return sum;
           const doneActivityIds = usage.classYearActivities.get(schoolClass) || new Set();
           return sum + (doneActivityIds.has(block.activityId) ? 520 : 0);
@@ -5584,7 +5900,7 @@
       function optimizedRuleProgramMissingCount(rule, usage) {
         if (!constructionRuleSettingEnabled("class-activity-program")) return 0;
         return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
-          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          const programActivityIds = activityProgramForClass(schoolClass);
           if (!programActivityIds.length) return sum;
           const doneActivityIds = usage.classYearActivities.get(schoolClass) || new Set();
           return sum + programActivityIds.filter((activityId) => !doneActivityIds.has(activityId)).length;
@@ -5600,7 +5916,7 @@
       function optimizedAnnualProgramViolations() {
         if (!constructionRuleSettingEnabled("class-activity-program")) return [];
         return classes.flatMap((schoolClass) => {
-          const programActivityIds = activityProgramByLevel[classParts(schoolClass).level] || [];
+          const programActivityIds = activityProgramForClass(schoolClass);
           if (!programActivityIds.length) return [];
           const doneActivityIds = new Set();
           classicConstructionCycles().forEach((cycle) => {
@@ -5654,8 +5970,7 @@
 
       function optimizedUnresolvedReason(rule, cycle, candidates, assignments, usage) {
         if (!candidates.length) {
-          const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
-          const programActivityIds = constructionRuleSettingEnabled("class-activity-program") ? (activityProgramByLevel[level] || []) : [];
+          const programActivityIds = constructionRuleSettingEnabled("class-activity-program") ? activityProgramForRule(rule) : [];
           if (constructionRuleSettingEnabled("class-activity-program") && programActivityIds.length) return "Aucune installation ne propose une activité du programme compatible.";
           if (constructionRuleSettingEnabled("facility-unavailable")) return "Aucune installation/activité compatible ou disponible sur ce créneau.";
           return "Aucun couple installation/activité compatible.";
@@ -8322,13 +8637,19 @@
           </div>
           <div class="eventList">
             <h3>Classes existantes</h3>
+            <div class="classImportBox">
+              <label>Importer depuis Pronote
+                <input id="classCsvImport" type="file" accept=".csv,text/csv,text/plain" />
+              </label>
+              <span class="muted">Le CSV est lu sur votre ordinateur. Les classes détectées remplacent la liste actuelle.</span>
+            </div>
             <div class="classConfigGrid">${classLevels.map((level) => {
               const config = classConfig[level];
               return `<article class="classConfigCard">
                 <h4>${level}</h4>
                 <div class="classConfigControls">
                   <label>Nombre
-                    <input type="number" min="0" max="26" value="${config.labels.length}" data-class-count="${level}" />
+                    <input type="number" min="0" max="99" value="${config.labels.length}" data-class-count="${level}" />
                   </label>
                   <label>Format
                     <select data-class-mode="${level}">
@@ -8960,6 +9281,33 @@ $$;
 
 grant execute on function public.get_current_user_etab() to authenticated;
 
+create or replace function public.list_current_user_etabs()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    return '[]'::jsonb;
+  end if;
+
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'etab_id', m.etab_id,
+      'role', m.role,
+      'etab_name', e.name,
+      'created_at', m.created_at
+    ) order by m.created_at asc)
+    from public.etab_members m
+    left join public.etabs e on e.id = m.etab_id
+    where m.user_id = auth.uid()
+  ), '[]'::jsonb);
+end;
+$$;
+
+grant execute on function public.list_current_user_etabs() to authenticated;
+
 create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
 returns text
 language plpgsql
@@ -9548,7 +9896,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <div class="eventList">
             <h3>Installations existantes</h3>
             ${facilities.length ? `<div class="compactCardGrid fiveCardGrid">${facilities.map((facility) => `<article class="eventCard">
-              <strong>${facility.label}</strong>
+              <label class="eventField">
+                <span>Nom</span>
+                <input data-rename-facility="${facility.id}" value="${attrValue(facility.label)}" />
+              </label>
               <span>${facilityTypeLabel(facility.type)}</span>
               <span>${facilityLocationTypeLabel(facility.locationType)}</span>
               <div class="choiceGrid">
@@ -9621,6 +9972,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       }
 
       function renderActivityProgramSettings() {
+        const standardClasses = classesFromStandardConfig();
         return `<section class="eventPage">
           <div class="eventList" style="grid-column:1 / -1">
             <h3>Programme annuel par niveau</h3>
@@ -9640,6 +9992,25 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 `).join("")}</div>` : ""}
               </article>`;
             }).join("")}</div>` : `<div class="alertEmpty">Ajoutez d'abord les activités dans Installations & activités.</div>`}
+            ${activities.length ? `<h3 style="margin-top:16px">Programme spécifique par classe</h3>
+            <p class="muted">Optionnel : renseignez uniquement les classes qui ne suivent pas exactement le programme de leur niveau.</p>
+            <div class="facilityActivityMatrix">${standardClasses.map((schoolClass) => {
+              const selectedIds = activityProgramByClass[schoolClass] || [];
+              const selectedActivities = selectedIds.map((id) => activities.find((activity) => activity.id === id)).filter(Boolean);
+              const unselectedActivities = activities
+                .filter((activity) => !selectedIds.includes(activity.id))
+                .sort((a, b) => a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
+              const inheritedCount = activityProgramForClass(schoolClass).length;
+              return `<article class="facilityActivityRow">
+                <strong>${compactClassName(schoolClass)}</strong>
+                ${selectedActivities.length ? `<div class="choiceGrid">${selectedActivities.map((activity) => `
+                  <button class="choiceButton active" data-program-class="${schoolClass}" data-program-activity="${activity.id}">${activity.label}</button>
+                `).join("")}</div>` : `<span class="muted">Programme du niveau utilisé (${inheritedCount} activité(s)).</span>`}
+                ${unselectedActivities.length ? `<div class="choiceGrid">${unselectedActivities.map((activity) => `
+                  <button class="choiceButton" data-program-class="${schoolClass}" data-program-activity="${activity.id}">${activity.label}</button>
+                `).join("")}</div>` : ""}
+              </article>`;
+            }).join("")}</div>` : ""}
           </div>
         </section>`;
       }
@@ -9676,7 +10047,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <div class="eventList">
             <h3>Installations existantes</h3>
             ${facilities.length ? `<div class="compactCardGrid fiveCardGrid">${facilities.map((facility) => `<article class="eventCard">
-              <strong>${facility.label}</strong>
+              <label class="eventField">
+                <span>Nom</span>
+                <input data-rename-facility="${facility.id}" value="${attrValue(facility.label)}" />
+              </label>
               <span>${facilityTypeLabel(facility.type)}</span>
               <span>${facilityLocationTypeLabel(facility.locationType)}</span>
               <div class="choiceGrid">
@@ -10388,10 +10762,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         renderBrandEtabName();
         if (!authBox) return;
         if (isSignedIn()) {
+          const defaultEtabId = getDefaultEtabId();
           authBox.innerHTML = `
             <div class="authStatus">Connecté : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form>` : ""}
+            ${cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Ajouter cet établissement</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l’établissement" aria-label="Nom de l’établissement" /><button class="authButton" type="submit">Creer l’établissement</button></form>` : ""}
+            ${currentUserEtabs.length > 1 ? `<form class="authForm">
+              <select id="activeEtabSelect" aria-label="Choisir l'établissement actif">
+                ${currentUserEtabs.map((item) => `<option value="${item.etab_id}" ${item.etab_id === cloudConfig.etabId ? "selected" : ""}>${escapeHtml(item.etab_name || item.etab_id)} · ${item.role === "owner" ? "admin" : "consultation"}${item.etab_id === defaultEtabId ? " · défaut" : ""}</option>`).join("")}
+              </select>
+              <button class="defaultEtabButton ${cloudConfig.etabId && cloudConfig.etabId === defaultEtabId ? "active" : ""}" type="button" id="setDefaultEtab" ${cloudConfig.etabId ? "" : "disabled"}>${cloudConfig.etabId && cloudConfig.etabId === defaultEtabId ? "Par défaut" : "Définir par défaut"}</button>
+            </form>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Vérification du rôle en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
@@ -10476,6 +10858,30 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         const logoutAdmin = document.getElementById("logoutAdmin");
         if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
+        const setDefaultEtab = document.getElementById("setDefaultEtab");
+        if (setDefaultEtab) setDefaultEtab.addEventListener("click", () => {
+          if (!cloudConfig.etabId) return;
+          setDefaultEtabId(cloudConfig.etabId);
+          authStatus = `Établissement par défaut : ${currentEtabDisplayName() || cloudConfig.etabId}`;
+          showValidationPopup("Établissement défini par défaut");
+          render();
+        });
+        const activeEtabSelect = document.getElementById("activeEtabSelect");
+        if (activeEtabSelect) activeEtabSelect.addEventListener("change", async () => {
+          const selected = currentUserEtabs.find((item) => item.etab_id === activeEtabSelect.value);
+          if (!selected || selected.etab_id === cloudConfig.etabId) return;
+          if (hasPendingCloudSave() && !window.confirm("Une sauvegarde cloud est encore en attente. Changer d'établissement peut ignorer cette modification locale. Continuer ?")) {
+            activeEtabSelect.value = cloudConfig.etabId || "";
+            return;
+          }
+          discardLocalChangesFromCloudSoon();
+          setActiveEtabFromRow(selected);
+          cloudSourceLoaded = false;
+          cloudInitialLoadKey = "";
+          cloudLastUpdatedAt = "";
+          authStatus = `Établissement actif : ${selected.etab_name || selected.etab_id}`;
+          await cloudLoadFromRemote(true, false, true);
+        });
       }
 
       function render() {
@@ -10582,8 +10988,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authStatus = "Rattachement à l'équipe EPS...";
           render();
           try {
+            const previousEtabId = cloudConfig.etabId;
             await acceptEtabInvite(authInviteToken);
-            authStatus = "Vous avez rejoint l'équipe EPS.";
+            authStatus = previousEtabId
+              ? "Nouvel établissement ajouté à votre compte."
+              : "Vous avez rejoint l'équipe EPS.";
+            cleanAuthUrl(true);
             requestInitialCloudLoad(false, true);
           } catch (error) {
             authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
@@ -11013,7 +11423,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const level = input.dataset.classCount;
             const mode = classConfig[level]?.mode || "number";
             const previousCount = classConfig[level]?.labels.length || 0;
-            const nextCount = Math.min(26, Math.max(0, Number(input.value) || 0));
+            const nextCount = Math.min(99, Math.max(0, Number(input.value) || 0));
             classConfig = { ...classConfig, [level]: { mode, labels: generatedClassLabels(mode, nextCount) } };
             saveClassConfig();
             if (nextCount > previousCount) showValidationPopup("Classes ajoutées");
@@ -11053,6 +11463,22 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             render();
           });
         });
+        const classCsvImport = document.getElementById("classCsvImport");
+        if (classCsvImport) {
+          classCsvImport.addEventListener("change", async () => {
+            const file = classCsvImport.files?.[0];
+            if (!file) return;
+            try {
+              const text = await file.text();
+              const total = importClassesFromCsvText(text);
+              showValidationPopup(`${total} classe(s) importée(s) depuis Pronote`);
+              render();
+            } catch (error) {
+              showValidationPopup(`Import CSV impossible : ${error.message || "fichier non reconnu"}`, "error");
+              classCsvImport.value = "";
+            }
+          });
+        }
         const specialClassNameInput = document.getElementById("specialClassName");
         if (specialClassNameInput) {
           specialClassNameInput.addEventListener("input", () => {
@@ -11436,6 +11862,26 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           input.addEventListener("change", saveRename);
           input.addEventListener("blur", saveRename);
         });
+        document.querySelectorAll("[data-rename-facility]").forEach((input) => {
+          const saveRename = () => {
+            const facility = facilities.find((item) => item.id === input.dataset.renameFacility);
+            if (!facility) return;
+            const label = input.value.trim();
+            if (!label) {
+              input.value = facility.label;
+              return;
+            }
+            if (label === facility.label) return;
+            facilities = facilities.map((item) => item.id === facility.id ? { ...item, label } : item);
+            syncConstructionFacilityLabel(facility.id, label);
+            saveFacilities();
+            rebuildConstructionPlan();
+            showValidationPopup("Installation renommée");
+            render();
+          };
+          input.addEventListener("change", saveRename);
+          input.addEventListener("blur", saveRename);
+        });
         document.querySelectorAll("[data-facility-type]").forEach((button) => {
           button.addEventListener("click", () => {
             facilityDraftType = button.dataset.facilityType;
@@ -11514,6 +11960,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const deletedId = button.dataset.deleteActivity;
             activities = activities.filter((activity) => activity.id !== deletedId);
             activityProgramByLevel = normalizeActivityProgramByLevel(activityProgramByLevel);
+            activityProgramByClass = normalizeActivityProgramByClass(activityProgramByClass);
             facilityActivities = Object.fromEntries(Object.entries(facilityActivities).map(([facilityId, ids]) => [
               facilityId,
               Array.isArray(ids) ? ids.filter((id) => id !== deletedId) : []
@@ -11525,6 +11972,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             } : rule);
             saveActivities();
             saveActivityProgramByLevel();
+            saveActivityProgramByClass();
             saveFacilityActivities();
             rebuildConstructionPlan();
             showValidationPopup("Activité supprimée");
@@ -11533,8 +11981,25 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-program-activity]").forEach((button) => {
           button.addEventListener("click", () => {
-            const level = button.dataset.programActivityLevel;
             const activityId = button.dataset.programActivity;
+            const schoolClass = button.dataset.programClass;
+            if (schoolClass) {
+              const normalizedClass = normalizeSchoolClassId(schoolClass);
+              if (!classesFromStandardConfig().includes(normalizedClass) || !activities.some((activity) => activity.id === activityId)) return;
+              const current = activityProgramByClass[normalizedClass] || [];
+              const next = current.includes(activityId)
+                ? current.filter((id) => id !== activityId)
+                : [...current, activityId];
+              activityProgramByClass = {
+                ...activityProgramByClass,
+                [normalizedClass]: next
+              };
+              if (!next.length) delete activityProgramByClass[normalizedClass];
+              saveActivityProgramByClass();
+              render();
+              return;
+            }
+            const level = button.dataset.programActivityLevel;
             if (!classLevels.includes(level) || !activities.some((activity) => activity.id === activityId)) return;
             const current = activityProgramByLevel[level] || [];
             activityProgramByLevel = {
