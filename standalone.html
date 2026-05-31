@@ -5594,6 +5594,22 @@
         return true;
       }
 
+      function promoteRestoredConstructionVersionToCloud() {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
+        cloudSaveQueued = false;
+        cloudSourceLoaded = true;
+        markLocalChangedForCloud(["constructionRules", "constructionPlan", "blockExclusions"]);
+        if (isAdmin() && cloudReady() && cloudWriteAllowed() && cloudConfig.autoSave) {
+          cloudStatus = "Version restaurée : sauvegarde Supabase en cours...";
+          cloudSaveToRemote(false);
+        } else {
+          cloudStatus = cloudReady()
+            ? cloudWriteBlockedMessage()
+            : "Version restaurée localement. Cloud non configuré.";
+        }
+      }
+
       function conflictBelongsToBuildMode(conflict, buildMode) {
         if (buildMode === "blocks") return ["teacher", "class", "asTeacher"].includes(conflict.type);
         if (buildMode === "cycleDetails") return conflict.type === "facility";
@@ -11435,7 +11451,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         document.querySelectorAll("[data-restore-construction-version]").forEach((button) => {
           button.addEventListener("click", () => {
             if (!window.confirm("Charger cette version dans la construction actuelle ?")) return;
-            if (restoreConstructionVersion(button.dataset.restoreConstructionVersion)) showValidationPopup("Version recuperee");
+            if (restoreConstructionVersion(button.dataset.restoreConstructionVersion)) {
+              promoteRestoredConstructionVersionToCloud();
+              showValidationPopup("Version récupérée et définie comme source Supabase");
+            }
             constructionBuildMode = "blocks";
             render();
           });
