@@ -3600,12 +3600,58 @@
       }
 
       function signOutAdmin() {
+        const keptCloudConfig = {
+          ...cloudConfig,
+          etabId: "",
+          autoLoad: true
+        };
         saveAdminSession(null);
+        [
+          "planningEpsTeachers2026",
+          "planningEpsClassConfig2026",
+          "planningEpsFacilities2026",
+          "planningEpsActivities2026",
+          "planningEpsFacilityActivities2026",
+          "planningEpsActivityProgramByLevel2026",
+          "planningEpsYearPlan2026",
+          "planningEpsCycles2026",
+          "planningEpsCyclesByLevel2026",
+          "planningEpsServiceHoursByLevel2026",
+          "planningEpsServiceAssignments2026",
+          "planningEpsSchoolConstraints2026",
+          PREREQUISITE_LOCKS_KEY,
+          YEAR_PREREQUISITE_LOCKS_KEY,
+          PREREQUISITES_LOCK_KEY,
+          "planningEpsConstructionWorkspaceMode2026",
+          "planningEpsConstructionVersions2026",
+          "planningEpsConstructionLocks2026",
+          "planningEpsConstructionRuleSettings2026",
+          "planningEpsConstructionRules2026",
+          "planningEpsConstruction2026",
+          "planningEpsBlockExclusions2026",
+          "planningEpsSportEvents2026",
+          "planningEpsAsSessions2026",
+          "planningEpsFacilityUnavailability2026",
+          "planningEpsEventExclusions2026",
+          "planningEpsAsExclusions2026",
+          "planningEpsHiddenConstructionBlocksReport2026",
+          CLOUD_LOCAL_UNSYNCED_KEY,
+          CLOUD_DIRTY_KEYS_KEY,
+          AUTH_INVITE_KEY,
+          AUTH_ETAB_NAME_KEY,
+          AUTH_ROLE_KEY
+        ].forEach((key) => localStorage.removeItem(key));
+        cloudConfig = keptCloudConfig;
+        saveCloudConfig();
         authPassword = "";
         authStatus = "";
         authInviteLink = "";
+        authInviteStatus = "";
+        authInviteMenuOpen = false;
+        currentEtabRole = "";
+        currentEtabName = "";
         if (week === "build" || week === "alerts") week = "current";
-        render();
+        window.location.reload();
       }
 
       function withCurrentPlanningId(item) {
