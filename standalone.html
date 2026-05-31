@@ -940,9 +940,9 @@
           <section class="navGroup" id="adminNavGroup">
             <span class="navGroupLabel">Admin</span>
             <section class="weeks">
-              <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
-              <button data-week="build" data-build-mode="rules"><span class="stepNav"><span class="stepBadge">3</span>Regles de construction<span class="stepStatus" aria-label="Etat de l'etape"></span></span></button>
+              <button data-week="build" data-build-mode="prerequisites"><span class="stepNav"><span class="stepBadge">1</span>Pré-requis établissement<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
+              <button data-week="build" data-build-mode="yearPrerequisites"><span class="stepNav"><span class="stepBadge">2</span>Pré-requis année scolaire<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
+              <button data-week="build" data-build-mode="rules"><span class="stepNav"><span class="stepBadge">3</span>Règles de construction<span class="stepStatus" aria-label="?tat de l’?tape"></span></span></button>
               <button class="adminBuildAction" data-week="build" data-build-mode="planning"><span class="stepNav"><span class="stepBadge">4</span>Construction<svg class="constructionHammerIcon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="#73838a" d="M185 80c-8-8-21-8-29 0l-68 68 7 14c7 18 3 38-11 52-12 12-29 17-46 13L0 237l89 89 39-39c-6-17-2-36 11-49 15-15 38-18 56-8l58-58z"/><path fill="#627176" d="m0 237 40-40 88 90-39 39z"/><path fill="#73838a" d="M222 24c43-8 85 0 135 16-56 27-99 68-132 123l25 25c7 7 7 18 0 25l-28 28-134-93 68-68c9-9 23-13 35-7 9-15 19-28 31-49z"/><path fill="#627176" d="M225 163c28-51 71-94 132-123-46 4-98 37-134 90z"/><path fill="#627176" d="m214 201 52 52-34 34-52-52z"/><path fill="#bd8459" d="M282 208c5-5 13-5 18 0l194 194c12 12 18 28 18 45 0 36-29 65-65 65-17 0-33-7-45-18L230 322c-5-5-5-13 0-18z"/><path fill="#a66f4e" d="m230 304 172 172c12 12 28 18 45 18 25 0 47-15 58-36-11 7-24 12-38 12-17 0-33-7-45-19L250 280z"/></svg></span></button>
             </section>
           </section>
@@ -965,7 +965,7 @@
         { id: "p2", name: "Prof B", color: "#bbf7d0", border: "#16a34a", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
         { id: "p3", name: "Prof C", color: "#fecaca", border: "#dc2626", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 18, B: 16 } },
         { id: "p4", name: "Prof D", color: "#ddd6fe", border: "#7c3aed", monthlyTarget: 68, weeklyReference: 17, weekTargets: { A: 16, B: 18 } },
-        { id: "p5", name: "Prof E agrege", color: "#fde68a", border: "#d97706", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
+        { id: "p5", name: "Prof E agrégé", color: "#fde68a", border: "#d97706", monthlyTarget: 56, weeklyReference: 14, weekTargets: { A: 14, B: 14 } }
       ];
       const teacherPalette = [
         { color: "#93c5fd", border: "#1d4ed8" },
@@ -1020,7 +1020,7 @@
       ];
       const defaultSchoolConstraints = {
         establishmentName: "",
-        establishmentType: "college",
+        establishmentType: "coll?ge",
         schoolZone: "B",
         courseSlots: defaultCourseSlots,
         asSlots: defaultAsSlots,
@@ -1041,7 +1041,7 @@
       let facilities = loadFacilities();
       let activities = loadActivities();
       let facilityActivities = loadFacilityActivities();
-      const classLevels = ["6eme", "5eme", "4eme", "3eme"];
+      const classLevels = ["6ème", "5ème", "4ème", "3ème"];
       let activityProgramByLevel = loadActivityProgramByLevel();
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
       const defaultClassConfig = Object.fromEntries(classLevels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
@@ -1052,36 +1052,36 @@
       ];
       let classConfig = loadClassConfig();
       let classes = classesFromConfig();
-      const defaultServiceHours = { "6eme": 4, "5eme": 3, "4eme": 3, "3eme": 3 };
+      const defaultServiceHours = { "6ème": 4, "5ème": 3, "4ème": 3, "3ème": 3 };
       const defaultConstructionRuleSettings = [
-        { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquee indisponible sur le creneau." },
-        { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le creneau." },
-        { id: "class-unavailable", category: "Conflit classe", title: "Classe disponible", detail: "Impossible de placer une classe indiquee indisponible sur le creneau." },
-        { id: "teacher-single-place", category: "Conflit prof", title: "Un prof, un seul cours", detail: "Un professeur ne peut pas etre affecte a deux cours differents sur le meme creneau." },
-        { id: "facility-single-place", category: "Conflit installation", title: "Une installation, un seul cours", detail: "Une installation ne peut pas accueillir deux cours sur le meme creneau, sauf co-intervention explicite." },
+        { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquée indisponible sur le créneau." },
+        { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le créneau." },
+        { id: "class-unavailable", category: "Conflit classe", title: "Classe disponible", detail: "Impossible de placer une classe indiquée indisponible sur le créneau." },
+        { id: "teacher-single-place", category: "Conflit prof", title: "Un prof, un seul cours", detail: "Un professeur ne peut pas être affecté à deux cours différents sur le même créneau." },
+        { id: "facility-single-place", category: "Conflit installation", title: "Une installation, un seul cours", detail: "Une installation ne peut pas accueillir deux cours sur le même créneau, sauf co-intervention explicite." },
         { id: "class-single-place", category: "Conflit classe", title: "Une classe, un seul cours", detail: "Une classe ou un demi-groupe ne peut pas etre place sur deux cours qui se chevauchent." },
-        { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
-        { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
-        { id: "seasonal-location-preference", category: "Regles definies par l'etablissement", title: "Saisonnalite des lieux", detail: "Privilegier les lieux en exterieur au premier et au dernier cycle, et les lieux en interieur sur les cycles intermediaires." },
-        { id: "class-activity-program", category: "Installations / activites", title: "Programme annuel des classes", detail: "Chaque classe doit faire toutes les activites prevues dans son programme annuel." },
-        { id: "class-single-activity-per-cycle", category: "Regles definies par l'etablissement", title: "Activite unique hors 6eme", detail: "Sur un meme cycle, les classes de 5eme, 4eme et 3eme font une seule activite. Les 6eme suivent leur regle specifique." },
-        { id: "sixth-grade-dual-activity-swimming", category: "Regles definies par l'etablissement", title: "Programme specifique 6eme", detail: "Les classes de 6eme font exactement deux activites distinctes par cycle. La natation, associee a la piscine, est obligatoire sur les trois premiers cycles." },
-        { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
-        { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." },
-        { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixes sur l'annee ; seules les installations et activites varient par cycle." },
-        { id: "cycle-details-required", category: "Installations / activites", title: "Details par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activite par cycle quand l'installation propose des activites." },
-        { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le creneau", detail: "En co-intervention, les deux professeurs sont presents sur toute la duree du creneau, dans la meme installation, avec des classes differentes." },
-        { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service theorique peuvent devenir des blocs Option sans classe obligatoire, avec une duree precisee dans le bloc profs/classes." },
-        { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d'atteindre son volume EPS hebdomadaire : 4h en 6eme, 3h en 5eme, 4eme et 3eme." },
-        { id: "supabase-source", category: "Sauvegarde", title: "Supabase source officielle", detail: "Les donnees de construction, versions, verrous et liens installations/activites sont rechargees depuis Supabase comme source de reference." }
+        { id: "service-théorique", category: "Service", title: "Respect du service théorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service théorique." },
+        { id: "facility-activity-link", category: "Installations / activités", title: "Activités compatibles", detail: "Une installation ne propose que les activités qui lui sont reliées dans Installations & activités." },
+        { id: "seasonal-location-preference", category: "Règles définies par l’établissement", title: "Saisonnalité des lieux", detail: "Privilégier les lieux en extérieur au premier et au dernier cycle, et les lieux en intérieur sur les cycles intermédiaires." },
+        { id: "class-activity-program", category: "Installations / activités", title: "Programme annuel des classes", detail: "Chaque classe doit faire toutes les activités prévues dans son programme annuel." },
+        { id: "class-single-activity-per-cycle", category: "Règles définies par l’établissement", title: "Activité unique hors 6ème", detail: "Sur un même cycle, les classes de 5ème, 4ème et 3ème font une seule activité. Les 6ème suivent leur règle spécifique." },
+        { id: "sixth-grade-dual-activity-swimming", category: "Règles définies par l’établissement", title: "Programme spécifique 6ème", detail: "Les classes de 6ème font exactement deux activités distinctes par cycle. La natation, associée à la piscine, est obligatoire sur les trois premiers cycles." },
+        { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS à moins de 24h d'intervalle." },
+        { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se répercuter sur les semaines du cycle concerné." },
+        { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixés sur l'année ; seules les installations et activités varient par cycle." },
+        { id: "cycle-details-required", category: "Installations / activités", title: "Détails par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activité par cycle quand l'installation propose des activités." },
+        { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le créneau", detail: "En co-intervention, les deux professeurs sont présents sur toute la durée du créneau, dans la même installation, avec des classes différentes." },
+        { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service théorique peuvent devenir des blocs Option sans classe obligatoire, avec une dur?e pr?cis?e dans le bloc profs/classes." },
+        { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d’atteindre son volume EPS hebdomadaire : 4h en 6ème, 3h en 5ème, 4ème et 3ème." },
+        { id: "supabase-source", category: "Sauvegarde", title: "Supabase source officielle", detail: "Les données de construction, versions, verrous et liens installations/activités sont rechargées depuis Supabase comme source de référence." }
       ];
       const constructionRuleCategoryChoices = [
         "Conflit prof",
         "Conflit classe",
         "Conflit installation",
         "Service",
-        "Installations / activites",
-        "Regles definies par l'etablissement",
+        "Installations / activités",
+        "Règles définies par l’établissement",
         "Rythme classe",
         "Cycle",
         "Co-intervention",
@@ -1278,47 +1278,47 @@
 
 - Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
 - Navigation : liens Mode d'emploi, Alertes, Log et Une question placés sous l'icône chat.
-- Etablissement : colonne Créneaux AS élargie et typographie harmonisée avec les créneaux de cours.
+- Établissement : colonne Créneaux AS élargie et typographie harmonisée avec les créneaux de cours.
 - Navigation : libellés Professeur et Admin passés en noir.
 - Navigation : liens Mode d'emploi, Alertes, Log et Une question rapprochés de l'icône chat.
 - Pré-requis établissement : verrous individuels par sous-onglet avec cadenas visible au-dessus de la coche ou croix.
-- Etablissement : bloc Application automatique retiré du sous-onglet.
+- Établissement : bloc Application automatique retiré du sous-onglet.
 - Mode d'emploi : ajout de la mention des sous-onglets et du verrou des pré-requis établissement.
-- Etablissement : description sous Créneaux AS retirée.
-- Navigation : libelles Professeur/Admin rapproches de leurs onglets.
+- Établissement : description sous Créneaux AS retirée.
+- Navigation : libellés Professeur/Admin rapproches de leurs onglets.
 - Pré-requis établissement : ajout d'un verrou de consultation pour empêcher les modifications tout en gardant les sous-onglets accessibles.
-- Navigation : blocs Professeur/Admin deplaces dans l'en-tete entre le logo chat et la connexion.
-- Etablissement : creneaux de cours et creneaux AS affiches cote a cote dans le sous-onglet.
+- Navigation : blocs Professeur/Admin déplacés dans l’en-tête entre le logo chat et la connexion.
+- Établissement : créneaux de cours et créneaux AS affichés côte à côte dans le sous-onglet.
 - Navigation Admin : espacement augmente entre le texte des sous-onglets et leur indicateur de validation.
 - HTML : correction de l'echappement des coches et des separateurs du Service libre.
 - Service libre : correction du symbole de validation et retour des indicateurs coche/croix dans les sous-onglets.
-- Navigation Admin : bouton Construction replace directement a cote de Pré-requis année scolaire.
-- Navigation Admin : anciens onglets conserves comme sous-onglets dans les deux pages de pré-requis.
-- Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation reduite a trois etapes.
+- Navigation Admin : bouton Construction replacé directement ? c?t? de Pré-requis année scolaire.
+- Navigation Admin : anciens onglets conservés comme sous-onglets dans les deux pages de pré-requis.
+- Navigation Admin : regroupement des onglets 6 a 10 dans Pré-requis année scolaire et navigation réduite à trois étapes.
 - Navigation Admin : regroupement des cinq premiers onglets dans Pré-requis établissement.
-- Etablissement : configuration generale conservee a gauche et creneaux cours/AS regroupes a droite.
-- Choix des dates : validation possible pour les periodes qui traversent week-ends, jours feries ou vacances, tout en gardant ces jours non selectionnables comme bornes.
-- Service libre : saisie stabilisee sans rechargement du panneau a chaque caractere.
-- Etablissement : creneaux de cours et AS configures par heures de debut/fin, avec duree calculee automatiquement.
-- Etablissement : ajout du nom d'etablissement, du type college et de la zone scolaire A/B/C avec vacances 2026-2027 mises a jour automatiquement selon la zone.
-- Etablissement : renommage de l'onglet Contraintes etablissement.
+- Établissement : configuration générale conservée ? gauche et créneaux cours/AS regroup?s à droite.
+- Choix des dates : validation possible pour les périodes qui traversent week-ends, jours fériés ou vacances, tout en gardant ces jours non sélectionnables comme bornes.
+- Service libre : saisie stabilisée sans rechargement du panneau a chaque caractere.
+- Établissement : créneaux de cours et AS configurés par heures de début/fin, avec dur?e calcul?e automatiquement.
+- Établissement : ajout du nom d’établissement, du type coll?ge et de la zone scolaire A/B/C avec vacances 2026-2027 mises à jour automatiquement selon la zone.
+- Établissement : renommage de l'onglet Contraintes Établissement.
 - Choix des dates : calendrier maintenu ouvert jusqu'a validation explicite par bouton.
-- Service theorique : ajout du service libre pour affecter des heures non rattachees a une classe.
-- Contraintes etablissement : creneaux cours et AS rendus ajoutables/supprimables avec format horaire explicite.
-- Service theorique : champ heures signale en rouge tant qu'il n'est pas valide et bouton de validation ajoute.
+- Service théorique : ajout du service libre pour affecter des heures non rattachées à une classe.
+- Contraintes Établissement : créneaux cours et AS rendus ajoutables/supprimables avec format horaire explicite.
+- Service théorique : champ heures signale en rouge tant qu'il n'est pas valide et bouton de validation ajoute.
 - Synchronisation cloud : sauvegardes mises en file d'attente, recuperation automatique des changements distants et droits SQL eps_plannings ajoutes.
 - Choix des dates : correction du decalage d'un jour lie au fuseau horaire dans le calendrier.
 - Confirmations utilisateur : messages d'ajout et de suppression generalises sur les actions principales.
 - Confirmations utilisateur : popup de validation adaptee apres ajout ou modification d'un element.
-- Classes en duo : duree parametrable pour le deuxieme professeur et prise en compte dans le service reel.
-- Contraintes etablissement : nouvel onglet Admin avant Profs pour parametrer les creneaux de cours et les horaires d'AS.
-- Navigation Admin : bouton Construction replace a droite de la ligne des prerequis.
-- Selection dates : week-ends, jours feries et vacances grises et bloquees dans les calendriers de parametrage.
-- Vidage selectif de la construction : construction, AS, evenements sportifs, ou plusieurs elements a la fois.
-- AS et evenements sportifs rattaches au planning courant dans eps_plannings.data avec planningId.
-- Installations : plus de type coche par defaut, libelles Externe/Interne, suppression possible de toutes les installations.
+- Classes en duo : dur?e param?trable pour le deuxième professeur et prise en compte dans le service r?el.
+- Contraintes Établissement : nouvel onglet Admin avant Profs pour paramêtrer les créneaux de cours et les horaires d'AS.
+- Navigation Admin : bouton Construction replacé à droite de la ligne des prérequis.
+- Sélection dates : week-ends, jours fériés et vacances grises et bloquées dans les calendriers de param?trage.
+- Vidage s?lectif de la construction : construction, AS, événements sportifs, ou plusieurs ?l?ments ? la fois.
+- AS et événements sportifs rattachés au planning courant dans eps_plannings.data avec planningId.
+- Installations : plus de type coche par défaut, libellés Externe/Interne, suppression possible de toutes les installations.
 - Profs : palette pastel imposee, couleur modifiable, remplacant possible.
-- Indisponibilites : choix de n'importe quelle installation, dates libres ou cycles selectionnes.`;
+- Indisponibilités : choix de n'importe quelle installation, dates libres ou cycles sélectionnés.`;
       let cloudConfig = loadCloudConfig();
       let cloudStatus = cloudReady()
         ? cloudWriteAllowed()
@@ -1339,7 +1339,7 @@
       let authEtabName = "";
       let authInviteToken = inviteTokenFromUrl() || localStorage.getItem(AUTH_INVITE_KEY) || "";
       let authInviteLink = "";
-      let authInviteStatus = authInviteToken ? "Invitation equipe detectee." : "";
+      let authInviteStatus = authInviteToken ? "Invitation équipe détectée." : "";
       let authInviteMenuOpen = false;
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
@@ -1457,7 +1457,7 @@
       }
 
       function facilityBadge(type) {
-        return `<span class="badge ${type === "external" ? "external" : "internal"}">${type === "external" ? "Ext." : "College"}</span>`;
+        return `<span class="badge ${type === "external" ? "external" : "internal"}">${type === "external" ? "Ext." : "Coll?ge"}</span>`;
       }
 
       function getIsoWeekInfo(date) {
@@ -1839,7 +1839,7 @@
         const schoolZone = ["A", "B", "C"].includes(value.schoolZone) ? value.schoolZone : defaultSchoolConstraints.schoolZone;
         return {
           establishmentName: (value.establishmentName || defaultSchoolConstraints.establishmentName).trim(),
-          establishmentType: "college",
+          establishmentType: "coll?ge",
           schoolZone,
           courseSlots,
           asSlots,
@@ -2440,7 +2440,7 @@
           const activeKeys = constructionRuleActiveKeys(rule);
           if (isAnnualConstructionRule(rule) && Array.isArray(blockExclusions[rule.id]) && blockExclusions[rule.id].length) {
             removedIds.add(rule.id);
-            reportItems.push(hiddenConstructionRuleReport(rule, "Bloc annuel masque par une suppression de creneau"));
+            reportItems.push(hiddenConstructionRuleReport(rule, "Bloc annuel masqué par une suppression de créneau"));
             return;
           }
           if (activeKeys.length && !constructionRuleVisibleKeys(rule).length) {
@@ -2537,11 +2537,11 @@
       }
 
       function facilityTypeLabel(type) {
-        return type === "external" ? "Externe a l'etablissement" : "Interne a l'etablissement";
+        return type === "external" ? "Externe ? l’établissement" : "Interne ? l’établissement";
       }
 
       function facilityLocationTypeLabel(locationType) {
-        return locationType === "outdoor" ? "En exterieur" : "En interieur";
+        return locationType === "outdoor" ? "En extérieur" : "En intérieur";
       }
 
       function loadFacilities() {
@@ -2871,11 +2871,11 @@
         if (!row || !weekItem || !block) return "";
         const unavailableItems = unavailableForCell(row, weekItem);
         const facilityBlocked = unavailableItems.find((item) => unavailableCoversFacility(item, block.facilityId));
-        if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce creneau.`;
+        if (facilityBlocked) return `${block.facilityLabel || "Cette installation"} est indisponible sur ce créneau.`;
         const blockedClass = classesForBlock(block).find((schoolClass) => classCollectionHasOverlap(unavailableItems.flatMap((item) => item.classIds || []), schoolClass));
-        if (blockedClass) return `${blockedClass || "Cette classe"} est indisponible sur ce creneau.`;
+        if (blockedClass) return `${blockedClass || "Cette classe"} est indisponible sur ce créneau.`;
         const teacherBlocked = unavailableItems.find((item) => teacherIdsForBlock(block).some((teacherId) => (item.teacherIds || []).includes(teacherId)));
-        if (teacherBlocked) return `${teacherLabelForBlock(block) || "Ce professeur"} est indisponible sur ce creneau.`;
+        if (teacherBlocked) return `${teacherLabelForBlock(block) || "Ce professeur"} est indisponible sur ce créneau.`;
         return "";
       }
 
@@ -3110,12 +3110,12 @@
 
       function saveCloudNowIfPossible(keys = []) {
         if (!isAdmin()) {
-          cloudStatus = "Modification refusee : rechargement de la source Supabase.";
+          cloudStatus = "Modification refusée : rechargement de la source Supabase.";
           discardLocalChangesFromCloudSoon();
           return false;
         }
         if (!cloudReady()) {
-          cloudStatus = "Modification refusee : cloud non configure.";
+          cloudStatus = "Modification refusée : cloud non configuré.";
           return false;
         }
         if (!cloudWriteAllowed()) {
@@ -3124,7 +3124,7 @@
           return false;
         }
         if (!cloudConfig.autoSave) {
-          cloudStatus = "Modification refusee : autosauvegarde cloud desactivee.";
+          cloudStatus = "Modification refusée : autosauvegarde cloud désactivée.";
           discardLocalChangesFromCloudSoon();
           return false;
         }
@@ -3289,7 +3289,7 @@
         const params = new URLSearchParams(hash);
         const error = params.get("error_description") || params.get("error");
         if (error) {
-          authStatus = `Connexion OAuth refusee : ${error}`;
+          authStatus = `Connexion OAuth refusée : ${error}`;
           cleanAuthUrl(false);
           return true;
         }
@@ -3307,7 +3307,7 @@
         const token = authInviteToken || localStorage.getItem(AUTH_INVITE_KEY) || "";
         if (token) {
           await acceptEtabInvite(token);
-          authStatus = "Invitation acceptee.";
+          authStatus = "Invitation acceptée.";
           cleanAuthUrl(true);
         } else {
           await ensureCurrentUserEtab();
@@ -3379,12 +3379,12 @@
 
       function inviteMailtoLink() {
         if (!authInviteLink) return "";
-        const etabName = currentEtabDisplayName() || "l'equipe EPS";
-        const subject = `Invitation equipe EPS - ${etabName}`;
+        const etabName = currentEtabDisplayName() || "l'équipe EPS";
+        const subject = `Invitation équipe EPS - ${etabName}`;
         const body = [
           "Bonjour,",
           "",
-          `Je t'invite a rejoindre l'espace EPS de l'etablissement ${etabName}.`,
+          `Je t'invite a rejoindre l'espace EPS de l’établissement ${etabName}.`,
           "",
           "Lien d'acces :",
           authInviteLink,
@@ -3406,7 +3406,7 @@
             <button type="button" data-create-invite-link="member">Consultation</button>
             <button type="button" data-create-invite-link="owner">Admin</button>
           </div>` : ""}
-          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" /><a class="mailInviteButton" href="${inviteMailtoLink()}">Envoyer par mail</a>` : ""}
+          ${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation équipe EPS" /><a class="mailInviteButton" href="${inviteMailtoLink()}">Envoyer par mail</a>` : ""}
         </div>`;
       }
 
@@ -3454,7 +3454,7 @@
         try {
           return await refreshCurrentEtabRole();
         } catch (error) {
-          authStatus = `Role etablissement non relu : ${error.message || "erreur Supabase"}`;
+          authStatus = `Rôle Établissement non relu : ${error.message || "erreur Supabase"}`;
           return currentEtabRole;
         }
       }
@@ -3486,7 +3486,7 @@
           const resolvedEtabId = await resolveCurrentUserEtab();
           if (resolvedEtabId) return resolvedEtabId;
         } catch (error) {
-          authStatus = `Etablissement non retrouve automatiquement : ${error.message || "erreur Supabase"}`;
+          authStatus = `Établissement non retrouvé automatiquement : ${error.message || "erreur Supabase"}`;
         }
         if (cloudConfig.etabId) {
           await refreshCurrentEtabRoleSafe();
@@ -3506,7 +3506,7 @@
         const result = await response.json().catch(() => null);
         if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
         const etabId = typeof result === "string" ? result : result?.id || result;
-        if (!etabId) throw new Error("etab_id non retourne par Supabase");
+        if (!etabId) throw new Error("etab_id non retourné par Supabase");
         cloudConfig = { ...cloudConfig, etabId };
         saveCloudConfig();
         setCurrentEtabRole(result?.role || "member");
@@ -3517,7 +3517,7 @@
       }
 
       async function createEtabInvite(role = "member") {
-        if (!cloudConfig.etabId) throw new Error("aucun etablissement actif");
+        if (!cloudConfig.etabId) throw new Error("aucun Établissement actif");
         const response = await fetch(rpcEndpoint("create_etab_invite"), {
           method: "POST",
           headers: cloudHeaders(),
@@ -3526,7 +3526,7 @@
         const result = await response.json().catch(() => null);
         if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
         const token = typeof result === "string" ? result : result?.token || result;
-        if (!token) throw new Error("invitation non retournee par Supabase");
+        if (!token) throw new Error("invitation non retournée par Supabase");
         authInviteLink = inviteLinkForToken(token);
         return authInviteLink;
       }
@@ -3549,10 +3549,10 @@
           else if (cloudConfig.etabId) await refreshCurrentEtabRole();
           authPassword = "";
           authStatus = hadInvite
-            ? "Connexion Supabase active. Invitation acceptee."
+            ? "Connexion Supabase active. Invitation acceptée."
             : cloudReady()
             ? "Connexion Supabase active."
-            : "Connexion Supabase active. Renseignez l'etab_id pour charger les donnees.";
+            : "Connexion Supabase active. Renseignez l'etab_id pour charger les données.";
           if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
         } catch (error) {
           saveAdminSession(null);
@@ -3569,12 +3569,12 @@
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, "")
-          .slice(0, 80) || "etablissement";
+          .slice(0, 80) || "Établissement";
       }
 
       async function createEtabForCurrentUser(name) {
         const label = String(name || "").trim();
-        if (!label) throw new Error("nom d'etablissement requis");
+        if (!label) throw new Error("nom d’établissement requis");
         const response = await fetch(rpcEndpoint("create_etab_for_current_user"), {
           method: "POST",
           headers: cloudHeaders(),
@@ -3583,7 +3583,7 @@
         const result = await response.json().catch(() => null);
         if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
         const etabId = typeof result === "string" ? result : result?.id || result;
-        if (!etabId) throw new Error("etab_id non retourne par Supabase");
+        if (!etabId) throw new Error("etab_id non retourné par Supabase");
         cloudConfig = { ...cloudConfig, etabId };
         saveCloudConfig();
         setCurrentEtabName(label);
@@ -3591,11 +3591,11 @@
       }
 
       async function signUpAdmin() {
-        authStatus = "Creation du compte...";
+        authStatus = "Création du compte...";
         render();
         try {
           if (!cloudConfig.url || !cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
-          if (!authInviteToken && !authEtabName.trim()) throw new Error("renseignez le nom de l'etablissement");
+          if (!authInviteToken && !authEtabName.trim()) throw new Error("renseignéz le nom de l’établissement");
           const response = await fetch(authEndpoint("signup"), {
             method: "POST",
             headers: cloudHeaders(),
@@ -3610,8 +3610,8 @@
           if (!result.access_token) {
             authPassword = "";
             authStatus = authInviteToken
-              ? "Compte cree. Validez l'email si Supabase le demande, puis connectez-vous avec ce lien pour rejoindre l'equipe."
-              : "Compte cree. Validez l'email si Supabase le demande, puis connectez-vous pour creer l'etablissement.";
+              ? "Compte créé. Validez l'email si Supabase le demande, puis connectez-vous avec ce lien pour rejoindre l'équipe."
+              : "Compte créé. Validez l'email si Supabase le demande, puis connectez-vous pour creer l’établissement.";
             return;
           }
           saveAdminSession(result);
@@ -3623,12 +3623,12 @@
           }
           authPassword = "";
           authStatus = hadInvite
-            ? "Compte cree et rattache a l'equipe EPS."
-            : "Compte et etablissement crees. Vous pouvez sauvegarder ce planning.";
+            ? "Compte créé et rattaché à l’équipe EPS."
+            : "Compte et Établissement créés. Vous pouvez sauvegarder ce planning.";
           if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, true, true), 0);
         } catch (error) {
           saveAdminSession(null);
-          authStatus = `Creation impossible : ${error.message || "erreur inconnue"}`;
+          authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
         } finally {
           render();
         }
@@ -3807,16 +3807,16 @@
 
       function scheduleCloudSave(keys = []) {
         if (!isAdmin()) {
-          cloudStatus = "Modification refusee : rechargement de la source Supabase.";
+          cloudStatus = "Modification refusée : rechargement de la source Supabase.";
           discardLocalChangesFromCloudSoon();
           return;
         }
         if (!cloudReady()) {
-          cloudStatus = "Modification refusee : cloud non configure.";
+          cloudStatus = "Modification refusée : cloud non configuré.";
           return;
         }
         if (!cloudConfig.autoSave) {
-          cloudStatus = "Modification refusee : autosauvegarde cloud desactivee.";
+          cloudStatus = "Modification refusée : autosauvegarde cloud désactivée.";
           discardLocalChangesFromCloudSoon();
           return;
         }
@@ -4026,8 +4026,8 @@
       }
 
       function validateCycle(cycle, cycleList = activeCycles()) {
-        if (!cycle.start || !cycle.end) return `${cycle.name} : renseignez une date de debut et une date de fin.`;
-        if (cycleDateRange(cycle).start > cycleDateRange(cycle).end) return `${cycle.name} : la date de fin doit etre apres la date de debut.`;
+        if (!cycle.start || !cycle.end) return `${cycle.name} : renseignéz une date de début et une date de fin.`;
+        if (cycleDateRange(cycle).start > cycleDateRange(cycle).end) return `${cycle.name} : la date de fin doit être après la date de début.`;
         if (!isWorkdayDate(cycle.start) || !isWorkdayDate(cycle.end)) return `${cycle.name} : les dates doivent commencer et finir un jour travaille, du lundi au vendredi.`;
         const overlapping = cycleList.find((item) => item.id !== cycle.id && cyclesOverlap(cycle, item));
         if (overlapping) return `${cycle.name} se superpose avec ${overlapping.name}.`;
@@ -4118,7 +4118,7 @@
               <button type="button" data-date-range-month="+">›</button>
             </div>
             <div class="dateRangeGrid">${["L", "M", "M", "J", "V", "S", "D"].map((day) => `<span class="dateRangeWeekday">${day}</span>`).join("")}${dayButtons}</div>
-            <span class="dateRangeHint ${dateRangeSelectionError ? "error" : ""}">${dateRangeSelectionError || (dateRangeDraftStart && !dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de debut.")}</span>
+            <span class="dateRangeHint ${dateRangeSelectionError ? "error" : ""}">${dateRangeSelectionError || (dateRangeDraftStart && !dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de début.")}</span>
             <div class="dateRangeActions">
               <button type="button" class="dateRangeValidate" data-validate-date-range="${id}" ${dateRangeDraftStart && dateRangeDraftEnd ? "" : "disabled"}>Valider les dates</button>
             </div>
@@ -4565,7 +4565,7 @@
       }
 
       function optimizedCycleActivityLimitForClass(schoolClass) {
-        return classParts(schoolClass).level === "6eme" && constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") ? 2 : 1;
+        return classParts(schoolClass).level === "6ème" && constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming") ? 2 : 1;
       }
 
       function optimizedSwimmingActivityIds() {
@@ -4593,7 +4593,7 @@
         return optimizedRuleClassKeys(rule).some((schoolClass) => {
           const key = `${schoolClass}::${cycle.id}`;
           const existing = usage.classCycleActivities.get(key) || new Set();
-          const isSixth = classParts(schoolClass).level === "6eme" && enforceSixthProgram;
+          const isSixth = classParts(schoolClass).level === "6ème" && enforceSixthProgram;
           if (isSixth && existing.size === 1 && existing.has(block.activityId)) return true;
           if (existing.has(block.activityId)) return false;
           return existing.size >= optimizedCycleActivityLimitForClass(schoolClass);
@@ -4605,7 +4605,7 @@
         const swimmingIds = optimizedSwimmingActivityIds();
         if (!swimmingIds.length) return 0;
         return optimizedRuleClassKeys(rule).reduce((sum, schoolClass) => {
-          if (classParts(schoolClass).level !== "6eme") return sum;
+          if (classParts(schoolClass).level !== "6ème") return sum;
           const isSwimming = swimmingIds.includes(block.activityId);
           const classCycleKey = `${schoolClass}::${cycle.id}`;
           const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
@@ -4647,7 +4647,7 @@
         const swimmingIds = optimizedSwimmingActivityIds();
         if (!swimmingIds.length) return false;
         return optimizedRuleClassKeys(rule).some((schoolClass) => {
-          if (classParts(schoolClass).level !== "6eme") return false;
+          if (classParts(schoolClass).level !== "6ème") return false;
           const classCycleKey = `${schoolClass}::${cycle.id}`;
           const currentActivities = usage.classCycleActivities.get(classCycleKey) || new Set();
           return ![...currentActivities].some((activityId) => swimmingIds.includes(activityId));
@@ -4701,7 +4701,7 @@
       function optimizedSixthProgramViolations() {
         if (!constructionRuleSettingEnabled("sixth-grade-dual-activity-swimming")) return [];
         const swimmingIds = optimizedSwimmingActivityIds();
-        const sixthClasses = classes.filter((schoolClass) => classParts(schoolClass).level === "6eme");
+        const sixthClasses = classes.filter((schoolClass) => classParts(schoolClass).level === "6ème");
         const cyclesToCheck = classicConstructionCycles();
         return sixthClasses.flatMap((schoolClass) => cyclesToCheck.flatMap((cycle, cycleIndex) => {
           const activityIds = new Set();
@@ -4712,7 +4712,7 @@
             if (block.activityId) activityIds.add(block.activityId);
           });
           const issues = [];
-          if (activityIds.size !== 2) issues.push(`${compactClassName(schoolClass)} ${cycle.name || `cycle ${cycleIndex + 1}`} : ${activityIds.size || 0} activite(s) au lieu de 2`);
+          if (activityIds.size !== 2) issues.push(`${compactClassName(schoolClass)} ${cycle.name || `cycle ${cycleIndex + 1}`} : ${activityIds.size || 0} activité(s) au lieu de 2`);
           if (cycleIndex < 3 && ![...activityIds].some((activityId) => swimmingIds.includes(activityId))) {
             issues.push(`${compactClassName(schoolClass)} ${cycle.name || `cycle ${cycleIndex + 1}`} : natation manquante`);
           }
@@ -4734,18 +4734,18 @@
         if (!candidates.length) {
           const level = rule.classLevel || classParts(rule.block?.schoolClass || "").level || "";
           const programActivityIds = constructionRuleSettingEnabled("class-activity-program") ? (activityProgramByLevel[level] || []) : [];
-          if (constructionRuleSettingEnabled("class-activity-program") && programActivityIds.length) return "Aucune installation ne propose une activite du programme compatible.";
-          if (constructionRuleSettingEnabled("facility-unavailable")) return "Aucune installation/activite compatible ou disponible sur ce creneau.";
-          return "Aucun couple installation/activite compatible.";
+          if (constructionRuleSettingEnabled("class-activity-program") && programActivityIds.length) return "Aucune installation ne propose une activité du programme compatible.";
+          if (constructionRuleSettingEnabled("facility-unavailable")) return "Aucune installation/activité compatible ou disponible sur ce créneau.";
+          return "Aucun couple installation/activité compatible.";
         }
         const withoutConflicts = candidates.filter((block) => !optimizedAssignmentHasConflict(rule, cycle, block, assignments));
-        if (!withoutConflicts.length) return "Toutes les installations compatibles sont deja occupees sur ce creneau.";
+        if (!withoutConflicts.length) return "Toutes les installations compatibles sont déjà occupées sur ce créneau.";
         const withoutActivityLimit = withoutConflicts.filter((block) => !optimizedCandidateViolatesClassCycleActivity(rule, cycle, block, usage));
         if (!withoutActivityLimit.length) {
-          const hasSixth = optimizedRuleClassKeys(rule).some((schoolClass) => classParts(schoolClass).level === "6eme");
+          const hasSixth = optimizedRuleClassKeys(rule).some((schoolClass) => classParts(schoolClass).level === "6ème");
           return hasSixth
-            ? "La classe de 6eme a deja atteint ses deux activites distinctes sur ce cycle."
-            : "La classe a deja une activite affectee sur ce cycle.";
+            ? "La classe de 6ème a déjà atteint ses deux activités distinctes sur ce cycle."
+            : "La classe a déjà une activité affectée sur ce cycle.";
         }
         return "Aucune affectation n'a respecte toutes les contraintes actives.";
       }
@@ -4790,7 +4790,7 @@
             usage.classCycleActivities.get(classCycleKey).add(block.activityId);
             if (!usage.classYearActivities.has(schoolClass)) usage.classYearActivities.set(schoolClass, new Set());
             usage.classYearActivities.get(schoolClass).add(block.activityId);
-            if (classParts(schoolClass).level === "6eme" && swimmingIds.includes(block.activityId)) {
+            if (classParts(schoolClass).level === "6ème" && swimmingIds.includes(block.activityId)) {
               if (!usage.sixthSwimmingCycles.has(schoolClass)) usage.sixthSwimmingCycles.set(schoolClass, new Set());
               usage.sixthSwimmingCycles.get(schoolClass).add(cycle.id);
             }
@@ -4859,7 +4859,7 @@
 
       function optimizeConstructionCycleDetails() {
         if (!facilities.length || !activities.length) {
-          const result = { saved: 0, unresolved: constructionRules.length, message: "Ajoutez d'abord des installations et des activites.", detail: "La construction optimisee a besoin de couples installation/activite pour proposer une solution." };
+          const result = { saved: 0, unresolved: constructionRules.length, message: "Ajoutez d'abord des installations et des activités.", detail: "La construction optimisée a besoin de couples installation/activité pour proposer une solution." };
           constructionOptimizationResult = result;
           return result;
         }
@@ -4920,16 +4920,16 @@
           saved,
           unresolved,
           message: unresolved
-            ? `${saved} detail(s) optimise(s), ${preserved} conserve(s), ${unresolved} point(s) a verifier`
-            : `${saved} detail(s) optimise(s), ${preserved} conserve(s)`
+            ? `${saved} detail(s) optimise(s), ${preserved} conservé(s), ${unresolved} point(s) a verifier`
+            : `${saved} detail(s) optimise(s), ${preserved} conservé(s)`
         };
         constructionOptimizationResult = {
           ...result,
           unresolvedBlocks,
           level: unresolved ? "warning" : "ready",
           detail: checkDetail || (saved
-            ? "Les installations et activites manquantes ont ete renseignees dans les cycles, sans modifier les blocs profs/classes ni les details deja saisis."
-            : "Aucun detail n'a ete ajoute. Les details deja saisis sont conserves ; vous pouvez vider les installations/activites pour repartir de zero.")
+            ? "Les installations et activités manquantes ont été renseignées dans les cycles, sans modifier les blocs profs/classes ni les détails déjà saisis."
+            : "Aucun d?tail n?a ?t? ajout?. Les détails déjà saisis sont conservés ; vous pouvez vider les installations/activités pour repartir de z?ro.")
         };
         return result;
       }
@@ -4973,7 +4973,7 @@
         const targetWeek = schoolYearWeeks().find((item) => item.rank === targetParts.weekRank);
         if (!targetRow || !targetWeek) return false;
         if (targetRow.isAs) {
-          showValidationPopup("Impossible de deplacer un cours sur un creneau AS");
+          showValidationPopup("Impossible de déplacer un cours sur un créneau AS");
           return false;
         }
         const classLevel = classParts(block.schoolClass).level;
@@ -5050,12 +5050,12 @@
         const targetWeek = schoolYearWeeks().find((item) => item.rank === targetParts.weekRank);
         if (!targetRow || !targetWeek) return false;
         if (!targetRow.isAs) {
-          showValidationPopup("Une AS doit rester sur un creneau AS");
+          showValidationPopup("Une AS doit rester sur un créneau AS");
           return false;
         }
         const blockedTeacherIds = unavailableTeachersForCell(targetRow, targetWeek, true);
         if ((session.teacherIds || []).some((teacherId) => blockedTeacherIds.has(teacherId))) {
-          showValidationPopup("Impossible de deplacer l'AS : un professeur est indisponible sur ce creneau");
+          showValidationPopup("Impossible de déplacer l'AS : un professeur est indisponible sur ce créneau");
           return false;
         }
         asSessions = asSessions.map((item) => item.id === sessionId ? {
@@ -5094,7 +5094,7 @@
         }
         activeBuildCell = null;
         editingBuildBlock = null;
-        showValidationPopup("Bloc selectionne : cliquez sur la case cible");
+        showValidationPopup("Bloc sélectionné : cliquez sur la case cible");
         render();
       }
 
@@ -5136,9 +5136,9 @@
       }
 
       function confirmSlotItemDeletion(label) {
-        const firstConfirm = window.confirm(`Supprimer ${label} uniquement sur ce creneau ?`);
+        const firstConfirm = window.confirm(`Supprimer ${label} uniquement sur ce créneau ?`);
         if (!firstConfirm) return false;
-        return window.confirm("Confirmer une deuxieme fois la suppression sur ce creneau ?");
+        return window.confirm("Confirmer une deuxième fois la suppression sur ce créneau ?");
       }
 
       function excludeEventFromSlot(eventId, key) {
@@ -5153,7 +5153,7 @@
 
       function excludeAsFromSlot(sessionId, key) {
         const session = asSessions.find((item) => item.id === sessionId);
-        if (!session || !window.confirm(`Supprimer l'AS ${session.name || ""} uniquement sur ce creneau ?`.trim())) return;
+        if (!session || !window.confirm(`Supprimer l'AS ${session.name || ""} uniquement sur ce créneau ?`.trim())) return;
         const existing = asExclusions[sessionId] || [];
         if (!existing.includes(key)) asExclusions[sessionId] = [...existing, key];
         saveAsExclusions();
@@ -5697,7 +5697,7 @@
         const ids = teacherIdsForBlock(block);
         if (ids.length < 2) return "";
         const name = teachers.find((teacher) => teacher.id === ids[1])?.name || "2e prof";
-        return `${name} : creneau complet`;
+        return `${name} : créneau complet`;
       }
 
       function blockTeacherStyle(block) {
@@ -5829,14 +5829,14 @@
 
       function blockConflictMessageForItems(items, candidate) {
         const facilityConflict = items.find((item) => item.facilityId && candidate.facilityId && item.facilityId === candidate.facilityId && !blocksCanShareFacility(item, candidate));
-        if (facilityConflict) return `Installation deja occupee : ${candidate.facilityLabel}.`;
+        if (facilityConflict) return `Installation déjà occupée : ${candidate.facilityLabel}.`;
         const teacherConflict = items.find((item) => teacherIdsForBlock(item).some((teacherId) =>
           teacherIdsForBlock(candidate).includes(teacherId)
           && teacherClassForBlock(item, teacherId) !== teacherClassForBlock(candidate, teacherId)
         ));
-        if (teacherConflict) return `Professeur deja pris avec ${blockClassLabel(teacherConflict) || "une autre classe"}.`;
+        if (teacherConflict) return `Professeur déjà pris avec ${blockClassLabel(teacherConflict) || "une autre classe"}.`;
         const classConflict = items.find((item) => classesForBlock(item).some((itemClass) => classesForBlock(candidate).some((candidateClass) => classesOverlap(itemClass, candidateClass))));
-        if (classConflict) return `Classe deja prise : ${blockClassLabel(candidate)}.`;
+        if (classConflict) return `Classe déjà prise : ${blockClassLabel(candidate)}.`;
         return "";
       }
 
@@ -5968,7 +5968,7 @@
         const missingTeachers = teacherIds
           .filter((teacherId) => !serviceFreeRowsForTeacher(teacherId).length)
           .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)?.name || teacherId);
-        if (missingTeachers.length) return `${missingTeachers.join(" + ")} n'a pas d'option renseignee dans le service theorique.`;
+        if (missingTeachers.length) return `${missingTeachers.join(" + ")} n'a pas d'option renseignée dans le service théorique.`;
         return "Option disponible.";
       }
 
@@ -5994,8 +5994,8 @@
         if (parts.special) return specialClassHoursForSchoolClass(schoolClass);
         const level = parts.level;
         const legalTarget = Number(defaultServiceHours[level] ?? 0);
-        const configuredTarget = Number(serviceHoursByLevel[level] ?? legalTarget);
-        return legalTarget ? Math.min(configuredTarget, legalTarget) : configuredTarget;
+        const configurédTarget = Number(serviceHoursByLevel[level] ?? legalTarget);
+        return legalTarget ? Math.min(configurédTarget, legalTarget) : configurédTarget;
       }
 
       function selectedServiceLevelForTeacher(teacherId) {
@@ -6137,7 +6137,7 @@
         const restrictedTeachers = teacherIds
           .filter((teacherId) => !serviceAllowsClassForTeacher(teacherId, schoolClass))
           .map((teacherId) => teachers.find((teacher) => teacher.id === teacherId)?.name || teacherId);
-        return restrictedTeachers.length ? `${schoolClass} n'est pas affectee a ${restrictedTeachers.join(", ")} dans le service theorique.` : "";
+        return restrictedTeachers.length ? `${schoolClass} n'est pas affectée ? ${restrictedTeachers.join(", ")} dans le service théorique.` : "";
       }
 
       function buildModalAvailability() {
@@ -6360,7 +6360,7 @@
           <div class="dateNav">
             <button class="weekArrow" id="prevWeek" title="Semaine precedente" ${weekInfo.rank <= 1 ? "disabled" : ""}>‹</button>
             <div class="dateMain">
-              <span>Semaine selectionnee</span>
+              <span>Semaine sélectionnée</span>
               <strong>Semaine ${weekInfo.rank}${weekInfo.letter} - ${weekDateLabel(weekInfo)}</strong>
               <small>${weekWorkingDaysLabel(weekInfo)}</small>
             </div>
@@ -6512,7 +6512,7 @@
         const cycleChoices = userCycleChoices();
         const currentCycle = cycleChoices.find((cycle) => weeksForCycle(cycle).some((weekItem) => weekItem.rank === displayedWeek.rank)) || cycleChoices[0];
         const selectedCycle = cycleChoices.find((item) => item.id === (activeHomeCycleId || currentCycle?.id)) || currentCycle;
-        if (!selectedCycle) return `<section class="panel"><h2>Résumé cycle</h2><p class="muted">Aucun cycle defini.</p></section>`;
+        if (!selectedCycle) return `<section class="panel"><h2>Résumé cycle</h2><p class="muted">Aucun cycle défini.</p></section>`;
         return `<section class="panel">
           <div class="cycleSummaryHeader">
             <div>
@@ -6584,7 +6584,7 @@
         const displayedTeachers = teachers.filter((teacher) => selectedTeacherIds.includes(teacher.id));
         return `<section class="panel">
           <h2>Vue par professeur</h2>
-          <p class="muted">${allSelected ? "Tous les professeurs sont visibles ensemble" : `${displayedTeachers.length} professeur(s) selectionne(s)`} pour la semaine ${selectedWeek}.</p>
+          <p class="muted">${allSelected ? "Tous les professeurs sont visibles ensemble" : `${displayedTeachers.length} professeur(s) sélectionné(s)`} pour la semaine ${selectedWeek}.</p>
           <div class="allTeachersGrid">${displayedTeachers.map((teacher) => {
             const stats = statFor(cycle, teacher.id);
             const lessons = assignments.filter((item) => item.teacher.id === teacher.id);
@@ -6613,7 +6613,7 @@
 
       function renderHoursBalance() {
         const alerts = serviceAlerts();
-        const serviceCloudNotice = criticalCloudNotice("Service theorique");
+        const serviceCloudNotice = criticalCloudNotice("Service théorique");
         return `<section class="hoursBalancePage">
           <div class="hoursBalanceHeader">
             <div>
@@ -6634,10 +6634,10 @@
                 <input data-service-special-hours="${schoolClass}" type="number" min="0" step="0.5" value="${specialClassHoursForSchoolClass(schoolClass)}" />
               </div>`).join("")}</div>
             <div class="alertHelp"><strong>Contrainte de construction</strong><span>Il faut minimum 24h d'intervalle pour refaire cours avec la même classe, peu importe le prof. Cette contrainte sera intégrée lors de la construction des emplois du temps.</span></div>
-            ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${compactClassName(item.schoolClass)} : ${item.total}h affectees / ${item.target}h autorisees. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun depassement d'heures par classe.</div>`}
+            ${alerts.length ? `<div class="serviceAlerts">${alerts.map((item) => `<div class="serviceAlert">${compactClassName(item.schoolClass)} : ${item.total}h affectées / ${item.target}h autorisées. A modifier avant validation du service.</div>`).join("")}</div>` : `<div class="alertEmpty">Aucun dépassement d'heures par classe.</div>`}
           </div>
           <div class="servicePanel">
-            <h3>Service theorique</h3>
+            <h3>Service théorique</h3>
             <div class="serviceTeachers">${teachers.map((teacher) => {
               const teacherRows = serviceClassRowsForTeacher(teacher.id);
               const freeRows = serviceFreeRowsForTeacher(teacher.id);
@@ -6658,7 +6658,7 @@
                 </div>
                 <div class="serviceCompare singleColumn">
                   <div class="serviceColumn">
-                    <h4>Service theorique</h4>
+                    <h4>Service théorique</h4>
                     <div class="serviceTheorySummary">
                       <span class="hoursStatus ${hourStatus(total - courseTarget).className}">${total}h / ${courseTarget}h</span>
                       ${overtimeHours ? `<span class="overtimeBadge">${overtimeHours}h sup</span>` : ""}
@@ -6669,14 +6669,14 @@
                 ${selectedLevel ? `<div class="serviceClassRows">${visibleClasses.map((schoolClass) => {
                   const assignment = serviceAssignmentFor(teacher.id, schoolClass);
                   const active = selectedClass === schoolClass;
-                  return `<button class="choiceButton serviceClassButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}" title="${assignment ? `${assignment.hours}h affectee(s)` : ""}">${compactClassName(schoolClass)}${assignment ? ` &middot; ${assignment.hours}h` : ""}</button>`;
+                  return `<button class="choiceButton serviceClassButton ${active ? "active" : ""}" data-service-class-toggle="${teacher.id}" data-service-class="${schoolClass}" title="${assignment ? `${assignment.hours}h affectée(s)` : ""}">${compactClassName(schoolClass)}${assignment ? ` &middot; ${assignment.hours}h` : ""}</button>`;
                 }).join("")}</div>
                 ${selectedClass ? `<div class="serviceClassRow">
                   <strong>${compactClassName(selectedClass)}</strong>
                   <input class="serviceHoursInput ${selectedClassAssignment ? "" : "needsValidation"}" data-service-class-hours="${teacher.id}" data-service-class="${selectedClass}" type="number" min="0" max="${selectedClassMaxHours}" step="0.5" value="${selectedClassHoursDraft}" placeholder="${serviceClassTarget(selectedClass)}h max" />
                   <button class="serviceValidateButton" data-service-class-validate="${teacher.id}" data-service-class="${selectedClass}" title="Valider les heures" ${canValidateSelectedClass ? "" : "disabled"}>&#10003;</button>
                 </div>` : `<span class="muted">Choisissez une classe pour renseigner les heures.</span>`}` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
-                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectee</span>`}</div>
+                <div class="classPills">${teacherRows.length ? teacherRows.map((row) => `<button class="classPill" data-service-assignment-delete="${teacher.id}" data-service-assignment-class="${row.classId}" title="Supprimer cette affectation">${compactClassName(row.classId)} &middot; ${row.hours}h</button>`).join("") : `<span class="classPill">Aucune classe affectée</span>`}</div>
                 <div class="serviceFreeBox">
                   <label>Service libre</label>
                   <div class="serviceFreeRow">
@@ -6698,16 +6698,16 @@
         const selectedWeek = activeScheduleWeek();
         const selected = selectedWeek === "B" ? cycle.B : cycle.A;
         return `<section class="panel">
-          <div class="check"><strong>Objectif mensuel : 68h pour 4 professeurs, 52h pour le professeur agrege. Les semaines A et B peuvent donc etre differentes.</strong></div>
+          <div class="check"><strong>Objectif mensuel : 68h pour 4 professeurs, 52h pour le professeur agrégé. Les semaines A et B peuvent donc être différentes.</strong></div>
           <h2 style="margin-top:18px">Priorite de generation</h2>
           <div class="list">${facilities.map((facility, index) => `
-            <article class="priority"><strong>${index + 1}</strong><div><b>${facility.label}</b><span class="muted">${facility.type === "external" ? "Installation exterieure au college" : "Installation dans le college"}</span></div></article>
+            <article class="priority"><strong>${index + 1}</strong><div><b>${facility.label}</b><span class="muted">${facility.type === "external" ? "Installation extérieure au collège" : "Installation dans le collège"}</span></div></article>
           `).join("")}</div>
           <h2 style="margin-top:18px">${selectedWeek === "year" ? "Bilan mensuel A/B" : `Bilan semaine ${selectedWeek}`}</h2>
           <div class="list">${teachers.map((teacher) => {
             const stats = selectedWeek === "year" ? statFor(cycle, teacher.id) : selected.stats[teacher.id];
             const target = selectedWeek === "year" ? "" : ` / ${teacher.weekTargets[selectedWeek]}h`;
-            return `<article class="stat"><strong style="color:${teacher.border}">${teacher.name}</strong><span>${stats.total}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${stats.external}${selectedWeek === "year" ? "" : "h"} ext. · ${stats.internal}${selectedWeek === "year" ? "" : "h"} college</small></article>`;
+            return `<article class="stat"><strong style="color:${teacher.border}">${teacher.name}</strong><span>${stats.total}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${stats.external}${selectedWeek === "year" ? "" : "h"} ext. · ${stats.internal}${selectedWeek === "year" ? "" : "h"} coll?ge</small></article>`;
           }).join("")}</div>
         </section>`;
       }
@@ -6727,10 +6727,10 @@
         const details = [
           ...builtItems.map((item) => `<div class="selectedCellDetail">
             <strong>Cours</strong>
-            <span>Classe : ${item.schoolClass ? compactClassName(item.schoolClass) : "non renseignee"}</span>
+            <span>Classe : ${item.schoolClass ? compactClassName(item.schoolClass) : "non renseignée"}</span>
             <span>Prof : ${teacherLabelForBlock(item)}</span>
-            <span>Installation : ${item.facilityLabel || item.type || "non renseignee"}</span>
-            ${item.activityLabel ? `<span>Activite : ${item.activityLabel}</span>` : ""}
+            <span>Installation : ${item.facilityLabel || item.type || "non renseignée"}</span>
+            ${item.activityLabel ? `<span>Activité : ${item.activityLabel}</span>` : ""}
             ${item.cycleName ? `<span>Cycle : ${item.cycleName}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>` : ""}
           </div>`),
           ...events.map((event) => `<div class="selectedCellDetail">
@@ -6750,9 +6750,9 @@
           </div>`)
         ];
         if (vacation) details.push(`<div class="selectedCellDetail"><strong>Vacances</strong><span>${vacation.name}</span></div>`);
-        if (holiday) details.push(`<div class="selectedCellDetail"><strong>Ferie</strong><span>${holiday}</span></div>`);
+        if (holiday) details.push(`<div class="selectedCellDetail"><strong>Férié</strong><span>${holiday}</span></div>`);
         return `<div class="selectedCellBackdrop" data-close-year-cell-detail></div>
-          <div class="selectedCellInfo" role="dialog" aria-label="Detail de la case selectionnee">
+          <div class="selectedCellInfo" role="dialog" aria-label="Detail de la case sélectionnée">
             <button class="selectedCellClose" data-close-year-cell-detail>Fermer</button>
             <strong>${row.day} ${row.slot.label} · Semaine ${weekItem.rank}${weekItem.letter}</strong>
             <span>${weekDateLabel(weekItem)}</span>
@@ -6848,18 +6848,18 @@
         const items = [];
         const cycleErrors = validateCycles(cycles);
         const hasServiceAssignments = teachers.some((teacher) => serviceRowsForTeacher(teacher.id).length > 0);
-        if (!adminStepComplete("establishment")) items.push({ level: "blocking", title: "Creneaux a completer", detail: "Renseignez les creneaux de cours et les horaires d'AS dans Etablissement.", buildMode: "prerequisites", subMode: "establishment" });
+        if (!adminStepComplete("establishment")) items.push({ level: "blocking", title: "Créneaux à compléter", detail: "Renseignez les créneaux de cours et les horaires d'AS dans Établissement.", buildMode: "prerequisites", subMode: "establishment" });
         if (!teachers.length) items.push({ level: "blocking", title: "Aucun professeur", detail: "Ajoutez au moins un professeur avant de construire des cours.", buildMode: "prerequisites", subMode: "team" });
         if (!classes.length) items.push({ level: "blocking", title: "Aucune classe", detail: "Ajoutez au moins une classe dans l'onglet Classes.", buildMode: "prerequisites", subMode: "classes" });
         if (!facilities.length) items.push({ level: "blocking", title: "Aucune installation", detail: "Ajoutez au moins une installation pour pouvoir placer un cours.", buildMode: "prerequisites", subMode: "facilitiesActivities" });
-        if (!activities.length) items.push({ level: "blocking", title: "Aucune activite", detail: "Ajoutez au moins une activite et reliez-la aux installations possibles.", buildMode: "prerequisites", subMode: "facilitiesActivities" });
-        if (!adminStepComplete("program")) items.push({ level: "blocking", title: "Programme incomplet", detail: "Affectez les activites attendues pour chaque niveau dans Programme.", buildMode: "prerequisites", subMode: "program" });
-        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "Definissez les cycles pour relier chaque cours a une periode.", buildMode: "yearPrerequisites", subMode: "cycles" });
-        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles a corriger", detail: cycleErrors[0], buildMode: "yearPrerequisites", subMode: "cycles" });
-        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service theorique non renseigne", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "yearPrerequisites", subMode: "hours" });
-        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilite", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "yearPrerequisites", subMode: "unavailable" });
-        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent apparaitre dans le planning.", buildMode: "yearPrerequisites", subMode: "as" });
-        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun evenement sportif", detail: "Ajoutez les evenements sportifs connus pour reserver les creneaux concernes.", buildMode: "yearPrerequisites", subMode: "events" });
+        if (!activities.length) items.push({ level: "blocking", title: "Aucune activité", detail: "Ajoutez au moins une activité et reliez-la aux installations possibles.", buildMode: "prerequisites", subMode: "facilitiesActivities" });
+        if (!adminStepComplete("program")) items.push({ level: "blocking", title: "Programme incomplet", detail: "Affectez les activités attendues pour chaque niveau dans Programme.", buildMode: "prerequisites", subMode: "program" });
+        if (!cycles.length) items.push({ level: "blocking", title: "Aucun cycle", detail: "D?finissez les cycles pour relier chaque cours ? une p?riode.", buildMode: "yearPrerequisites", subMode: "cycles" });
+        if (cycleErrors.length) items.push({ level: "blocking", title: "Cycles ? corriger", detail: cycleErrors[0], buildMode: "yearPrerequisites", subMode: "cycles" });
+        if (!hasServiceAssignments) items.push({ level: "warning", title: "Service théorique non renseigné", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction.", buildMode: "yearPrerequisites", subMode: "hours" });
+        if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilit?", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "yearPrerequisites", subMode: "unavailable" });
+        if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent appara?tre dans le planning.", buildMode: "yearPrerequisites", subMode: "as" });
+        if (!sportEvents.length) items.push({ level: "warning", title: "Aucun ?v?nement sportif", detail: "Ajoutez les événements sportifs connus pour reserver les créneaux concernes.", buildMode: "yearPrerequisites", subMode: "events" });
         return items;
       }
 
@@ -7148,7 +7148,7 @@
 
       function renderConstructionWarnings() {
         const items = constructionReadinessItems();
-        if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Parametrage pret</strong><span>Les elements essentiels sont renseignes pour construire l'emploi du temps.</span></div></div>`;
+        if (!items.length) return `<div class="constructionWarningPanel"><div class="constructionWarning ready"><strong>Paramétrage prêt</strong><span>Les éléments essentiels sont renseignés pour construire l'emploi du temps.</span></div></div>`;
         return `<div class="constructionWarningPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
@@ -7186,7 +7186,7 @@
                   ${serviceDetails.length ? serviceDetails.map((item) => {
                     const detail = item.missing ? ` &middot; manque ${formatHours(item.missing)}` : item.excess ? ` &middot; trop ${formatHours(item.excess)}` : "";
                     return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${item.label} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
-                  }).join("") : `<span class="classPill">Aucun service affecte</span>`}
+                  }).join("") : `<span class="classPill">Aucun service affecté</span>`}
                 </div>
               </article>`;
             }).join("")}
@@ -7209,7 +7209,7 @@
           ${items.map((item) => {
             const complete = adminStepComplete(item.id);
             const locked = lockState(item.id);
-            return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="subtabStatusStack"><span class="subtabLockIcon ${locked ? "locked" : ""}" aria-label="${locked ? "Verrouille" : "Deverrouille"}">&#128274;</span><span class="stepStatus" aria-label="${complete ? "Etape complete" : "Etape incomplete"}"></span></span></button>`;
+            return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="subtabStatusStack"><span class="subtabLockIcon ${locked ? "locked" : ""}" aria-label="${locked ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${complete ? "Étape complète" : "Étape incomplète"}"></span></span></button>`;
           }).join("")}
         </div>`;
       }
@@ -7219,7 +7219,7 @@
           { id: "establishment", label: "Établissement" },
           { id: "team", label: "Profs" },
           { id: "classes", label: "Classes" },
-          { id: "facilitiesActivities", label: "Installations & activites" },
+          { id: "facilitiesActivities", label: "Installations & activités" },
           { id: "program", label: "Programme" }
         ];
         const content = prerequisiteMode === "team" ? renderTeamSettings()
@@ -7287,17 +7287,17 @@
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Établissement</h3>
-            <p class="muted">Parametrez les horaires utilises dans les cours, les indisponibilites, les evenements et les AS en indiquant simplement l'heure de debut et l'heure de fin.</p>
+            <p class="muted">Paramétrez les horaires utilisés dans les cours, les indisponibilités, les événements et les AS en indiquant simplement l'heure de début et l'heure de fin.</p>
             <div class="eventField">
-              <label>Nom de l'etablissement</label>
-              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. College Loustic" />
+              <label>Nom de l’établissement</label>
+              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. Coll?ge Loustic" />
             </div>
             <div class="eventField">
-              <label>Type d'etablissement</label>
+              <label>Type d’établissement</label>
               <select id="establishmentType" disabled>
-                <option value="college" selected>College</option>
+                <option value="coll?ge" selected>Coll?ge</option>
               </select>
-              <span class="muted">Configuration college active pour le moment.</span>
+              <span class="muted">Configuration coll?ge active pour le moment.</span>
             </div>
             <div class="eventField">
               <label>Zone scolaire</label>
@@ -7314,7 +7314,7 @@
                 <div class="cycleList">
                   ${slots.map((slot, index) => `<div class="cycleRow schoolSlotGrid">
                     <label>Cours ${index + 1}</label>
-                    <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de debut" />
+                    <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de début" />
                     <input data-course-slot-end="${slot.id}" type="time" value="${slot.endTime}" aria-label="Heure de fin" />
                     <button class="ghostButton" data-delete-course-slot="${slot.id}" ${slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
                   </div>`).join("")}
@@ -7327,7 +7327,7 @@
                   ${(schoolConstraints.asSlots || []).map((slot, index) => `<div class="cycleRow">
                     <label>AS ${index + 1}</label>
                     <div class="asSlotGrid">
-                      <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de debut AS" />
+                      <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de début AS" />
                       <input data-as-slot-end="${index}" type="time" value="${slot.endTime}" aria-label="Heure de fin AS" />
                       <div class="asSlotDays">${days.map((day) => `<button class="choiceButton ${(slot.days || []).includes(day) ? "active" : ""}" data-as-slot-day="${index}" data-day="${day}">${day}</button>`).join("")}</div>
                     </div>
@@ -7373,7 +7373,7 @@
               </article>`;
             }).join("")}</div>
             <div class="specialClassPanel">
-              <h3>Classes a besoin specifique</h3>
+              <h3>Classes à besoin spécifique</h3>
               <div class="specialClassForm">
                 <input id="specialClassName" value="${specialClassDraftName}" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
                 <div class="choiceGrid">
@@ -7391,7 +7391,7 @@
                 <span class="muted">${specialClassBaseLabel(item)}</span>
                 <button class="ghostButton" data-remove-special-class="${item.id}" title="Supprimer cette classe">Supprimer</button>
               </div>`;
-              }).join("") : `<span class="muted">Aucune classe specifique definie.</span>`}</div>
+              }).join("") : `<span class="muted">Aucune classe spécifique définie.</span>`}</div>
             </div>
           </div>
         </section>`;
@@ -7412,9 +7412,9 @@
         return `<section class="constructionRulesPage">
           <div class="constructionRulesList" style="grid-column:1 / -1">
             <div class="constructionRulesToolbar">
-              <h3>Regles de construction</h3>
+              <h3>Règles de construction</h3>
             </div>
-            <div class="alertHelp"><strong>Regles systeme</strong><span>Ces regles sont pilotees par les onglets de pre-requis, les services, le programme, les indisponibilites et les installations. Il n'y a rien a ajouter ici.</span></div>
+            <div class="alertHelp"><strong>Règles système</strong><span>Ces règles sont pilotées par les onglets de pré-requis, les services, le programme, les indisponibilités et les installations. Il n’y a rien à ajouter ici.</span></div>
             ${ruleGroups.length ? `<div class="constructionRuleGroupsGrid">${ruleGroups.map(([category, rules]) => {
               const isOpen = expandedConstructionRuleCategory === category;
               return `<section class="unavailableGroup">
@@ -7498,7 +7498,7 @@
         if (!canAccessConstructionPlanning()) {
           return `<section class="builderPage">
             <div class="constructionWarningPanel">
-              <div class="constructionWarning blocking"><strong>Construction verrouillee</strong><span>Completez d'abord les prerequis ci-dessous, puis revenez sur Construction.</span></div>
+              <div class="constructionWarning blocking"><strong>Construction verrouillée</strong><span>Compl?tez d?abord les prérequis ci-dessous, puis revenez sur Construction.</span></div>
             </div>
             ${renderConstructionWarnings()}
           </section>`;
@@ -7508,7 +7508,7 @@
         const blocksComplete = constructionBlocksStepComplete();
         const cycleDetailsComplete = constructionCycleDetailsStepComplete();
         const currentConstructionLocked = constructionBuildLocked(constructionBuildMode, selectedCycle?.id);
-        const lockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `${selectedCycle.name} verrouille` : "Blocs profs/classes verrouilles";
+        const lockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `${selectedCycle.name} verrouillé` : "Blocs profs/classes verrouillés";
         const unlockLabel = constructionBuildMode === "cycleDetails" && selectedCycle ? `Verrouiller ${selectedCycle.name}` : "Verrouiller les blocs profs/classes";
         const constructionTableContent = constructionBuildMode === "versions"
           ? renderConstructionVersionsView()
@@ -7540,12 +7540,12 @@
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>
             <div class="constructionTabs">
-              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouille"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Etape complete" : "Etape incomplete"}"></span></span></button>
-              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activites<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Etape complete" : "Etape incomplete"}"></span></span></button>
+              <button class="${constructionBuildMode === "blocks" ? "active" : ""} ${blocksComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="blocks">Blocs profs/classes<span class="subtabStatusStack"><span class="subtabLockIcon ${constructionLocks.blocks ? "locked" : ""}" aria-label="${constructionLocks.blocks ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${blocksComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
+              <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activités<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
             ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
-              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activites">Lancer la construction optimisee</button>
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activités">Lancer la construction optimisée</button>
             </div>` : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
@@ -7557,13 +7557,13 @@
                 <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
               </label>
             </div>
-            ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillee : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
-            ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activites se renseignent ensuite par cycle." : "Details par cycle : les blocs profs/classes sont fixes ; cliquez sur un bloc pour renseigner son installation et son activite sur ce cycle."}</div>`}
+            ${currentConstructionLocked ? `<div class="lockNotice">Partie verrouillée : vous pouvez consulter, mais pas modifier ces blocs.</div>` : ""}` : ""}
+            ${constructionBuildMode === "versions" ? "" : `<div class="calendarLegend">${constructionBuildMode === "blocks" ? "Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activités se renseignent ensuite par cycle." : "Détails par cycle : les blocs profs/classes sont fixés ; cliquez sur un bloc pour renseigner son installation et son activité sur ce cycle."}</div>`}
             ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionWarnings()}
             ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
             ${clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
-            ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc selectionne : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
+            ${movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
             ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
             ${constructionTableContent}
           </div>
@@ -7579,9 +7579,9 @@
         return `<div class="modalBackdrop" role="presentation">
           <div class="modal" role="dialog" aria-modal="true" aria-labelledby="constructionOptimizeTitle">
             <button class="modalClose" id="cancelConstructionOptimizer" aria-label="Fermer">x</button>
-            <h2 id="constructionOptimizeTitle">Construction optimisee</h2>
-            <p>Affecter automatiquement les installations et les activites a partir des blocs profs/classes existants ?</p>
-            <p class="muted">Les blocs profs/classes et les details installations/activites deja saisis ne seront pas modifies. Seuls les details vides seront remplis selon les contraintes.</p>
+            <h2 id="constructionOptimizeTitle">Construction optimisée</h2>
+            <p>Affecter automatiquement les installations et les activités à partir des blocs profs/classes existants ?</p>
+            <p class="muted">Les blocs profs/classes et les d?tails installations/activités déjà saisis ne seront pas modifi?s. Seuls les d?tails vides seront remplis selon les contraintes.</p>
             <div class="modalFooter">
               <button class="ghostButton" id="cancelConstructionOptimizerFooter">Annuler</button>
               <button class="addButton" id="confirmConstructionOptimizer">Affecter automatiquement</button>
@@ -7596,9 +7596,9 @@
           <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clearConstructionTitle">
             <button class="modalClose" id="cancelClearConstructionTop" aria-label="Fermer">x</button>
             <h2 id="clearConstructionTitle">Vider la construction</h2>
-            <div class="alertHelp"><strong>Conserve</strong><span>Les pre-requis, regles de construction, AS, evenements sportifs, services, installations et activites restent intacts.</span></div>
+            <div class="alertHelp"><strong>Conserve</strong><span>Les pré-requis, règles de construction, AS, événements sportifs, services, installations et activités restent intacts.</span></div>
             <div class="clearConstructionPanel">
-              <h3>Installations / activites</h3>
+              <h3>Installations / activités</h3>
               <div class="clearConstructionOptions">
                 <label><input type="checkbox" data-clear-option="constructionDetailsAll" /> Tous les cycles</label>
                 ${constructionCycles.map((cycle) => `<label><input type="checkbox" data-clear-cycle-detail="${cycle.id}" /> ${escapeHtml(cycle.name || cycle.id)}</label>`).join("")}
@@ -7631,7 +7631,7 @@
                 <strong>${escapeHtml(constructionVersionLabel(version))}</strong>
                 <span>${escapeHtml(constructionVersionPartsLabel(version))}</span>
                 <span>${ruleCount} bloc(s) · ${exclusionCount} exclusion(s)</span>
-                <span>${version.mode === "optimized" ? "Construction optimisee" : "Construction manuelle"}</span>
+                <span>${version.mode === "optimized" ? "Construction optimisée" : "Construction manuelle"}</span>
                 <div class="constructionRuleActions">
                   <button class="ghostButton" data-restore-construction-version="${version.id}">Charger</button>
                   <button class="ghostButton" data-delete-construction-version="${version.id}">Supprimer</button>
@@ -7716,8 +7716,8 @@ create table if not exists public.eps_plannings (
 alter table public.eps_plannings
 add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
 
--- Migration si eps_plannings existait deja avec id comme seule cle primaire :
--- 1. creez d'abord l'etablissement et recuperez son UUID.
+-- Migration si eps_plannings existait déjà avec id comme seule cl? primaire :
+-- 1. creez d'abord l’établissement et récupérez son UUID.
 -- 2. adaptez puis lancez :
 -- alter table public.eps_plannings add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
 -- update public.eps_plannings set etab_id = 'ETAB_UUID_ICI' where etab_id is null;
@@ -7725,7 +7725,7 @@ add column if not exists etab_id uuid references public.etabs(id) on delete casc
 -- alter table public.eps_plannings drop constraint if exists eps_plannings_pkey;
 -- alter table public.eps_plannings add primary key (etab_id, id);
 
--- AS et evenements sportifs sont rattaches au planning dans data :
+-- AS et événements sportifs sont rattachés au planning dans data :
 -- data->'asSessions' et data->'sportEvents'.
 -- Chaque entree contient etabId + planningId.
 
@@ -7855,7 +7855,7 @@ begin
 
   clean_name := nullif(trim(etab_name), '');
   if clean_name is null then
-    raise exception 'Nom d''etablissement requis';
+    raise exception 'Nom d''Établissement requis';
   end if;
 
   clean_slug := nullif(trim(etab_slug), '');
@@ -7864,7 +7864,7 @@ begin
   end if;
   clean_slug := trim(both '-' from clean_slug);
   if clean_slug = '' then
-    clean_slug := 'etablissement';
+    clean_slug := 'Établissement';
   end if;
   clean_slug := clean_slug || '-' || substr(gen_random_uuid()::text, 1, 8);
 
@@ -7881,7 +7881,7 @@ $$;
 
 grant execute on function public.create_etab_for_current_user(text, text) to authenticated;
 
-create or replace function public.claim_etab_for_current_user(claim_etab_id uuid, etab_name text default 'Etablissement EPS')
+create or replace function public.claim_etab_for_current_user(claim_etab_id uuid, etab_name text default 'Établissement EPS')
 returns jsonb
 language plpgsql
 security definer
@@ -7901,7 +7901,7 @@ begin
 
   clean_name := nullif(trim(etab_name), '');
   if clean_name is null then
-    clean_name := 'Etablissement EPS';
+    clean_name := 'Établissement EPS';
   end if;
 
   insert into public.etabs (id, name, slug)
@@ -7917,7 +7917,7 @@ begin
     where etab_id = claim_etab_id
     and user_id = auth.uid()
   ) then
-    raise exception 'Cet etablissement a deja une equipe. Demandez un lien d''invitation owner.';
+    raise exception 'Cet ?tablissement a déjà une équipe. Demandez un lien d''invitation owner.';
   end if;
 
   insert into public.etab_members (etab_id, user_id, role)
@@ -8082,7 +8082,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </div>
               <div class="cloudField">
                 <label>etab_id</label>
-                <input id="cloudEtabId" value="${cloudConfig.etabId || ""}" placeholder="UUID de l'etablissement" />
+                <input id="cloudEtabId" value="${cloudConfig.etabId || ""}" placeholder="UUID de l’établissement" />
               </div>
               <div class="cloudField">
                 <label>Identifiant du planning</label>
@@ -8106,7 +8106,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           </div>
           <div class="cloudPanel">
             <h3>Tables Supabase a creer</h3>
-            <p class="muted">Dans Supabase, va dans SQL Editor, colle ce script, puis recupere l'URL du projet et la cle publique anon. Ensuite, chaque utilisateur pourra creer son compte et son etablissement depuis l'app.</p>
+            <p class="muted">Dans Supabase, va dans SQL Editor, colle ce script, puis recupere l'URL du projet et la clé publique anon. Ensuite, chaque utilisateur pourra créer son compte et son ?tablissement depuis l'app.</p>
             <pre class="cloudSql">${sql}</pre>
           </div>
         </section>`;
@@ -8147,7 +8147,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
         const presentCount = items.length + events.length + asItems.length;
-        const editingLabel = editingCycleDetails ? "Mode cycle : les installations et activites seront appliquees a tout ce cycle." : editingBuildBlock ? "Mode modification : double-clic applique sur un bloc existant." : "";
+        const editingLabel = editingCycleDetails ? "Mode cycle : les installations et activités seront appliquées ? tout ce cycle." : editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
         const linkedActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : [];
         const availableActivities = blockFacilityId ? (linkedActivities.length ? linkedActivities : activities) : activities;
         const availableFreeActivities = serviceFreeActivities();
@@ -8172,14 +8172,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass)
                   || !serviceAllowsClassForTeacher(teacher.id, schoolClass)
                 ));
-                const reason = unavailable ? `Classes de ${level} deja prises, indisponibles ou hors service theorique pour ${teacher.name}.` : `Afficher les classes de ${level}.`;
+                const reason = unavailable ? `Classes de ${level} déjà prises, indisponibles ou hors service théorique pour ${teacher.name}.` : `Afficher les classes de ${level}.`;
                 return `<button class="choiceButton ${level === selectedLevel ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-level="${teacher.id}" data-class-level="${level}" title="${reason}" aria-label="${reason}" ${!levelClasses.length ? "disabled" : ""}>${level}</button>`;
               }).join("")}
             </div>
             ${selectedLevel ? `<div class="choiceGrid">${visibleClasses.map((schoolClass) => {
               const serviceMessage = serviceClassRestrictionMessage([teacher.id], schoolClass);
               const unavailable = classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || Boolean(serviceMessage);
-              const reason = unavailable ? serviceMessage || `${compactClassName(schoolClass)} est deja prise ou indisponible sur ce creneau.` : `${compactClassName(schoolClass)} disponible.`;
+              const reason = unavailable ? serviceMessage || `${compactClassName(schoolClass)} est déjà prise ou indisponible sur ce créneau.` : `${compactClassName(schoolClass)} disponible.`;
               const hardUnavailable = classCollectionHasOverlap(occupied.unavailableClasses, schoolClass);
               return `<button class="choiceButton serviceClassButton ${schoolClass === blockTeacherClasses[teacher.id] ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${teacher.id}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${compactClassName(schoolClass)}</button>`;
             }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
@@ -8209,9 +8209,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <div class="choiceGrid">${teachers.map((teacher) => {
                   const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id) || cycleUnavailableTeacherIds.has(teacher.id);
                   const reason = occupied.teacherIds.has(teacher.id)
-                    ? `${teacher.name} est deja pris sur ce creneau.`
+                    ? `${teacher.name} est déjà pris sur ce créneau.`
                     : occupied.unavailableTeacherIds.has(teacher.id)
-                      ? `${teacher.name} est indisponible sur ce creneau.`
+                      ? `${teacher.name} est indisponible sur ce créneau.`
                       : cycleUnavailableTeacherIds.has(teacher.id)
                         ? `${teacher.name} est indisponible sur une semaine de ce cycle.`
                       : `${teacher.name} disponible.`;
@@ -8228,10 +8228,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   const unavailable = (occupiedByCourse && !blockCoIntervention) || hardUnavailable;
                   const reason = occupied.facilityIds.has(facility.id)
                     ? blockCoIntervention
-                      ? `${facility.label} deja occupee : autorisee en co-intervention si profs et classes sont differents.`
-                      : `${facility.label} est deja occupee sur ce creneau.`
+                      ? `${facility.label} déjà occupée : autorisée en co-intervention si profs et classes sont différents.`
+                      : `${facility.label} est déjà occupée sur ce créneau.`
                       : occupied.unavailableFacilityIds.has(facility.id)
-                        ? `${facility.label} est indisponible sur ce creneau.`
+                        ? `${facility.label} est indisponible sur ce créneau.`
                       : `${facility.label} disponible.`;
                   return `<button class="choiceButton ${facility.id === blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${facility.label}</button>`;
                 }).join("")}</div>
@@ -8239,16 +8239,16 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               ${false && blockIsOption ? `<div class="buildField">
                 <label>Option</label>
                 <div class="choiceGrid">
-                  ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
+                  ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
                 </div>
                 ${selectedOption ? `<label>Duree</label>
                 <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${blockOptionHours || selectedOptionDefaultHours}" />
-                <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee pour ce cycle.</span>`}
+                <span class="muted">Durée libre : renseignéz le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee pour ce cycle.</span>`}
               </div>` : `<div class="buildField">
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
-                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activite reliee a cette installation." : "Aucune activite renseignee."}</span>`}
+                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${blockFacilityId ? "Aucune activité reli?e ? cette installation." : "Aucune activité renseignée."}</span>`}
                 </div>
                 ${availableFreeActivities.length ? `<label>Service libre</label>
                 <div class="choiceGrid">
@@ -8260,11 +8260,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 ? `<div class="buildField">
                   <label>Option</label>
                   <div class="choiceGrid">
-                    ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs selectionnes.</span>`}
+                    ${availableOptions.map((option) => `<button class="choiceButton ${option.id === blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
                   </div>
                   ${selectedOption ? `<label>Duree</label>
                   <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${blockOptionHours || selectedOptionDefaultHours}" />
-                  <span class="muted">Durée libre : renseignez le volume à compter dans le service réel.</span>
+                  <span class="muted">Durée libre : renseignéz le volume à compter dans le service réel.</span>
                   <label>Cycles concernés</label>
                   <div class="choiceGrid">
                     ${optionCycleChoices().map((cycle) => `<button class="choiceButton ${selectedOptionCycleIds.includes(cycle.id) ? "active" : ""}" data-pick-option-cycle="${cycle.id}">${cycle.name}</button>`).join("")}
@@ -8283,9 +8283,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
               <strong>${classesForBlock(block).length ? blockClassLabel(block) : block.optionBlock ? "Option" : "Classe libre"}</strong>
-              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a selectionner"}</span>
+              ${constructionBuildMode === "cycleDetails" ? `<span>${block.facilityLabel || "Installation a sélectionnér"}</span>
               ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
-              <span>${block.teacherNames || "Professeur a selectionner"}</span>
+              <span>${block.teacherNames || "Professeur a sélectionnér"}</span>
               ${blockCoIntervention ? `<span>Co-intervention</span>` : ""}
             </div>
             ${conflictMessage ? `<div class="conflictNotice">${conflictMessage}</div>` : ""}
@@ -8294,7 +8294,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <button class="addButton" id="addBuiltBlock" ${canSaveBlock ? "" : "disabled"}>${editingCycleDetails ? "Enregistrer ce cycle" : editingBuildBlock ? "Enregistrer le bloc annuel" : "Ajouter le bloc annuel"}</button>
             </div>` : ""}
             <div class="existingBlocks">
-              <h3>${editingCycleDetails ? "Blocs presents sur ce cycle" : "Blocs presents sur ce creneau"}</h3>
+              <h3>${editingCycleDetails ? "Blocs présents sur ce cycle" : "Blocs présents sur ce créneau"}</h3>
               <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
                 <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
                   ${editingCycleDetails ? "" : `<button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>`}
@@ -8304,12 +8304,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map((event) => `
                 <div class="buildBlock eventBlock">
-                  <button data-delete-cell-event="${event.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce creneau">x</button>
+                  <button data-delete-cell-event="${event.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce créneau">x</button>
                   <strong>${event.name} : ${eventClassSummary(event)}</strong>
                   ${eventTeacherDots(event)}
                 </div>`).join("")}${asItems.map((session) => `
                 <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
-                  <button data-delete-cell-as="${session.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce creneau">x</button>
+                  <button data-delete-cell-as="${session.id}" data-delete-cell-key="${activeBuildCell}" title="Retirer de ce créneau">x</button>
                   <strong>${asBlockLabel(session)}</strong>
                   <span>${asSessionTeacherLabel(session)}</span>
                 </div>`).join("")}` : `<span class="muted">Aucun bloc pour cette case.</span>`}</div>
@@ -8320,7 +8320,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function renderDeleteBlockModal() {
         const block = constructionPlan[pendingBlockDelete.key]?.[pendingBlockDelete.index];
-        const label = block ? `${block.schoolClass || "Bloc"} · ${block.facilityLabel || ""} · ${block.cycleName || "cycle"}` : "Bloc selectionne";
+        const label = block ? `${block.schoolClass || "Bloc"} · ${block.facilityLabel || ""} · ${block.cycleName || "cycle"}` : "Bloc sélectionné";
         return `<div class="modalBackdrop">
           <section class="modal deleteModal">
             <div class="modalHeader">
@@ -8347,7 +8347,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <button class="${activeCycleScope === "default" ? "active" : ""}" data-cycle-scope="default">Tous niveaux</button>
             ${classLevels.map((level) => `<button class="${activeCycleScope === level ? "active" : ""}" data-cycle-scope="${level}">${level}</button>`).join("")}
           </div>
-          ${activeCycleScope === "default" ? `<p class="muted">Par defaut, ces cycles s'appliquent a tous les niveaux.</p>` : `<p class="muted">Cycles specifiques aux ${activeCycleScope}. Ils seront utilises pour les blocs de classes ${activeCycleScope}.</p>`}
+          ${activeCycleScope === "default" ? `<p class="muted">Par defaut, ces cycles s’appliquent à tous les niveaux.</p>` : `<p class="muted">Cycles spécifiques aux ${activeCycleScope}. Ils seront utilisés pour les blocs de classes ${activeCycleScope}.</p>`}
           <div class="cycleCount">
             <label for="cycleCount">Nombre de cycles</label>
             <input id="cycleCount" type="number" min="1" max="12" value="${shownCycles.length}" />
@@ -8562,18 +8562,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${facilityDraftName}" />
             </div>
             <div class="eventField">
-              <label>Position par rapport a l'etablissement</label>
+              <label>Position par rapport a l’établissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe a l'etablissement</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne a l'etablissement</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe ? l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne ? l’établissement</button>
               </div>
-              ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre etablissement.</span>` : ""}
+              ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre Établissement.</span>` : ""}
             </div>
             <div class="eventField">
               <label>Lieu de pratique</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En exterieur</button>
-                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En interieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En extérieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En intérieur</button>
               </div>
             </div>
             <div class="modalFooter">
@@ -8591,7 +8591,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
               </div>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
-            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutée.</div>`}
           </div>
         </section>`;
       }
@@ -8622,14 +8622,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       function renderFacilityActivityLinks() {
         if (!facilities.length || !activities.length) {
           return `<section class="eventList facilityActivityLinksPanel">
-            <h3>Activites possibles par installation</h3>
-            ${criticalCloudNotice("Liens installations/activites")}
-            <div class="alertEmpty">Ajoutez au moins une installation et une activite pour definir les activites possibles.</div>
+            <h3>Activités possibles par installation</h3>
+            ${criticalCloudNotice("Liens installations/activités")}
+            <div class="alertEmpty">Ajoutez au moins une installation et une activité pour définir les activités possibles.</div>
           </section>`;
         }
         return `<section class="eventList facilityActivityLinksPanel">
-          <h3>Activites possibles par installation</h3>
-          ${criticalCloudNotice("Liens installations/activites")}
+          <h3>Activités possibles par installation</h3>
+          ${criticalCloudNotice("Liens installations/activités")}
           <div class="facilityActivityMatrix">${facilities.map((facility) => {
             const linked = facilityActivities[facility.id] || [];
             const linkedActivities = linked.map((id) => activities.find((activity) => activity.id === id)).filter(Boolean);
@@ -8646,7 +8646,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   <button class="ghostButton" data-move-facility-activity="${facility.id}" data-activity-id="${activity.id}" data-direction="down" ${index === linkedActivities.length - 1 ? "disabled" : ""}>↓</button>
                   <button class="ghostButton" data-toggle-facility-activity="${facility.id}" data-activity-id="${activity.id}">Retirer</button>
                 </div>
-              `).join("")}</div>` : `<span class="muted">Aucune activite priorisee pour cette installation.</span>`}
+              `).join("")}</div>` : `<span class="muted">Aucune activité priorisée pour cette installation.</span>`}
               ${unlinkedActivities.length ? `<div class="choiceGrid">${unlinkedActivities.map((activity) => `
                 <button class="choiceButton" data-toggle-facility-activity="${facility.id}" data-activity-id="${activity.id}">${activity.label}</button>
               `).join("")}</div>` : ""}
@@ -8669,12 +8669,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <strong>${level}</strong>
                 ${selectedActivities.length ? `<div class="choiceGrid">${selectedActivities.map((activity) => `
                   <button class="choiceButton active" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
-                `).join("")}</div>` : `<span class="muted">Aucune activite affectee a ce niveau.</span>`}
+                `).join("")}</div>` : `<span class="muted">Aucune activité affectée a ce niveau.</span>`}
                 ${unselectedActivities.length ? `<div class="choiceGrid">${unselectedActivities.map((activity) => `
                   <button class="choiceButton" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
                 `).join("")}</div>` : ""}
               </article>`;
-            }).join("")}</div>` : `<div class="alertEmpty">Ajoutez d'abord les activites dans Installations & activites.</div>`}
+            }).join("")}</div>` : `<div class="alertEmpty">Ajoutez d'abord les activités dans Installations & activités.</div>`}
           </div>
         </section>`;
       }
@@ -8690,18 +8690,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${facilityDraftName}" />
             </div>
             <div class="eventField">
-              <label>Position par rapport a l'etablissement</label>
+              <label>Position par rapport a l’établissement</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe a l'etablissement</button>
-                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne a l'etablissement</button>
+                <button class="choiceButton ${facilityDraftType === "external" ? "active" : ""}" data-facility-type="external">Externe ? l’établissement</button>
+                <button class="choiceButton ${facilityDraftType === "internal" ? "active" : ""}" data-facility-type="internal">Interne ? l’établissement</button>
               </div>
-              ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre etablissement.</span>` : ""}
+              ${facilityDraftType === "external" ? `<span class="muted">Votre installation est en dehors de votre Établissement.</span>` : ""}
             </div>
             <div class="eventField">
               <label>Lieu de pratique</label>
               <div class="choiceGrid">
-                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En exterieur</button>
-                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En interieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "outdoor" ? "active" : ""}" data-facility-location-type="outdoor">En extérieur</button>
+                <button class="choiceButton ${facilityDraftLocationType === "indoor" ? "active" : ""}" data-facility-location-type="indoor">En intérieur</button>
               </div>
             </div>
             <div class="modalFooter">
@@ -8719,24 +8719,24 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
               </div>
               <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
-            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutee.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutée.</div>`}
           </div>
           <div class="eventForm">
-            <h3>Ajouter une activite</h3>
+            <h3>Ajouter une activité</h3>
             <div class="eventField">
               <label>Nom</label>
               <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${activityDraftName}" />
             </div>
             <div class="modalFooter">
-              <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activite</button>
+              <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activité</button>
             </div>
           </div>
           <div class="eventList">
-            <h3>Activites existantes</h3>
+            <h3>Activités existantes</h3>
             ${activities.length ? `<div class="compactCardGrid compactActivityGrid">${activities.map((activity) => `<article class="eventCard">
               <strong>${activity.label}</strong>
               <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
-            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activite ajoutee.</div>`}
+            </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
           </div>
           ${renderFacilityActivityLinks()}
         </section>`;
@@ -8748,7 +8748,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           teacherDraftColor = firstAvailableTeacherColor();
         }
         const canAddTeacher = teacherDraftName.trim().length > 0 && Boolean(teacherDraftColor) && Boolean(teacherDraftStatus);
-        const teacherDraftHours = teacherDraftStatus === "agrege" ? 14 : teacherDraftStatus === "certifie" ? 17 : "-";
+        const teacherDraftHours = teacherDraftStatus === "agrégé" ? 14 : teacherDraftStatus === "certifie" ? 17 : "-";
         return `<section class="eventPage">
           <div class="eventForm">
             <h3>Ajouter un professeur</h3>
@@ -8758,13 +8758,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </div>
             <div class="eventField">
               <label>Couleur</label>
-              <div class="teacherColorPalette">${draftPalette.map((item) => `<button class="teacherColorSwatch ${teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("") || `<span class="muted">Toutes les couleurs sont deja utilisees.</span>`}</div>
+              <div class="teacherColorPalette">${draftPalette.map((item) => `<button class="teacherColorSwatch ${teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("") || `<span class="muted">Toutes les couleurs sont déjà utilisées.</span>`}</div>
             </div>
             <div class="eventField">
               <label>Statut</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${teacherDraftStatus === "certifie" ? "active" : ""}" data-teacher-status="certifie">Certifié · 17h</button>
-                <button class="choiceButton ${teacherDraftStatus === "agrege" ? "active" : ""}" data-teacher-status="agrege">Agrégé · 14h</button>
+                <button class="choiceButton ${teacherDraftStatus === "agrégé" ? "active" : ""}" data-teacher-status="agrégé">Agrégé · 14h</button>
               </div>
             </div>
             <div class="teamPreview" style="background:${teacherDraftColor || "#f8fafc"};border-color:${teacherDraftColor ? teacherBorderForColor(teacherDraftColor) : "#cbd5e1"}">
@@ -8889,7 +8889,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const canOpenHere = editable && constructionBuildMode === "blocks" && !row.isAs && !blocked;
         const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked, cycle, letter || "all") : "";
         const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key, cycle, letter || "all") : "";
-        const cellTitle = [label, blocked ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
+        const cellTitle = [label, blocked ? "Mercredi après-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
         return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
           ${blocked ? "" : row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map((session) => `
@@ -8916,7 +8916,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
       }
 
       function renderConstructionCycleTable(cycle, rows, editable, filterSelection = false) {
-        if (!cycle) return `<div class="alertEmpty">Aucun cycle classique defini.</div>`;
+        if (!cycle) return `<div class="alertEmpty">Aucun cycle classique défini.</div>`;
         const slotRows = constructionWeekTypeSlots();
         return `<div class="yearWrap cycleConstructionTableWrap"><table class="yearTable constructionTable cycleConstructionTable">
           <thead>
@@ -8981,7 +8981,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <button class="choiceButton ${unavailablePeriodMode === "dates" ? "active" : ""}" data-unavailable-period-mode="dates">Dates</button>
                 <button class="choiceButton ${unavailablePeriodMode === "cycles" ? "active" : ""}" data-unavailable-period-mode="cycles" ${cyclesAvailable ? "" : "disabled"}>Cycles</button>
               </div>
-              ${!cyclesAvailable ? `<span class="muted">Si vous voulez parametrer vos indispo sur des cycles, definissez les avant.</span>` : ""}
+              ${!cyclesAvailable ? `<span class="muted">Si vous voulez paramêtrer vos indispo sur des cycles, définissez-les avant.</span>` : ""}
             </div>
             <div class="eventField">
               <label>Dates</label>
@@ -8990,7 +8990,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${unavailablePeriodMode === "cycles" ? `<div class="eventField">
               <label>Cycles concernes</label>
               ${cyclesAvailable ? `<div class="choiceGrid">${cycles.map((cycle) => `<button class="choiceButton ${unavailableCycleIds.includes(cycle.id) ? "active" : ""}" data-unavailable-cycle="${cycle.id}">${cycle.name}</button>`).join("")}</div>
-              <span class="muted">${selectedCycles.length ? `Dates appliquees : ${period.start} -> ${period.end}` : "Selectionnez un ou plusieurs cycles."}</span>` : `<span class="muted">Si vous voulez parametrer vos indispo sur des cycles, definissez les avant.</span>`}
+              <span class="muted">${selectedCycles.length ? `Dates appliquées : ${period.start} -> ${period.end}` : "Sélectionnez un ou plusieurs cycles."}</span>` : `<span class="muted">Si vous voulez paramêtrer vos indispo sur des cycles, définissez-les avant.</span>`}
             </div>` : ""}
             ${unavailableType === "facility" ? `<div class="eventField">
               <label>Contraintes installations</label>
@@ -9026,7 +9026,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <div class="choiceGrid">
                 ${teachers.map((teacher) => `<button class="choiceButton ${unavailableTeacherIds.includes(teacher.id) ? "active" : ""}" data-unavailable-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("") || `<span class="muted">Aucun prof disponible.</span>`}
               </div>
-              <span class="muted">${unavailableTeacherIds.length ? `Profs selectionnes : ${teacherNamesFromIds(unavailableTeacherIds).join(", ")}` : "Aucun prof selectionne"}</span>
+              <span class="muted">${unavailableTeacherIds.length ? `Profs sélectionnés : ${teacherNamesFromIds(unavailableTeacherIds).join(", ")}` : "Aucun prof sélectionné"}</span>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${days.map((day) => `<th>${day}</th>`).join("")}</tr></thead>
@@ -9111,7 +9111,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               const canOpenHere = editable && !blocked && !blockedWednesdayAfternoon && !row.isAs;
               const availableStyle = canOpenHere ? availableTeacherCellStyle(row, weekItem, key, blocked) : "";
               const availabilityTitle = canOpenHere ? availableTeacherCellTitle(row, weekItem, key) : "";
-              const cellTitle = [holiday || vacation?.name || "", blockedWednesdayAfternoon ? "Mercredi apres-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
+              const cellTitle = [holiday || vacation?.name || "", blockedWednesdayAfternoon ? "Mercredi après-midi indisponible" : "", availabilityTitle].filter(Boolean).join(" | ");
               return `<td title="${cellTitle}" class="${canOpenHere ? "buildDropCell availableTeacherBg" : ""} ${blockedWednesdayAfternoon ? "constructionBlockedCell" : ""} ${movingBuildBlock && canMoveHere ? "moveTarget" : ""} ${conflicts.has(key) ? "conflictCell" : ""} ${holiday ? "holidayCell" : ""} ${vacation ? "vacationCell vacationWeekCell" : ""}" style="${availableStyle}" ${canMoveHere ? `data-move-cell="${key}"` : ""} ${canOpenHere ? `data-open-cell="${key}" data-row="${row.id}"` : ""}>
                 ${vacation ? `<span class="muted">V</span>` : ""}
                 ${!vacation && holiday ? `<span class="muted">F</span>` : ""}
@@ -9130,7 +9130,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           const teacherName = teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher;
           return {
             label: `Professeur en conflit : ${teacherName}`,
-            detail: conflict.items.map((item) => `${blockClassLabel(item) || "classe non precisee"} · ${item.facilityLabel || "installation non precisee"}`).join(" / ")
+            detail: conflict.items.map((item) => `${blockClassLabel(item) || "classe non précisée"} · ${item.facilityLabel || "installation non précisée"}`).join(" / ")
           };
         }
         if (conflict.type === "asTeacher") {
@@ -9143,12 +9143,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (conflict.type === "class") {
           return {
             label: `Classe en conflit : ${conflict.schoolClass}`,
-            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} · ${item.facilityLabel || "installation non precisee"}`).join(" / ")
+            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} · ${item.facilityLabel || "installation non précisée"}`).join(" / ")
           };
         }
         return {
           label: `Installation en conflit : ${conflict.items[0].facilityLabel || conflict.facility}`,
-            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe non precisee"}`).join(" / ")
+            detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe non précisée"}`).join(" / ")
         };
       }
 
@@ -9159,11 +9159,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <h2>Blocs caches trouves</h2>
           ${hiddenReport.items.map((item) => `<article class="alertCard">
             <strong>${item.day} ${item.slot} · ${item.rhythm}</strong>
-            <span>${item.classes || "Classe non renseignee"} · ${item.teachers || "Prof non renseigne"}</span>
-            <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} creneau(x) masque(s)` : ""}</span>
+            <span>${item.classes || "Classe non renseignée"} · ${item.teachers || "Prof non renseigné"}</span>
+            <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
-        if (!conflicts.length) return `${hiddenReportHtml}<div class="alertEmpty">Aucun conflit detecte dans la construction.</div>`;
+        if (!conflicts.length) return `${hiddenReportHtml}<div class="alertEmpty">Aucun conflit détecté dans la construction.</div>`;
         const visibleConflicts = conflicts.slice(0, 5);
         return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
@@ -9221,28 +9221,28 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function renderGuideView() {
         const steps = [
-          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites via les sous-onglets. Verrouillez cette partie une fois stabilisee."],
-          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service via les sous-onglets."],
-          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides et deverrouilles si besoin."],
+          ["1. Pré-requis établissement", "Renseignez l’établissement, les profs, les classes, les installations et les activités via les sous-onglets. Verrouillez cette partie une fois stabilisée."],
+          ["2. Pré-requis année scolaire", "Renseignez les indisponibilités, cycles, AS, événements sportifs et le service via les sous-onglets."],
+          ["3. Construction", "Cliquez sur une case du tableau pour créer un créneau de cours quand les pré-requis sont valides et déverrouillés si besoin."],
           ["Verification", "Consultez Alertes, Année scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
-          ["Emploi du temps", "Consultez la semaine selectionnee avec les cours, AS et evenements visibles."],
-          ["Année scolaire", "Visualisez toute l'annee, selectionnez une semaine et ouvrez le detail des cases."],
-          ["Résumé cycle", "Controlez rapidement les cours d'un cycle par installation et par semaine A/B."]
+          ["Emploi du temps", "Consultez la semaine sélectionnée avec les cours, AS et événements visibles."],
+          ["Année scolaire", "Visualisez toute l'annee, sélectionnéz une semaine et ouvrez le détail des cases."],
+          ["Résumé cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
         ];
         return `<section class="guidePage">
           <h2>Mode d'emploi</h2>
           <article class="alertHelp">
             <strong>Parcours Admin conseille</strong>
-            <span>Les etapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour eviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
+            <span>Les étapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
           </article>
           <div class="guideGrid">
             ${steps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
           </div>
           <article class="alertHelp">
             <strong>Vue Professeur</strong>
-            <span>Ces trois onglets servent surtout a consulter le planning construit, sans modifier le parametrage Admin.</span>
+            <span>Ces trois onglets servent surtout à consulter le planning construit, sans modifier le paramétrage Admin.</span>
           </article>
           <div class="guideGrid guideProfessorGrid">
             ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
@@ -9252,20 +9252,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function renderGuideView() {
         const adminSteps = [
-          ["1. Pre-requis etablissement", "Renseignez l'etablissement, les profs, les classes, les installations et les activites via les sous-onglets. Verrouillez cette partie une fois stabilisee."],
-          ["2. Pre-requis annee scolaire", "Renseignez les indisponibilites, cycles, AS, evenements sportifs et le service via les sous-onglets."],
-          ["3. Construction", "Cliquez sur une case du tableau pour creer un creneau de cours quand les pre-requis sont valides et deverrouilles si besoin."],
+          ["1. Pré-requis établissement", "Renseignez l’établissement, les profs, les classes, les installations et les activités via les sous-onglets. Verrouillez cette partie une fois stabilisée."],
+          ["2. Pré-requis année scolaire", "Renseignez les indisponibilités, cycles, AS, événements sportifs et le service via les sous-onglets."],
+          ["3. Construction", "Cliquez sur une case du tableau pour créer un créneau de cours quand les pré-requis sont valides et déverrouillés si besoin."],
           ["Verification", "Consultez Alertes, Annee scolaire, Emploi du temps et Resume cycle avant export."]
         ];
         const professorSteps = [
-          ["Emploi du temps", "Consultez la semaine selectionnee avec les cours, AS et evenements visibles."],
-          ["Annee scolaire", "Visualisez toute l'annee, selectionnez une semaine et ouvrez le detail des cases."],
-          ["Resume cycle", "Controlez rapidement les cours d'un cycle par installation et par semaine A/B."]
+          ["Emploi du temps", "Consultez la semaine sélectionnée avec les cours, AS et événements visibles."],
+          ["Annee scolaire", "Visualisez toute l'annee, sélectionnéz une semaine et ouvrez le détail des cases."],
+          ["Resume cycle", "Contrôlez rapidement les cours d'un cycle par installation et par semaine A/B."]
         ];
         const adminGuide = isAdmin() ? `
           <article class="alertHelp">
             <strong>Parcours Admin conseille</strong>
-            <span>Les etapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour eviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
+            <span>Les étapes ci-dessous concernent la partie Admin. Suivez-les dans l'ordre pour éviter les oublis et les conflits au moment de construire l'emploi du temps.</span>
           </article>
           <div class="guideGrid">
             ${adminSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
@@ -9275,7 +9275,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           ${adminGuide}
           <article class="alertHelp">
             <strong>Vue Professeur</strong>
-            <span>${isAdmin() ? "Ces trois onglets servent surtout a consulter le planning construit, sans modifier le parametrage Admin." : "Vous voyez ici les onglets utiles pour consulter le planning construit."}</span>
+            <span>${isAdmin() ? "Ces trois onglets servent surtout à consulter le planning construit, sans modifier le paramétrage Admin." : "Vous voyez ici les onglets utiles pour consulter le planning construit."}</span>
           </article>
           <div class="guideGrid guideProfessorGrid">
             ${professorSteps.map(([title, detail]) => `<article class="guideCard"><strong>${title}</strong><span>${detail}</span></article>`).join("")}
@@ -9306,7 +9306,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <h2>Log des corrections</h2>
           <article class="alertHelp">
             <strong>Historique simple</strong>
-            <span>Liste des corrections et ameliorations apportees au logiciel au fil des mises a jour.</span>
+            <span>Liste des corrections et améliorations apportées au logiciel au fil des mises à jour.</span>
           </article>
           ${Object.keys(groups).length ? `<div class="logGroupGrid">${Object.entries(groups).map(([title, items]) => `
               <details class="logGroup">
@@ -9325,7 +9325,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         requestStatus = "Envoi en cours...";
         render();
         try {
-          if (!cloudReady()) throw new Error("cloud non configure");
+          if (!cloudReady()) throw new Error("cloud non configuré");
           if (!cloudWriteAllowed()) throw new Error(cloudWriteBlockedMessage());
           const payload = {
             etab_id: cloudConfig.etabId,
@@ -9348,7 +9348,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           });
           if (!response.ok) throw new Error(await response.text());
           requestMessage = "";
-          requestStatus = "Votre requete a bien ete envoyee. Merci pour votre retour.";
+          requestStatus = "Votre requête a bien été envoyée. Merci pour votre retour.";
         } catch (error) {
           requestStatus = `Envoi impossible : ${error.message || "erreur inconnue"}`;
         } finally {
@@ -9359,7 +9359,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function renderRequestView() {
         const canSend = requestMessage.trim().length > 0 && !requestSubmitting;
-        const requestStatusClass = requestSubmitting ? "pending" : requestStatus.startsWith("Votre requete") ? "success" : "error";
+        const requestStatusClass = requestSubmitting ? "pending" : requestStatus.startsWith("Votre requ?te") ? "success" : "error";
         return `<section class="requestPage">
           <div class="requestPanel">
             <h2>Une question ?</h2>
@@ -9368,7 +9368,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <label>Type</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${requestKind === "bug" ? "active" : ""}" data-request-kind="bug">Bug</button>
-                <button class="choiceButton ${requestKind === "improvement" ? "active" : ""}" data-request-kind="improvement">Amelioration</button>
+                <button class="choiceButton ${requestKind === "improvement" ? "active" : ""}" data-request-kind="improvement">Am?lioration</button>
               </div>
             </div>
             <div class="requestField">
@@ -9377,10 +9377,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </div>
             <div class="requestField">
               <label>Message</label>
-              <textarea id="requestMessage" placeholder="Decrivez le bug, ce que vous vouliez faire, ou l'amelioration souhaitee.">${requestMessage}</textarea>
+              <textarea id="requestMessage" placeholder="Décrivez le bug, ce que vous vouliez faire, ou l'amélioration souhaitée.">${requestMessage}</textarea>
             </div>
             <div class="modalFooter">
-              <button class="ghostButton primaryWeekButton" id="sendFeedback" ${canSend ? "" : "disabled"}>${requestSubmitting ? "Envoi..." : "Envoyer la requete"}</button>
+              <button class="ghostButton primaryWeekButton" id="sendFeedback" ${canSend ? "" : "disabled"}>${requestSubmitting ? "Envoi..." : "Envoyer la requête"}</button>
             </div>
             ${requestStatus ? `<div class="requestStatus ${requestStatusClass}">${requestStatus}</div>` : ""}
           </div>
@@ -9408,7 +9408,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return `
           <section class="panel">
             <h2>Affichage interrompu</h2>
-            <p class="muted">Une erreur bloque le chargement de cet onglet. Rechargez la page, ou envoyez une requete avec le message ci-dessous si le probleme revient.</p>
+            <p class="muted">Une erreur bloque le chargement de cet onglet. Rechargez la page, ou envoyez une requête avec le message ci-dessous si le problème revient.</p>
             <div class="warningItem">${message}</div>
           </section>`;
       }
@@ -9432,17 +9432,17 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (!authBox) return;
         if (isSignedIn()) {
           authBox.innerHTML = `
-            <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
-            ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
-            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l'etablissement" aria-label="Nom de l'etablissement" /><button class="authButton" type="submit">Creer l'etablissement</button></form>` : ""}
-            ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Verification du role en cours...</div>` : ""}
+            <div class="authStatus">Connecté : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
+            ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l’établissement" aria-label="Nom de l’établissement" /><button class="authButton" type="submit">Creer l’établissement</button></form>` : ""}
+            ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Vérification du rôle en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
             ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
-            <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
+            <button class="authButton secondary" id="logoutAdmin">Déconnexion</button>
           `;
-          authBox.querySelector(".authStatus").innerHTML = `Connect&eacute; : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`;
-          authBox.querySelector("#logoutAdmin").innerHTML = "D&eacute;connexion";
+          authBox.querySelector(".authStatus").innerHTML = `Connecté : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`;
+          authBox.querySelector("#logoutAdmin").innerHTML = "Déconnexion";
           return;
         }
         authBox.innerHTML = "";
@@ -9456,11 +9456,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <article class="homeComparisonCard">
                   <img src="./before_loustic.png" alt="Avant Loustic" />
                   <strong>Avant Loustic</strong>
-                  <span>Des contraintes partout, un planning difficile a stabiliser.</span>
+                  <span>Des contraintes partout, un planning difficile à stabiliser.</span>
                 </article>
                 <article class="homeComparisonCard">
-                  <img src="./after_loustic.png" alt="Apres Loustic" />
-                  <strong>Apres Loustic</strong>
+                  <img src="./after_loustic.png" alt="Après Loustic" />
+                  <strong>Après Loustic</strong>
                   <span>Un espace clair pour construire, consulter et partager l'organisation EPS.</span>
                 </article>
               </div>
@@ -9475,13 +9475,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <div class="homeKicker">Planning EPS simplifie</div>
               <h3>Construisez votre planning sans y passer vos soirees.</h3>
             </div>
-            <p>Loustic centralise l'emploi du temps EPS de l'etablissement et aide l'equipe a garder une organisation claire, partagee et facile a ajuster.</p>
-            ${authInviteToken ? `<div class="homeInviteNotice">Lien d'invitation detecte. Connectez-vous pour rejoindre l'equipe.</div>` : ""}
+            <p>Loustic centralise l'emploi du temps EPS de l’établissement et aide l’équipe à garder une organisation claire, partagée et facile à ajuster.</p>
+            ${authInviteToken ? `<div class="homeInviteNotice">Lien d’invitation détecté. Connectez-vous pour rejoindre l'équipe.</div>` : ""}
             <button class="authButton googleAuthButton" type="button" data-oauth-provider="google"><span class="googleAuthIcon" aria-hidden="true">G</span><span>Connexion via Google</span></button>
             <div class="homeFeatures">
-              <div class="homeFeature"><span class="homeFeatureIcon">✓</span><div class="homeFeatureText"><strong>Emploi du temps lisible</strong><span>Visualisez les semaines, les profs, les classes et les creneaux en un coup d'oeil.</span></div></div>
-              <div class="homeFeature"><span class="homeFeatureIcon">↻</span><div class="homeFeatureText"><strong>Cycles et installations</strong><span>Construisez vos cycles avec les activites, les lieux disponibles et les contraintes de l'etablissement.</span></div></div>
-              <div class="homeFeature"><span class="homeFeatureIcon">+</span><div class="homeFeatureText"><strong>Travail d'equipe</strong><span>Invitez les collegues en consultation ou en admin, chacun dans le meme espace EPS securise.</span></div></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">✓</span><div class="homeFeatureText"><strong>Emploi du temps lisible</strong><span>Visualisez les semaines, les profs, les classes et les créneaux en un coup d'oeil.</span></div></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">↻</span><div class="homeFeatureText"><strong>Cycles et installations</strong><span>Construisez vos cycles avec les activités, les lieux disponibles et les contraintes de l’établissement.</span></div></div>
+              <div class="homeFeature"><span class="homeFeatureIcon">+</span><div class="homeFeatureText"><strong>Travail d'équipe</strong><span>Invitez les collègues en consultation ou en admin, chacun dans le même espace EPS sécurisé.</span></div></div>
             </div>
             ${authInviteStatus ? `<div class="authStatus">${escapeHtml(authInviteStatus)}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
@@ -9503,7 +9503,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           if (buildMode === "planning") {
             const locked = !canAccessConstructionPlanning();
             item.disabled = locked;
-            item.title = locked ? "Completez les prerequis avant d'acceder a Construction." : "";
+            item.title = locked ? "Complétez les prérequis avant d’accéder à Construction." : "";
           }
         });
       }
@@ -9595,14 +9595,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (createEtabForm) createEtabForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           authEtabName = document.getElementById("authEtabName")?.value.trim() || "";
-          authStatus = "Creation de l'etablissement...";
+          authStatus = "Création de l’établissement...";
           render();
         try {
           await createEtabForCurrentUser(authEtabName);
           setCurrentEtabRole("owner");
-          authStatus = "Etablissement cree.";
+          authStatus = "Établissement créé.";
           } catch (error) {
-            authStatus = `Creation impossible : ${error.message || "erreur inconnue"}`;
+            authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
           } finally {
             render();
           }
@@ -9610,11 +9610,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const acceptInviteForm = document.getElementById("acceptInviteForm");
         if (acceptInviteForm) acceptInviteForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          authStatus = "Rattachement a l'equipe EPS...";
+          authStatus = "Rattachement à l'équipe EPS...";
           render();
           try {
             await acceptEtabInvite(authInviteToken);
-            authStatus = "Vous avez rejoint l'equipe EPS.";
+            authStatus = "Vous avez rejoint l'équipe EPS.";
             if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
           } catch (error) {
             authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
@@ -9632,10 +9632,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             render();
             try {
               const link = await createEtabInvite(role);
-              authInviteStatus = `Lien d'invitation ${label} pret a partager.`;
+              authInviteStatus = `Lien d'invitation ${label} prêt à partager.`;
               if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(link).catch(() => {});
-                authInviteStatus = `Lien d'invitation ${label} pret a partager et copie.`;
+                authInviteStatus = `Lien d'invitation ${label} prêt à partager et copié.`;
               }
             } catch (error) {
               authInviteStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
@@ -9830,7 +9830,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const mode = input.dataset.prerequisitesLock || prerequisiteMode;
             prerequisiteLocks = { ...prerequisiteLocks, [mode]: input.checked };
             savePrerequisiteLocks();
-            showValidationPopup(input.checked ? "Sous-onglet verrouille" : "Sous-onglet deverrouille");
+            showValidationPopup(input.checked ? "Sous-onglet verrouillé" : "Sous-onglet déverrouillé");
             render();
           });
         });
@@ -9839,7 +9839,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const mode = input.dataset.yearPrerequisitesLock || yearPrerequisiteMode;
             yearPrerequisiteLocks = { ...yearPrerequisiteLocks, [mode]: input.checked };
             saveYearPrerequisiteLocks();
-            showValidationPopup(input.checked ? "Sous-onglet verrouille" : "Sous-onglet deverrouille");
+            showValidationPopup(input.checked ? "Sous-onglet verrouillé" : "Sous-onglet déverrouillé");
             render();
           });
         });
@@ -9855,7 +9855,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               };
             }
             saveConstructionLocks();
-            showValidationPopup(input.checked ? "Partie verrouillee" : "Partie deverrouillee");
+            showValidationPopup(input.checked ? "Partie verrouillée" : "Partie déverrouillée");
             render();
           });
         });
@@ -10095,7 +10095,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               })
             };
             saveClassConfig();
-            showValidationPopup("Rattachements mis a jour");
+            showValidationPopup("Rattachements mis à jour");
             render();
           });
         });
@@ -10304,7 +10304,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const name = teacherDraftName.trim();
             if (!name || !teacherDraftColor || !teacherDraftStatus) return;
             const id = `p-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-            const weeklyReference = teacherDraftStatus === "agrege" ? 14 : 17;
+            const weeklyReference = teacherDraftStatus === "agrégé" ? 14 : 17;
             const teacher = {
               id,
               name,
@@ -11034,7 +11034,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             }
             if (editingCycleDetails) {
               const saved = updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, activeBuildCycleId || block.cycleId || activeConstructionCycleId, block);
-              showValidationPopup(saved ? "Installation / activite mises a jour" : "Bloc introuvable : modification non enregistree");
+              showValidationPopup(saved ? "Installation / activité mises à jour" : "Bloc introuvable : modification non enregistrée");
             } else if (editingBuildBlock?.ruleId) {
               updateAnnualConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter);
               showValidationPopup("Bloc annuel modifie");
@@ -11327,13 +11327,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               ? "tous les cycles"
               : selectedDetailCycleIds.map((cycleId) => classicConstructionCycles().find((cycle) => cycle.id === cycleId)?.name || cycleId).join(", ");
             const firstConfirm = window.confirm(onlyDetails
-              ? `Supprimer uniquement les installations/activites (${detailScope}) ?\n\nLes blocs profs/classes seront conserves.`
-              : "Supprimer les elements selectionnes de la construction ?\n\nLes pre-requis, regles, AS et evenements sportifs seront conserves.");
+              ? `Supprimer uniquement les installations/activités (${detailScope}) ?\n\nLes blocs profs/classes seront conservés.`
+              : "Supprimer les éléments sélectionnés de la construction ?\n\nLes pré-requis, règles, AS et événements sportifs seront conservés.");
             if (!firstConfirm) return;
             const typedConfirm = window.prompt("Deuxieme validation : tapez VIDER pour confirmer.");
             if (typedConfirm !== "VIDER") return;
             clearPlanningParts(options);
-            showValidationPopup(onlyDetails ? "Installations / activites videes, squelette conserve" : "Construction videe, pre-requis conserves");
+            showValidationPopup(onlyDetails ? "Installations / activités vidées, squelette conservé" : "Construction vidée, pré-requis conservés");
             render();
           });
         }
