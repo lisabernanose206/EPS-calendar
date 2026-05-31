@@ -307,9 +307,9 @@
       .consultationYearTable .rowHead { left: 0; min-width: 62px; width: 62px; z-index: 4; }
       .consultationYearTable .timeHead { left: 62px; min-width: 68px; width: 68px; z-index: 4; }
       .consultationYearTable thead th { position: sticky; z-index: 8; }
-      .consultationYearTable thead tr:nth-child(1) th { top: var(--yearStickyInfoHeight, 76px); }
-      .consultationYearTable thead tr:nth-child(2) th { top: calc(var(--yearStickyInfoHeight, 76px) + 22px); }
-      .consultationYearTable thead tr:nth-child(3) th { top: calc(var(--yearStickyInfoHeight, 76px) + 44px); }
+      .consultationYearTable thead tr:nth-child(1) th { top: 0; }
+      .consultationYearTable thead tr:nth-child(2) th { top: 22px; }
+      .consultationYearTable thead tr:nth-child(3) th { top: 44px; }
       .consultationYearTable thead .rowHead, .consultationYearTable thead .timeHead { z-index: 10; }
       .monthCell { background: #e5e7eb !important; color: #111827 !important; text-transform: capitalize; }
       .weekA { background: #f3f4f6; color: #374151; font-weight: 900; }
@@ -1610,10 +1610,24 @@
       let facilities = loadFacilities();
       let activities = loadActivities();
       let facilityActivities = loadFacilityActivities();
-      const classLevels = ["6e", "5e", "4e", "3e"];
+      const classLevelsByEstablishmentType = {
+        "collège": ["6e", "5e", "4e", "3e"],
+        "lycée": ["2de", "1ere", "Tle"]
+      };
+      function normalizedEstablishmentType(value) {
+        const normalized = String(value || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return normalized === "lycee" ? "lycée" : "collège";
+      }
+      function classLevelsForEstablishmentType(type = schoolConstraints?.establishmentType) {
+        return [...(classLevelsByEstablishmentType[normalizedEstablishmentType(type)] || classLevelsByEstablishmentType["collège"])];
+      }
+      let classLevels = classLevelsForEstablishmentType(schoolConstraints.establishmentType);
       let activityProgramByLevel = loadActivityProgramByLevel();
       const classNumbers = ["1", "2", "3", "4", "5", "6", "7"];
-      const defaultClassConfig = Object.fromEntries(classLevels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
+      function defaultClassConfigForLevels(levels = classLevels) {
+        return Object.fromEntries(levels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
+      }
+      let defaultClassConfig = defaultClassConfigForLevels();
       const classGroups = [
         { id: "whole", label: "Classe entiere", short: "" },
         { id: "A", label: "Demi-groupe A", short: "A" },
@@ -1621,7 +1635,7 @@
       ];
       let classConfig = loadClassConfig();
       let classes = classesFromConfig();
-      const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3 };
+      const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3, "2de": 2, "1ere": 2, "Tle": 2 };
       const defaultConstructionRuleSettings = [
         { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquée indisponible sur le créneau." },
         { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le créneau." },
@@ -2414,9 +2428,10 @@
           };
         });
         const schoolZone = ["A", "B", "C"].includes(value.schoolZone) ? value.schoolZone : defaultSchoolConstraints.schoolZone;
+        const establishmentType = normalizedEstablishmentType(value.establishmentType || defaultSchoolConstraints.establishmentType);
         return {
           establishmentName: (value.establishmentName || defaultSchoolConstraints.establishmentName).trim(),
-          establishmentType: "collège",
+          establishmentType,
           schoolZone,
           courseSlots,
           asSlots,
@@ -2432,6 +2447,8 @@
 
       function syncSchoolSlots() {
         schoolConstraints = normalizeSchoolConstraints(schoolConstraints);
+        classLevels = classLevelsForEstablishmentType(schoolConstraints.establishmentType);
+        defaultClassConfig = defaultClassConfigForLevels();
         slots = schoolConstraints.courseSlots;
       }
 
@@ -2440,6 +2457,48 @@
         saveSchoolConstraints();
         if (message) showValidationPopup(message);
         render();
+      }
+
+      function applyEstablishmentTypeChange(nextType) {
+        const type = normalizedEstablishmentType(nextType);
+        schoolConstraints = { ...schoolConstraints, establishmentType: type };
+        syncSchoolSlots();
+        classConfig = normalizeClassConfig(defaultClassConfigForLevels());
+        classes = classesFromConfig();
+        activityProgramByLevel = normalizeActivityProgramByLevel({});
+        serviceHoursByLevel = normalizeLevelKeyedObject({}, defaultServiceHours, (value) => Math.max(0, Number(value) || 0));
+        serviceAssignments = {};
+        cyclesByLevel = {};
+        constructionRules = [];
+        constructionPlan = {};
+        constructionVersions = [];
+        blockExclusions = {};
+        pruneClassReferences();
+        invalidateConstructionChecksCache();
+        localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
+        localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(classConfig));
+        localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
+        localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
+        localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(serviceAssignments));
+        localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(cyclesByLevel));
+        localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
+        localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
+        localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(constructionVersions));
+        localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
+        saveCloudNowIfPossible([
+          "schoolConstraints",
+          "classConfig",
+          "activityProgramByLevel",
+          "serviceHoursByLevel",
+          "serviceAssignments",
+          "cyclesByLevel",
+          "constructionRules",
+          "constructionPlan",
+          "constructionVersions",
+          "blockExclusions",
+          "facilityUnavailability",
+          "sportEvents"
+        ]);
       }
 
       function makeSlotId(prefix, existingIds) {
@@ -2458,6 +2517,9 @@
 
       function canonicalClassLevel(level) {
         const value = String(level || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (/^(2de|seconde|secondes?)$/.test(value)) return "2de";
+        if (/^(1ere|1re|premiere|premieres?)$/.test(value)) return "1ere";
+        if (/^(tle|terminale|terminales?)$/.test(value)) return "Tle";
         const match = value.match(/^([3-6])\s*(?:eme|e)?$/);
         return match ? `${match[1]}e` : "";
       }
@@ -2472,6 +2534,13 @@
           return `special::${id}${baseClassId ? `::${baseClassId}` : ""}`;
         }
         const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+        const lycéeMatch = normalized.match(/^(2de|seconde|1ere|1re|premiere|tle|terminale)([a-z0-9]+?)(whole|a|b)?$/i);
+        if (lycéeMatch) {
+          const level = canonicalClassLevel(lycéeMatch[1]);
+          const number = lycéeMatch[2];
+          const group = lycéeMatch[3] ? lycéeMatch[3].toUpperCase() : "whole";
+          return schoolClassLabel(level, number, group === "WHOLE" ? "whole" : group);
+        }
         const match = normalized.match(/^([3-6])(?:eme|e)([a-z0-9]+?)(whole|a|b)?$/i);
         if (!match) return value;
         const level = `${match[1]}e`;
@@ -4102,6 +4171,26 @@
         return normalizeEtabDisplayName(currentEtabName || schoolConstraints.establishmentName || cloudConfig.etabId || "");
       }
 
+      function constructionFinalizedForLousticMood() {
+        try {
+          return constructionBlocksStepComplete()
+            && constructionCycleDetailsStepComplete()
+            && !conflictsForBuildMode("blocks").length
+            && !conflictsForBuildMode("cycleDetails").length;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function currentLousticIconSrc() {
+        const prerequisitesReady = adminStepComplete("prerequisites");
+        const yearReady = prerequisitesReady && adminStepComplete("yearPrerequisites");
+        const constructionReady = yearReady && constructionFinalizedForLousticMood();
+        const step = constructionReady ? 3 : yearReady ? 2 : prerequisitesReady ? 1 : 0;
+        const fileName = step ? `icon_app_small_step${step}.png` : "icon_app_small.png";
+        return `./${fileName}?v=${step || "base"}`;
+      }
+
       function normalizeEtabDisplayName(name) {
         const value = String(name || "").trim();
         if (/^louise\s+michele$/i.test(value)) return "Louise Michel";
@@ -4175,9 +4264,16 @@
 
       function renderBrandEtabName() {
         const label = document.getElementById("brandEtabName");
-        if (!label) return;
-        label.textContent = cloudConfig.etabId ? currentEtabDisplayName() : "";
-        label.title = label.textContent;
+        const logo = document.querySelector(".brandTitle .brandLogo");
+        const iconSrc = currentLousticIconSrc();
+        if (logo) logo.src = iconSrc;
+        if (label) {
+          label.textContent = cloudConfig.etabId ? currentEtabDisplayName() : "";
+          label.title = label.textContent;
+        }
+        document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']").forEach((link) => {
+          link.href = iconSrc;
+        });
       }
 
       async function refreshCurrentEtabRole() {
@@ -4505,6 +4601,9 @@
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
+        schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
+        classLevels = classLevelsForEstablishmentType(schoolConstraints.establishmentType);
+        defaultClassConfig = defaultClassConfigForLevels();
         classConfig = normalizeClassConfig(data.classConfig || classConfig);
         classes = classesFromConfig();
         facilities = Array.isArray(data.facilities) ? normalizeFacilities(data.facilities) : normalizeFacilities(facilities);
@@ -4519,7 +4618,6 @@
           ? normalizeLevelKeyedObject(data.serviceHoursByLevel, defaultServiceHours, (value) => Math.max(0, Number(value) || 0))
           : serviceHoursByLevel;
         serviceAssignments = data.serviceAssignments && typeof data.serviceAssignments === "object" ? normalizeServiceAssignments(data.serviceAssignments) : serviceAssignments;
-        schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
         prerequisiteLocks = data.prerequisiteLocks && typeof data.prerequisiteLocks === "object"
           ? { ...defaultPrerequisiteLocks(false), ...data.prerequisiteLocks }
           : typeof data.prerequisitesLocked === "boolean"
@@ -7069,7 +7167,8 @@
           const baseClassId = specialClassBaseIdFromSchoolId(normalizedClass);
           return { level: "special", number: specialClassSchoolId(id, baseClassId), group: "whole", special: true, specialId: id, baseClassId, label: item?.label || id };
         }
-        const match = normalizedClass.match(/^([3-6]e)([a-z0-9]+?)(whole|A|B)?$/i);
+        const levelPattern = classLevels.map((level) => level.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).sort((a, b) => b.length - a.length).join("|");
+        const match = levelPattern ? normalizedClass.match(new RegExp(`^(${levelPattern})([a-z0-9]+?)(whole|A|B)?$`, "i")) : null;
         const level = match?.[1] || "";
         const number = match?.[2] || "";
         const group = match?.[3] ? match[3].toUpperCase() : "whole";
@@ -8163,10 +8262,11 @@
             </div>
             <div class="eventField">
               <label>Type d’établissement</label>
-              <select id="establishmentType" disabled>
-                <option value="collège" selected>Collège</option>
+              <select id="establishmentType">
+                <option value="collège" ${normalizedEstablishmentType(schoolConstraints.establishmentType) === "collège" ? "selected" : ""}>Collège</option>
+                <option value="lycée" ${normalizedEstablishmentType(schoolConstraints.establishmentType) === "lycée" ? "selected" : ""}>Lycée</option>
               </select>
-              <span class="muted">Configuration collège active pour le moment.</span>
+              <span class="muted">Changer de type réinitialise les classes et les données qui en dépendent.</span>
             </div>
             <div class="eventField">
               <label>Zone scolaire</label>
@@ -10324,7 +10424,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           </div>
           <aside class="homePanel">
             <div class="homePanelLogo">
-              <img src="./icon_app.png" alt="Logo Loustic" />
+              <img src="${currentLousticIconSrc()}" alt="Logo Loustic" />
               <div><strong>Loustic</strong><span>Planning EPS collaboratif</span></div>
             </div>
             <div>
@@ -10799,6 +10899,22 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             saveSchoolConstraints();
           });
           establishmentNameInput.addEventListener("change", () => render());
+        }
+        const establishmentTypeSelect = document.getElementById("establishmentType");
+        if (establishmentTypeSelect) {
+          establishmentTypeSelect.addEventListener("change", () => {
+            const previousType = normalizedEstablishmentType(schoolConstraints.establishmentType);
+            const nextType = normalizedEstablishmentType(establishmentTypeSelect.value);
+            if (nextType === previousType) return;
+            const confirmed = window.confirm(`Changer le type d'établissement vers ${nextType === "lycée" ? "Lycée" : "Collège"} va réinitialiser les classes, le service et la construction. Continuer ?`);
+            if (!confirmed) {
+              establishmentTypeSelect.value = previousType;
+              return;
+            }
+            applyEstablishmentTypeChange(nextType);
+            showValidationPopup(`${nextType === "lycée" ? "Lycée" : "Collège"} appliqué : classes réinitialisées.`);
+            render();
+          });
         }
         document.querySelectorAll("[data-school-zone]").forEach((button) => {
           button.addEventListener("click", () => {
