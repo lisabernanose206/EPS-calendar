@@ -8843,19 +8843,33 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return constructionOptimizationResult.unresolvedBlocks.find((issue) => issue.ruleId === item.ruleId && issue.cycleId === cycle.id) || null;
       }
 
+      function constructionCycleDisplayBlock(item, cycle = null) {
+        if (constructionBuildMode !== "cycleDetails" || !cycle?.id || !item?.ruleId) return item;
+        const rule = constructionRules.find((entry) => entry.id === item.ruleId);
+        if (!rule) return item;
+        return {
+          ...blockWithCycleOverride(rule, cycle),
+          ruleId: rule.id,
+          cycleId: cycle.id,
+          cycleName: cycle.name,
+          weekLetter: item.weekLetter || rule.weekLetter || "all"
+        };
+      }
+
       function renderConstructionCycleBlocks(indexedItems, key, editable = true, cycle = null) {
         if (!indexedItems.length) return "";
         return `<div class="cycleBlockGrid">${indexedItems.map(({ item, index }) => {
-          const optimizationIssue = constructionOptimizationIssueForBlock(item, cycle);
+          const displayItem = constructionCycleDisplayBlock(item, cycle);
+          const optimizationIssue = constructionOptimizationIssueForBlock(displayItem, cycle);
           const showCycleDetails = constructionBuildMode !== "blocks";
           return `
-          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" data-cycle-id="${cycle?.id || ""}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(item)}">
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" data-rule-id="${displayItem.ruleId || ""}" data-cycle-id="${cycle?.id || ""}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(displayItem)}">
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
-            <strong>${blockClassLabel(item)}</strong>
-            ${showCycleDetails ? `<span>${blockDetailLabel(item)}</span>` : ""}
+            <strong>${blockClassLabel(displayItem)}</strong>
+            ${showCycleDetails ? `<span>${blockDetailLabel(displayItem) || "Aucune installation / activité"}</span>` : ""}
             ${optimizationIssue ? `<span class="optimizationIssueReason">${escapeHtml(optimizationIssue.reason)}</span>` : ""}
-            ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
+            ${displayItem.coIntervention ? `<span>Co-intervention</span>` : ""}
           </div>
         `;
         }).join("")}</div>`;
@@ -11187,10 +11201,13 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             event.stopPropagation();
             const key = block.dataset.blockKey;
             const index = Number(block.dataset.editCycleDetails);
-            const item = constructionPlan[key]?.[index];
+            const cycleId = block.dataset.cycleId || activeConstructionCycleId;
+            const cycle = constructionCycleById(cycleId) || activeConstructionCycle();
+            const rule = block.dataset.ruleId ? constructionRules.find((entry) => entry.id === block.dataset.ruleId) : null;
+            const item = rule && cycle ? constructionCycleDisplayBlock({ ...(constructionPlan[key]?.[index] || {}), ruleId: rule.id }, cycle) : constructionPlan[key]?.[index];
             if (!item) return;
             activeBuildCell = key;
-            activeBuildCycleId = block.dataset.cycleId || item.cycleId || activeConstructionCycleId;
+            activeBuildCycleId = cycleId || item.cycleId || activeConstructionCycleId;
             blockTeacherIds = teacherIdsForBlock(item);
             blockFacilityId = item.facilityId || "";
             blockActivityId = item.activityId || "";
