@@ -6819,13 +6819,11 @@
 
       function renderHoursBalance() {
         const alerts = serviceAlerts();
-        const serviceCloudNotice = criticalCloudNotice("Service théorique");
         return `<section class="hoursBalancePage">
           <div class="hoursBalanceHeader">
             <div>
               <h2>Service</h2>
               <p class="muted">Affectez les classes aux profs et indiquez le nombre d'heures hebdomadaires prévues. Une alerte s'affiche si une classe dépasse son volume autorisé.</p>
-              ${serviceCloudNotice}
             </div>
           </div>
           <div class="servicePanel compactServicePanel">
