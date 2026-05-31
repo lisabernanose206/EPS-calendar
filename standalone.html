@@ -2213,7 +2213,7 @@
       function saveConstructionLocks() {
         constructionLocks = normalizeConstructionLocks(constructionLocks);
         localStorage.setItem("planningEpsConstructionLocks2026", JSON.stringify(constructionLocks));
-        scheduleCloudSave(["constructionLocks"]);
+        saveLocksToCloudNow(["constructionLocks"]);
       }
 
       function constructionBuildLocked(mode = constructionBuildMode, cycleId = activeConstructionCycleId) {
@@ -3144,7 +3144,23 @@
       }
 
       function saveLocksToCloudNow(keys = ["prerequisiteLocks", "yearPrerequisiteLocks"]) {
-        saveCloudNowIfPossible(keys);
+        const normalizedKeys = normalizeCloudDirtyKeys(keys);
+        if (!isAdmin() || !cloudReady() || !cloudConfig.autoSave) {
+          return saveCloudNowIfPossible(normalizedKeys);
+        }
+        if (!cloudWriteAllowed()) {
+          cloudStatus = cloudWriteBlockedMessage();
+          return false;
+        }
+        markLocalChangedForCloud(normalizedKeys);
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
+        if (cloudSyncing) {
+          cloudSaveQueued = true;
+          return true;
+        }
+        cloudSaveToRemote(false, { allowBeforeSourceLoaded: true });
+        return true;
       }
 
       function readCloudConfigInputs() {
@@ -3844,7 +3860,8 @@
         cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false), 900);
       }
 
-      async function cloudSaveToRemote(shouldRender = true) {
+      async function cloudSaveToRemote(shouldRender = true, options = {}) {
+        const allowBeforeSourceLoaded = Boolean(options.allowBeforeSourceLoaded);
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = null;
         let cloudSaveSucceeded = false;
@@ -3861,7 +3878,7 @@
           if (shouldRender) render();
           return;
         }
-        if (!cloudSourceReadyForWrite()) {
+        if (!cloudWriteAllowed() || (cloudConfig.autoLoad && !cloudSourceLoaded && !allowBeforeSourceLoaded)) {
           cloudStatus = cloudWriteBlockedMessage();
           discardLocalChangesFromCloudSoon();
           if (shouldRender) render();
@@ -3885,6 +3902,9 @@
           if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
           const remoteRows = await remoteResponse.json();
           const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
+          if (!remoteData && allowBeforeSourceLoaded && cloudConfig.autoLoad && !cloudSourceLoaded) {
+            throw new Error("Source Supabase introuvable pour sauvegarder les verrous.");
+          }
           const dataToSave = remoteData
             ? { ...remoteData, version: currentData.version, etabId: cloudConfig.etabId, planningId: cloudConfig.planningId, savedAt: updatedAt }
             : { ...currentData, savedAt: updatedAt };
@@ -9834,13 +9854,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-prerequisites-lock]").forEach((input) => {
           input.addEventListener("change", () => {
-            if (!cloudSourceReadyForWrite()) {
-              input.checked = !input.checked;
-              cloudStatus = cloudWriteBlockedMessage();
-              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
-              render();
-              return;
-            }
             const mode = input.dataset.prerequisitesLock || prerequisiteMode;
             prerequisiteLocks = { ...prerequisiteLocks, [mode]: input.checked };
             savePrerequisiteLocks();
@@ -9850,13 +9863,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-year-prerequisites-lock]").forEach((input) => {
           input.addEventListener("change", () => {
-            if (!cloudSourceReadyForWrite()) {
-              input.checked = !input.checked;
-              cloudStatus = cloudWriteBlockedMessage();
-              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
-              render();
-              return;
-            }
             const mode = input.dataset.yearPrerequisitesLock || yearPrerequisiteMode;
             yearPrerequisiteLocks = { ...yearPrerequisiteLocks, [mode]: input.checked };
             saveYearPrerequisiteLocks();
@@ -9866,13 +9872,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-construction-lock]").forEach((input) => {
           input.addEventListener("change", () => {
-            if (!cloudSourceReadyForWrite()) {
-              input.checked = !input.checked;
-              cloudStatus = cloudWriteBlockedMessage();
-              if (cloudReady() && isSignedIn()) cloudLoadFromRemote(true, false, true);
-              render();
-              return;
-            }
             const mode = input.dataset.constructionLock;
             if (mode === "blocks") constructionLocks = { ...constructionLocks, blocks: input.checked };
             if (mode === "cycleDetails") {
