@@ -1011,15 +1011,14 @@
         { id: "class-single-place", category: "Conflit classe", title: "Une classe, un seul cours", detail: "Une classe ou un demi-groupe ne peut pas etre place sur deux cours qui se chevauchent." },
         { id: "service-theorique", category: "Service", title: "Respect du service theorique", detail: "En construction, les classes proposees pour un prof doivent correspondre a son service theorique." },
         { id: "facility-activity-link", category: "Installations / activites", title: "Activites compatibles", detail: "Une installation ne propose que les activites qui lui sont reliees dans Installations & activites." },
-        { id: "seasonal-location-preference", category: "Installations / activites", title: "Saisonnalite des lieux", detail: "Privilegier les lieux en exterieur au premier et au dernier cycle, et les lieux en interieur sur les cycles intermediaires." },
+        { id: "seasonal-location-preference", category: "Regles definies par l'etablissement", title: "Saisonnalite des lieux", detail: "Privilegier les lieux en exterieur au premier et au dernier cycle, et les lieux en interieur sur les cycles intermediaires." },
         { id: "class-activity-program", category: "Installations / activites", title: "Programme annuel des classes", detail: "Chaque classe doit faire toutes les activites prevues dans son programme annuel." },
-        { id: "class-single-activity-per-cycle", category: "Installations / activites", title: "Activite unique hors 6eme", detail: "Sur un meme cycle, les classes de 5eme, 4eme et 3eme font une seule activite. Les 6eme suivent leur regle specifique." },
-        { id: "sixth-grade-dual-activity-swimming", category: "Installations / activites", title: "Programme specifique 6eme", detail: "Les classes de 6eme font exactement deux activites distinctes par cycle. La natation, associee a la piscine, est obligatoire sur les trois premiers cycles." },
+        { id: "class-single-activity-per-cycle", category: "Regles definies par l'etablissement", title: "Activite unique hors 6eme", detail: "Sur un meme cycle, les classes de 5eme, 4eme et 3eme font une seule activite. Les 6eme suivent leur regle specifique." },
+        { id: "sixth-grade-dual-activity-swimming", category: "Regles definies par l'etablissement", title: "Programme specifique 6eme", detail: "Les classes de 6eme font exactement deux activites distinctes par cycle. La natation, associee a la piscine, est obligatoire sur les trois premiers cycles." },
         { id: "twenty-four-hours", category: "Rythme classe", title: "24h entre deux cours EPS", detail: "Une classe ne devrait pas refaire EPS a moins de 24h d'intervalle." },
         { id: "cycle-week-type", category: "Cycle", title: "Construction par semaine type", detail: "Un bloc construit sur la semaine type doit se repercuter sur les semaines du cycle concerne." },
         { id: "annual-skeleton", category: "Cycle", title: "Socle annuel profs/classes", detail: "Les duos prof-classe et le type de semaine sont fixes sur l'annee ; seules les installations et activites varient par cycle." },
         { id: "cycle-details-required", category: "Installations / activites", title: "Details par cycle", detail: "Chaque bloc annuel doit recevoir une installation et une activite par cycle quand l'installation propose des activites." },
-        { id: "as-readonly-construction", category: "AS", title: "AS non modifiables en construction", detail: "Les creneaux AS restent fixes dans Construction ; on ne peut pas les deplacer ni les modifier depuis les blocs." },
         { id: "cointervention-full-slot", category: "Co-intervention", title: "Co-intervention sur tout le creneau", detail: "En co-intervention, les deux professeurs sont presents sur toute la duree du creneau, dans la meme installation, avec des classes differentes." },
         { id: "option-blocks", category: "Options", title: "Blocs option sans classe obligatoire", detail: "Les horaires libres du service theorique peuvent devenir des blocs Option sans classe obligatoire, avec une duree precisee dans le bloc profs/classes." },
         { id: "class-weekly-volume", category: "Service", title: "Volume hebdomadaire par classe", detail: "Les blocs profs/classes doivent permettre a chaque classe d'atteindre son volume EPS hebdomadaire : 4h en 6eme, 3h en 5eme, 4eme et 3eme." },
@@ -1031,9 +1030,9 @@
         "Conflit installation",
         "Service",
         "Installations / activites",
+        "Regles definies par l'etablissement",
         "Rythme classe",
         "Cycle",
-        "AS",
         "Co-intervention",
         "Options",
         "Sauvegarde",
@@ -1217,11 +1216,12 @@
         autoLoad: true,
         url: "https://kgmhuwuiswabbmeyqibp.supabase.co",
         anonKey: "sb_publishable_dJcG78XPNikpRqKGDB_0tw_ZZO7QAgj",
+        etabId: "",
         planningId: "planning-eps-2026-2027"
       };
       const AUTH_SESSION_KEY = "planningEpsAdminSession2026";
-      const ADMIN_EMAIL = "eps@lm.com";
-      const ADMIN_PASSWORD = "loustic";
+      const AUTH_INVITE_KEY = "planningEpsInviteToken2026";
+      const AUTH_ROLE_KEY = "planningEpsEtabRole2026";
       const fallbackBugFixLog = `# Log des corrections
 
 - Navigation : en-tête compacté pour éviter que les onglets masquent le contenu de la page.
@@ -1281,10 +1281,16 @@
       let cloudRefreshTimer = null;
       let cloudSyncing = false;
       let adminSession = loadAdminSession();
-      let authEmail = ADMIN_EMAIL;
+      let authEmail = "";
       let authPassword = "";
-      let authStatus = adminSession ? "Mode admin actif." : "";
-      if (adminSession) {
+      let authMode = "signin";
+      let authEtabName = "";
+      let authInviteToken = inviteTokenFromUrl() || localStorage.getItem(AUTH_INVITE_KEY) || "";
+      let authInviteLink = "";
+      let authInviteStatus = authInviteToken ? "Invitation equipe detectee." : "";
+      let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
+      let authStatus = adminSession ? "Connexion Supabase active." : "";
+      if (adminSession && currentEtabRole === "owner") {
         week = "build";
         constructionMode = "planning";
       }
@@ -2165,7 +2171,7 @@
           .filter((item) => defaultIds.has(item?.id))
           .map((item) => ({
             id: String(item?.id || `rule-setting-${Date.now()}-${Math.random().toString(16).slice(2)}`),
-            category: String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
+            category: defaultConstructionRuleSettings.find((rule) => rule.id === item?.id)?.category || String(item?.category || "Regle personnalisée").trim() || "Regle personnalisée",
             title: String(item?.title || "").trim(),
             detail: String(item?.detail || "").trim()
           }))
@@ -2925,6 +2931,7 @@
           autoLoad: true,
           url: "",
           anonKey: "",
+          etabId: "",
           planningId: "vaucanson-2026-2027",
           ...BUILT_IN_CLOUD_CONFIG,
           ...(window.__EPS_CLOUD_CONFIG__ || {})
@@ -2944,6 +2951,7 @@
               autoLoad: true,
               url: defaults.url,
               anonKey: defaults.anonKey,
+              etabId: merged.etabId || defaults.etabId || "",
               planningId: defaults.planningId
             };
           }
@@ -3086,19 +3094,21 @@
       function readCloudConfigInputs() {
         const urlInput = document.getElementById("cloudUrl");
         const anonKeyInput = document.getElementById("cloudAnonKey");
+        const etabIdInput = document.getElementById("cloudEtabId");
         const planningIdInput = document.getElementById("cloudPlanningId");
-        if (!urlInput && !anonKeyInput && !planningIdInput) return cloudConfig;
+        if (!urlInput && !anonKeyInput && !etabIdInput && !planningIdInput) return cloudConfig;
         cloudConfig = {
           ...cloudConfig,
           url: urlInput?.value.trim() || cloudConfig.url || "",
           anonKey: anonKeyInput?.value.trim() || cloudConfig.anonKey || "",
+          etabId: etabIdInput?.value.trim() || cloudConfig.etabId || "",
           planningId: planningIdInput?.value.trim() || cloudConfig.planningId || "vaucanson-2026-2027"
         };
         return cloudConfig;
       }
 
       function cloudReady() {
-        return Boolean(cloudConfig.enabled && cloudConfig.url && cloudConfig.anonKey && cloudConfig.planningId);
+        return Boolean(cloudConfig.enabled && cloudConfig.url && cloudConfig.anonKey && cloudConfig.etabId && cloudConfig.planningId);
       }
 
       function isLocalRuntime() {
@@ -3138,6 +3148,15 @@
         return `${base}/rest/v1/eps_feedback`;
       }
 
+      function etabMembersEndpoint() {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/rest/v1/etab_members`;
+      }
+
+      function planningQuery() {
+        return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&id=eq.${encodeURIComponent(cloudConfig.planningId)}`;
+      }
+
       function cloudHeaders(extra = {}) {
         const token = adminSession?.access_token || cloudConfig.anonKey;
         return {
@@ -3151,6 +3170,100 @@
       function authEndpoint(path) {
         const base = cloudConfig.url.replace(/\/$/, "");
         return `${base}/auth/v1/${path}`;
+      }
+
+      function rpcEndpoint(name) {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/rest/v1/rpc/${name}`;
+      }
+
+      function inviteTokenFromUrl() {
+        try {
+          const token = new URL(window.location.href).searchParams.get("invite") || "";
+          if (token) localStorage.setItem(AUTH_INVITE_KEY, token);
+          return token;
+        } catch {
+          return "";
+        }
+      }
+
+      function inviteLinkForToken(token) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("invite", token);
+        return url.toString();
+      }
+
+      function cleanAuthUrl(removeInvite = false) {
+        try {
+          const url = new URL(window.location.href);
+          url.hash = "";
+          if (removeInvite) url.searchParams.delete("invite");
+          window.history.replaceState({}, document.title, url.toString());
+        } catch {}
+      }
+
+      function oauthRedirectUrl() {
+        const url = new URL(window.location.href);
+        url.hash = "";
+        return url.toString();
+      }
+
+      function startOAuthProvider(provider) {
+        if (!cloudConfig.url || !cloudConfig.anonKey) {
+          authStatus = "Configuration Supabase incomplete.";
+          render();
+          return;
+        }
+        if (authInviteToken) localStorage.setItem(AUTH_INVITE_KEY, authInviteToken);
+        const target = `${authEndpoint("authorize")}?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(oauthRedirectUrl())}`;
+        window.location.assign(target);
+      }
+
+      async function fetchAuthUser(accessToken) {
+        const response = await fetch(authEndpoint("user"), {
+          headers: {
+            apikey: cloudConfig.anonKey,
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) return null;
+        return response.json();
+      }
+
+      async function handleOAuthRedirect() {
+        const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
+        if (!hash) return false;
+        const params = new URLSearchParams(hash);
+        const error = params.get("error_description") || params.get("error");
+        if (error) {
+          authStatus = `Connexion OAuth refusee : ${error}`;
+          cleanAuthUrl(false);
+          return true;
+        }
+        const accessToken = params.get("access_token");
+        if (!accessToken) return false;
+        const expiresIn = Number(params.get("expires_in") || 3600);
+        const user = await fetchAuthUser(accessToken);
+        saveAdminSession({
+          access_token: accessToken,
+          refresh_token: params.get("refresh_token") || "",
+          token_type: params.get("token_type") || "bearer",
+          expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+          user
+        });
+        const token = authInviteToken || localStorage.getItem(AUTH_INVITE_KEY) || "";
+        if (token) {
+          await acceptEtabInvite(token);
+          authStatus = "Connexion OAuth active. Invitation acceptee.";
+          cleanAuthUrl(true);
+        } else {
+          if (cloudConfig.etabId) await refreshCurrentEtabRole();
+          authStatus = "Connexion OAuth active.";
+          cleanAuthUrl(false);
+        }
+        if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+        return true;
       }
 
       function loadAdminSession() {
@@ -3168,33 +3281,100 @@
       function saveAdminSession(session) {
         adminSession = session;
         if (session) localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
-        else localStorage.removeItem(AUTH_SESSION_KEY);
+        else {
+          localStorage.removeItem(AUTH_SESSION_KEY);
+          currentEtabRole = "";
+          localStorage.removeItem(AUTH_ROLE_KEY);
+        }
+      }
+
+      function isSignedIn() {
+        return Boolean(adminSession?.access_token);
+      }
+
+      function normalizeEtabRole(role) {
+        return role === "owner" ? "owner" : role ? "member" : "";
+      }
+
+      function setCurrentEtabRole(role) {
+        currentEtabRole = normalizeEtabRole(role);
+        if (currentEtabRole) localStorage.setItem(AUTH_ROLE_KEY, currentEtabRole);
+        else localStorage.removeItem(AUTH_ROLE_KEY);
+        return currentEtabRole;
       }
 
       function isAdmin() {
-        return Boolean(adminSession?.access_token);
+        return isSignedIn() && currentEtabRole === "owner";
+      }
+
+      async function refreshCurrentEtabRole() {
+        if (!isSignedIn() || !cloudConfig.etabId) return "";
+        const response = await fetch(`${etabMembersEndpoint()}?select=role&etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&limit=1`, {
+          headers: cloudHeaders()
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const rows = await response.json();
+        return setCurrentEtabRole(rows[0]?.role || "");
+      }
+
+      async function claimConfiguredEtabForCurrentUser() {
+        if (!isSignedIn()) throw new Error("connexion requise");
+        if (!cloudConfig.etabId) throw new Error("etab_id manquant");
+        const response = await fetch(rpcEndpoint("claim_etab_for_current_user"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({
+            claim_etab_id: cloudConfig.etabId,
+            etab_name: schoolConstraints.establishmentName || "Etablissement EPS"
+          })
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
+        const role = result?.role || "owner";
+        setCurrentEtabRole(role);
+        return role;
+      }
+
+      async function acceptEtabInvite(token = authInviteToken) {
+        const cleanToken = String(token || "").trim();
+        if (!cleanToken) return "";
+        const response = await fetch(rpcEndpoint("accept_etab_invite"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({ invite_token: cleanToken })
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
+        const etabId = typeof result === "string" ? result : result?.id || result;
+        if (!etabId) throw new Error("etab_id non retourne par Supabase");
+        cloudConfig = { ...cloudConfig, etabId };
+        saveCloudConfig();
+        setCurrentEtabRole(result?.role || "member");
+        authInviteToken = "";
+        localStorage.removeItem(AUTH_INVITE_KEY);
+        return etabId;
+      }
+
+      async function createEtabInvite(role = "member") {
+        if (!cloudConfig.etabId) throw new Error("aucun etablissement actif");
+        const response = await fetch(rpcEndpoint("create_etab_invite"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({ invite_etab_id: cloudConfig.etabId, invite_role: role === "owner" ? "owner" : "member" })
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
+        const token = typeof result === "string" ? result : result?.token || result;
+        if (!token) throw new Error("invitation non retournee par Supabase");
+        authInviteLink = inviteLinkForToken(token);
+        return authInviteLink;
       }
 
       async function signInAdmin() {
         authStatus = "Connexion en cours...";
         render();
-        if (authPassword === ADMIN_PASSWORD) {
-          saveAdminSession({
-            access_token: cloudConfig.anonKey,
-            expires_at: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
-            user: { email: authEmail.trim() || ADMIN_EMAIL },
-            local_admin: true
-          });
-          authPassword = "";
-          authStatus = cloudReady()
-            ? cloudWriteAllowed()
-              ? "Mode admin actif. Sauvegarde Supabase active."
-              : "Mode admin actif. Ecriture Supabase bloquee en local."
-            : "Mode admin actif. Cloud non configuré.";
-          render();
-          return;
-        }
         try {
+          if (!cloudConfig.url || !cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
           const response = await fetch(authEndpoint("token?grant_type=password"), {
             method: "POST",
             headers: cloudHeaders(),
@@ -3203,11 +3383,90 @@
           const result = await response.json();
           if (!response.ok) throw new Error(result.error_description || result.msg || result.message || "connexion impossible");
           saveAdminSession(result);
+          const hadInvite = Boolean(authInviteToken);
+          if (hadInvite) await acceptEtabInvite(authInviteToken);
+          else if (cloudConfig.etabId) await refreshCurrentEtabRole();
           authPassword = "";
-          authStatus = "Mode admin actif. Sauvegarde Supabase active.";
+          authStatus = hadInvite
+            ? "Connexion Supabase active. Invitation acceptee."
+            : cloudReady()
+            ? "Connexion Supabase active."
+            : "Connexion Supabase active. Renseignez l'etab_id pour charger les donnees.";
+          if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
         } catch (error) {
           saveAdminSession(null);
           authStatus = `Connexion refusée : ${error.message || "identifiants incorrects"}`;
+        } finally {
+          render();
+        }
+      }
+
+      function etabSlugFromName(name) {
+        return String(name || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 80) || "etablissement";
+      }
+
+      async function createEtabForCurrentUser(name) {
+        const label = String(name || "").trim();
+        if (!label) throw new Error("nom d'etablissement requis");
+        const response = await fetch(rpcEndpoint("create_etab_for_current_user"), {
+          method: "POST",
+          headers: cloudHeaders(),
+          body: JSON.stringify({ etab_name: label, etab_slug: etabSlugFromName(label) })
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
+        const etabId = typeof result === "string" ? result : result?.id || result;
+        if (!etabId) throw new Error("etab_id non retourne par Supabase");
+        cloudConfig = { ...cloudConfig, etabId };
+        saveCloudConfig();
+        return etabId;
+      }
+
+      async function signUpAdmin() {
+        authStatus = "Creation du compte...";
+        render();
+        try {
+          if (!cloudConfig.url || !cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
+          if (!authInviteToken && !authEtabName.trim()) throw new Error("renseignez le nom de l'etablissement");
+          const response = await fetch(authEndpoint("signup"), {
+            method: "POST",
+            headers: cloudHeaders(),
+            body: JSON.stringify({
+              email: authEmail.trim(),
+              password: authPassword,
+              data: { etablissement: authEtabName.trim() }
+            })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error_description || result.msg || result.message || "creation impossible");
+          if (!result.access_token) {
+            authPassword = "";
+            authStatus = authInviteToken
+              ? "Compte cree. Validez l'email si Supabase le demande, puis connectez-vous avec ce lien pour rejoindre l'equipe."
+              : "Compte cree. Validez l'email si Supabase le demande, puis connectez-vous pour creer l'etablissement.";
+            return;
+          }
+          saveAdminSession(result);
+          const hadInvite = Boolean(authInviteToken);
+          if (hadInvite) await acceptEtabInvite(authInviteToken);
+          else {
+            await createEtabForCurrentUser(authEtabName);
+            setCurrentEtabRole("owner");
+          }
+          authPassword = "";
+          authStatus = hadInvite
+            ? "Compte cree et rattache a l'equipe EPS."
+            : "Compte et etablissement crees. Vous pouvez sauvegarder ce planning.";
+          if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) setTimeout(() => cloudLoadFromRemote(true, true, true), 0);
+        } catch (error) {
+          saveAdminSession(null);
+          authStatus = `Creation impossible : ${error.message || "erreur inconnue"}`;
         } finally {
           render();
         }
@@ -3217,6 +3476,7 @@
         saveAdminSession(null);
         authPassword = "";
         authStatus = "";
+        authInviteLink = "";
         if (week === "build" || week === "alerts") week = "current";
         render();
       }
@@ -3233,6 +3493,7 @@
         return {
           version: 1,
           savedAt: new Date().toISOString(),
+          etabId: cloudConfig.etabId,
           planningId: cloudConfig.planningId,
           teachers,
           classConfig,
@@ -3401,24 +3662,24 @@
         try {
           const updatedAt = new Date().toISOString();
           const currentData = collectPlanningData();
-          const remoteResponse = await fetch(`${cloudEndpoint()}?select=data,updated_at&id=eq.${encodeURIComponent(cloudConfig.planningId)}`, {
+          const remoteResponse = await fetch(`${cloudEndpoint()}?select=data,updated_at&${planningQuery()}`, {
             headers: cloudHeaders()
           });
           if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
           const remoteRows = await remoteResponse.json();
           const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
           const dataToSave = remoteData
-            ? { ...remoteData, version: currentData.version, planningId: cloudConfig.planningId, savedAt: updatedAt }
+            ? { ...remoteData, version: currentData.version, etabId: cloudConfig.etabId, planningId: cloudConfig.planningId, savedAt: updatedAt }
             : { ...currentData, savedAt: updatedAt };
           if (remoteData) {
             changedKeys.forEach((key) => {
               dataToSave[key] = currentData[key];
             });
           }
-          const response = await fetch(`${cloudEndpoint()}?on_conflict=id`, {
+          const response = await fetch(`${cloudEndpoint()}?on_conflict=etab_id,id`, {
             method: "POST",
             headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-            body: JSON.stringify({ id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt })
+            body: JSON.stringify({ etab_id: cloudConfig.etabId, id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt })
           });
           if (!response.ok) throw new Error(await response.text());
           cloudSaveSucceeded = true;
@@ -3427,7 +3688,7 @@
         } catch (error) {
           const message = error.message || "sauvegarde impossible";
           cloudStatus = message.includes("42501") || message.includes("permission denied")
-            ? "Erreur cloud : droits Supabase manquants. Dans Supabase SQL Editor, lance GRANT INSERT, SELECT, UPDATE ON public.eps_plannings TO anon, authenticated;"
+            ? "Erreur cloud : droits Supabase/RLS manquants. Verifiez que l'utilisateur est membre de cet etab_id."
             : `Erreur cloud : ${message}`;
           shouldDiscardLocalChanges = true;
         } finally {
@@ -3465,7 +3726,7 @@
         if (!silent) cloudStatus = "Chargement depuis le cloud...";
         if (shouldRender) render();
         try {
-          const response = await fetch(`${cloudEndpoint()}?select=data,updated_at&id=eq.${encodeURIComponent(cloudConfig.planningId)}`, {
+          const response = await fetch(`${cloudEndpoint()}?select=data,updated_at&${planningQuery()}`, {
             headers: cloudHeaders()
           });
           if (!response.ok) throw new Error(await response.text());
@@ -3752,6 +4013,12 @@
 
       function cycleForWeek(weekItem, classLevel = "") {
         return cyclesForClassLevel(classLevel).find((cycle) => weeksForCycle(cycle).some((cycleWeek) => cycleWeek.rank === weekItem.rank));
+      }
+
+      function constructionCycleById(cycleId) {
+        return allCycleSets().flatMap((set) => set.cycles).find((cycle) => cycle.id === cycleId)
+          || cycles.find((cycle) => cycle.id === cycleId)
+          || null;
       }
 
       function findCycleForRule(rule) {
@@ -7202,22 +7469,66 @@
       }
 
       function renderCloudSettings() {
-        const sql = `create table if not exists public.eps_plannings (
-  id text primary key,
-  data jsonb not null,
-  updated_at timestamptz not null default now()
+        const sql = `create extension if not exists pgcrypto;
+
+create table if not exists public.etabs (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text unique,
+  created_at timestamptz not null default now()
 );
+
+create table if not exists public.etab_members (
+  etab_id uuid not null references public.etabs(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null default 'member' check (role in ('owner', 'member')),
+  created_at timestamptz not null default now(),
+  primary key (etab_id, user_id)
+);
+
+create table if not exists public.etab_invites (
+  token text primary key default replace(gen_random_uuid()::text, '-', ''),
+  etab_id uuid not null references public.etabs(id) on delete cascade,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  role text not null default 'member' check (role in ('owner', 'member')),
+  expires_at timestamptz not null default now() + interval '30 days',
+  used_count integer not null default 0,
+  max_uses integer,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.eps_plannings (
+  etab_id uuid not null references public.etabs(id) on delete cascade,
+  id text not null,
+  data jsonb not null,
+  updated_at timestamptz not null default now(),
+  primary key (etab_id, id)
+);
+
+alter table public.eps_plannings
+add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
+
+-- Migration si eps_plannings existait deja avec id comme seule cle primaire :
+-- 1. creez d'abord l'etablissement et recuperez son UUID.
+-- 2. adaptez puis lancez :
+-- alter table public.eps_plannings add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
+-- update public.eps_plannings set etab_id = 'ETAB_UUID_ICI' where etab_id is null;
+-- alter table public.eps_plannings alter column etab_id set not null;
+-- alter table public.eps_plannings drop constraint if exists eps_plannings_pkey;
+-- alter table public.eps_plannings add primary key (etab_id, id);
 
 -- AS et evenements sportifs sont rattaches au planning dans data :
 -- data->'asSessions' et data->'sportEvents'.
--- Chaque entree contient planningId = eps_plannings.id.
+-- Chaque entree contient etabId + planningId.
 
-alter table public.eps_plannings disable row level security;
 grant usage on schema public to anon, authenticated;
-grant insert, select, update on public.eps_plannings to anon, authenticated;
+grant select on public.etabs to authenticated;
+grant select on public.etab_members to authenticated;
+grant insert, select, update on public.eps_plannings to authenticated;
 
 create table if not exists public.eps_feedback (
   id uuid primary key default gen_random_uuid(),
+  etab_id uuid not null references public.etabs(id) on delete cascade,
   planning_id text not null,
   kind text not null check (kind in ('bug', 'improvement')),
   author text,
@@ -7227,9 +7538,263 @@ create table if not exists public.eps_feedback (
   created_at timestamptz not null default now()
 );
 
-alter table public.eps_feedback disable row level security;
-grant usage on schema public to anon, authenticated;
-grant insert, select, update on public.eps_feedback to anon, authenticated;`;
+alter table public.eps_feedback
+add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
+
+grant insert, select, update on public.eps_feedback to authenticated;
+
+alter table public.etabs enable row level security;
+alter table public.etab_members enable row level security;
+alter table public.etab_invites enable row level security;
+alter table public.eps_plannings enable row level security;
+alter table public.eps_feedback enable row level security;
+
+drop policy if exists "members read own etab" on public.etabs;
+create policy "members read own etab"
+on public.etabs for select
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = etabs.id
+    and m.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "members read memberships" on public.etab_members;
+create policy "members read memberships"
+on public.etab_members for select
+using (user_id = auth.uid());
+
+drop policy if exists "members read invites" on public.etab_invites;
+create policy "members read invites"
+on public.etab_invites for select
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = etab_invites.etab_id
+    and m.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "members read plannings" on public.eps_plannings;
+create policy "members read plannings"
+on public.eps_plannings for select
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = eps_plannings.etab_id
+    and m.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "owners write plannings" on public.eps_plannings;
+drop policy if exists "editors write plannings" on public.eps_plannings;
+create policy "owners write plannings"
+on public.eps_plannings for all
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = eps_plannings.etab_id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  )
+)
+with check (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = eps_plannings.etab_id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  )
+);
+
+drop policy if exists "members insert feedback" on public.eps_feedback;
+create policy "members insert feedback"
+on public.eps_feedback for insert
+with check (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = eps_feedback.etab_id
+    and m.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "members read feedback" on public.eps_feedback;
+create policy "members read feedback"
+on public.eps_feedback for select
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = eps_feedback.etab_id
+    and m.user_id = auth.uid()
+  )
+);
+
+create or replace function public.create_etab_for_current_user(etab_name text, etab_slug text default null)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_etab_id uuid;
+  clean_name text;
+  clean_slug text;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  clean_name := nullif(trim(etab_name), '');
+  if clean_name is null then
+    raise exception 'Nom d''etablissement requis';
+  end if;
+
+  clean_slug := nullif(trim(etab_slug), '');
+  if clean_slug is null then
+    clean_slug := lower(regexp_replace(clean_name, '[^a-zA-Z0-9]+', '-', 'g'));
+  end if;
+  clean_slug := trim(both '-' from clean_slug);
+  if clean_slug = '' then
+    clean_slug := 'etablissement';
+  end if;
+  clean_slug := clean_slug || '-' || substr(gen_random_uuid()::text, 1, 8);
+
+  insert into public.etabs (name, slug)
+  values (clean_name, clean_slug)
+  returning id into new_etab_id;
+
+  insert into public.etab_members (etab_id, user_id, role)
+  values (new_etab_id, auth.uid(), 'owner');
+
+  return new_etab_id;
+end;
+$$;
+
+grant execute on function public.create_etab_for_current_user(text, text) to authenticated;
+
+create or replace function public.claim_etab_for_current_user(claim_etab_id uuid, etab_name text default 'Etablissement EPS')
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  member_count integer;
+  clean_name text;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if claim_etab_id is null then
+    raise exception 'etab_id requis';
+  end if;
+
+  clean_name := nullif(trim(etab_name), '');
+  if clean_name is null then
+    clean_name := 'Etablissement EPS';
+  end if;
+
+  insert into public.etabs (id, name, slug)
+  values (claim_etab_id, clean_name, 'migration-' || substr(claim_etab_id::text, 1, 8))
+  on conflict (id) do nothing;
+
+  select count(*) into member_count
+  from public.etab_members
+  where etab_id = claim_etab_id;
+
+  if member_count > 0 and not exists (
+    select 1 from public.etab_members
+    where etab_id = claim_etab_id
+    and user_id = auth.uid()
+  ) then
+    raise exception 'Cet etablissement a deja une equipe. Demandez un lien d''invitation owner.';
+  end if;
+
+  insert into public.etab_members (etab_id, user_id, role)
+  values (claim_etab_id, auth.uid(), 'owner')
+  on conflict (etab_id, user_id) do update
+  set role = 'owner';
+
+  return jsonb_build_object('id', claim_etab_id, 'role', 'owner');
+end;
+$$;
+
+grant execute on function public.claim_etab_for_current_user(uuid, text) to authenticated;
+
+create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  invite_token text;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = invite_etab_id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  ) then
+    raise exception 'Droits insuffisants pour inviter';
+  end if;
+
+  if invite_role not in ('owner', 'member') then
+    invite_role := 'member';
+  end if;
+
+  insert into public.etab_invites (etab_id, created_by, role)
+  values (invite_etab_id, auth.uid(), invite_role)
+  returning token into invite_token;
+
+  return invite_token;
+end;
+$$;
+
+create or replace function public.accept_etab_invite(invite_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  invite_row public.etab_invites%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  select * into invite_row
+  from public.etab_invites
+  where token = invite_token
+    and expires_at > now()
+    and (max_uses is null or used_count < max_uses);
+
+  if invite_row.token is null then
+    raise exception 'Invitation invalide ou expiree';
+  end if;
+
+  insert into public.etab_members (etab_id, user_id, role)
+  values (invite_row.etab_id, auth.uid(), invite_row.role)
+  on conflict (etab_id, user_id) do update
+  set role = excluded.role;
+
+  update public.etab_invites
+  set used_count = used_count + 1
+  where token = invite_row.token;
+
+  return jsonb_build_object('id', invite_row.etab_id, 'role', invite_row.role);
+end;
+$$;
+
+grant execute on function public.create_etab_invite(uuid, text) to authenticated;
+grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return `<section class="cloudPage">
           <div class="cloudPanel">
             <h3>Synchronisation cloud</h3>
@@ -7242,6 +7807,10 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <div class="cloudField">
                 <label>Clé publique anon</label>
                 <input id="cloudAnonKey" value="${cloudConfig.anonKey || ""}" placeholder="eyJhbGci..." />
+              </div>
+              <div class="cloudField">
+                <label>etab_id</label>
+                <input id="cloudEtabId" value="${cloudConfig.etabId || ""}" placeholder="UUID de l'etablissement" />
               </div>
               <div class="cloudField">
                 <label>Identifiant du planning</label>
@@ -7264,8 +7833,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="cloudStatus">${cloudStatus}</div>
           </div>
           <div class="cloudPanel">
-            <h3>Table Supabase à créer</h3>
-            <p class="muted">Dans Supabase, va dans SQL Editor, colle ce script, puis récupère l'URL du projet et la clé publique anon.</p>
+            <h3>Tables Supabase a creer</h3>
+            <p class="muted">Dans Supabase, va dans SQL Editor, colle ce script, puis recupere l'URL du projet et la cle publique anon. Ensuite, chaque utilisateur pourra creer son compte et son etablissement depuis l'app.</p>
             <pre class="cloudSql">${sql}</pre>
           </div>
         </section>`;
@@ -7277,8 +7846,9 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
         const block = currentBlock();
         const blockLevel = classParts(block.schoolClass).level;
+        const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
         const cellCycle = activeBuildCycleId
-          ? cycles.find((cycle) => cycle.id === activeBuildCycleId)
+          ? constructionCycleById(activeBuildCycleId)
           : cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
@@ -7292,21 +7862,20 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         });
         const selectedFacilityUnavailable = (occupied.facilityIds.has(blockFacilityId) && !blockCoIntervention) || occupied.unavailableFacilityIds.has(blockFacilityId);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId) || cycleUnavailableTeacherIds.has(teacherId));
-        const weekLetterMismatch = !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
-        const unavailableMessage = blockUnavailableMessage(row, weekItem, block);
+        const weekLetterMismatch = !editingCycleDetails && !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
+        const unavailableMessage = editingCycleDetails ? "" : blockUnavailableMessage(row, weekItem, block);
         const cycleUnavailableMessage = cellCycle ? blockCycleUnavailableMessage(row.id, cellCycle.id, block, blockWeekLetter) : "";
         const conflictMessage = unavailableMessage || cycleUnavailableMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
-        const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
         const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
         const presentCount = items.length + events.length + asItems.length;
-        const editingLabel = editingBuildBlock ? "Mode modification : double-clic appliqué sur un bloc existant." : "";
+        const editingLabel = editingCycleDetails ? "Mode cycle : les installations et activites seront appliquees a tout ce cycle." : editingBuildBlock ? "Mode modification : double-clic applique sur un bloc existant." : "";
         const availableActivities = blockFacilityId ? activitiesForFacility(blockFacilityId) : activities;
         const availableFreeActivities = serviceFreeActivities();
         const availableOptions = serviceFreeOptionsForTeachers(blockTeacherIds);
@@ -7348,7 +7917,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             <div class="modalHeader">
               <div>
                 <h3>${row.day} · ${row.slot.label}</h3>
-                <p class="muted">Semaine ${weekItem.rank}${weekItem.letter}. Cycle ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? cellCycle.name : "aucun cycle defini"}.</p>
+                <p class="muted">${editingCycleDetails ? `Cycle ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? cellCycle.name : "aucun cycle defini"}.` : `Semaine ${weekItem.rank}${weekItem.letter}. Cycle ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? cellCycle.name : "aucun cycle defini"}.`}</p>
                 ${editingLabel ? `<p class="muted">${editingLabel}</p>` : ""}
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
@@ -7452,7 +8021,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               <button class="addButton" id="addBuiltBlock" ${canSaveBlock ? "" : "disabled"}>${editingCycleDetails ? "Enregistrer ce cycle" : editingBuildBlock ? "Enregistrer le bloc annuel" : "Ajouter le bloc annuel"}</button>
             </div>` : ""}
             <div class="existingBlocks">
-              <h3>Blocs presents sur ce creneau</h3>
+              <h3>${editingCycleDetails ? "Blocs presents sur ce cycle" : "Blocs presents sur ce creneau"}</h3>
               <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
                 <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
                   ${editingCycleDetails ? "" : `<button data-remove-cell="${activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>`}
@@ -8007,7 +8576,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           const optimizationIssue = constructionOptimizationIssueForBlock(item, cycle);
           const showCycleDetails = constructionBuildMode !== "blocks";
           return `
-          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(item)}">
+          <div class="buildBlock ${movingBuildBlock?.type === "course" && movingBuildBlock?.key === key && movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? (constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"`) : ""} data-move-index="${index}" data-block-key="${key}" data-cycle-id="${cycle?.id || ""}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(item)}">
             ${editable && constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Deplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(item)}</strong>
@@ -8486,6 +9055,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           if (!cloudReady()) throw new Error("cloud non configure");
           if (!cloudWriteAllowed()) throw new Error(cloudWriteBlockedMessage());
           const payload = {
+            etab_id: cloudConfig.etabId,
             planning_id: cloudConfig.planningId,
             kind: requestKind,
             author: requestAuthor.trim() || null,
@@ -8500,12 +9070,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           };
           const response = await fetch(feedbackEndpoint(), {
             method: "POST",
-            headers: {
-              apikey: cloudConfig.anonKey,
-              Authorization: `Bearer ${cloudConfig.anonKey}`,
-              "Content-Type": "application/json",
-              Prefer: "return=minimal"
-            },
+            headers: cloudHeaders({ Prefer: "return=minimal" }),
             body: JSON.stringify(payload)
           });
           if (!response.ok) throw new Error(await response.text());
@@ -8591,21 +9156,33 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
       function renderAuthBox() {
         const authBox = document.getElementById("authBox");
         if (!authBox) return;
-        if (isAdmin()) {
+        if (isSignedIn()) {
           authBox.innerHTML = `
-            <div class="authStatus">Admin connectÃ© : ${adminSession.user?.email || ADMIN_EMAIL}</div>
+            <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${isAdmin() ? "owner" : "member"}` : ""}</div>
+            ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Etablissement" aria-label="Nom de l'etablissement" /><button class="authButton" type="submit">Creer mon etab</button></form>` : ""}
+            ${cloudConfig.etabId && !currentEtabRole ? `<form class="authForm" id="claimEtabForm"><button class="authButton" type="submit">Lier mon compte a cet etab</button></form>` : ""}
+            ${cloudConfig.etabId && isAdmin() ? `<div class="authForm"><button class="authButton secondary" data-create-invite-link="member">Inviter member</button><button class="authButton secondary" data-create-invite-link="owner">Inviter owner</button>${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
           `;
-          authBox.querySelector(".authStatus").innerHTML = `Admin connect&eacute; : ${adminSession.user?.email || ADMIN_EMAIL}`;
+          authBox.querySelector(".authStatus").innerHTML = `Connect&eacute; : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${isAdmin() ? "owner" : "member"}` : ""}`;
           authBox.querySelector("#logoutAdmin").innerHTML = "D&eacute;connexion";
           return;
         }
         authBox.innerHTML = `
           <form class="authForm" id="adminLoginForm">
-            <input id="adminEmail" type="email" value="${authEmail}" autocomplete="username" aria-label="Email admin" />
-            <input id="adminPassword" type="password" value="${authPassword}" autocomplete="current-password" placeholder="Mot de passe admin" aria-label="Mot de passe admin" />
-            <button class="authButton" type="submit">Admin</button>
+            <input id="adminEmail" type="email" value="${authEmail}" autocomplete="username" aria-label="Email Supabase" placeholder="Email" />
+            <input id="adminPassword" type="password" value="${authPassword}" autocomplete="current-password" placeholder="Mot de passe" aria-label="Mot de passe Supabase" />
+            ${authMode === "signup" && !authInviteToken ? `<input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Etablissement" aria-label="Nom de l'etablissement" />` : ""}
+            <button class="authButton" type="submit">${authMode === "signup" ? "Creer" : "Connexion"}</button>
+            <button class="authButton secondary" type="button" id="toggleAuthMode">${authMode === "signup" ? "J'ai deja un compte" : authInviteToken ? "Creer compte invite" : "Creer compte + etab"}</button>
           </form>
+          <div class="authForm">
+            <button class="authButton secondary" type="button" data-oauth-provider="google">Google</button>
+            <button class="authButton secondary" type="button" data-oauth-provider="apple">Apple</button>
+          </div>
+          ${authInviteToken ? `<div class="authStatus">Lien d'invitation equipe EPS detecte.</div>` : ""}
+          ${authInviteStatus ? `<div class="authStatus">${authInviteStatus}</div>` : ""}
           ${authStatus ? `<div class="authStatus">${authStatus}</div>` : ""}
         `;
       }
@@ -8666,15 +9243,88 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (adminLoginForm) {
           adminLoginForm.addEventListener("submit", (event) => {
             event.preventDefault();
-            authEmail = document.getElementById("adminEmail")?.value.trim() || ADMIN_EMAIL;
+            authEmail = document.getElementById("adminEmail")?.value.trim() || "";
             authPassword = document.getElementById("adminPassword")?.value || "";
-            signInAdmin();
+            authEtabName = document.getElementById("authEtabName")?.value.trim() || authEtabName;
+            if (authMode === "signup") signUpAdmin();
+            else signInAdmin();
           });
         }
+        const toggleAuthMode = document.getElementById("toggleAuthMode");
+        if (toggleAuthMode) toggleAuthMode.addEventListener("click", () => {
+          authMode = authMode === "signup" ? "signin" : "signup";
+          authStatus = "";
+          render();
+        });
+        document.querySelectorAll("[data-oauth-provider]").forEach((button) => {
+          button.addEventListener("click", () => startOAuthProvider(button.dataset.oauthProvider));
+        });
         const adminEmailInput = document.getElementById("adminEmail");
         if (adminEmailInput) adminEmailInput.addEventListener("input", () => authEmail = adminEmailInput.value);
         const adminPasswordInput = document.getElementById("adminPassword");
         if (adminPasswordInput) adminPasswordInput.addEventListener("input", () => authPassword = adminPasswordInput.value);
+        const authEtabNameInput = document.getElementById("authEtabName");
+        if (authEtabNameInput) authEtabNameInput.addEventListener("input", () => authEtabName = authEtabNameInput.value);
+        const createEtabForm = document.getElementById("createEtabForm");
+        if (createEtabForm) createEtabForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          authEtabName = document.getElementById("authEtabName")?.value.trim() || "";
+          authStatus = "Creation de l'etablissement...";
+          render();
+        try {
+          await createEtabForCurrentUser(authEtabName);
+          setCurrentEtabRole("owner");
+          authStatus = "Etablissement cree.";
+          } catch (error) {
+            authStatus = `Creation impossible : ${error.message || "erreur inconnue"}`;
+          } finally {
+            render();
+          }
+        });
+        const acceptInviteForm = document.getElementById("acceptInviteForm");
+        if (acceptInviteForm) acceptInviteForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          authStatus = "Rattachement a l'equipe EPS...";
+          render();
+          try {
+            await acceptEtabInvite(authInviteToken);
+            authStatus = "Vous avez rejoint l'equipe EPS.";
+            if (cloudReady() && cloudConfig.autoLoad) setTimeout(() => cloudLoadFromRemote(true, false, true), 0);
+          } catch (error) {
+            authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
+          } finally {
+            render();
+          }
+        });
+        const claimEtabForm = document.getElementById("claimEtabForm");
+        if (claimEtabForm) claimEtabForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          authStatus = "Liaison du compte a l'etablissement...";
+          render();
+          try {
+            await claimConfiguredEtabForCurrentUser();
+            authStatus = "Compte lie a cet etablissement en owner. Vous pouvez envoyer le planning local vers le cloud.";
+          } catch (error) {
+            authStatus = `Liaison impossible : ${error.message || "erreur inconnue"}`;
+          } finally {
+            render();
+          }
+        });
+        document.querySelectorAll("[data-create-invite-link]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const role = button.dataset.createInviteLink === "owner" ? "owner" : "member";
+            authInviteStatus = `Generation du lien ${role}...`;
+            render();
+            try {
+              await createEtabInvite(role);
+              authInviteStatus = `Lien d'invitation ${role} pret a partager.`;
+            } catch (error) {
+              authInviteStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
+            } finally {
+              render();
+            }
+          });
+        });
         const logoutAdmin = document.getElementById("logoutAdmin");
         if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
         document.querySelectorAll("[data-warning-build-mode]").forEach((warning) => {
@@ -9272,7 +9922,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             render();
           });
         }
-        ["cloudUrl", "cloudAnonKey", "cloudPlanningId"].forEach((id) => {
+        ["cloudUrl", "cloudAnonKey", "cloudEtabId", "cloudPlanningId"].forEach((id) => {
           const input = document.getElementById(id);
           if (input) {
             input.addEventListener("input", () => {
@@ -9286,6 +9936,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         if (pushCloudNow) pushCloudNow.addEventListener("click", () => {
           readCloudConfigInputs();
           saveCloudConfig();
+          markLocalChangedForCloud(cloudDataKeys);
           cloudSaveToRemote(true);
         });
         const pullCloudNow = document.getElementById("pullCloudNow");
@@ -10046,16 +10697,17 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const weekItem = schoolYearWeeks().find((item) => item.rank === weekRank);
             if (!blockTeacherIds.length) return;
             const block = currentBlock();
+            const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
             const cellCycle = activeBuildCycleId
-              ? cycles.find((cycle) => cycle.id === activeBuildCycleId)
+              ? constructionCycleById(activeBuildCycleId)
               : cycleForWeek(weekItem, classParts(block.schoolClass).level);
             if (!cellCycle) return;
             const row = yearRows().find((item) => item.id === rowId);
-            if (blockUnavailableMessage(row, weekItem, block)) {
+            if (!editingCycleDetails && blockUnavailableMessage(row, weekItem, block)) {
               render();
               return;
             }
-            if (!activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter) {
+            if (!editingCycleDetails && !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter) {
               render();
               return;
             }
@@ -10063,8 +10715,8 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
               render();
               return;
             }
-            if (constructionBuildMode === "cycleDetails" && editingBuildBlock?.ruleId) {
-              updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, block.cycleId || activeConstructionCycleId, block);
+            if (editingCycleDetails) {
+              updateConstructionRuleCycleDetails(editingBuildBlock.ruleId, activeBuildCycleId || block.cycleId || activeConstructionCycleId, block);
               showValidationPopup("Installation / activite mises a jour");
             } else if (editingBuildBlock?.ruleId) {
               updateAnnualConstructionRule(editingBuildBlock.ruleId, block, blockWeekLetter);
@@ -10252,7 +10904,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
             const item = constructionPlan[key]?.[index];
             if (!item) return;
             activeBuildCell = key;
-            activeBuildCycleId = item.cycleId || activeConstructionCycleId;
+            activeBuildCycleId = block.dataset.cycleId || item.cycleId || activeConstructionCycleId;
             blockTeacherIds = teacherIdsForBlock(item);
             blockFacilityId = item.facilityId || "";
             blockActivityId = item.activityId || "";
@@ -10489,7 +11141,7 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
         button.addEventListener("click", () => {
           if (button.disabled) return;
           if (!isAdmin() && (button.dataset.week === "build" || button.dataset.week === "alerts" || button.dataset.week === "log")) {
-            authStatus = "Connexion admin requise.";
+            authStatus = "Connexion Supabase requise.";
             render();
             return;
           }
@@ -10500,13 +11152,25 @@ grant insert, select, update on public.eps_feedback to anon, authenticated;`;
           render();
         });
       });
-      refreshConstructionPlanFromRulesLocalOnly();
-      render();
-      if (cloudReady() && cloudConfig.autoLoad) {
-        setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
-      } else {
-        restartCloudAutoRefresh();
+      async function bootstrapApp() {
+        refreshConstructionPlanFromRulesLocalOnly();
+        try {
+          await handleOAuthRedirect();
+        } catch (error) {
+          authStatus = `Retour OAuth impossible : ${error.message || "erreur inconnue"}`;
+        }
+        render();
+        if (isSignedIn() && cloudConfig.etabId) {
+          setTimeout(() => refreshCurrentEtabRole().then(render).catch(() => {}), 0);
+        }
+        if (cloudReady() && cloudConfig.autoLoad && isSignedIn()) {
+          setTimeout(() => cloudLoadFromRemote(true, false, true), 300);
+        } else {
+          restartCloudAutoRefresh();
+        }
       }
+
+      bootstrapApp();
     </script>
   </body>
 </html>
