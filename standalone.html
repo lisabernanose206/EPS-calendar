@@ -32,6 +32,8 @@
       .authForm input { border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 38px; padding: 0 10px; width: 190px; }
       .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
       .authButton.secondary { background: #e2e8f0; color: #0f172a; }
+      .googleAuthButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(15, 23, 42, .08); color: #0f172a; display: inline-flex; gap: 10px; min-height: 44px; padding: 0 16px; }
+      .googleAuthIcon { align-items: center; border-radius: 999px; display: inline-flex; font-family: Arial, sans-serif; font-size: 18px; font-weight: 900; height: 24px; justify-content: center; width: 24px; }
       .authStatus { color: #64748b; font-size: 12px; font-weight: 850; text-align: right; }
       h1 { font-size: clamp(26px, 5vw, 42px); line-height: 1.05; margin: 0; }
       h2 { font-size: 18px; margin: 0 0 10px; }
@@ -9221,16 +9223,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           return;
         }
         authBox.innerHTML = `
-          <form class="authForm" id="adminLoginForm">
-            <input id="adminEmail" type="email" value="${authEmail}" autocomplete="username" aria-label="Email Supabase" placeholder="Email" />
-            <input id="adminPassword" type="password" value="${authPassword}" autocomplete="current-password" placeholder="Mot de passe" aria-label="Mot de passe Supabase" />
-            ${authMode === "signup" && !authInviteToken ? `<input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Etablissement" aria-label="Nom de l'etablissement" />` : ""}
-            <button class="authButton" type="submit">${authMode === "signup" ? "Creer" : "Connexion"}</button>
-            <button class="authButton secondary" type="button" id="toggleAuthMode">${authMode === "signup" ? "J'ai deja un compte" : authInviteToken ? "Creer compte invite" : "Creer compte + etab"}</button>
-          </form>
           <div class="authForm">
-            <button class="authButton secondary" type="button" data-oauth-provider="google">Google</button>
-            <button class="authButton secondary" type="button" data-oauth-provider="apple">Apple</button>
+            <button class="authButton googleAuthButton" type="button" data-oauth-provider="google"><span class="googleAuthIcon" aria-hidden="true">G</span><span>Connexion via Google</span></button>
           </div>
           ${authInviteToken ? `<div class="authStatus">Lien d'invitation equipe EPS detecte.</div>` : ""}
           ${authInviteStatus ? `<div class="authStatus">${authInviteStatus}</div>` : ""}
