@@ -8,6 +8,7 @@
     <link rel="apple-touch-icon" href="./icon_app_small.png?v=1" />
     <link rel="shortcut icon" href="./icon_app_small.png?v=1" />
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap");
       :root {
         background: #f8fafc;
         color: #0f172a;
@@ -816,6 +817,408 @@
       .validationPopup.error { background: #7f1d1d; border-color: #991b1b; }
       .validationPopup.error::before { background: #ef4444; content: "!"; }
       .cloudSql { background: #0f172a; border-radius: 8px; color: #e2e8f0; font-size: 11px; overflow-x: auto; padding: 12px; white-space: pre; }
+      :root {
+        --edu-bg: #fff9f5;
+        --edu-surface: #ffffff;
+        --edu-text: #2d3748;
+        --edu-muted: #64748b;
+        --edu-border: #2d3748;
+        --edu-peach: #fdbcb4;
+        --edu-peach-dark: #f5a69d;
+        --edu-blue: #add8e6;
+        --edu-blue-dark: #8bc4d6;
+        --edu-mint: #98ff98;
+        --edu-green: #22c55e;
+        --edu-green-dark: #16a34a;
+        --edu-purple: #e6e6fa;
+        --edu-shadow: 5px 5px 0 var(--edu-border);
+        --edu-shadow-small: 3px 3px 0 var(--edu-border);
+      }
+      body {
+        background: var(--edu-bg);
+        color: var(--edu-text);
+        font-family: Nunito, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      h1, h2, h3, h4,
+      .brandEtabName,
+      .navGroupLabel,
+      .dateMain strong {
+        font-family: Fredoka, Nunito, ui-sans-serif, system-ui, sans-serif;
+      }
+      .app {
+        background: var(--edu-bg);
+        padding: 14px;
+      }
+      .top {
+        background: var(--edu-surface);
+        border: 3px solid var(--edu-border);
+        border-radius: 22px;
+        box-shadow: var(--edu-shadow);
+        margin-bottom: 14px;
+        padding: 12px 14px;
+      }
+      .brandIdentity {
+        gap: 10px;
+      }
+      .brandLogo {
+        height: 36px;
+        width: 36px;
+      }
+      .brandEtabName {
+        color: var(--edu-text);
+        font-size: 16px;
+        font-weight: 700;
+        max-width: 260px;
+      }
+      .sideNav {
+        gap: 8px;
+      }
+      .navGroup {
+        gap: 8px;
+        grid-template-columns: max-content minmax(0, max-content);
+      }
+      .navGroupLabel {
+        color: var(--edu-text);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .weeks,
+      .tabs,
+      .constructionTabs,
+      .yearSubTabs {
+        background: var(--edu-surface);
+        border: 3px solid var(--edu-border);
+        border-radius: 18px;
+        box-shadow: var(--edu-shadow-small);
+        gap: 5px;
+        padding: 5px;
+      }
+      .questionNavGroup .weeks {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+      .weeks button,
+      .tabs button,
+      .constructionTabs button,
+      .yearSubTabs button {
+        border-radius: 13px;
+        color: var(--edu-text);
+        font-weight: 900;
+        min-height: 32px;
+        padding: 0 11px;
+        transition: background .15s ease, box-shadow .15s ease, transform .15s ease;
+      }
+      .weeks button:hover,
+      .tabs button:hover,
+      .constructionTabs button:hover,
+      .yearSubTabs button:hover {
+        background: var(--edu-purple);
+      }
+      .weeks button.active,
+      .tabs button.active,
+      .constructionTabs button.active,
+      .yearSubTabs button.active {
+        background: var(--edu-green);
+        color: #fff;
+        text-shadow: 0 1px 0 rgba(0,0,0,.18);
+      }
+      .stepBadge {
+        background: var(--edu-blue);
+        border: 2px solid var(--edu-border);
+        color: var(--edu-text);
+      }
+      .dateInfo {
+        background: var(--edu-surface);
+        border: 3px solid var(--edu-border);
+        border-radius: 22px;
+        box-shadow: var(--edu-shadow-small);
+        margin-top: 16px;
+        min-height: 56px;
+        padding: 10px 14px;
+      }
+      .weekArrow {
+        background: var(--edu-blue);
+        border: 3px solid var(--edu-border);
+        box-shadow: 2px 2px 0 var(--edu-border);
+        color: var(--edu-text);
+        height: 36px;
+        width: 36px;
+      }
+      .weekArrow:not(:disabled):hover {
+        background: var(--edu-blue-dark);
+        transform: translate(1px, 1px);
+      }
+      .dateChip {
+        background: #fff;
+        border: 2px solid #d8e2ee;
+        border-radius: 999px;
+        color: var(--edu-text);
+        font-weight: 900;
+      }
+      .dateChip strong {
+        color: #047857;
+      }
+      .authForm input,
+      .cloudField input,
+      .specialClassForm input,
+      .serviceTarget input,
+      .serviceHoursInput,
+      .serviceFreeRow input {
+        background: #fff;
+        border: 2px solid #cbd5e1;
+        border-radius: 14px;
+      }
+      .authForm input:focus,
+      .cloudField input:focus,
+      .specialClassForm input:focus,
+      .serviceTarget input:focus,
+      .serviceHoursInput:focus,
+      .serviceFreeRow input:focus {
+        border-color: var(--edu-border);
+        outline: 3px solid rgba(173, 216, 230, .55);
+      }
+      .authButton,
+      .primary,
+      .googleAuthButton,
+      .mailInviteButton,
+      .ghostButton,
+      .serviceValidateButton,
+      .constructionModeButtons button,
+      .teacherTabs button,
+      .choiceButton,
+      .dateRangeButton,
+      .dateRangeValidate,
+      .cloudActions button {
+        border: 3px solid var(--edu-border);
+        border-radius: 16px;
+        box-shadow: var(--edu-shadow-small);
+        font-weight: 900;
+        transition: box-shadow .15s ease, transform .15s ease, background .15s ease;
+      }
+      .authButton,
+      .primary,
+      .serviceValidateButton,
+      .dateRangeValidate {
+        background: var(--edu-green);
+        color: #fff;
+      }
+      .authButton.secondary,
+      .ghostButton,
+      .mailInviteButton,
+      .cloudActions button {
+        background: var(--edu-blue);
+        color: var(--edu-text);
+      }
+      .googleAuthButton {
+        background: #fff;
+        color: var(--edu-text);
+        min-height: 50px;
+      }
+      .authButton:hover,
+      .primary:hover,
+      .googleAuthButton:hover,
+      .mailInviteButton:hover,
+      .ghostButton:hover,
+      .serviceValidateButton:hover,
+      .constructionModeButtons button:hover,
+      .teacherTabs button:hover,
+      .choiceButton:hover,
+      .dateRangeButton:hover,
+      .dateRangeValidate:hover,
+      .cloudActions button:hover {
+        box-shadow: 2px 2px 0 var(--edu-border);
+        transform: translate(1px, 1px);
+      }
+      .authButton:disabled,
+      .primary:disabled,
+      .googleAuthButton:disabled,
+      .mailInviteButton:disabled,
+      .ghostButton:disabled,
+      .serviceValidateButton:disabled,
+      .constructionModeButtons button:disabled,
+      .teacherTabs button:disabled,
+      .choiceButton:disabled,
+      .dateRangeButton:disabled,
+      .dateRangeValidate:disabled,
+      .cloudActions button:disabled {
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: .55;
+        transform: none;
+      }
+      .shareInviteButton {
+        background: var(--edu-peach);
+        border: 3px solid var(--edu-border);
+        box-shadow: var(--edu-shadow-small);
+        color: var(--edu-text);
+      }
+      .shareInviteMenu,
+      .cloudPanel,
+      .servicePanel,
+      .specialClassPanel,
+      .teacherMini,
+      .metric,
+      .requestStatus,
+      .cycleErrorBox {
+        background: var(--edu-surface);
+        border: 3px solid var(--edu-border);
+        border-radius: 22px;
+        box-shadow: var(--edu-shadow-small);
+      }
+      .shareInviteMenu button:hover {
+        background: var(--edu-purple);
+      }
+      .legend {
+        gap: 10px;
+      }
+      .legendItem {
+        border: 3px solid var(--edu-border);
+        border-radius: 14px;
+        box-shadow: 3px 3px 0 var(--edu-border);
+        min-height: 38px;
+      }
+      .legendItem.selected {
+        box-shadow: 2px 2px 0 var(--edu-border), inset 0 0 0 2px rgba(255,255,255,.55);
+        transform: translate(1px, 1px);
+      }
+      .teacherTabs button.selected,
+      .constructionModeButtons button.active,
+      .choiceButton.active,
+      .unavailableGroup button.active {
+        background: var(--edu-green);
+        border-color: var(--edu-border);
+        color: #fff;
+      }
+      .homePanel,
+      .homeShell {
+        font-family: Nunito, ui-sans-serif, system-ui, sans-serif;
+      }
+      .app.hasSidebar {
+        padding-left: 312px;
+        transition: padding-left .2s ease;
+      }
+      .app.hasSidebar.sidebarCollapsed {
+        padding-left: 86px;
+      }
+      .app.hasSidebar .top {
+        align-content: start;
+        bottom: 14px;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        left: 14px;
+        margin: 0;
+        overflow-y: auto;
+        padding: 12px;
+        position: fixed;
+        top: 14px;
+        width: 270px;
+        z-index: 95;
+      }
+      .sidebarToggle {
+        align-items: center;
+        background: var(--edu-blue);
+        border: 3px solid var(--edu-border);
+        border-radius: 14px;
+        box-shadow: 3px 3px 0 var(--edu-border);
+        color: var(--edu-text);
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 18px;
+        font-weight: 950;
+        height: 38px;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        width: 38px;
+        z-index: 3;
+      }
+      .sidebarToggle:hover {
+        box-shadow: 2px 2px 0 var(--edu-border);
+        transform: translate(1px, 1px);
+      }
+      .app.hasSidebar .brandNavCluster {
+        gap: 12px;
+        padding-right: 48px;
+      }
+      .app.hasSidebar .brandIdentity {
+        align-items: center;
+      }
+      .app.hasSidebar .sideNav {
+        align-content: start;
+        gap: 12px;
+        margin-top: 16px;
+        overflow: visible;
+      }
+      .app.hasSidebar .navGroup {
+        align-items: stretch;
+        gap: 6px;
+        grid-template-columns: 1fr;
+      }
+      .app.hasSidebar .weeks,
+      .app.hasSidebar .tabs {
+        align-items: stretch;
+        box-shadow: none;
+        flex-direction: column;
+        overflow: visible;
+        width: 100%;
+      }
+      .app.hasSidebar .weeks button,
+      .app.hasSidebar .tabs button {
+        justify-content: flex-start;
+        min-height: 38px;
+        text-align: left;
+        width: 100%;
+      }
+      .app.hasSidebar .utilityNav {
+        width: 100%;
+      }
+      .app.hasSidebar .authBox {
+        align-items: stretch;
+        justify-items: stretch;
+        min-width: 0;
+      }
+      .app.hasSidebar .authForm {
+        justify-content: stretch;
+      }
+      .app.hasSidebar .authForm input,
+      .app.hasSidebar .googleAuthButton,
+      .app.hasSidebar .authButton {
+        width: 100%;
+      }
+      .app.hasSidebar .authStatus {
+        text-align: left;
+      }
+      .app.hasSidebar.sidebarCollapsed .top {
+        overflow: visible;
+        padding: 10px;
+        width: 58px;
+      }
+      .app.hasSidebar.sidebarCollapsed .sidebarToggle {
+        left: 10px;
+        right: auto;
+        top: 56px;
+      }
+      .app.hasSidebar.sidebarCollapsed .brandNavCluster {
+        padding: 0;
+      }
+      .app.hasSidebar.sidebarCollapsed .brandEtabName,
+      .app.hasSidebar.sidebarCollapsed .questionNavGroup,
+      .app.hasSidebar.sidebarCollapsed .sideNav,
+      .app.hasSidebar.sidebarCollapsed .authBox {
+        display: none;
+      }
+      .app.hasSidebar.sidebarCollapsed .brandLogo {
+        height: 32px;
+        width: 32px;
+      }
+      .app.hasSidebar.sidebarCollapsed .dateInfo {
+        margin-top: 0;
+      }
       body.printA3, body.printA2, body.printA4 { background: #fff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body.printA3 .sideNav, body.printA2 .sideNav, body.printA4 .sideNav, body.printA3 .top, body.printA2 .top, body.printA4 .top, body.printA3 .weekArrow, body.printA2 .weekArrow, body.printA4 .weekArrow, body.printA3 [data-print-format], body.printA2 [data-print-format], body.printA4 [data-print-format], body.printA3 .yearActions, body.printA2 .yearActions, body.printA4 .yearActions, body.printA3 .yearActionsRight, body.printA2 .yearActionsRight, body.printA4 .yearActionsRight, body.printA3 .builderActions, body.printA2 .builderActions, body.printA4 .builderActions, body.printA3 .constructionTabs, body.printA2 .constructionTabs, body.printA4 .constructionTabs, body.printA3 .legend, body.printA2 .legend, body.printA4 .legend, body.printA3 .zoomControls, body.printA2 .zoomControls, body.printA4 .zoomControls, body.printA3 .cycleSummaryControl, body.printA2 .cycleSummaryControl, body.printA4 .cycleSummaryControl { display: none !important; }
       body.printA3 .app, body.printA2 .app, body.printA4 .app { padding: 0; }
@@ -889,6 +1292,30 @@
       }
       @media (max-width: 720px) {
         .app { padding: 8px; }
+        .app.hasSidebar,
+        .app.hasSidebar.sidebarCollapsed { padding-left: 8px; }
+        .app.hasSidebar .top {
+          bottom: auto;
+          left: auto;
+          position: relative;
+          right: auto;
+          top: auto;
+          width: 100%;
+        }
+        .app.hasSidebar.sidebarCollapsed .top {
+          width: 100%;
+        }
+        .app.hasSidebar.sidebarCollapsed .sidebarToggle {
+          left: auto;
+          right: 10px;
+          top: 10px;
+        }
+        .app.hasSidebar.sidebarCollapsed .brandEtabName,
+        .app.hasSidebar.sidebarCollapsed .questionNavGroup,
+        .app.hasSidebar.sidebarCollapsed .sideNav,
+        .app.hasSidebar.sidebarCollapsed .authBox {
+          display: grid;
+        }
         .top { align-items: stretch; grid-template-columns: 1fr; }
         .brandNavCluster { align-items: flex-start; }
         .primary { justify-content: center; width: 100%; }
@@ -917,6 +1344,7 @@
   <body>
     <main class="app">
       <header class="top">
+        <button class="sidebarToggle" id="sidebarToggle" type="button" aria-label="Masquer le menu" title="Masquer le menu">‹</button>
         <div class="brandNavCluster">
           <div class="brandIdentity">
             <h1 class="brandTitle" aria-label="EPS Loustic"><img class="brandLogo" src="./icon_app.png?v=2" alt="Loustic" /></h1>
@@ -1103,6 +1531,7 @@
       let selectedYearCellKey = "";
       let displayedCurrentWeekRank = null;
       let selectedTeacherIds = teachers.map((teacher) => teacher.id);
+      let sidebarCollapsed = localStorage.getItem("planningEpsSidebarCollapsed2026") === "true";
       let yearPlan = loadYearPlan();
       let cycles = loadCycles();
       let cyclesByLevel = loadCyclesByLevel();
@@ -9726,6 +10155,17 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const dateInfo = document.getElementById("dateInfo");
         const legend = document.getElementById("legend");
         if (!root || !dateInfo || !legend) return;
+        const app = document.querySelector(".app");
+        if (app) {
+          app.classList.toggle("hasSidebar", isSignedIn());
+          app.classList.toggle("sidebarCollapsed", isSignedIn() && sidebarCollapsed);
+        }
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        if (sidebarToggle) {
+          sidebarToggle.textContent = sidebarCollapsed ? "›" : "‹";
+          sidebarToggle.setAttribute("aria-label", sidebarCollapsed ? "Afficher le menu" : "Masquer le menu");
+          sidebarToggle.setAttribute("title", sidebarCollapsed ? "Afficher le menu" : "Masquer le menu");
+        }
         dateInfo.style.display = "none";
         dateInfo.innerHTML = "";
         renderAuthBox();
@@ -11679,6 +12119,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           render();
         });
       });
+      const sidebarToggle = document.getElementById("sidebarToggle");
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", () => {
+          sidebarCollapsed = !sidebarCollapsed;
+          localStorage.setItem("planningEpsSidebarCollapsed2026", sidebarCollapsed ? "true" : "false");
+          render();
+        });
+      }
       async function bootstrapApp() {
         refreshConstructionPlanFromRulesLocalOnly();
         try {
