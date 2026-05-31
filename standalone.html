@@ -4183,6 +4183,11 @@
         return `${base}/rest/v1/etab_members`;
       }
 
+      function etabsEndpoint() {
+        const base = cloudConfig.url.replace(/\/$/, "");
+        return `${base}/rest/v1/etabs`;
+      }
+
       function planningQuery() {
         return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&id=eq.${encodeURIComponent(cloudConfig.planningId)}`;
       }
@@ -4541,8 +4546,48 @@
         };
       }
 
+      function uniqueUserEtabs(rows = []) {
+        const byId = new Map();
+        rows.map(normalizeUserEtabRow).filter(Boolean).forEach((item) => {
+          if (!byId.has(item.etab_id)) byId.set(item.etab_id, item);
+        });
+        return [...byId.values()];
+      }
+
+      async function fetchCurrentUserEtabsFromTables() {
+        if (!isSignedIn()) return [];
+        const userId = adminSession?.user?.id || "";
+        if (!userId) return [];
+        const membersResponse = await fetch(`${etabMembersEndpoint()}?select=etab_id,role,created_at&user_id=eq.${encodeURIComponent(userId)}&order=created_at.asc`, {
+          headers: cloudHeaders()
+        });
+        if (!membersResponse.ok) throw new Error(await membersResponse.text());
+        const memberships = await membersResponse.json().catch(() => []);
+        if (!memberships.length) return [];
+        const etabIds = memberships.map((item) => item.etab_id).filter(Boolean);
+        let namesById = {};
+        if (etabIds.length) {
+          try {
+            const etabsResponse = await fetch(`${etabsEndpoint()}?select=id,name&id=in.(${etabIds.join(",")})`, {
+              headers: cloudHeaders()
+            });
+            if (etabsResponse.ok) {
+              const etabs = await etabsResponse.json().catch(() => []);
+              namesById = Object.fromEntries(etabs.map((item) => [item.id, item.name]));
+            }
+          } catch {
+            namesById = {};
+          }
+        }
+        return uniqueUserEtabs(memberships.map((item) => ({
+          ...item,
+          etab_name: namesById[item.etab_id] || item.etab_id
+        })));
+      }
+
       async function fetchCurrentUserEtabs() {
         if (!isSignedIn()) return [];
+        let rpcRows = [];
         try {
           const response = await fetch(rpcEndpoint("list_current_user_etabs"), {
             method: "POST",
@@ -4551,19 +4596,27 @@
           });
           if (response.ok) {
             const result = await response.json().catch(() => []);
-            const rows = Array.isArray(result) ? result : result?.items || [];
-            return rows.map(normalizeUserEtabRow).filter(Boolean);
+            const parsed = typeof result === "string" ? JSON.parse(result) : result;
+            const rows = Array.isArray(parsed) ? parsed : parsed?.items || [];
+            rpcRows = uniqueUserEtabs(rows);
           }
         } catch (error) {
           // Fallback below for projects where the RPC has not been installed yet.
         }
+        try {
+          const tableRows = await fetchCurrentUserEtabsFromTables();
+          if (tableRows.length >= rpcRows.length) return tableRows;
+        } catch (error) {
+          // Fallback below.
+        }
+        if (rpcRows.length) return rpcRows;
         try {
           const response = await fetch(`${etabMembersEndpoint()}?select=etab_id,role,etabs(name)&user_id=eq.${encodeURIComponent(adminSession?.user?.id || "")}&order=created_at.asc`, {
             headers: cloudHeaders()
           });
           if (response.ok) {
             const rows = await response.json().catch(() => []);
-            return rows.map(normalizeUserEtabRow).filter(Boolean);
+            return uniqueUserEtabs(rows);
           }
         } catch (error) {
           // Fallback below.
