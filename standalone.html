@@ -319,7 +319,6 @@
       .yearActionsRight { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
       .yearHeaderCompact { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; margin: 0 0 8px; }
       .calendarLegend { color: #64748b; font-size: 10px; font-weight: 850; margin: -4px 0 8px; text-align: right; }
-      .constructionHelpRow { align-items: start; display: flex; gap: 8px; justify-content: flex-end; margin: -2px 0 8px; }
       .constructionHelpButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; height: 28px; justify-content: center; width: 28px; }
       .constructionHelpButton.active { background: #0f172a; border-color: #0f172a; color: #fff; }
       .constructionHelpText { background: #fff; border: 1px solid #d6e2ef; border-radius: 10px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); color: #475569; font-size: 11px; font-weight: 850; line-height: 1.35; max-width: 560px; padding: 8px 10px; text-align: left; }
@@ -372,8 +371,8 @@
       .constructionBuilderBody > .constructionOptimizeActions,
       .constructionBuilderBody > .cycleConstructionTabs,
       .constructionBuilderBody > .prerequisitesLockRow,
-      .constructionBuilderBody > .constructionHelpRow,
       .constructionBuilderBody > .calendarLegend { margin-bottom: 0; margin-top: 0; }
+      .constructionBuilderBody > .constructionTableActions { margin-bottom: -10px; }
       .constructionExportControls { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
       .iconButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; color: #172033; cursor: pointer; display: inline-flex; font-size: 16px; font-weight: 950; height: 34px; justify-content: center; line-height: 1; padding: 0; width: 34px; }
       .iconButton:hover { border-color: #0f172a; }
@@ -394,6 +393,9 @@
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
       .constructionWarningPanel.constructionStatusPanel { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
       .constructionStatusRow { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+      .constructionStatusBlock { display: grid; gap: 8px; }
+      .constructionStatusRow .constructionHelpButton { margin-left: auto; }
+      .constructionStatusBlock .constructionHelpText { justify-self: end; }
       .constructionStatusRow .constructionWarningPanel { margin: 0; }
       .constructionStatusRow .constructionOkBadge { margin: 0; }
       .constructionStatusPanel .constructionWarning { align-items: center; background: #fff; border: 2px solid #d6e2ef; border-left-width: 2px; border-radius: 999px; box-shadow: none; display: inline-flex; gap: 8px; min-height: 34px; padding: 0 12px; }
@@ -4342,7 +4344,14 @@
           body: JSON.stringify({ etab_name: label, etab_slug: etabSlugFromName(label) })
         });
         const result = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || await response.text());
+        if (!response.ok) {
+          const rawMessage = result?.message || result?.error_description || result?.msg || await response.text();
+          const normalized = String(rawMessage || "").toLowerCase();
+          if (normalized.includes("create_etab_for_current_user") || normalized.includes("schema cache")) {
+            throw new Error("fonction Supabase create_etab_for_current_user manquante. Lancez le SQL de création des fonctions dans Supabase, puis rechargez le cache/API.");
+          }
+          throw new Error(rawMessage);
+        }
         const etabId = typeof result === "string" ? result : result?.id || result;
         if (!etabId) throw new Error("etab_id non retourné par Supabase");
         cloudConfig = { ...cloudConfig, etabId };
@@ -5210,6 +5219,23 @@
         while (length < currentBase.length && otherBases.some((base) => base.slice(0, length) === currentBase.slice(0, length))) length += 1;
         const shortLabel = currentDisplay.slice(0, Math.max(1, length));
         return shortLabel ? shortLabel[0].toUpperCase() + shortLabel.slice(1) : "";
+      }
+
+      function serviceFreeShortLabel(label = "") {
+        const normalized = String(label || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9 ]/g, " ")
+          .trim()
+          .replace(/\s+/g, " ");
+        if (normalized === "soutien piscine") return "SP";
+        if (normalized === "devoirs faits" || normalized === "devoir faits") return "DF";
+        const stopWords = new Set(["de", "du", "des", "la", "le", "les", "l", "d"]);
+        const words = normalized.split(" ").filter((word) => word && !stopWords.has(word));
+        if (!words.length) return "SL";
+        if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+        return words.map((word) => word[0]).join("").slice(0, 4).toUpperCase();
       }
 
       function groupedHeaderCells(weeks, labelForWeek, classForWeek) {
@@ -7655,7 +7681,7 @@
         const hasConflict = (conflicts || conflictMap()).has(key);
         return `<div class="yearLessonStack">${builtItems.map((item) => `
           <div class="yearLesson" style="${blockTeacherStyle(item)}">
-            <strong>${compactClassName(item.schoolClass) || item.label || "Bloc"}</strong>
+            <strong>${compactClassName(item.schoolClass) || (item.optionBlock ? serviceFreeShortLabel(item.optionLabel || item.activityLabel || item.label) : item.label) || "Bloc"}</strong>
             <span>${facilityShortLabel(item.facilityId, item.facilityLabel || item.type || "")}</span>
           </div>`).join("")}${events.map((event) => `
           <div class="yearLesson eventBlock">
@@ -7975,11 +8001,13 @@
         return `<div class="constructionWarningPanel constructionStatusPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
       }
 
-      function renderConstructionStatusRow() {
+      function renderConstructionStatusRow(helpText = "") {
         const readiness = renderConstructionWarnings();
         const conflicts = conflictsForBuildMode(constructionBuildMode);
         const conflictBadge = !conflicts.length ? `<div class="constructionOkBadge">Aucun conflit détecté</div>` : "";
-        return `<div class="constructionStatusRow">${readiness}${conflictBadge}</div>`;
+        const helpButton = helpText ? `<button class="constructionHelpButton ${constructionHelpOpen ? "active" : ""}" type="button" data-toggle-construction-help aria-label="Afficher l'aide de ce sous-onglet" title="Afficher l'aide">?</button>` : "";
+        const helpPanel = helpText && constructionHelpOpen ? `<div class="constructionHelpText">${helpText}</div>` : "";
+        return `<div class="constructionStatusBlock"><div class="constructionStatusRow">${readiness}${conflictBadge}${helpButton}</div>${helpPanel}</div>`;
       }
 
       function renderConstructionServiceSummary() {
@@ -8362,7 +8390,27 @@
               <button class="${constructionBuildMode === "cycleDetails" ? "active" : ""} ${cycleDetailsComplete ? "stepComplete" : "stepIncomplete"}" data-construction-build-mode="cycleDetails">Installations/activités<span class="subtabStatusStack"><span class="subtabLockIcon ${Object.values(constructionLocks.cycleDetails || {}).some(Boolean) ? "locked" : ""}" aria-label="Verrous cycles">&#128274;</span><span class="stepStatus" aria-label="${cycleDetailsComplete ? "Étape complète" : "Étape incomplète"}"></span></span></button>
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
-            ${constructionBuildMode !== "versions" ? `<div class="builderActions constructionSubtabActions">
+            ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activités">Lancer la construction optimisée</button>
+            </div>` : ""}
+            ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
+              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
+            </div>` : ""}
+            ${constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
+              <label class="lockToggle" title="Verrouiller les modifications de cette partie">
+                <input type="checkbox" data-construction-lock="${constructionBuildMode}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
+                <span class="lockToggleTrack"></span>
+                <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
+              </label>
+            </div>
+            ${currentConstructionLocked ? `<div class="lockNotice">Sous-onglet verrouill&eacute; : vous pouvez consulter et naviguer, mais pas modifier cette partie.</div>` : ""}` : ""}
+            ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
+            ${constructionBuildMode === "versions" ? "" : renderConstructionStatusRow(constructionHelpText)}
+            ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
+            ${constructionBuildMode !== "versions" && clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
+            ${constructionBuildMode !== "versions" && movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
+            ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
+            ${constructionBuildMode !== "versions" ? `<div class="builderActions constructionSubtabActions constructionTableActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
               </div>
@@ -8382,30 +8430,6 @@
               <button class="ghostButton" id="saveConstructionVersion">Sauvegarder la construction</button>
               <button class="ghostButton" id="clearConstruction">Vider la construction</button>
             </div>` : ""}
-            ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
-              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activités">Lancer la construction optimisée</button>
-            </div>` : ""}
-            ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
-              ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${cycle.name}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
-            </div>` : ""}
-            ${constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
-              <label class="lockToggle" title="Verrouiller les modifications de cette partie">
-                <input type="checkbox" data-construction-lock="${constructionBuildMode}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
-                <span class="lockToggleTrack"></span>
-                <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
-              </label>
-            </div>
-            ${currentConstructionLocked ? `<div class="lockNotice">Sous-onglet verrouill&eacute; : vous pouvez consulter et naviguer, mais pas modifier cette partie.</div>` : ""}` : ""}
-            ${constructionBuildMode === "versions" ? "" : `<div class="constructionHelpRow">
-              ${constructionHelpOpen ? `<div class="constructionHelpText">${constructionHelpText}</div>` : ""}
-              <button class="constructionHelpButton ${constructionHelpOpen ? "active" : ""}" type="button" data-toggle-construction-help aria-label="Afficher l'aide de ce sous-onglet" title="Afficher l'aide">?</button>
-            </div>`}
-            ${constructionBuildMode === "cycleDetails" && constructionOptimizationResult ? `<div class="constructionOptimizeNotice ${constructionOptimizationResult.unresolved ? "blocking" : ""}"><strong>${escapeHtml(constructionOptimizationResult.message)}</strong><span>${escapeHtml(constructionOptimizationResult.detail || "")}</span></div>` : ""}
-            ${constructionBuildMode === "versions" ? "" : renderConstructionStatusRow()}
-            ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
-            ${constructionBuildMode !== "versions" && clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
-            ${constructionBuildMode !== "versions" && movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
-            ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
             ${constructionTableContent}
           </div>
           ${activeBuildCell ? renderBuildModal() : ""}
