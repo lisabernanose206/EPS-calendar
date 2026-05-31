@@ -3307,6 +3307,11 @@
         return isSignedIn() && currentEtabRole === "owner";
       }
 
+      function currentEtabRoleLabel() {
+        if (!cloudConfig.etabId) return "";
+        return currentEtabRole || "non lie";
+      }
+
       async function refreshCurrentEtabRole() {
         if (!isSignedIn() || !cloudConfig.etabId) return "";
         const response = await fetch(`${etabMembersEndpoint()}?select=role&etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&limit=1`, {
@@ -9158,7 +9163,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (!authBox) return;
         if (isSignedIn()) {
           authBox.innerHTML = `
-            <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${isAdmin() ? "owner" : "member"}` : ""}</div>
+            <div class="authStatus">Connecte : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'equipe EPS</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="claimExistingEtabForm"><input id="existingEtabId" value="" placeholder="UUID etab existant" aria-label="UUID de l'etablissement existant" /><button class="authButton" type="submit">Lier cet etab existant</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nouvel etablissement" aria-label="Nom du nouvel etablissement" /><button class="authButton secondary" type="submit">Creer un nouvel etab</button></form>` : ""}
@@ -9166,7 +9171,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm"><button class="authButton secondary" data-create-invite-link="member">Inviter member</button><button class="authButton secondary" data-create-invite-link="owner">Inviter owner</button>${authInviteLink ? `<input value="${escapeHtml(authInviteLink)}" readonly aria-label="Lien d'invitation equipe EPS" />` : ""}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">DÃ©connexion</button>
           `;
-          authBox.querySelector(".authStatus").innerHTML = `Connect&eacute; : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${isAdmin() ? "owner" : "member"}` : ""}`;
+          authBox.querySelector(".authStatus").innerHTML = `Connect&eacute; : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`;
           authBox.querySelector("#logoutAdmin").innerHTML = "D&eacute;connexion";
           return;
         }
