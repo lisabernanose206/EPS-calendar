@@ -1510,6 +1510,7 @@
             <section class="weeks">
               <button data-week="guide">Mode d'emploi</button>
               <button data-week="request">Une question ?</button>
+              <button data-week="account">Établissements</button>
             </section>
           </section>
         </div>
@@ -10858,6 +10859,35 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         </section>`;
       }
 
+      function renderAccountView() {
+        if (!isSignedIn()) return "";
+        const defaultEtabId = getDefaultEtabId();
+        const rows = currentUserEtabs.length ? currentUserEtabs : (cloudConfig.etabId ? [{
+          etab_id: cloudConfig.etabId,
+          role: currentEtabRole,
+          etab_name: currentEtabDisplayName()
+        }] : []);
+        return `<section class="guidePage">
+          <h2>Établissements</h2>
+          <article class="alertHelp">
+            <strong>Compte connecté</strong>
+            <span>${escapeHtml(adminSession.user?.email || "utilisateur Supabase")}</span>
+            <span>Établissement actif : ${escapeHtml(currentEtabDisplayName() || cloudConfig.etabId || "aucun")}</span>
+          </article>
+          <div class="guideGrid guideProfessorGrid">
+            ${rows.map((item) => {
+              const active = item.etab_id === cloudConfig.etabId;
+              const isDefault = item.etab_id === defaultEtabId;
+              return `<article class="guideCard">
+                <strong>${escapeHtml(item.etab_name || item.etab_id)}</strong>
+                <span>${item.role === "owner" ? "admin" : "consultation"}${active ? " · actif" : ""}${isDefault ? " · par défaut" : ""}</span>
+                <button class="defaultEtabButton ${isDefault ? "active" : ""}" type="button" data-set-default-etab="${item.etab_id}" ${isDefault ? "disabled" : ""}>${isDefault ? "Par défaut" : "Définir par défaut"}</button>
+              </article>`;
+            }).join("") || `<article class="guideCard"><strong>Aucun établissement</strong><span>Reconnectez-vous ou acceptez une invitation pour rattacher ce compte.</span></article>`}
+          </div>
+        </section>`;
+      }
+
       function renderBugFixLogView() {
         const source = window.__EPS_BUG_FIX_LOG__ || fallbackBugFixLog;
         const entries = source
@@ -11008,15 +11038,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         renderBrandEtabName();
         if (!authBox) return;
         if (isSignedIn()) {
-          const defaultEtabId = getDefaultEtabId();
           authBox.innerHTML = `
             <div class="authStatus">Connecté : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form>` : ""}
             ${cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Ajouter cet établissement</button></form>` : ""}
             ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l’établissement" aria-label="Nom de l’établissement" /><button class="authButton" type="submit">Creer l’établissement</button></form>` : ""}
-            ${currentUserEtabs.length > 1 ? `<form class="authForm">
-              <button class="defaultEtabButton ${cloudConfig.etabId && cloudConfig.etabId === defaultEtabId ? "active" : ""}" type="button" id="setDefaultEtab" ${cloudConfig.etabId ? "" : "disabled"}>${cloudConfig.etabId && cloudConfig.etabId === defaultEtabId ? "Par défaut" : "Définir par défaut"}</button>
-            </form>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Vérification du rôle en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
@@ -11106,13 +11132,16 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         const logoutAdmin = document.getElementById("logoutAdmin");
         if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
-        const setDefaultEtab = document.getElementById("setDefaultEtab");
-        if (setDefaultEtab) setDefaultEtab.addEventListener("click", () => {
-          if (!cloudConfig.etabId) return;
-          setDefaultEtabId(cloudConfig.etabId);
-          authStatus = `Établissement par défaut : ${currentEtabDisplayName() || cloudConfig.etabId}`;
-          showValidationPopup("Établissement défini par défaut");
-          render();
+        document.querySelectorAll("[data-set-default-etab]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const etabId = button.dataset.setDefaultEtab;
+            const etab = currentUserEtabs.find((item) => item.etab_id === etabId) || null;
+            if (!etabId) return;
+            setDefaultEtabId(etabId);
+            authStatus = `Établissement par défaut : ${etab?.etab_name || etabId}`;
+            showValidationPopup("Établissement défini par défaut");
+            render();
+          });
         });
         document.querySelectorAll("[data-close-switch-modal]").forEach((target) => {
           target.addEventListener("click", (event) => {
@@ -11180,7 +11209,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         try {
           updateNavigationActive();
           const cycle = generateCycle();
-          const hideLegend = week === "build" || week === "guide" || week === "request" || week === "cycle" || week === "year" || week === "current";
+          const hideLegend = week === "build" || week === "guide" || week === "request" || week === "account" || week === "cycle" || week === "year" || week === "current";
           legend.style.display = hideLegend ? "none" : "flex";
           legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
           if (week === "year") root.innerHTML = renderYearView(cycle);
@@ -11188,6 +11217,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           else if (week === "build") root.innerHTML = renderConstructionView();
           else if (week === "guide") root.innerHTML = renderGuideView();
           else if (week === "request") root.innerHTML = renderRequestView();
+          else if (week === "account") root.innerHTML = renderAccountView();
           else root.innerHTML = renderCalendar(cycle);
         } catch (error) {
           console.error(error);
