@@ -4212,7 +4212,27 @@
       }
 
       function planningQuery() {
-        return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&id=eq.${encodeURIComponent(cloudConfig.planningId)}`;
+        return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}`;
+      }
+
+      function cloudPlanningRowId() {
+        return cloudConfig.etabId || cloudConfig.planningId || "planning-eps";
+      }
+
+      function planningRowQuery(rowId) {
+        return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&id=eq.${encodeURIComponent(rowId)}`;
+      }
+
+      function sortedPlanningRowsForCurrentEtab(rows = []) {
+        const preferredId = cloudPlanningRowId();
+        return rows
+          .filter((row) => row?.etab_id === cloudConfig.etabId || row?.data?.etabId === cloudConfig.etabId)
+          .sort((first, second) => {
+            const firstPreferred = first.id === preferredId ? 0 : 1;
+            const secondPreferred = second.id === preferredId ? 0 : 1;
+            if (firstPreferred !== secondPreferred) return firstPreferred - secondPreferred;
+            return new Date(second.updated_at || 0).getTime() - new Date(first.updated_at || 0).getTime();
+          });
       }
 
       function cloudHeaders(extra = {}) {
@@ -5279,12 +5299,13 @@
         try {
           const updatedAt = new Date().toISOString();
           const currentData = collectPlanningData();
-          const remoteResponse = await fetch(`${cloudEndpoint()}?select=data,updated_at&${planningQuery()}`, {
+          const remoteResponse = await fetch(`${cloudEndpoint()}?select=id,etab_id,data,updated_at&${planningQuery()}`, {
             headers: cloudHeaders()
           });
           if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
-          const remoteRows = await remoteResponse.json();
-          const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
+          const remoteRows = sortedPlanningRowsForCurrentEtab(await remoteResponse.json());
+          const remoteRow = remoteRows[0] || null;
+          const remoteData = remoteRow?.data && typeof remoteRow.data === "object" ? remoteRow.data : null;
           if (remoteData) assertPlanningDataMatchesActiveScope(remoteData, "Sauvegarde Supabase");
           const dataToSave = remoteData
             ? { ...remoteData, version: currentData.version, etabId: cloudConfig.etabId, planningId: cloudConfig.planningId, savedAt: updatedAt }
@@ -5297,10 +5318,10 @@
           dataToSave.etabId = cloudConfig.etabId;
           dataToSave.planningId = cloudConfig.planningId;
           assertPlanningDataMatchesActiveScope(dataToSave, "Sauvegarde Supabase");
-          const rowPayload = { etab_id: cloudConfig.etabId, id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt };
-          const response = await fetch(`${cloudEndpoint()}?on_conflict=etab_id,id`, {
-            method: "POST",
-            headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+          const rowPayload = { etab_id: cloudConfig.etabId, id: remoteRow?.id || cloudPlanningRowId(), data: dataToSave, updated_at: updatedAt };
+          const response = await fetch(remoteRow ? `${cloudEndpoint()}?${planningRowQuery(remoteRow.id)}` : cloudEndpoint(), {
+            method: remoteRow ? "PATCH" : "POST",
+            headers: cloudHeaders({ Prefer: "return=minimal" }),
             body: JSON.stringify(rowPayload)
           });
           if (!response.ok) throw new Error(await response.text());
@@ -5318,7 +5339,7 @@
             ? "Erreur cloud : droits Supabase/RLS manquants. Verifiez que l'utilisateur est membre de cet etab_id."
             : `Erreur cloud : ${message}`;
           showValidationPopup(cloudStatus, "error");
-          shouldDiscardLocalChanges = true;
+          shouldDiscardLocalChanges = false;
         } finally {
           cloudSyncing = false;
           if (cloudSaveSucceeded && !cloudSaveQueued) clearLocalChangedForCloud();
@@ -5354,11 +5375,11 @@
         if (!silent) cloudStatus = "Chargement depuis le cloud...";
         if (shouldRender) render();
         try {
-          const response = await fetch(`${cloudEndpoint()}?select=data,updated_at&${planningQuery()}`, {
+          const response = await fetch(`${cloudEndpoint()}?select=id,etab_id,data,updated_at&${planningQuery()}`, {
             headers: cloudHeaders()
           });
           if (!response.ok) throw new Error(await response.text());
-          const rows = await response.json();
+          const rows = sortedPlanningRowsForCurrentEtab(await response.json());
           if (!rows.length) {
             if (!silent) cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
             cloudSourceLoaded = true;
@@ -9273,7 +9294,8 @@ create table if not exists public.eps_plannings (
   id text not null,
   data jsonb not null,
   updated_at timestamptz not null default now(),
-  primary key (etab_id, id)
+  primary key (id),
+  constraint eps_plannings_one_save_per_etab unique (etab_id)
 );
 
 alter table public.eps_plannings
@@ -9285,8 +9307,12 @@ add column if not exists etab_id uuid references public.etabs(id) on delete casc
 -- alter table public.eps_plannings add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
 -- update public.eps_plannings set etab_id = 'ETAB_UUID_ICI' where etab_id is null;
 -- alter table public.eps_plannings alter column etab_id set not null;
--- alter table public.eps_plannings drop constraint if exists eps_plannings_pkey;
--- alter table public.eps_plannings add primary key (etab_id, id);
+-- Pour garantir une seule sauvegarde par etablissement :
+-- delete from public.eps_plannings a
+-- using public.eps_plannings b
+-- where a.etab_id = b.etab_id
+--   and a.updated_at < b.updated_at;
+-- alter table public.eps_plannings add constraint eps_plannings_one_save_per_etab unique (etab_id);
 
 -- AS et événements sportifs sont rattachés au planning dans data :
 -- data->'asSessions' et data->'sportEvents'.
