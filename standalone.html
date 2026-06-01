@@ -392,6 +392,7 @@
       .constructionPrintSections { display: contents; }
       .constructionPrintSection { display: grid; gap: 8px; }
       .constructionWarningPanel { display: grid; gap: 6px; margin: 0 0 10px; }
+      .constructionLockedPage > .constructionWarningPanel:not(.constructionLockedNotice) { display: none; }
       .constructionWarning { background: #fff7ed; border: 1px solid #fdba74; border-left: 5px solid #f97316; border-radius: 8px; color: #9a3412; display: grid; font-size: 12px; font-weight: 900; gap: 2px; padding: 8px 10px; }
       .constructionWarning[data-warning-build-mode] { cursor: pointer; }
       .constructionWarning[data-warning-build-mode]:hover { filter: brightness(0.98); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
@@ -399,6 +400,12 @@
       .constructionWarning.ready { background: #ecfdf5; border-color: #86efac; border-left-color: #16a34a; color: #047857; }
       .constructionWarning span { color: inherit; font-size: 11px; font-weight: 750; opacity: 0.86; }
       .constructionWarningPanel.constructionStatusPanel { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+      .constructionLockedList { color: #991b1b; display: grid; font-size: 13px; font-weight: 850; gap: 7px; line-height: 1.35; margin: 10px 0 0 18px; padding: 0; }
+      .constructionLockedList li { padding-left: 2px; }
+      .constructionLockedList li[data-warning-build-mode] { cursor: pointer; }
+      .constructionLockedList li[data-warning-build-mode]:hover strong { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+      .constructionLockedList strong { color: #7f1d1d; font-weight: 950; }
+      .constructionLockedList span { color: #9f1239; font-size: 12px; font-weight: 750; margin-left: 5px; }
       .constructionStatusRow { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
       .constructionStatusBlock { display: grid; gap: 8px; }
       .constructionStatusRow .constructionHelpButton { margin-left: auto; }
@@ -8369,7 +8376,21 @@
         if (!facilityUnavailability.length) items.push({ level: "warning", title: "Aucune indisponibilit?", detail: "Renseignez les contraintes profs, classes ou installations si elles existent.", buildMode: "yearPrerequisites", subMode: "unavailable" });
         if (!asSessions.length) items.push({ level: "warning", title: "Aucune AS", detail: "Ajoutez les AS si elles doivent appara?tre dans le planning.", buildMode: "yearPrerequisites", subMode: "as" });
         if (!sportEvents.length) items.push({ level: "warning", title: "Aucun ?v?nement sportif", detail: "Ajoutez les événements sportifs connus pour reserver les créneaux concernes.", buildMode: "yearPrerequisites", subMode: "events" });
-        return items;
+        return items.map(normalizeConstructionReadinessItem);
+      }
+
+      function normalizeConstructionReadinessItem(item) {
+        if (item.subMode === "establishment") return { ...item, title: "Cr&eacute;neaux &agrave; compl&eacute;ter", detail: "Renseignez les cr&eacute;neaux de cours et les horaires d'AS dans &Eacute;tablissement." };
+        if (item.title === "Aucune installation") return item;
+        if (item.subMode === "facilitiesActivities") return { ...item, title: "Aucune activit&eacute;", detail: "Ajoutez au moins une activit&eacute; et reliez-la aux installations possibles." };
+        if (item.subMode === "program") return { ...item, title: "Programme incomplet", detail: "Affectez les activit&eacute;s attendues pour chaque niveau dans Programme." };
+        if (item.subMode === "cycles" && item.title === "Aucun cycle") return { ...item, title: "Aucun cycle", detail: "D&eacute;finissez les cycles pour relier chaque cours &agrave; une p&eacute;riode." };
+        if (item.subMode === "cycles") return { ...item, title: "Cycles &agrave; corriger" };
+        if (item.subMode === "hours") return { ...item, title: "Service th&eacute;orique non renseign&eacute;", detail: "Affectez les classes aux profs dans Service pour limiter les choix de classes en Construction." };
+        if (item.subMode === "unavailable") return { ...item, title: "Aucune indisponibilit&eacute;", detail: "Renseignez les contraintes profs, classes ou installations si elles existent." };
+        if (item.subMode === "as") return { ...item, title: "Aucune AS", detail: "Ajoutez les AS si elles doivent appara&icirc;tre dans le planning." };
+        if (item.subMode === "events") return { ...item, title: "Aucun &eacute;v&eacute;nement sportif", detail: "Ajoutez les &eacute;v&eacute;nements sportifs connus pour r&eacute;server les cr&eacute;neaux concern&eacute;s." };
+        return item;
       }
 
       function constructionBlockingItems() {
@@ -8659,6 +8680,12 @@
         const items = constructionReadinessItems();
         if (!items.length) return `<div class="constructionWarningPanel constructionStatusPanel"><div class="constructionWarning ready"><strong>Paramétrage prêt</strong><span>Les éléments essentiels sont renseignés pour construire l'emploi du temps.</span></div></div>`;
         return `<div class="constructionWarningPanel constructionStatusPanel">${items.map((item) => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+      }
+
+      function renderConstructionLockedWarnings() {
+        const items = constructionReadinessItems();
+        if (!items.length) return "";
+        return `<ul class="constructionLockedList">${items.map((item) => `<li ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concern&eacute;"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></li>`).join("")}</ul>`;
       }
 
       function renderConstructionStatusRow(helpText = "") {
@@ -9030,11 +9057,14 @@
           </section>`;
         }
         if (!canAccessConstructionPlanning()) {
-          return `<section class="builderPage">
+          return `<section class="builderPage constructionLockedPage">
+            <div class="constructionWarningPanel constructionLockedNotice">
+              <div class="constructionWarning blocking"><strong>Construction verrouill&eacute;e</strong><span>Compl&eacute;tez d'abord les pr&eacute;requis ci-dessous, puis revenez sur Construction.</span></div>
+            </div>
             <div class="constructionWarningPanel">
               <div class="constructionWarning blocking"><strong>Construction verrouillée</strong><span>Compl?tez d?abord les prérequis ci-dessous, puis revenez sur Construction.</span></div>
             </div>
-            ${renderConstructionWarnings()}
+            ${renderConstructionLockedWarnings()}
           </section>`;
         }
         const constructionCycles = classicConstructionCycles();
