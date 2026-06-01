@@ -1652,6 +1652,21 @@
       function defaultClassConfigForLevels(levels = classLevels) {
         return Object.fromEntries(levels.map((level) => [level, { mode: "number", labels: [...classNumbers] }]));
       }
+      function supportedCsvClassLevels() {
+        return ["CAP1", "CAP2", "2de", "1ere", "Tle", "BTS1", "BTS2"];
+      }
+      function normalizedImportedClassLevels(config) {
+        return [...new Set((Array.isArray(config?.importedLevels) ? config.importedLevels : [])
+          .map((level) => String(level || "").trim())
+          .filter((level) => supportedCsvClassLevels().includes(level)))];
+      }
+      function applyImportedClassLevels(config) {
+        const importedLevels = normalizedImportedClassLevels(config);
+        if (!importedLevels.length) return false;
+        classLevels = importedLevels;
+        defaultClassConfig = defaultClassConfigForLevels();
+        return true;
+      }
       let defaultClassConfig = defaultClassConfigForLevels();
       const classGroups = [
         { id: "whole", label: "Classe entiere", short: "" },
@@ -1659,9 +1674,11 @@
         { id: "B", label: "Demi-groupe B", short: "B" }
       ];
       let classConfig = loadClassConfig();
+      applyImportedClassLevels(classConfig);
+      classConfig = normalizeClassConfig(classConfig);
       let classes = classesFromConfig();
       let activityProgramByClass = loadActivityProgramByClass();
-      const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3, "2de": 2, "1ere": 2, "Tle": 2 };
+      const defaultServiceHours = { "6e": 4, "5e": 3, "4e": 3, "3e": 3, "CAP1": 2, "CAP2": 2, "2de": 2, "1ere": 2, "Tle": 2, "BTS1": 2, "BTS2": 2 };
       const defaultConstructionRuleSettings = [
         { id: "facility-unavailable", category: "Conflit installation", title: "Installation disponible", detail: "Impossible de placer une classe sur une installation indiquée indisponible sur le créneau." },
         { id: "teacher-unavailable", category: "Conflit prof", title: "Prof disponible", detail: "Impossible de placer un cours avec un professeur indisponible sur le créneau." },
@@ -2567,7 +2584,11 @@
 
       function canonicalClassLevel(level) {
         const value = String(level || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (/^(2de|seconde|secondes?)$/.test(value)) return "2de";
+        if (/^(cap\s*1|cap1|1cap|1ere\s*annee\s*de\s*cap)$/.test(value)) return "CAP1";
+        if (/^(cap\s*2|cap2|2cap|2eme\s*annee\s*de\s*cap)$/.test(value)) return "CAP2";
+        if (/^(bts\s*1|bts1|1bts)$/.test(value)) return "BTS1";
+        if (/^(bts\s*2|bts2|2bts)$/.test(value)) return "BTS2";
+        if (/^(2de|2nde|seconde|secondes?)$/.test(value)) return "2de";
         if (/^(1ere|1re|premiere|premieres?)$/.test(value)) return "1ere";
         if (/^(tle|terminale|terminales?)$/.test(value)) return "Tle";
         const match = value.match(/^([3-6])\s*(?:eme|e)?$/);
@@ -2584,7 +2605,7 @@
           return `special::${id}${baseClassId ? `::${baseClassId}` : ""}`;
         }
         const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
-        const lycéeMatch = normalized.match(/^(2de|seconde|1ere|1re|premiere|tle|terminale)([a-z0-9]+?)(whole|a|b)?$/i);
+        const lycéeMatch = normalized.match(/^(cap1|cap2|bts1|bts2|2de|2nde|seconde|1ere|1re|premiere|tle|terminale)([a-z0-9]+?)(whole|a|b)?$/i);
         if (lycéeMatch) {
           const level = canonicalClassLevel(lycéeMatch[1]);
           const rawNumber = lycéeMatch[2];
@@ -2630,6 +2651,8 @@
             : generatedClassLabels(mode, 7);
           return [level, { mode, labels }];
         }));
+        const importedLevels = normalizedImportedClassLevels(config);
+        if (importedLevels.length) normalized.importedLevels = importedLevels;
         const seen = new Set();
         normalized.specialClasses = (Array.isArray(config?.specialClasses) ? config.specialClasses : [])
           .map((item) => {
@@ -2704,9 +2727,13 @@
           { level: "5e", regex: /(?:^|\b)5\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
           { level: "4e", regex: /(?:^|\b)4\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
           { level: "3e", regex: /(?:^|\b)3\s*(?:eme|e)?\s*([a-z0-9]+)\b/i },
+          { level: "CAP1", regex: /(?:^|\b)(?:cap\s*1|1\s*cap)\s*([a-z0-9]+)\b/i },
+          { level: "CAP2", regex: /(?:^|\b)(?:cap\s*2|2\s*cap)\s*([a-z0-9]+)\b/i },
           { level: "2de", regex: /(?:^|\b)(?:2\s*(?:de|nde|nd)?|seconde)\s*([a-z0-9]+)\b/i },
           { level: "1ere", regex: /(?:^|\b)(?:1\s*(?:ere|re)?|premiere)\s*([a-z0-9]+)\b/i },
-          { level: "Tle", regex: /(?:^|\b)(?:t\s*(?:le)?|terminale)\s*([a-z0-9]+)\b/i }
+          { level: "Tle", regex: /(?:^|\b)(?:t\s*(?:le)?|terminale)\s*([a-z0-9]+)\b/i },
+          { level: "BTS1", regex: /(?:^|\b)(?:bts\s*1|1\s*bts)\s*([a-z0-9]+)\b/i },
+          { level: "BTS2", regex: /(?:^|\b)(?:bts\s*2|2\s*bts)\s*([a-z0-9]+)\b/i }
         ];
         for (const pattern of patterns) {
           if (!classLevels.includes(pattern.level)) continue;
@@ -2725,29 +2752,146 @@
         return null;
       }
 
+      function csvImportHeaderKey(value) {
+        return simplifyClassImportValue(value);
+      }
+
+      function classLevelFromImportText(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return "";
+        const direct = canonicalClassLevel(raw);
+        if (direct) return direct;
+        const simple = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        if (/(^|[^a-z0-9])(?:cap\s*1|1\s*cap)([^a-z0-9]|$)/i.test(simple)) return "CAP1";
+        if (/(^|[^a-z0-9])(?:cap\s*2|2\s*cap)([^a-z0-9]|$)/i.test(simple)) return "CAP2";
+        if (/(^|[^a-z0-9])(?:bts\s*1|1\s*bts)([^a-z0-9]|$)/i.test(simple)) return "BTS1";
+        if (/(^|[^a-z0-9])(?:bts\s*2|2\s*bts)([^a-z0-9]|$)/i.test(simple)) return "BTS2";
+        if (/(^|[^a-z0-9])(?:2\s*(?:de|nde)|seconde)s?([^a-z0-9]|$)/i.test(simple)) return "2de";
+        if (/(^|[^a-z0-9])(?:1\s*(?:ere|re)|premiere)s?([^a-z0-9]|$)/i.test(simple)) return "1ere";
+        if (/(^|[^a-z0-9])(?:t\s*le|tle|terminale)s?([^a-z0-9]|$)/i.test(simple)) return "Tle";
+        const collegeMatch = simple.match(/(^|[^a-z0-9])([3-6])\s*(?:eme|e)?([^a-z0-9]|$)/i);
+        return collegeMatch ? `${collegeMatch[2]}e` : "";
+      }
+
+      function importedClassFromFields(nameValue, levelValue = "") {
+        const name = String(nameValue || "").trim();
+        const explicitLevel = classLevelFromImportText(levelValue);
+        const parsedFromName = importedClassFromText(name);
+        const level = explicitLevel || parsedFromName?.level || classLevelFromImportText(name);
+        if (!level) return null;
+        if (parsedFromName && !explicitLevel) return parsedFromName;
+        let labelSource = name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\b(?:classe|division|groupe|niveau)\b/ig, " ")
+          .replace(/\b(?:cap\s*[12]|bts\s*[12]|2\s*(?:de|nde)|seconde|1\s*(?:ere|re)|premiere|t\s*le|tle|terminale|[3-6]\s*(?:eme|e)?)s?\b/ig, " ");
+        if (explicitLevel === "CAP1") labelSource = labelSource.replace(/^\s*(?:cap\s*1|1\s*cap|1)\s*/i, "");
+        if (explicitLevel === "CAP2") labelSource = labelSource.replace(/^\s*(?:cap\s*2|2\s*cap|2)\s*/i, "");
+        if (explicitLevel === "BTS1") labelSource = labelSource.replace(/^\s*(?:bts\s*1|1\s*bts|1)\s*/i, "");
+        if (explicitLevel === "BTS2") labelSource = labelSource.replace(/^\s*(?:bts\s*2|2\s*bts|2)\s*/i, "");
+        if (explicitLevel === "2de") labelSource = labelSource.replace(/^\s*(?:2\s*(?:de|nde)?|seconde)\s*/i, "");
+        if (explicitLevel === "1ere") labelSource = labelSource.replace(/^\s*(?:1\s*(?:ere|re)?|premiere)\s*/i, "");
+        if (explicitLevel === "Tle") labelSource = labelSource.replace(/^\s*(?:t\s*(?:le)?|terminale)\s*/i, "");
+        const collegeLevel = explicitLevel.match(/^([3-6])e$/);
+        if (collegeLevel) labelSource = labelSource.replace(new RegExp(`^\\s*${collegeLevel[1]}\\s*(?:eme|e)?\\s*`, "i"), "");
+        const label = cleanImportedClassLabel(labelSource);
+        if (!label) return null;
+        return { level, label };
+      }
+
+      function addImportedClass(found, parsed) {
+        if (!parsed || !found[parsed.level]) return;
+        found[parsed.level].add(parsed.label);
+      }
+
+      function findClassImportHeader(rows) {
+        const nameKeys = new Set(["nom", "classe", "classes", "nomclasse", "nomdelaclasse", "libelle", "libelleclasse", "division", "divisions", "code", "codeclasse"]);
+        const levelKeys = new Set(["niveau", "niveaux", "niv", "niveauclasse"]);
+        for (let rowIndex = 0; rowIndex < Math.min(rows.length, 12); rowIndex += 1) {
+          const keys = (rows[rowIndex] || []).map(csvImportHeaderKey);
+          const levelIndex = keys.findIndex((key) => levelKeys.has(key));
+          const nameIndex = keys.findIndex((key) => nameKeys.has(key));
+          if (nameIndex >= 0 || levelIndex >= 0) return { rowIndex, nameIndex, levelIndex };
+        }
+        return null;
+      }
+
+      function establishmentTypeForImportedLevels(found) {
+        const levels = Object.entries(found).filter(([, labels]) => labels.size).map(([level]) => level);
+        const hasCollege = levels.some((level) => classLevelsByEstablishmentType["collÃ¨ge"].includes(level));
+        const hasLycee = levels.some((level) => classLevelsByEstablishmentType["lycÃ©e"].includes(level));
+        if (hasCollege && hasLycee) throw new Error("Le CSV contient des niveaux college et lycee. Importez un fichier par type d'etablissement.");
+        return hasLycee ? "lycÃ©e" : "collÃ¨ge";
+      }
+
+      function establishmentTypeForImportedLevelsSafe(found) {
+        const levels = Object.entries(found).filter(([, labels]) => labels.size).map(([level]) => level);
+        const hasCollege = levels.some((level) => ["6e", "5e", "4e", "3e"].includes(level));
+        const hasLycee = levels.some((level) => ["CAP1", "CAP2", "2de", "1ere", "Tle", "BTS1", "BTS2"].includes(level));
+        if (hasCollege && hasLycee) throw new Error("Le CSV contient des niveaux college et lycee. Importez un fichier par type d'etablissement.");
+        return normalizedEstablishmentType(hasLycee ? "lycee" : "college");
+      }
+
       function importClassesFromCsvText(text) {
-        const found = Object.fromEntries(classLevels.map((level) => [level, new Set()]));
-        parseCsvRows(text).flat().forEach((cell) => {
-          const parsed = importedClassFromText(cell);
-          if (parsed && found[parsed.level]) found[parsed.level].add(parsed.label);
-        });
+        const allLevels = [...classLevelsByEstablishmentType["collège"], ...supportedCsvClassLevels()];
+        const found = Object.fromEntries(allLevels.map((level) => [level, new Set()]));
+        const rows = parseCsvRows(text).filter((row) => row.some((cell) => String(cell || "").trim()));
+        const header = findClassImportHeader(rows);
+        if (header) {
+          rows.slice(header.rowIndex + 1).forEach((row) => {
+            const nameValue = header.nameIndex >= 0 ? row[header.nameIndex] : row.find((cell, index) => index !== header.levelIndex && String(cell || "").trim());
+            const levelValue = header.levelIndex >= 0 ? row[header.levelIndex] : "";
+            addImportedClass(found, importedClassFromFields(nameValue, levelValue));
+          });
+        } else {
+          rows.forEach((row) => {
+            row.forEach((cell, index) => {
+              const level = classLevelFromImportText(cell);
+              if (!level) return;
+              row.forEach((candidate, candidateIndex) => {
+                if (candidateIndex !== index) addImportedClass(found, importedClassFromFields(candidate, cell));
+              });
+            });
+          });
+        }
+        if (!header) rows.flat().forEach((cell) => addImportedClass(found, importedClassFromText(cell)));
         const total = Object.values(found).reduce((sum, labels) => sum + labels.size, 0);
         if (!total) throw new Error("Aucune classe reconnue dans le CSV. Vérifiez que le type d'établissement choisi correspond au fichier.");
+        const importedType = establishmentTypeForImportedLevelsSafe(found);
+        const importedLevels = allLevels.filter((level) => found[level]?.size);
+        const importedTypeChanged = normalizedEstablishmentType(schoolConstraints.establishmentType) !== importedType;
+        if (importedTypeChanged) {
+          schoolConstraints = { ...schoolConstraints, establishmentType: importedType };
+          syncSchoolSlots();
+          activityProgramByLevel = normalizeActivityProgramByLevel({});
+          serviceHoursByLevel = normalizeLevelKeyedObject({}, defaultServiceHours, (value) => Math.max(0, Number(value) || 0));
+        }
+        classLevels = importedLevels;
+        defaultClassConfig = defaultClassConfigForLevels();
         const nextConfig = Object.fromEntries(classLevels.map((level) => {
           const labels = [...found[level]].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
           const mode = labels.length && labels.every((label) => /^[A-Z]$/.test(label)) ? "letter" : "number";
           return [level, { mode, labels }];
         }));
-        nextConfig.specialClasses = specialClasses();
+        nextConfig.importedLevels = importedLevels;
+        nextConfig.specialClasses = [];
         classConfig = normalizeClassConfig(nextConfig);
+        specialClassDraftName = "";
+        specialClassDraftBaseIds = [];
+        localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(schoolConstraints));
+        localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(activityProgramByLevel));
+        localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(serviceHoursByLevel));
         saveClassConfig();
+        if (importedTypeChanged) saveCloudNowIfPossible(["schoolConstraints", "activityProgramByLevel", "serviceHoursByLevel"]);
         return total;
       }
 
       function loadClassConfig() {
         try {
           const saved = localStorage.getItem("planningEpsClassConfig2026");
-          return normalizeClassConfig(saved ? JSON.parse(saved) : defaultClassConfig);
+          const rawConfig = saved ? JSON.parse(saved) : defaultClassConfig;
+          applyImportedClassLevels(rawConfig);
+          return normalizeClassConfig(rawConfig);
         } catch {
           return normalizeClassConfig(defaultClassConfig);
         }
@@ -5160,6 +5304,7 @@
         schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
         classLevels = classLevelsForEstablishmentType(schoolConstraints.establishmentType);
         defaultClassConfig = defaultClassConfigForLevels();
+        applyImportedClassLevels(data.classConfig || {});
         classConfig = normalizeClassConfig(data.classConfig || classConfig);
         classes = classesFromConfig();
         facilities = Array.isArray(data.facilities) ? normalizeFacilities(data.facilities) : normalizeFacilities(facilities);
