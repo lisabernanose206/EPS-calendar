@@ -4082,14 +4082,13 @@
           cloudStatus = "Modification refusée : cloud non configuré.";
           return false;
         }
-        if (!cloudSourceReadyForWrite()) {
-          cloudStatus = cloudWriteBlockedMessage();
-          discardLocalChangesFromCloudSoon();
-          return false;
-        }
         if (!cloudConfig.autoSave) {
           cloudStatus = "Modification refusée : autosauvegarde cloud désactivée.";
           discardLocalChangesFromCloudSoon();
+          return false;
+        }
+        if (!cloudWriteAllowed()) {
+          cloudStatus = cloudWriteBlockedMessage();
           return false;
         }
         markLocalChangedForCloud(keys);
@@ -4097,9 +4096,11 @@
         cloudSaveTimer = null;
         if (cloudSyncing) {
           cloudSaveQueued = true;
+          showValidationPopup("Synchronisation Supabase en attente...");
           return true;
         }
-        cloudSaveToRemote(false);
+        showValidationPopup("Synchronisation Supabase en cours...");
+        cloudSaveToRemote(false, { allowBeforeSourceLoaded: true });
         return true;
       }
 
@@ -5219,19 +5220,20 @@
           discardLocalChangesFromCloudSoon();
           return;
         }
-        if (!cloudSourceReadyForWrite()) {
+        if (!cloudWriteAllowed()) {
           cloudStatus = cloudWriteBlockedMessage();
-          discardLocalChangesFromCloudSoon();
           return;
         }
         markLocalChangedForCloud(keys);
         if (cloudSyncing) {
           cloudSaveQueued = true;
+          showValidationPopup("Synchronisation Supabase en attente...");
           return;
         }
         clearTimeout(cloudSaveTimer);
         cloudStatus = "Sauvegarde cloud en attente...";
-        cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false), 900);
+        showValidationPopup("Synchronisation Supabase en cours...");
+        cloudSaveTimer = setTimeout(() => cloudSaveToRemote(false, { allowBeforeSourceLoaded: true }), 900);
       }
 
       async function cloudSaveToRemote(shouldRender = true, options = {}) {
@@ -5276,9 +5278,6 @@
           if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
           const remoteRows = await remoteResponse.json();
           const remoteData = remoteRows[0]?.data && typeof remoteRows[0].data === "object" ? remoteRows[0].data : null;
-          if (!remoteData && allowBeforeSourceLoaded && cloudConfig.autoLoad && !cloudSourceLoaded) {
-            throw new Error("Source Supabase introuvable pour sauvegarder cette modification.");
-          }
           if (remoteData) assertPlanningDataMatchesActiveScope(remoteData, "Sauvegarde Supabase");
           const dataToSave = remoteData
             ? { ...remoteData, version: currentData.version, etabId: cloudConfig.etabId, planningId: cloudConfig.planningId, savedAt: updatedAt }
