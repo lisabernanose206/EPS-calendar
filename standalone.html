@@ -2372,8 +2372,9 @@
       function loadTeachers() {
         try {
           const saved = localStorage.getItem("planningEpsTeachers2026");
-          const parsed = saved ? JSON.parse(saved) : null;
-          if (!Array.isArray(parsed) || !parsed.length) return [...defaultTeachers];
+          if (saved === null) return [...defaultTeachers];
+          const parsed = JSON.parse(saved);
+          if (!Array.isArray(parsed)) return [...defaultTeachers];
           return parsed.map((teacher, index) => {
             const paletteItem = teacherPalette.find((item) => item.color === teacher.color) || teacherPalette[index % teacherPalette.length];
             return { ...teacher, color: paletteItem.color, border: paletteItem.border };
@@ -5155,7 +5156,7 @@
       function applyPlanningData(data) {
         if (!data || typeof data !== "object") return;
         assertPlanningDataMatchesActiveScope(data, "Chargement Supabase");
-        teachers = Array.isArray(data.teachers) && data.teachers.length ? data.teachers : teachers;
+        teachers = Array.isArray(data.teachers) ? data.teachers : teachers;
         schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : schoolConstraints;
         classLevels = classLevelsForEstablishmentType(schoolConstraints.establishmentType);
         defaultClassConfig = defaultClassConfigForLevels();
