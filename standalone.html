@@ -7702,6 +7702,17 @@
           && activityAllowedForBlockProgram(block, activityId);
       }
 
+      function activitiesForFacilityAndBlockProgram(facilityId, block) {
+        if (!facilityId) return activities.filter((activity) => activityAllowedForBlockProgram(block, activity.id));
+        const blockForFacility = { ...(block || {}), facilityId };
+        return activitiesForFacility(facilityId)
+          .filter((activity) => activityAllowedForBlockProgram(blockForFacility, activity.id));
+      }
+
+      function facilityHasActivityForBlockProgram(facilityId, block) {
+        return activitiesForFacilityAndBlockProgram(facilityId, block).length > 0;
+      }
+
       function clearInvalidBlockActivitySelection() {
         if (!blockActivityId) return;
         const block = currentBlock();
@@ -9769,6 +9780,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           return schoolClass && !serviceAllowsClassForTeacher(teacherId, schoolClass);
         });
         const selectedFacilityUnavailable = (occupied.facilityIds.has(blockFacilityId) && !blockCoIntervention) || occupied.unavailableFacilityIds.has(blockFacilityId);
+        const selectedFacilityNoProgramActivity = Boolean(blockFacilityId) && !facilityHasActivityForBlockProgram(blockFacilityId, block);
         const selectedTeachersUnavailable = blockTeacherIds.some((teacherId) => occupied.teacherIds.has(teacherId) || occupied.unavailableTeacherIds.has(teacherId) || cycleUnavailableTeacherIds.has(teacherId));
         const weekLetterMismatch = !editingCycleDetails && !activeBuildCycleId && blockWeekLetter !== "all" && blockWeekLetter !== weekItem.letter;
         const unavailableMessage = editingCycleDetails ? "" : blockUnavailableMessage(row, weekItem, block);
@@ -9777,12 +9789,15 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const activityProgramMessage = !activityProgramValid && block.activityId
           ? "Impossible : l'activite choisie n'est pas reliee a l'installation ou n'est pas au programme de la classe du bloc."
           : "";
-        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || (weekLetterMismatch
+        const facilityProgramMessage = selectedFacilityNoProgramActivity
+          ? "Impossible : cette installation ne propose aucune activite compatible avec le programme de la classe du bloc."
+          : "";
+        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || facilityProgramMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid);
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !selectedFacilityNoProgramActivity);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
@@ -9873,9 +9888,15 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                   <button class="choiceButton ${!blockFacilityId ? "active" : ""}" data-clear-facility>Sans installation</button>
                   ${facilities.map((facility) => {
                   const occupiedByCourse = occupied.facilityIds.has(facility.id);
-                  const hardUnavailable = occupied.unavailableFacilityIds.has(facility.id);
+                  const hasLinkedActivities = activitiesForFacility(facility.id).length > 0;
+                  const hasProgramActivity = hasLinkedActivities && facilityHasActivityForBlockProgram(facility.id, block);
+                  const hardUnavailable = occupied.unavailableFacilityIds.has(facility.id) || !hasProgramActivity;
                   const unavailable = (occupiedByCourse && !blockCoIntervention) || hardUnavailable;
-                  const reason = occupied.facilityIds.has(facility.id)
+                  const reason = !hasLinkedActivities
+                    ? `${facility.label} n'a aucune activite reliee.`
+                    : !hasProgramActivity
+                      ? `${facility.label} ne propose aucune activite au programme de la classe du bloc.`
+                      : occupied.facilityIds.has(facility.id)
                     ? blockCoIntervention
                       ? `${facility.label} déjà occupée : autorisée en co-intervention si profs et classes sont différents.`
                       : `${facility.label} est déjà occupée sur ce créneau.`
