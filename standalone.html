@@ -26,7 +26,8 @@
       .brandIdentity { align-items: center; display: flex; gap: 8px; min-width: 0; }
       .brandEtabName { align-items: center; color: #0f172a; display: inline-flex; font-size: 13px; font-weight: 950; gap: 6px; line-height: 1.1; max-width: 320px; min-width: 0; overflow: hidden; white-space: nowrap; }
       .brandEtabName span { overflow: hidden; text-overflow: ellipsis; }
-      .brandSwitchButton { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f172a; cursor: pointer; font-size: 11px; font-weight: 950; min-height: 30px; padding: 0 9px; }
+      .brandSwitchButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f172a; cursor: pointer; display: inline-flex; height: 30px; justify-content: center; padding: 0; width: 32px; }
+      .brandSwitchButton svg { display: block; height: 18px; width: 18px; }
       .brandLogo { display: block; height: 30px; object-fit: contain; width: 30px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
       .authForm { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
@@ -4198,6 +4199,10 @@
         return `${base}/rest/v1/etabs`;
       }
 
+      function etabByIdQuery(etabId = cloudConfig.etabId) {
+        return `id=eq.${encodeURIComponent(etabId)}`;
+      }
+
       function planningQuery() {
         return `etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&id=eq.${encodeURIComponent(cloudConfig.planningId)}`;
       }
@@ -4526,7 +4531,7 @@
         if (logo) logo.src = iconSrc;
         if (label) {
           if (isSignedIn() && currentUserEtabs.length > 1) {
-            label.innerHTML = `<span>${escapeHtml(currentEtabDisplayName())}</span><button class="brandSwitchButton" type="button" id="openEtabSwitch">Switch</button>`;
+            label.innerHTML = `<span>${escapeHtml(currentEtabDisplayName())}</span><button class="brandSwitchButton" type="button" id="openEtabSwitch" aria-label="Changer d'établissement" title="Changer d'établissement"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 3h10a4 4 0 0 1 4 4v2h-2V7a2 2 0 0 0-2-2H7.83l2.58 2.59L9 9 4 4l5-5 1.41 1.41L7.83 3Zm10 18H7a4 4 0 0 1-4-4v-2h2v2a2 2 0 0 0 2 2h9.17l-2.58-2.59L15 15l5 5-5 5-1.41-1.41L16.17 21Z"/></svg></button>`;
             label.title = currentEtabDisplayName();
           } else {
             label.textContent = cloudConfig.etabId ? currentEtabDisplayName() : "";
@@ -4674,6 +4679,20 @@
         setCurrentEtabRole(item.role || "");
         setCurrentEtabName(item.etab_name || "");
         return item.etab_id;
+      }
+
+      async function renameCurrentEtab(name) {
+        const label = normalizeEtabDisplayName(name);
+        if (!label || !cloudConfig.etabId || !isAdmin()) return false;
+        const response = await fetch(`${etabsEndpoint()}?${etabByIdQuery()}`, {
+          method: "PATCH",
+          headers: cloudHeaders({ Prefer: "return=minimal" }),
+          body: JSON.stringify({ name: label })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        setCurrentEtabName(label);
+        currentUserEtabs = currentUserEtabs.map((item) => item.etab_id === cloudConfig.etabId ? { ...item, etab_name: label } : item);
+        return true;
       }
 
       function choosePreferredUserEtab(rows = []) {
@@ -5273,17 +5292,11 @@
           dataToSave.planningId = cloudConfig.planningId;
           assertPlanningDataMatchesActiveScope(dataToSave, "Sauvegarde Supabase");
           const rowPayload = { etab_id: cloudConfig.etabId, id: cloudConfig.planningId, data: dataToSave, updated_at: updatedAt };
-          const response = remoteRows.length
-            ? await fetch(`${cloudEndpoint()}?${planningQuery()}`, {
-              method: "PATCH",
-              headers: cloudHeaders({ Prefer: "return=minimal" }),
-              body: JSON.stringify({ data: dataToSave, updated_at: updatedAt })
-            })
-            : await fetch(cloudEndpoint(), {
-              method: "POST",
-              headers: cloudHeaders({ Prefer: "return=minimal" }),
-              body: JSON.stringify(rowPayload)
-            });
+          const response = await fetch(`${cloudEndpoint()}?on_conflict=etab_id,id`, {
+            method: "POST",
+            headers: cloudHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+            body: JSON.stringify(rowPayload)
+          });
           if (!response.ok) throw new Error(await response.text());
           cloudSaveSucceeded = true;
           if (allowBeforeSourceLoaded) cloudSourceLoaded = true;
@@ -8806,8 +8819,9 @@
             <h3>Établissement</h3>
             <p class="muted">Paramétrez les horaires utilisés dans les cours, les indisponibilités, les événements et les AS en indiquant simplement l'heure de début et l'heure de fin.</p>
             <div class="eventField">
-              <label>Nom de l’établissement</label>
-              <input id="establishmentName" value="${attrValue(schoolConstraints.establishmentName)}" placeholder="Ex. Collège Loustic" />
+              <label>Renommer l'établissement</label>
+              <input id="establishmentName" value="${attrValue(currentEtabDisplayName() || schoolConstraints.establishmentName)}" placeholder="Ex. Lycée Jacques Vaucanson" />
+              <span class="muted">Ce nom est enregistré dans Supabase pour l'établissement actif.</span>
             </div>
             <div class="eventField">
               <label>Type d’établissement</label>
@@ -9250,7 +9264,7 @@ add column if not exists etab_id uuid references public.etabs(id) on delete casc
 -- Chaque entree contient etabId + planningId.
 
 grant usage on schema public to anon, authenticated;
-grant select on public.etabs to authenticated;
+grant select, update on public.etabs to authenticated;
 grant select on public.etab_members to authenticated;
 grant insert, select, update on public.eps_plannings to authenticated;
 
@@ -9285,6 +9299,26 @@ using (
     select 1 from public.etab_members m
     where m.etab_id = etabs.id
     and m.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "owners update own etab" on public.etabs;
+create policy "owners update own etab"
+on public.etabs for update
+using (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = etabs.id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  )
+)
+with check (
+  exists (
+    select 1 from public.etab_members m
+    where m.etab_id = etabs.id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
   )
 );
 
@@ -11595,7 +11629,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             schoolConstraints = { ...schoolConstraints, establishmentName: establishmentNameInput.value };
             saveSchoolConstraints();
           });
-          establishmentNameInput.addEventListener("change", () => render());
+          establishmentNameInput.addEventListener("change", async () => {
+            const label = establishmentNameInput.value.trim();
+            schoolConstraints = { ...schoolConstraints, establishmentName: label };
+            saveSchoolConstraints();
+            try {
+              if (label) await renameCurrentEtab(label);
+              authStatus = label ? `Établissement renommé : ${label}` : authStatus;
+            } catch (error) {
+              authStatus = `Renommage Supabase impossible : ${error.message || "erreur inconnue"}`;
+            }
+            render();
+          });
         }
         const establishmentTypeSelect = document.getElementById("establishmentType");
         if (establishmentTypeSelect) {
