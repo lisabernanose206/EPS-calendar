@@ -24,9 +24,9 @@
       .brandTitle { align-items: center; display: flex; gap: 10px; }
       .brandNavCluster { align-items: flex-start; display: grid; gap: 2px; justify-items: start; min-width: 0; }
       .brandIdentity { align-items: center; display: flex; gap: 8px; min-width: 0; }
-      .brandEtabName { align-items: center; color: #0f172a; display: inline-flex; font-size: 13px; font-weight: 950; gap: 6px; line-height: 1.1; max-width: 320px; min-width: 0; overflow: hidden; white-space: nowrap; }
-      .brandEtabName span { overflow: hidden; text-overflow: ellipsis; }
-      .brandSwitchButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f172a; cursor: pointer; display: inline-flex; height: 30px; justify-content: center; padding: 0; width: 32px; }
+      .brandEtabName { align-items: center; color: #0f172a; display: grid; font-size: 13px; font-weight: 950; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; line-height: 1.1; max-width: min(320px, 100%); min-width: 0; overflow: hidden; white-space: nowrap; }
+      .brandEtabName span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .brandSwitchButton { align-items: center; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f172a; cursor: pointer; display: inline-flex; flex: 0 0 32px; height: 30px; justify-content: center; padding: 0; width: 32px; }
       .brandSwitchButton svg { display: block; height: 18px; width: 18px; }
       .brandLogo { display: block; height: 30px; object-fit: contain; width: 30px; }
       .authBox { align-items: end; display: grid; gap: 8px; justify-items: end; min-width: 260px; }
@@ -1028,7 +1028,7 @@
         color: var(--edu-text);
         font-size: 16px;
         font-weight: 700;
-        max-width: 260px;
+        max-width: min(220px, 100%);
       }
       .sideNav {
         gap: 8px;
