@@ -751,18 +751,25 @@
       .cycleCoverageBlock strong { font-size: 10px; }
       .cycleCoverageBlock span { font-size: 8px; font-weight: 800; }
       .cycleHeader { background: #f3f4f6 !important; color: #374151 !important; font-weight: 950; }
-      .alertsPage { display: grid; gap: 10px; margin-top: 16px; max-width: none; width: 100%; }
-      .alertCard { background: #fff; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 8px; display: grid; gap: 5px; padding: 12px; }
+      .alertsPage { display: grid; gap: 8px; margin-top: 12px; max-width: none; width: 100%; }
+      .alertCard { background: #fff; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 7px; display: grid; gap: 4px; padding: 8px 10px; }
       .alertCard strong { color: #991b1b; }
-      .alertCard span { color: #475569; font-size: 12px; font-weight: 850; }
-      .alertCard.inlineConflict { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
-      .alertCard.inlineConflict strong, .alertCard.inlineConflict span { line-height: 1.25; }
+      .alertCard span { color: #475569; font-size: 11px; font-weight: 850; }
+      .alertCard.inlineConflict { align-items: center; display: flex; flex-wrap: wrap; gap: 5px 8px; }
+      .alertCard.inlineConflict strong, .alertCard.inlineConflict span { line-height: 1.18; }
       .alertCard.inlineConflict span::before { color: #cbd5e1; content: "•"; font-weight: 950; margin-right: 8px; }
-      .conflictGrid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
-      .conflictGrid .alertCard.inlineConflict { align-content: start; align-items: start; display: grid; gap: 5px; min-height: 86px; }
+      .conflictGrid { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+      .conflictGrid .alertCard.inlineConflict { align-content: start; align-items: start; display: grid; gap: 3px; min-height: 0; }
       .conflictGrid .alertCard.inlineConflict span::before { content: ""; margin: 0; }
-      .conflictCardActions { align-items: center; display: flex; gap: 6px; margin-top: 4px; }
-      .conflictCardActions button { min-height: 28px; padding: 0 9px; }
+      .conflictList { display: grid; gap: 3px; }
+      .conflictLine { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 7px; }
+      .conflictLine b { color: #7f1d1d; font-size: 11px; font-weight: 950; }
+      .conflictLine span { font-size: 11px; }
+      .conflictLine.acceptedConflictLine { background: #eff6ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 3px 5px; }
+      .conflictLine.acceptedConflictLine b { color: #075985; }
+      .acceptedConflictBadge { background: #dbeafe; border-radius: 999px; color: #075985 !important; font-size: 10px !important; font-weight: 950 !important; padding: 2px 7px; }
+      .conflictCardActions { align-items: center; display: inline-flex; gap: 5px; margin-top: 0; }
+      .conflictCardActions button { font-size: 10px; min-height: 22px; padding: 0 7px; }
       .acceptedConflictCard { border-color: #bae6fd; border-left-color: #0284c7; }
       .acceptedConflictCard strong { color: #075985; }
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
@@ -7541,13 +7548,17 @@
         return conflicts.filter((conflict) => !acceptedKeys.has(acceptedConflictKey(conflict, buildMode)));
       }
 
+      function allConflictsForBuildMode(buildMode = "") {
+        if (!buildMode) return detectConflicts();
+        return cachedConstructionCheck(`allConflicts:${buildMode}`, () => {
+          const conflicts = detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode));
+          return buildMode === "cycleDetails" ? aggregateCycleDetailConflicts(conflicts) : conflicts;
+        });
+      }
+
       function conflictsForBuildMode(buildMode = "") {
         if (!buildMode) return detectConflicts();
-        return cachedConstructionCheck(`conflicts:${buildMode}`, () => {
-          const conflicts = detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode));
-          const modeConflicts = buildMode === "cycleDetails" ? aggregateCycleDetailConflicts(conflicts) : conflicts;
-          return filterAcceptedConflicts(modeConflicts, buildMode);
-        });
+        return cachedConstructionCheck(`conflicts:${buildMode}`, () => filterAcceptedConflicts(allConflictsForBuildMode(buildMode), buildMode));
       }
 
       function conflictMap(buildMode = "") {
@@ -8192,7 +8203,7 @@
           .map(({ cycle, block }) => ({
             cycleName: displayCycleName(cycle) || cycle.id,
             facilityLabel: block.facilityLabel || "Installation a renseigner",
-            activityLabel: block.activityLabel || "Activite a renseigner",
+            activityLabel: block.activityLabel || "Activité à renseigner",
             missing: !block.facilityLabel && !block.activityLabel
           }));
       }
@@ -11469,25 +11480,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return encodeURIComponent(String(value || ""));
       }
 
-      function renderAcceptedConflictExceptions() {
-        const modePrefix = `${constructionBuildMode || "all"}::`;
-        const items = normalizeAcceptedConflicts(acceptedConflicts).filter((item) => item.key.startsWith(modePrefix));
-        if (!items.length) return "";
-        return `<section class="alertsPage">
-          <h2>Exceptions validées</h2>
-          <div class="conflictGrid">
-            ${items.map((item) => `<article class="alertCard inlineConflict acceptedConflictCard">
-              <strong>${escapeHtml(item.title || "Conflit validé")}</strong>
-              ${item.label ? `<span>${escapeHtml(item.label)}</span>` : ""}
-              ${item.detail ? `<span>${escapeHtml(item.detail)}</span>` : ""}
-              <div class="conflictCardActions">
-                <button class="ghostButton" data-revoke-conflict="${encodedConflictValue(item.key)}">Annuler l'exception</button>
-              </div>
-            </article>`).join("")}
-          </div>
-        </section>`;
-      }
-
       function cycleDetailsCompletionItems() {
         return annualConstructionRules().flatMap((rule) => {
           if (!rule?.block || rule.block.optionBlock) return [];
@@ -11541,64 +11533,99 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           .sort((a, b) => compactClassName(a.schoolClass).localeCompare(compactClassName(b.schoolClass), "fr") || a.activityLabel.localeCompare(b.activityLabel, "fr"));
       }
 
+      function groupBy(items, keyForItem) {
+        const groups = new Map();
+        items.forEach((item) => {
+          const key = keyForItem(item);
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(item);
+        });
+        return [...groups.entries()].map(([key, values]) => ({ key, values }));
+      }
+
       function ruleRowLabel(rowId) {
         const row = yearRows().find((item) => item.id === rowId);
         return row ? `${row.day} · ${row.slot.label}` : "Créneau";
+      }
+
+      function periodLabelForCycle(cycle) {
+        return displayCycleName(cycle) || `${cycleLabel()} ${cycleOrdinal(cycle) || ""}`.trim();
       }
 
       function renderCycleDetailsQualitySummary() {
         if (constructionBuildMode !== "cycleDetails") return "";
         const repeatedItems = repeatedActivityByClassItems();
         const missingItems = cycleDetailsCompletionItems();
+        const repeatedGroups = groupBy(repeatedItems, (item) => compactClassName(item.schoolClass));
+        const missingGroups = groupBy(missingItems, (item) => periodLabelForCycle(item.cycle));
         if (!repeatedItems.length && !missingItems.length) return "";
         return `<section class="alertsPage">
           <h2>Contrôles installations/activités</h2>
           <div class="conflictGrid">
-            ${repeatedItems.length ? repeatedItems.map((item) => `<article class="alertCard inlineConflict">
-              <strong>${compactClassName(item.schoolClass)} · ${item.activityLabel}</strong>
-              <span>Activité présente sur plusieurs ${cycleLabel(true, true)} : ${item.cycleLabels}</span>
+            ${repeatedGroups.length ? repeatedGroups.map((group) => `<article class="alertCard inlineConflict">
+              <strong>${group.key} · activités répétées</strong>
+              <div class="conflictList">
+                ${group.values.map((item) => `<div class="conflictLine"><b>${item.activityLabel}</b><span>${item.cycleLabels}</span></div>`).join("")}
+              </div>
               <span>Hors piscine/natation.</span>
             </article>`).join("") : `<article class="alertCard inlineConflict acceptedConflictCard"><strong>Activités répétées</strong><span>Aucune activité hors piscine répétée sur plusieurs ${cycleLabel(true, true)}.</span></article>`}
-            ${missingItems.length ? missingItems.map((item) => `<article class="alertCard inlineConflict">
-              <strong>${item.title}</strong>
-              <span>${item.detail}</span>
+            ${missingGroups.length ? missingGroups.map((group) => `<article class="alertCard inlineConflict">
+              <strong>${group.key} · blocs à compléter</strong>
+              <div class="conflictList">
+                ${group.values.map((item) => `<div class="conflictLine"><b>${ruleRowLabel(item.rule.rowId)}</b><span>${item.detail}</span></div>`).join("")}
+              </div>
             </article>`).join("") : `<article class="alertCard inlineConflict acceptedConflictCard"><strong>Blocs complétés</strong><span>Tous les cours hors option ont une installation et une activité.</span></article>`}
           </div>
         </section>`;
       }
 
+      function constructionConflictGroupTitle(conflict) {
+        if (conflict.type === "class") return `Classe ${compactClassName(conflict.schoolClass || "non renseignée")}`;
+        if (constructionBuildMode === "cycleDetails") return conflict.cycleLabel || `${cycleLabel()} non renseigné`;
+        return constructionConflictTitle(conflict);
+      }
+
+      function renderConstructionConflictLine(conflict) {
+        const details = constructionConflictDetails(conflict);
+        const key = acceptedConflictKey(conflict, constructionBuildMode);
+        const title = constructionConflictTitle(conflict);
+        const accepted = acceptedConflictKeys().has(key);
+        return `<div class="conflictLine ${accepted ? "acceptedConflictLine" : ""}">
+          <b>${title}</b>
+          <span>${details.label}</span>
+          <span>${details.detail}</span>
+          ${accepted ? `<span class="acceptedConflictBadge">Validé</span>` : ""}
+          <div class="conflictCardActions">
+            ${accepted
+              ? `<button class="ghostButton" data-revoke-conflict="${encodedConflictValue(key)}">Annuler</button>`
+              : `<button class="ghostButton" data-accept-conflict="${encodedConflictValue(key)}" data-conflict-title="${encodedConflictValue(title)}" data-conflict-label="${encodedConflictValue(details.label)}" data-conflict-detail="${encodedConflictValue(details.detail)}">Valider</button>`}
+          </div>
+        </div>`;
+      }
+
       function renderConstructionConflictSummary() {
-        const conflicts = conflictsForBuildMode(constructionBuildMode);
+        const conflicts = allConflictsForBuildMode(constructionBuildMode);
         const hiddenReport = loadHiddenConstructionReport();
         const hiddenReportHtml = constructionBuildMode === "blocks" && hiddenReport?.items?.length ? `<section class="alertsPage">
-          <h2>Blocs caches trouves</h2>
+          <h2>Blocs cachés trouvés</h2>
           ${hiddenReport.items.map((item) => `<article class="alertCard">
             <strong>${item.day} ${item.slot} · ${item.rhythm}</strong>
             <span>${item.classes || "Classe non renseignée"} · ${item.teachers || "Prof non renseigné"}</span>
             <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
-        const acceptedHtml = renderAcceptedConflictExceptions();
         const qualityHtml = renderCycleDetailsQualitySummary();
-        if (!conflicts.length) return `${hiddenReportHtml}${qualityHtml}${acceptedHtml}`;
+        if (!conflicts.length) return `${hiddenReportHtml}${qualityHtml}`;
+        const conflictGroups = groupBy(conflicts, constructionConflictGroupTitle);
         return `${hiddenReportHtml}<section class="alertsPage">
-          <h2>Conflits detectes</h2>
+          <h2>Conflits détectés</h2>
           <div class="conflictGrid">
-          ${conflicts.map((conflict) => {
-            const details = constructionConflictDetails(conflict);
-            const key = acceptedConflictKey(conflict, constructionBuildMode);
-            const title = constructionConflictTitle(conflict);
-            return `<article class="alertCard inlineConflict">
-              <strong>${title}</strong>
-              <span>${details.label}</span>
-              <span>${details.detail}</span>
-              <div class="conflictCardActions">
-                <button class="ghostButton" data-accept-conflict="${encodedConflictValue(key)}" data-conflict-title="${encodedConflictValue(title)}" data-conflict-label="${encodedConflictValue(details.label)}" data-conflict-detail="${encodedConflictValue(details.detail)}">Valider l'exception</button>
-              </div>
-            </article>`;
-          }).join("")}
+          ${conflictGroups.map((group) => `<article class="alertCard inlineConflict">
+            <strong>${group.key}${group.values.length > 1 ? ` · ${group.values.length} conflits` : ""}</strong>
+            <div class="conflictList">${group.values.map(renderConstructionConflictLine).join("")}</div>
+          </article>`).join("")}
           </div>
-        </section>${qualityHtml}${acceptedHtml}`;
+        </section>${qualityHtml}`;
       }
 
       function renderAlertsView() {
