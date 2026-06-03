@@ -3321,6 +3321,17 @@
           || null;
       }
 
+      function constructionCycleForBlockById(block, cycleId) {
+        const level = classParts(block?.schoolClass || "").level || "";
+        const levelCycles = cyclesForClassLevel(level);
+        const genericCycle = constructionCycleById(cycleId) || (cycleId ? { id: cycleId, name: cycleId } : null);
+        return levelCycles.find((cycle) => cycle.id === cycleId)
+          || levelCycles.find((cycle) => cyclesRepresentSameSlot(cycle, genericCycle))
+          || constructionCycleById(cycleId)
+          || levelCycles[0]
+          || null;
+      }
+
       function cycleOrdinal(cycle) {
         const matches = String(cycle?.id || cycle?.name || "").match(/\d+/g);
         return matches?.length ? Number(matches[matches.length - 1]) : null;
@@ -3357,8 +3368,9 @@
 
       function cycleOverrideForRule(rule, cycleId) {
         const overrides = rule?.cycleOverrides && typeof rule.cycleOverrides === "object" ? rule.cycleOverrides : {};
-        if (overrides[cycleId]) return overrides[cycleId];
         const targetCycle = constructionCycleForRuleById(rule, cycleId) || constructionCycleById(cycleId) || { id: cycleId, name: cycleId };
+        if (targetCycle?.id && overrides[targetCycle.id]) return overrides[targetCycle.id];
+        if (overrides[cycleId]) return overrides[cycleId];
         const fallbackEntry = Object.entries(overrides).find(([overrideCycleId]) => {
           const overrideCycle = constructionCycleForRuleById(rule, overrideCycleId)
             || constructionCycleById(overrideCycleId)
@@ -6108,7 +6120,7 @@
 
       function applyBlockToCycle(rowId, cycleId, block, weekLetter = "all") {
         const classLevel = classParts(block.schoolClass).level;
-        const cycle = cyclesForClassLevel(classLevel).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
+        const cycle = constructionCycleForBlockById(block, cycleId);
         if (!cycle) return;
         constructionRules.push({
           id: `rule-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -6168,9 +6180,19 @@
       function updateConstructionRuleCycleDetails(ruleId, cycleId, block) {
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule || !cycleId) return false;
+        const targetCycle = constructionCycleForRuleById(rule, cycleId) || { id: cycleId, name: cycleId };
+        const targetCycleId = targetCycle.id || cycleId;
+        const nextOverrides = { ...(rule.cycleOverrides || {}) };
+        Object.keys(nextOverrides).forEach((overrideCycleId) => {
+          if (overrideCycleId === targetCycleId) return;
+          const overrideCycle = constructionCycleForRuleById(rule, overrideCycleId)
+            || constructionCycleById(overrideCycleId)
+            || { id: overrideCycleId, name: overrideCycleId };
+          if (cyclesRepresentSameSlot(overrideCycle, targetCycle)) delete nextOverrides[overrideCycleId];
+        });
         rule.cycleOverrides = {
-          ...(rule.cycleOverrides || {}),
-          [cycleId]: {
+          ...nextOverrides,
+          [targetCycleId]: {
             facilityId: block.facilityId || "",
             activityId: block.activityId || ""
           }
@@ -7587,7 +7609,7 @@
       }
 
       function blockCycleConflictMessage(rowId, cycleId, candidate, ignoredRuleId = "", weekLetter = "all", showWeekDetail = true) {
-        const cycle = cyclesForClassLevel(classParts(candidate.schoolClass).level).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
+        const cycle = constructionCycleForBlockById(candidate, cycleId);
         if (!cycle) return "";
         for (const weekItem of weeksForCycle(cycle)) {
           if (weekLetter !== "all" && weekItem.letter !== weekLetter) continue;
@@ -7600,7 +7622,7 @@
       }
 
       function blockCycleUnavailableMessage(rowId, cycleId, candidate, weekLetter = "all") {
-        const cycle = cyclesForClassLevel(classParts(candidate.schoolClass).level).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
+        const cycle = constructionCycleForBlockById(candidate, cycleId);
         const row = yearRows().find((item) => item.id === rowId);
         if (!cycle || !row) return "";
         for (const weekItem of weeksForCycle(cycle)) {
@@ -10049,7 +10071,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
         const editingRule = editingBuildBlock?.ruleId ? constructionRules.find((rule) => rule.id === editingBuildBlock.ruleId) : null;
         const cellCycle = activeBuildCycleId
-          ? (editingRule ? constructionCycleForRuleById(editingRule, activeBuildCycleId) : constructionCycleById(activeBuildCycleId))
+          ? (editingRule ? constructionCycleForRuleById(editingRule, activeBuildCycleId) : constructionCycleForBlockById(block, activeBuildCycleId))
           : cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
@@ -13203,8 +13225,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             if (!blockTeacherIds.length) return;
             const block = currentBlock();
             const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
+            const editingRule = editingCycleDetails ? constructionRules.find((rule) => rule.id === editingBuildBlock.ruleId) : null;
             const cellCycle = activeBuildCycleId
-              ? constructionCycleById(activeBuildCycleId)
+              ? (editingRule ? constructionCycleForRuleById(editingRule, activeBuildCycleId) : constructionCycleForBlockById(block, activeBuildCycleId))
               : cycleForWeek(weekItem, classParts(block.schoolClass).level);
             if (!cellCycle) return;
             const row = yearRows().find((item) => item.id === rowId);
