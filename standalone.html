@@ -437,6 +437,8 @@
       .constructionOptimizeActions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; min-height: 34px; }
       .optimizeButton { align-items: center; background: #ecfeff; border: 1px solid #67e8f9; border-radius: 7px; color: #155e75; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 950; justify-content: center; line-height: 1; min-height: 32px; padding: 0 10px; }
       .optimizeButton:hover { background: #cffafe; }
+      .optimizeButton:disabled { background: #f1f5f9; border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; opacity: 0.85; }
+      .optimizeButton:disabled:hover { background: #f1f5f9; }
       .constructionVersionChoices { display: grid; gap: 7px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
       .constructionVersionChoice { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #172033; cursor: pointer; display: flex; font-size: 12px; font-weight: 850; gap: 8px; line-height: 1.2; min-height: 34px; min-width: 0; padding: 7px 9px; }
       .eventField .constructionVersionChoice input[type="checkbox"], .constructionVersionChoice input[type="checkbox"] { accent-color: #0f766e; appearance: auto; flex: 0 0 14px; height: 14px; margin: 0; min-height: 0; padding: 0; width: 14px; }
@@ -773,11 +775,14 @@
       .conflictCardActions button { font-size: 10px; min-height: 22px; padding: 0 7px; }
       .alertsHeader { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .alertsHeader h2 { margin: 0; }
-      .conflictProgressSummary { display: grid; gap: 4px; min-width: 220px; width: min(360px, 42vw); }
-      .conflictProgressTrack { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; display: flex; height: 12px; overflow: hidden; width: 100%; }
-      .conflictProgressAccepted { background: #3b82f6; min-width: 0; transition: width 0.2s ease; }
-      .conflictProgressPending { background: #ef4444; min-width: 0; transition: width 0.2s ease; }
-      .conflictProgressLegend { align-items: center; color: #475569; display: flex; flex-wrap: wrap; font-size: 10px; font-weight: 900; gap: 4px 9px; justify-content: flex-end; }
+      .conflictProgressSummary { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(180px, 1fr) auto; min-width: 250px; width: min(430px, 46vw); }
+      .conflictProgressTrack { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; display: flex; height: 24px; overflow: hidden; width: 100%; }
+      .conflictProgressAccepted,
+      .conflictProgressPending { align-items: center; display: flex; font-size: 11px; font-weight: 950; justify-content: center; min-width: 0; overflow: hidden; padding: 0 4px; transition: width 0.2s ease; white-space: nowrap; }
+      .conflictProgressAccepted { background: #3b82f6; color: #fff; }
+      .conflictProgressPending { background: #ef4444; color: #fff; }
+      .conflictProgressTotal { color: #0f172a; font-size: 11px; font-weight: 950; white-space: nowrap; }
+      .conflictProgressLegend { align-items: center; color: #475569; display: flex; flex-wrap: wrap; font-size: 10px; font-weight: 900; gap: 4px 9px; grid-column: 1 / -1; justify-content: flex-end; }
       .conflictProgressLegend b { color: #0f172a; }
       @media (max-width: 760px) {
         .alertsHeader { align-items: stretch; flex-direction: column; }
@@ -9716,7 +9721,7 @@
               <button class="${constructionBuildMode === "versions" ? "active" : ""}" data-construction-build-mode="versions">Versions</button>
             </div>
             ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
-              <button class="optimizeButton" id="openConstructionOptimizer" title="Affecter automatiquement uniquement les installations et activités">Lancer la construction optimisée</button>
+              <button class="optimizeButton" id="openConstructionOptimizer" title="Construction optimisée désactivée temporairement : pas encore au point" disabled>Lancer la construction optimisée</button>
             </div>` : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${displayCycleName(cycle)}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
@@ -11453,33 +11458,33 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (conflict.type === "teacher") {
           const teacherName = teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher;
           return {
-            label: `Professeur en conflit : ${teacherName}`,
+            label: teacherName,
             detail: conflict.items.map((item) => `${blockClassLabel(item) || "classe non précisée"} · ${item.facilityLabel || "installation non précisée"}`).join(" / ")
           };
         }
         if (conflict.type === "asTeacher") {
           const teacherName = teachers.find((teacher) => teacher.id === conflict.teacher)?.name || conflict.teacher;
           return {
-            label: `Professeur en conflit AS : ${teacherName}`,
+            label: teacherName,
             detail: conflict.items.map((item) => `${item.name || "AS"} · ${item.weekdays.join(", ")}`).join(" / ")
           };
         }
         if (conflict.type === "class") {
           return {
-            label: `Classe en conflit : ${conflict.schoolClass}`,
+            label: conflict.schoolClass || "classe non précisée",
             detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} · ${item.facilityLabel || "installation non précisée"}`).join(" / ")
           };
         }
         return {
-          label: `Installation en conflit : ${conflict.items[0].facilityLabel || conflict.facility}`,
+          label: conflict.items[0].facilityLabel || conflict.facility || "installation non précisée",
             detail: conflict.items.map((item) => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe non précisée"}`).join(" / ")
         };
       }
 
-      function constructionConflictTitle(conflict) {
+      function constructionConflictTitle(conflict, includeCycle = true) {
         if (constructionBuildMode === "cycleDetails") {
           const weekType = conflict.weekType && conflict.weekType !== "all" ? ` · Semaine type ${conflict.weekType}` : "";
-          const cycleLabel = conflict.cycleLabel ? `${conflict.cycleLabel} · ` : "";
+          const cycleLabel = includeCycle && conflict.cycleLabel ? `${conflict.cycleLabel} · ` : "";
           return `${cycleLabel}${conflict.row.day} · ${conflict.row.slot.label}${weekType}`;
         }
         return `${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}`;
@@ -11618,8 +11623,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               item.activityId,
               [...item.cycles.keys()].join("+")
             ].join("::"),
+            family: "repeatedActivity",
+            familyTitle: "Activités répétées hors piscine",
             groupTitle: `${compactClassName(item.schoolClass)} · activité répétée`,
-            periodOrder: Math.min(...[...item.cycles.values()].map((entry) => conflictPeriodOrderFromCycle(entry.cycle))),
+            periodKey: "inter-period",
+            periodTitle: "Inter-période",
+            periodOrder: 1000,
             classLabel: conflictClassSortLabel(item.schoolClass),
             title: item.activityLabel,
             label: `Activité présente sur plusieurs ${cycleLabel(true, true)}`,
@@ -11635,7 +11644,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               item.block.facilityId || "missing-facility",
               item.block.activityId || "missing-activity"
             ].join("::"),
-            groupTitle: `${periodLabelForCycle(item.cycle)} · bloc incomplet`,
+            family: "missingDetails",
+            familyTitle: "Blocs incomplets",
+            periodKey: `period:${conflictPeriodOrderFromCycle(item.cycle)}:${periodLabelForCycle(item.cycle)}`,
+            periodTitle: periodLabelForCycle(item.cycle),
+            groupTitle: `${compactClassName(classesForBlock(item.block)[0] || blockClassLabel(item.block) || "classe")} · bloc incomplet`,
             periodOrder: conflictPeriodOrderFromCycle(item.cycle),
             classLabel: conflictClassSortLabel(classesForBlock(item.block)[0] || blockClassLabel(item.block)),
             title: ruleRowLabel(item.rule.rowId),
@@ -11647,8 +11660,41 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
 
       function constructionConflictGroupTitle(conflict) {
         if (conflict.type === "class") return `Classe ${compactClassName(conflict.schoolClass || "non renseignée")}`;
-        if (constructionBuildMode === "cycleDetails") return conflict.cycleLabel || `${cycleLabel()} non renseigné`;
+        if (constructionBuildMode === "cycleDetails") return constructionConflictTitle(conflict, false);
         return constructionConflictTitle(conflict);
+      }
+
+      function constructionConflictPeriodInfo(conflict) {
+        if (constructionBuildMode === "cycleDetails") {
+          const itemCycles = (conflict.items || [])
+            .map((item) => item.cycleId ? { id: item.cycleId, name: item.cycleName || item.cycleId } : null)
+            .filter(Boolean);
+          const uniqueCycleKeys = [...new Map(itemCycles.map((cycle) => [cycle.id || cycle.name, cycle])).values()];
+          const cycle = uniqueCycleKeys[0] || (conflict.weekItem ? cycleForWeek(conflict.weekItem) : null);
+          const title = uniqueCycleKeys.length === 1
+            ? periodLabelForCycle(cycle)
+            : conflict.cycleLabel || (cycle ? periodLabelForCycle(cycle) : `${cycleLabel()} non renseigné`);
+          const order = cycle ? conflictPeriodOrderFromCycle(cycle) : conflictPeriodOrder(conflict);
+          return { key: `period:${order}:${title}`, title, order };
+        }
+        const cycle = conflict.weekItem ? cycleForWeek(conflict.weekItem) : null;
+        const title = cycle ? periodLabelForCycle(cycle) : "Hors période";
+        const order = cycle ? conflictPeriodOrderFromCycle(cycle) : 999;
+        return { key: `period:${order}:${title}`, title, order };
+      }
+
+      function constructionConflictFamilyTitle(conflict) {
+        if (conflict.type === "teacher") return "Professeurs en conflit";
+        if (conflict.type === "asTeacher") return "AS en conflit";
+        if (conflict.type === "class") return "Classes en conflit";
+        return "Installations en conflit";
+      }
+
+      function constructionConflictFamilyOrder(conflict) {
+        if (conflict.type === "class") return 2;
+        if (conflict.type === "teacher") return 3;
+        if (conflict.type === "asTeacher") return 4;
+        return 1;
       }
 
       function renderConflictValidationAction(key, title, label, detail, accepted) {
@@ -11659,10 +11705,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         </div>`;
       }
 
-      function renderConstructionConflictLine(conflict) {
+      function renderConstructionConflictLine(conflict, omitPeriod = false) {
         const details = constructionConflictDetails(conflict);
         const key = acceptedConflictKey(conflict, constructionBuildMode);
-        const title = constructionConflictTitle(conflict);
+        const title = constructionConflictTitle(conflict, !omitPeriod);
         const accepted = acceptedConflictKeys().has(key);
         return `<div class="conflictLine ${accepted ? "acceptedConflictLine" : ""}">
           <b>${title}</b>
@@ -11690,11 +11736,61 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const pendingPercent = totalCount ? 100 - acceptedPercent : 0;
         return `<div class="conflictProgressSummary" title="${totalCount} conflit${totalCount > 1 ? "s" : ""} détecté${totalCount > 1 ? "s" : ""}, ${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}, ${pendingCount} à traiter.">
           <div class="conflictProgressTrack" aria-label="${acceptedCount} conflits validés sur ${totalCount}">
-            <div class="conflictProgressAccepted" style="width:${acceptedPercent}%"></div>
-            <div class="conflictProgressPending" style="width:${pendingPercent}%"></div>
+            <div class="conflictProgressAccepted" style="width:${acceptedPercent}%">${acceptedCount ? `${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}` : ""}</div>
+            <div class="conflictProgressPending" style="width:${pendingPercent}%">${pendingCount ? `${pendingCount} à traiter` : ""}</div>
           </div>
-          <div class="conflictProgressLegend"><b>${totalCount}</b> détecté${totalCount > 1 ? "s" : ""}<span>${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}</span><span>${pendingCount} à traiter</span></div>
+          <div class="conflictProgressTotal">${totalCount} total</div>
         </div>`;
+      }
+
+      function conflictGroupLabel(label, count) {
+        return `${label}${count > 1 ? ` · ${count} conflits` : ""}`;
+      }
+
+      function conflictPeriodLabel(label, count) {
+        return `${label} · ${count} conflit${count > 1 ? "s" : ""}`;
+      }
+
+      function conflictPeriodOrderForGroup(group) {
+        return Math.min(...group.values.map((item) => item.periodOrder ?? 999));
+      }
+
+      function conflictFamilyOrderForGroup(group) {
+        return Math.min(...group.values.map((item) => item.familyOrder ?? 999));
+      }
+
+      function constructionConflictSummaryItems(conflicts, qualityItems) {
+        return [
+          ...conflicts.map((conflict) => {
+            const period = constructionConflictPeriodInfo(conflict);
+            return {
+              periodKey: period.key,
+              periodTitle: period.title,
+              periodOrder: period.order,
+              familyTitle: constructionConflictFamilyTitle(conflict),
+              familyOrder: constructionConflictFamilyOrder(conflict),
+              groupTitle: constructionConflictGroupTitle(conflict),
+              classLabel: conflictClassOrderLabel(conflict),
+              title: constructionConflictTitle(conflict),
+              render: () => renderConstructionConflictLine(conflict, true)
+            };
+          }),
+          ...qualityItems.map((item) => ({
+            periodKey: item.periodKey || `period:${item.periodOrder ?? 999}:${item.groupTitle || "Période"}`,
+            periodTitle: item.periodTitle || item.groupTitle || "Période",
+            periodOrder: item.periodOrder ?? 999,
+            familyTitle: item.familyTitle,
+            familyOrder: item.family === "repeatedActivity" ? 5 : 6,
+            groupTitle: item.groupTitle,
+            classLabel: item.classLabel,
+            title: item.title,
+            render: () => renderQualityConflictLine(item)
+          }))
+        ].sort((first, second) =>
+          (first.periodOrder ?? 999) - (second.periodOrder ?? 999)
+          || compareConflictLabels(first.classLabel, second.classLabel)
+          || compareConflictLabels(first.title, second.title)
+        );
       }
 
       function renderConstructionConflictSummary() {
@@ -11711,8 +11807,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const sortedConflicts = [...conflicts].sort(compareConstructionConflicts);
         const qualityItems = cycleDetailsQualityConflictItems().sort(compareQualityConflicts);
         if (!conflicts.length && !qualityItems.length) return hiddenReportHtml;
-        const conflictGroups = groupBy(sortedConflicts, constructionConflictGroupTitle);
-        const qualityGroups = groupBy(qualityItems, (item) => item.groupTitle);
+        const summaryItems = constructionConflictSummaryItems(sortedConflicts, qualityItems);
+        const periodGroups = groupBy(summaryItems, (item) => item.periodKey)
+          .sort((left, right) =>
+            conflictPeriodOrderForGroup(left) - conflictPeriodOrderForGroup(right)
+            || compareConflictLabels(left.values[0]?.periodTitle, right.values[0]?.periodTitle)
+          );
         const acceptedKeys = acceptedConflictKeys();
         const acceptedCount = conflicts.filter((conflict) => acceptedKeys.has(acceptedConflictKey(conflict, constructionBuildMode))).length;
         const acceptedQualityCount = qualityItems.filter((item) => acceptedKeys.has(item.key)).length;
@@ -11735,18 +11835,25 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <button class="ghostButton" data-toggle-construction-conflicts>Masquer</button>
           </div>
           <div class="conflictGrid">
-          ${conflictGroups.length ? `<article class="alertCard inlineConflict">
-            <strong>Occupation des créneaux · ${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""}</strong>
-            <div class="conflictList">
-              ${conflictGroups.map((group) => `<div class="conflictList"><b>${group.key}${group.values.length > 1 ? ` · ${group.values.length}` : ""}</b>${group.values.map(renderConstructionConflictLine).join("")}</div>`).join("")}
-            </div>
-          </article>` : ""}
-          ${qualityGroups.length ? `<article class="alertCard inlineConflict">
-            <strong>Cohérence installations/activités · ${qualityItems.length} conflit${qualityItems.length > 1 ? "s" : ""}</strong>
-            <div class="conflictList">
-              ${qualityGroups.map((group) => `<div class="conflictList"><b>${group.key}${group.values.length > 1 ? ` · ${group.values.length}` : ""}</b>${group.values.map(renderQualityConflictLine).join("")}</div>`).join("")}
-            </div>
-          </article>` : ""}
+          ${periodGroups.map((period) => {
+            const families = groupBy(period.values, (item) => item.familyTitle)
+              .sort((left, right) =>
+                conflictFamilyOrderForGroup(left) - conflictFamilyOrderForGroup(right)
+                || compareConflictLabels(left.key, right.key)
+              );
+            return `<article class="alertCard inlineConflict">
+              <strong>${conflictPeriodLabel(period.values[0]?.periodTitle || "Période", period.values.length)}</strong>
+              <div class="conflictList">
+                ${families.map((family) => {
+                  const familyGroups = groupBy(family.values, (item) => item.groupTitle);
+                  return `<div class="conflictList">
+                    <b>${conflictGroupLabel(family.key, family.values.length)}</b>
+                    ${familyGroups.map((group) => `<div class="conflictList"><b>${conflictGroupLabel(group.key, group.values.length)}</b>${group.values.map((item) => item.render()).join("")}</div>`).join("")}
+                  </div>`;
+                }).join("")}
+              </div>
+            </article>`;
+          }).join("")}
           </div>
         </section>`;
       }
@@ -14150,6 +14257,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const openConstructionOptimizer = document.getElementById("openConstructionOptimizer");
         if (openConstructionOptimizer) {
           openConstructionOptimizer.addEventListener("click", () => {
+            if (openConstructionOptimizer.disabled) return;
             constructionOptimizeConfirmOpen = true;
             render();
           });
