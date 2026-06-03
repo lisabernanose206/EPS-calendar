@@ -754,8 +754,8 @@
       .cycleCoverageBlock span { font-size: 8px; font-weight: 800; }
       .cycleHeader { background: #f3f4f6 !important; color: #374151 !important; font-weight: 950; }
       .alertsPage { display: grid; gap: 8px; margin-top: 12px; max-width: none; width: 100%; }
-      .alertCard { background: #fff; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 7px; display: grid; gap: 4px; padding: 8px 10px; }
-      .alertCard strong { color: #991b1b; }
+      .alertCard { background: #fff7ed; border: 1px solid #fed7aa; border-left: 4px solid #f97316; border-radius: 7px; display: grid; gap: 4px; padding: 8px 10px; }
+      .alertCard strong { color: #9a3412; }
       .alertCard span { color: #475569; font-size: 11px; font-weight: 850; }
       .alertCard.inlineConflict { align-items: center; display: flex; flex-wrap: wrap; gap: 5px 8px; }
       .alertCard.inlineConflict strong, .alertCard.inlineConflict span { line-height: 1.18; }
@@ -765,8 +765,8 @@
       .conflictGrid .alertCard.inlineConflict span::before { content: ""; margin: 0; }
       .conflictList { display: grid; gap: 3px; }
       .conflictList > b { color: #334155; font-size: 11px; font-weight: 950; margin-top: 2px; }
-      .conflictLine { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 7px; }
-      .conflictLine b { color: #7f1d1d; font-size: 11px; font-weight: 950; }
+      .conflictLine { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 4px 7px; padding: 3px 5px; }
+      .conflictLine b { color: #9a3412; font-size: 11px; font-weight: 950; }
       .conflictLine span { font-size: 11px; }
       .conflictLine.acceptedConflictLine { background: #eff6ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 3px 5px; }
       .conflictLine.acceptedConflictLine b { color: #075985; }
@@ -776,11 +776,11 @@
       .alertsHeader { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .alertsHeader h2 { margin: 0; }
       .conflictProgressSummary { align-items: center; display: grid; gap: 6px; grid-template-columns: minmax(180px, 1fr) auto; min-width: 250px; width: min(430px, 46vw); }
-      .conflictProgressTrack { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; display: flex; height: 24px; overflow: hidden; width: 100%; }
+      .conflictProgressTrack { background: #ffedd5; border: 1px solid #fed7aa; border-radius: 999px; display: flex; height: 24px; overflow: hidden; width: 100%; }
       .conflictProgressAccepted,
       .conflictProgressPending { align-items: center; display: flex; font-size: 11px; font-weight: 950; justify-content: center; min-width: 0; overflow: hidden; padding: 0 4px; transition: width 0.2s ease; white-space: nowrap; }
       .conflictProgressAccepted { background: #3b82f6; color: #fff; }
-      .conflictProgressPending { background: #ef4444; color: #fff; }
+      .conflictProgressPending { background: #f97316; color: #fff; }
       .conflictProgressTotal { color: #0f172a; font-size: 11px; font-weight: 950; white-space: nowrap; }
       .conflictProgressLegend { align-items: center; color: #475569; display: flex; flex-wrap: wrap; font-size: 10px; font-weight: 900; gap: 4px 9px; grid-column: 1 / -1; justify-content: flex-end; }
       .conflictProgressLegend b { color: #0f172a; }
