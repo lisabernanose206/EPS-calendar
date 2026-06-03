@@ -773,6 +773,17 @@
       .conflictCardActions button { font-size: 10px; min-height: 22px; padding: 0 7px; }
       .alertsHeader { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
       .alertsHeader h2 { margin: 0; }
+      .conflictProgressSummary { display: grid; gap: 4px; min-width: 220px; width: min(360px, 42vw); }
+      .conflictProgressTrack { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; display: flex; height: 12px; overflow: hidden; width: 100%; }
+      .conflictProgressAccepted { background: #3b82f6; min-width: 0; transition: width 0.2s ease; }
+      .conflictProgressPending { background: #ef4444; min-width: 0; transition: width 0.2s ease; }
+      .conflictProgressLegend { align-items: center; color: #475569; display: flex; flex-wrap: wrap; font-size: 10px; font-weight: 900; gap: 4px 9px; justify-content: flex-end; }
+      .conflictProgressLegend b { color: #0f172a; }
+      @media (max-width: 760px) {
+        .alertsHeader { align-items: stretch; flex-direction: column; }
+        .conflictProgressSummary { width: 100%; }
+        .conflictProgressLegend { justify-content: flex-start; }
+      }
       .compactAlertSection { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
       .compactAlertSection .muted { font-size: 11px; font-weight: 850; }
       .acceptedConflictCard { border-color: #bae6fd; border-left-color: #0284c7; }
@@ -11673,6 +11684,19 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         </div>`;
       }
 
+      function renderConflictProgressSummary(totalCount, acceptedCount) {
+        const pendingCount = Math.max(0, totalCount - acceptedCount);
+        const acceptedPercent = totalCount ? Math.round((acceptedCount / totalCount) * 100) : 0;
+        const pendingPercent = totalCount ? 100 - acceptedPercent : 0;
+        return `<div class="conflictProgressSummary" title="${totalCount} conflit${totalCount > 1 ? "s" : ""} détecté${totalCount > 1 ? "s" : ""}, ${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}, ${pendingCount} à traiter.">
+          <div class="conflictProgressTrack" aria-label="${acceptedCount} conflits validés sur ${totalCount}">
+            <div class="conflictProgressAccepted" style="width:${acceptedPercent}%"></div>
+            <div class="conflictProgressPending" style="width:${pendingPercent}%"></div>
+          </div>
+          <div class="conflictProgressLegend"><b>${totalCount}</b> détecté${totalCount > 1 ? "s" : ""}<span>${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}</span><span>${pendingCount} à traiter</span></div>
+        </div>`;
+      }
+
       function renderConstructionConflictSummary() {
         const conflicts = allConflictsForBuildMode(constructionBuildMode);
         const hiddenReport = loadHiddenConstructionReport();
@@ -11694,21 +11718,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const acceptedQualityCount = qualityItems.filter((item) => acceptedKeys.has(item.key)).length;
         const totalCount = conflicts.length + qualityItems.length;
         const totalAcceptedCount = acceptedCount + acceptedQualityCount;
-        const pendingCount = totalCount - totalAcceptedCount;
-        const conflictSummaryText = `${totalCount} conflit${totalCount > 1 ? "s" : ""} détecté${totalCount > 1 ? "s" : ""}${totalAcceptedCount ? `, dont ${totalAcceptedCount} validé${totalAcceptedCount > 1 ? "s" : ""}` : ""}${pendingCount ? ` (${pendingCount} à traiter)` : ""}.`;
+        const conflictProgressHtml = renderConflictProgressSummary(totalCount, totalAcceptedCount);
         if (constructionConflictsHidden) {
           return `${hiddenReportHtml}<section class="alertsPage compactAlertSection">
             <div class="alertsHeader">
               <h2>Conflits détectés</h2>
+              ${conflictProgressHtml}
               <button class="ghostButton" data-toggle-construction-conflicts>Afficher</button>
             </div>
-            <span class="muted">${conflictSummaryText}</span>
           </section>`;
         }
         return `${hiddenReportHtml}<section class="alertsPage">
           <div class="alertsHeader">
             <h2>Conflits détectés</h2>
-            <span class="muted">${conflictSummaryText}</span>
+            ${conflictProgressHtml}
             <button class="ghostButton" data-toggle-construction-conflicts>Masquer</button>
           </div>
           <div class="conflictGrid">
