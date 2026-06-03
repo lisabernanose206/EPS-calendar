@@ -6190,16 +6190,7 @@
       }
 
       function optimizedSwimmingActivityIds() {
-        const swimmingFacilityIds = facilities
-          .filter((facility) => /piscine|natation/i.test(String(facility.label || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")))
-          .map((facility) => facility.id);
-        const linkedSwimmingActivityIds = swimmingFacilityIds.flatMap((facilityId) => facilityActivities[facilityId] || []);
-        return [...new Set([
-          ...activities
-          .filter((activity) => /natation|piscine/i.test(String(activity.label || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")))
-          .map((activity) => activity.id),
-          ...linkedSwimmingActivityIds
-        ])];
+        return swimmingActivityIds();
       }
 
       function optimizedCycleIsSixthSwimmingCycle(cycle) {
@@ -7846,6 +7837,56 @@
         if (!activityId) return true;
         return activityAllowedForFacility(block?.facilityId || "", activityId)
           && activityAllowedForBlockProgram(block, activityId);
+      }
+
+      function swimmingActivityIds() {
+        const normalizedLabel = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const swimmingFacilityIds = facilities
+          .filter((facility) => /piscine|natation/i.test(normalizedLabel(facility.label)))
+          .map((facility) => facility.id);
+        const linkedSwimmingActivityIds = swimmingFacilityIds.flatMap((facilityId) => facilityActivities[facilityId] || []);
+        return [...new Set([
+          ...activities
+            .filter((activity) => /natation|piscine/i.test(normalizedLabel(activity.label)))
+            .map((activity) => activity.id),
+          ...linkedSwimmingActivityIds
+        ])];
+      }
+
+      function cycleActivityReuseLimit(activityId) {
+        return swimmingActivityIds().includes(activityId) ? 3 : 1;
+      }
+
+      function cycleActivityAssignmentsForRule(ruleId, activityId, excludedCycleId = "") {
+        if (!ruleId || !activityId) return [];
+        const rule = constructionRules.find((item) => item.id === ruleId);
+        if (!rule) return [];
+        return constructionCyclesForRule(rule)
+          .filter((cycle) => cycle.id !== excludedCycleId)
+          .map((cycle) => ({ cycle, block: blockWithCycleOverride(rule, cycle) }))
+          .filter(({ block }) => block.activityId === activityId)
+          .map(({ cycle }) => cycle.name || cycle.id);
+      }
+
+      function cycleActivityReuseMessage(ruleId, cycleId, activityId) {
+        const assignedCycles = cycleActivityAssignmentsForRule(ruleId, activityId, cycleId);
+        if (!assignedCycles.length) return "";
+        const activity = constructionActivityById(activityId);
+        const cycleList = assignedCycles.join(", ");
+        const limit = cycleActivityReuseLimit(activityId);
+        if (assignedCycles.length < limit) return "";
+        return limit > 1
+          ? `${activity?.label || "Cette activite"} deja affectee aux ${limit} cycles autorises : ${cycleList}.`
+          : `${activity?.label || "Cette activite"} deja affectee a ${cycleList}. Une activite ne peut pas etre sur deux cycles.`;
+      }
+
+      function cycleActivityReuseTitle(ruleId, cycleId, activityId, fallbackLabel = "Activite") {
+        const assignedCycles = cycleActivityAssignmentsForRule(ruleId, activityId, cycleId);
+        if (!assignedCycles.length) return `${fallbackLabel} disponible.`;
+        const limit = cycleActivityReuseLimit(activityId);
+        const cycleList = assignedCycles.join(", ");
+        if (assignedCycles.length >= limit) return cycleActivityReuseMessage(ruleId, cycleId, activityId);
+        return `${fallbackLabel} deja affectee a ${cycleList}. Piscine autorisee sur 3 cycles.`;
       }
 
       function activitiesForFacilityAndBlockProgram(facilityId, block) {
@@ -9935,15 +9976,16 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const activityProgramMessage = !activityProgramValid && block.activityId
           ? "Impossible : l'activite choisie n'est pas reliee a l'installation ou n'est pas au programme de la classe du bloc."
           : "";
+        const activityReuseMessage = editingCycleDetails ? cycleActivityReuseMessage(editingBuildBlock?.ruleId, cellCycle?.id || "", block.activityId) : "";
         const facilityProgramMessage = selectedFacilityNoProgramActivity
           ? "Impossible : cette installation ne propose aucune activite compatible avec le programme de la classe du bloc."
           : "";
-        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || facilityProgramMessage || (weekLetterMismatch
+        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || activityReuseMessage || facilityProgramMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !selectedFacilityNoProgramActivity);
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !activityReuseMessage && !selectedFacilityNoProgramActivity);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
@@ -10064,7 +10106,11 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
-                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
+                  ${availableActivities.map((activity) => {
+                    const reuseMessage = editingCycleDetails ? cycleActivityReuseMessage(editingBuildBlock?.ruleId, cellCycle?.id || "", activity.id) : "";
+                    const reuseTitle = editingCycleDetails ? cycleActivityReuseTitle(editingBuildBlock?.ruleId, cellCycle?.id || "", activity.id, activity.label) : `${activity.label} disponible.`;
+                    return `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""} ${reuseMessage ? "unavailable" : ""}" data-pick-activity="${activity.id}" title="${reuseTitle}" aria-label="${reuseTitle}" ${reuseMessage ? "disabled" : ""}>${activity.label}</button>`;
+                  }).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
                 </div>
                 ${availableFreeActivities.length ? `<label>Service libre</label>
                 <div class="choiceGrid">
@@ -12673,6 +12719,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-pick-activity]").forEach((button) => {
           button.addEventListener("click", () => {
+            if (button.disabled) return;
             blockActivityId = blockActivityId === button.dataset.pickActivity ? "" : button.dataset.pickActivity;
             render();
           });
