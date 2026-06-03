@@ -770,6 +770,10 @@
       .acceptedConflictBadge { background: #dbeafe; border-radius: 999px; color: #075985 !important; font-size: 10px !important; font-weight: 950 !important; padding: 2px 7px; }
       .conflictCardActions { align-items: center; display: inline-flex; gap: 5px; margin-top: 0; }
       .conflictCardActions button { font-size: 10px; min-height: 22px; padding: 0 7px; }
+      .alertsHeader { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+      .alertsHeader h2 { margin: 0; }
+      .compactAlertSection { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+      .compactAlertSection .muted { font-size: 11px; font-weight: 850; }
       .acceptedConflictCard { border-color: #bae6fd; border-left-color: #0284c7; }
       .acceptedConflictCard strong { color: #075985; }
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
@@ -1785,6 +1789,8 @@
       let constructionLocks = loadConstructionLocks();
       let constructionOptimizeConfirmOpen = false;
       let constructionServiceSummaryHidden = localStorage.getItem("planningEpsConstructionServiceSummaryHidden2026") === "true";
+      let constructionConflictsHidden = localStorage.getItem("planningEpsConstructionConflictsHidden2026") === "true";
+      let constructionQualitySummaryHidden = localStorage.getItem("planningEpsConstructionQualitySummaryHidden2026") === "true";
       let constructionVersionPanelOpen = false;
       let constructionVersionDraftName = "";
       let constructionVersionDraftParts = [];
@@ -4541,6 +4547,15 @@
         };
       }
 
+      function cloudAnonAuthHeaders(extra = {}) {
+        return {
+          apikey: cloudConfig.anonKey,
+          Authorization: `Bearer ${cloudConfig.anonKey}`,
+          "Content-Type": "application/json",
+          ...extra
+        };
+      }
+
       function cloudErrorLooksLikeExpiredJwt(message = "") {
         const text = String(message || "").toLowerCase();
         return text.includes("jwt expired")
@@ -4928,9 +4943,8 @@
           setCurrentEtabName(knownEtab.etab_name || knownEtab.name || currentEtabName);
           return setCurrentEtabRole(knownEtab.role || "");
         }
-        const userEtabResponse = await fetch(rpcEndpoint("get_current_user_etab"), {
+        const userEtabResponse = await cloudFetchWithAuthRetry(rpcEndpoint("get_current_user_etab"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({})
         });
         if (userEtabResponse.ok) {
@@ -4941,9 +4955,8 @@
             return setCurrentEtabRole(userEtab?.role || "");
           }
         }
-        const rpcResponse = await fetch(rpcEndpoint("get_current_etab_role"), {
+        const rpcResponse = await cloudFetchWithAuthRetry(rpcEndpoint("get_current_etab_role"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({ check_etab_id: cloudConfig.etabId })
         });
         if (rpcResponse.ok) {
@@ -4951,9 +4964,7 @@
           const role = typeof result === "string" ? result : result?.role || "";
           return setCurrentEtabRole(role);
         }
-        const response = await fetch(`${etabMembersEndpoint()}?select=role&etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&limit=1`, {
-          headers: cloudHeaders()
-        });
+        const response = await cloudFetchWithAuthRetry(`${etabMembersEndpoint()}?select=role&etab_id=eq.${encodeURIComponent(cloudConfig.etabId)}&limit=1`);
         if (!response.ok) throw new Error(await response.text());
         const rows = await response.json();
         return setCurrentEtabRole(rows[0]?.role || "");
@@ -4982,9 +4993,7 @@
         if (!isSignedIn()) return [];
         const userId = adminSession?.user?.id || "";
         if (!userId) return [];
-        const membersResponse = await fetch(`${etabMembersEndpoint()}?select=etab_id,role,created_at&user_id=eq.${encodeURIComponent(userId)}&order=created_at.asc`, {
-          headers: cloudHeaders()
-        });
+        const membersResponse = await cloudFetchWithAuthRetry(`${etabMembersEndpoint()}?select=etab_id,role,created_at&user_id=eq.${encodeURIComponent(userId)}&order=created_at.asc`);
         if (!membersResponse.ok) throw new Error(await membersResponse.text());
         const memberships = await membersResponse.json().catch(() => []);
         if (!memberships.length) return [];
@@ -4992,9 +5001,7 @@
         let namesById = {};
         if (etabIds.length) {
           try {
-            const etabsResponse = await fetch(`${etabsEndpoint()}?select=id,name&id=in.(${etabIds.join(",")})`, {
-              headers: cloudHeaders()
-            });
+            const etabsResponse = await cloudFetchWithAuthRetry(`${etabsEndpoint()}?select=id,name&id=in.(${etabIds.join(",")})`);
             if (etabsResponse.ok) {
               const etabs = await etabsResponse.json().catch(() => []);
               namesById = Object.fromEntries(etabs.map((item) => [item.id, item.name]));
@@ -5013,9 +5020,8 @@
         if (!isSignedIn()) return [];
         let rpcRows = [];
         try {
-          const response = await fetch(rpcEndpoint("list_current_user_etabs"), {
+          const response = await cloudFetchWithAuthRetry(rpcEndpoint("list_current_user_etabs"), {
             method: "POST",
-            headers: cloudHeaders(),
             body: JSON.stringify({})
           });
           if (response.ok) {
@@ -5035,9 +5041,7 @@
         }
         if (rpcRows.length) return rpcRows;
         try {
-          const response = await fetch(`${etabMembersEndpoint()}?select=etab_id,role,etabs(name)&user_id=eq.${encodeURIComponent(adminSession?.user?.id || "")}&order=created_at.asc`, {
-            headers: cloudHeaders()
-          });
+          const response = await cloudFetchWithAuthRetry(`${etabMembersEndpoint()}?select=etab_id,role,etabs(name)&user_id=eq.${encodeURIComponent(adminSession?.user?.id || "")}&order=created_at.asc`);
           if (response.ok) {
             const rows = await response.json().catch(() => []);
             return uniqueUserEtabs(rows);
@@ -5062,9 +5066,9 @@
       async function renameCurrentEtab(name) {
         const label = normalizeEtabDisplayName(name);
         if (!label || !cloudConfig.etabId || !isAdmin()) return false;
-        const response = await fetch(`${etabsEndpoint()}?${etabByIdQuery()}`, {
+        const response = await cloudFetchWithAuthRetry(`${etabsEndpoint()}?${etabByIdQuery()}`, {
           method: "PATCH",
-          headers: cloudHeaders({ Prefer: "return=minimal" }),
+          headers: { Prefer: "return=minimal" },
           body: JSON.stringify({ name: label })
         });
         if (!response.ok) throw new Error(await response.text());
@@ -5092,9 +5096,8 @@
 
       async function resolveCurrentUserEtabLegacy() {
         if (!isSignedIn()) return "";
-        const response = await fetch(rpcEndpoint("get_current_user_etab"), {
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("get_current_user_etab"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({})
         });
         if (!response.ok) {
@@ -5143,9 +5146,8 @@
           etab_name: currentEtabName
         };
         const shouldPreserveCurrent = options.preserveCurrent ?? Boolean(previousEtab.etab_id);
-        const response = await fetch(rpcEndpoint("accept_etab_invite"), {
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("accept_etab_invite"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({ invite_token: cleanToken })
         });
         const result = await response.json().catch(() => null);
@@ -5173,9 +5175,8 @@
 
       async function createEtabInvite(role = "member") {
         if (!cloudConfig.etabId) throw new Error("aucun Établissement actif");
-        const response = await fetch(rpcEndpoint("create_etab_invite"), {
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("create_etab_invite"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({ invite_etab_id: cloudConfig.etabId, invite_role: role === "owner" ? "owner" : "member" })
         });
         const result = await response.json().catch(() => null);
@@ -5193,7 +5194,7 @@
           if (!cloudConfig.url || !cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
           const response = await fetch(authEndpoint("token?grant_type=password"), {
             method: "POST",
-            headers: cloudHeaders(),
+            headers: cloudAnonAuthHeaders(),
             body: JSON.stringify({ email: authEmail.trim(), password: authPassword })
           });
           const result = await response.json();
@@ -5233,9 +5234,8 @@
       async function createEtabForCurrentUser(name) {
         const label = String(name || "").trim();
         if (!label) throw new Error("nom d’établissement requis");
-        const response = await fetch(rpcEndpoint("create_etab_for_current_user"), {
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("create_etab_for_current_user"), {
           method: "POST",
-          headers: cloudHeaders(),
           body: JSON.stringify({ etab_name: label, etab_slug: etabSlugFromName(label) })
         });
         const result = await response.json().catch(() => null);
@@ -5266,7 +5266,7 @@
           if (!authInviteToken && !authEtabName.trim()) throw new Error("renseignéz le nom de l’établissement");
           const response = await fetch(authEndpoint("signup"), {
             method: "POST",
-            headers: cloudHeaders(),
+            headers: cloudAnonAuthHeaders(),
             body: JSON.stringify({
               email: authEmail.trim(),
               password: authPassword,
@@ -11559,8 +11559,21 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const repeatedGroups = groupBy(repeatedItems, (item) => compactClassName(item.schoolClass));
         const missingGroups = groupBy(missingItems, (item) => periodLabelForCycle(item.cycle));
         if (!repeatedItems.length && !missingItems.length) return "";
+        const totalItems = repeatedItems.length + missingItems.length;
+        if (constructionQualitySummaryHidden) {
+          return `<section class="alertsPage compactAlertSection">
+            <div class="alertsHeader">
+              <h2>Contrôles installations/activités</h2>
+              <button class="ghostButton" data-toggle-construction-quality-summary>Afficher</button>
+            </div>
+            <span class="muted">${totalItems} point${totalItems > 1 ? "s" : ""} à contrôler.</span>
+          </section>`;
+        }
         return `<section class="alertsPage">
-          <h2>Contrôles installations/activités</h2>
+          <div class="alertsHeader">
+            <h2>Contrôles installations/activités</h2>
+            <button class="ghostButton" data-toggle-construction-quality-summary>Masquer</button>
+          </div>
           <div class="conflictGrid">
             ${repeatedGroups.length ? repeatedGroups.map((group) => `<article class="alertCard inlineConflict">
               <strong>${group.key} · activités répétées</strong>
@@ -11617,8 +11630,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const qualityHtml = renderCycleDetailsQualitySummary();
         if (!conflicts.length) return `${hiddenReportHtml}${qualityHtml}`;
         const conflictGroups = groupBy(conflicts, constructionConflictGroupTitle);
+        if (constructionConflictsHidden) {
+          return `${hiddenReportHtml}<section class="alertsPage compactAlertSection">
+            <div class="alertsHeader">
+              <h2>Conflits détectés</h2>
+              <button class="ghostButton" data-toggle-construction-conflicts>Afficher</button>
+            </div>
+            <span class="muted">${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""} détecté${conflicts.length > 1 ? "s" : ""}.</span>
+          </section>${qualityHtml}`;
+        }
         return `${hiddenReportHtml}<section class="alertsPage">
-          <h2>Conflits détectés</h2>
+          <div class="alertsHeader">
+            <h2>Conflits détectés</h2>
+            <button class="ghostButton" data-toggle-construction-conflicts>Masquer</button>
+          </div>
           <div class="conflictGrid">
           ${conflictGroups.map((group) => `<article class="alertCard inlineConflict">
             <strong>${group.key}${group.values.length > 1 ? ` · ${group.values.length} conflits` : ""}</strong>
@@ -11795,9 +11820,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             },
             status: "new"
           };
-          const response = await fetch(feedbackEndpoint(), {
+          const response = await cloudFetchWithAuthRetry(feedbackEndpoint(), {
             method: "POST",
-            headers: cloudHeaders({ Prefer: "return=minimal" }),
+            headers: { Prefer: "return=minimal" },
             body: JSON.stringify(payload)
           });
           if (!response.ok) throw new Error(await response.text());
@@ -14072,6 +14097,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           button.addEventListener("click", () => {
             constructionServiceSummaryHidden = !constructionServiceSummaryHidden;
             localStorage.setItem("planningEpsConstructionServiceSummaryHidden2026", constructionServiceSummaryHidden ? "true" : "false");
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-construction-conflicts]").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionConflictsHidden = !constructionConflictsHidden;
+            localStorage.setItem("planningEpsConstructionConflictsHidden2026", constructionConflictsHidden ? "true" : "false");
+            render();
+          });
+        });
+        document.querySelectorAll("[data-toggle-construction-quality-summary]").forEach((button) => {
+          button.addEventListener("click", () => {
+            constructionQualitySummaryHidden = !constructionQualitySummaryHidden;
+            localStorage.setItem("planningEpsConstructionQualitySummaryHidden2026", constructionQualitySummaryHidden ? "true" : "false");
             render();
           });
         });
