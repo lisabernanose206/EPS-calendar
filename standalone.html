@@ -761,6 +761,7 @@
       .fixedBlockCycleChoices { display: grid; gap: 3px; margin-top: 4px; }
       .fixedBlockCycleChoice { align-items: baseline; color: #475569; display: flex; flex-wrap: wrap; font-size: 11px; gap: 4px; }
       .fixedBlockCycleChoice b { color: #334155; font-weight: 900; }
+      .fixedBlockCycleChoice.missing span { color: #94a3b8; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
       .constructionOkBadge { align-items: center; background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 999px; color: #047857; display: inline-flex; font-size: 13px; font-weight: 950; gap: 7px; margin: 6px 0 8px; min-height: 34px; padding: 0 12px; width: fit-content; }
       .constructionOkBadge::before { content: "\2713"; }
@@ -2383,10 +2384,10 @@
         return constructionChecksCache[key];
       }
 
-      function saveConstructionPlan() {
+      function saveConstructionPlan(immediateCloud = true) {
         invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsConstruction2026", JSON.stringify(constructionPlan));
-        saveCloudNowIfPossible(["constructionPlan"]);
+        if (immediateCloud) saveCloudNowIfPossible(["constructionPlan"]);
       }
 
       function loadTeachers() {
@@ -3157,10 +3158,10 @@
         }
       }
 
-      function saveConstructionRules() {
+      function saveConstructionRules(immediateCloud = true) {
         invalidateConstructionChecksCache();
         localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(constructionRules));
-        saveCloudNowIfPossible(["constructionRules"]);
+        if (immediateCloud) saveCloudNowIfPossible(["constructionRules"]);
       }
 
       function loadConstructionWorkspaceMode() {
@@ -3487,8 +3488,10 @@
       function rebuildConstructionPlan() {
         pruneHiddenAndDuplicateConstructionRules();
         constructionPlan = buildConstructionPlanFromRules();
-        saveConstructionRules();
-        saveConstructionPlan();
+        saveConstructionRules(false);
+        saveConstructionPlan(false);
+        localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(blockExclusions));
+        saveCloudNowIfPossible(["constructionRules", "constructionPlan", "blockExclusions"]);
       }
 
       function loadSportEvents() {
@@ -7863,11 +7866,11 @@
         return constructionCyclesForRule(rule)
           .filter((cycle) => cycle.id !== excludedCycleId)
           .map((cycle) => ({ cycle, block: blockWithCycleOverride(rule, cycle) }))
-          .filter(({ block }) => block.facilityLabel || block.activityLabel)
           .map(({ cycle, block }) => ({
             cycleName: cycle.name || cycle.id,
-            facilityLabel: block.facilityLabel || "Sans installation",
-            activityLabel: block.activityLabel || "Sans activite"
+            facilityLabel: block.facilityLabel || "Installation a renseigner",
+            activityLabel: block.activityLabel || "Activite a renseigner",
+            missing: !block.facilityLabel && !block.activityLabel
           }));
       }
 
@@ -7875,7 +7878,7 @@
         const choices = otherCycleChoicesForRule(ruleId, excludedCycleId);
         if (!choices.length) return "";
         return `<div class="fixedBlockCycleChoices">${choices.map((choice) => `
-          <div class="fixedBlockCycleChoice"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
+          <div class="fixedBlockCycleChoice ${choice.missing ? "missing" : ""}"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
         `).join("")}</div>`;
       }
 
