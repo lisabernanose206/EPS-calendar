@@ -9723,6 +9723,7 @@
             ${constructionBuildMode === "cycleDetails" ? `<div class="constructionOptimizeActions">
               <button class="optimizeButton" id="openConstructionOptimizer" title="Construction optimisée désactivée temporairement : pas encore au point" disabled>Lancer la construction optimisée</button>
             </div>` : ""}
+            ${constructionBuildMode === "cycleDetails" ? renderConstructionConflictSummary() : ""}
             ${constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
               ${constructionCycles.map((cycle) => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${displayCycleName(cycle)}${constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
             </div>` : ""}
@@ -9739,7 +9740,7 @@
             ${constructionBuildMode === "blocks" ? renderConstructionServiceSummary() : ""}
             ${constructionBuildMode !== "versions" && clearConstructionPanelOpen ? renderClearConstructionPanel() : ""}
             ${constructionBuildMode !== "versions" && movingBuildBlock ? `<div class="constructionMoveHint"><span>Bloc sélectionné : cliquez sur la case de destination.</span><button id="cancelMoveBlock">Annuler</button></div>` : ""}
-            ${constructionBuildMode === "versions" ? "" : renderConstructionConflictSummary()}
+            ${constructionBuildMode === "blocks" ? renderConstructionConflictSummary() : ""}
             ${constructionBuildMode !== "versions" ? `<div class="builderActions constructionSubtabActions constructionTableActions">
               <div class="teacherColorLegend">
                 ${teachers.map((teacher) => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
