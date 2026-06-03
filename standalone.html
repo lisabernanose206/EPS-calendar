@@ -3305,6 +3305,29 @@
         return (scopedCycles.length ? scopedCycles : cycles).slice(0, 4);
       }
 
+      function constructionCycleForRuleById(rule, cycleId) {
+        const ruleCycles = constructionCyclesForRule(rule);
+        const genericCycle = constructionCycleById(cycleId) || (cycleId ? { id: cycleId, name: cycleId } : null);
+        return ruleCycles.find((cycle) => cycle.id === cycleId)
+          || ruleCycles.find((cycle) => cyclesRepresentSameSlot(cycle, genericCycle))
+          || genericCycle
+          || ruleCycles[0]
+          || null;
+      }
+
+      function cycleOrdinal(cycle) {
+        const matches = String(cycle?.id || cycle?.name || "").match(/\d+/g);
+        return matches?.length ? Number(matches[matches.length - 1]) : null;
+      }
+
+      function cyclesRepresentSameSlot(firstCycle, secondCycle) {
+        if (!firstCycle || !secondCycle) return false;
+        if (firstCycle.id === secondCycle.id) return true;
+        const firstOrdinal = cycleOrdinal(firstCycle);
+        const secondOrdinal = cycleOrdinal(secondCycle);
+        return firstOrdinal !== null && firstOrdinal === secondOrdinal;
+      }
+
       function optionCycleChoices() {
         return cycles.slice(0, 4);
       }
@@ -7859,12 +7882,12 @@
         ])];
       }
 
-      function otherCycleChoicesForRule(ruleId, excludedCycleId = "") {
+      function otherCycleChoicesForRule(ruleId, currentCycle = null) {
         if (!ruleId) return [];
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule) return [];
         return constructionCyclesForRule(rule)
-          .filter((cycle) => cycle.id !== excludedCycleId)
+          .filter((cycle) => !cyclesRepresentSameSlot(cycle, currentCycle))
           .map((cycle) => ({ cycle, block: blockWithCycleOverride(rule, cycle) }))
           .map(({ cycle, block }) => ({
             cycleName: cycle.name || cycle.id,
@@ -7874,8 +7897,8 @@
           }));
       }
 
-      function renderOtherCycleChoicesForRule(ruleId, excludedCycleId = "") {
-        const choices = otherCycleChoicesForRule(ruleId, excludedCycleId);
+      function renderOtherCycleChoicesForRule(ruleId, currentCycle = null) {
+        const choices = otherCycleChoicesForRule(ruleId, currentCycle);
         if (!choices.length) return "";
         return `<div class="fixedBlockCycleChoices">${choices.map((choice) => `
           <div class="fixedBlockCycleChoice ${choice.missing ? "missing" : ""}"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
@@ -9946,8 +9969,9 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const block = currentBlock();
         const blockLevel = classParts(block.schoolClass).level;
         const editingCycleDetails = constructionBuildMode === "cycleDetails" && Boolean(editingBuildBlock?.ruleId);
+        const editingRule = editingBuildBlock?.ruleId ? constructionRules.find((rule) => rule.id === editingBuildBlock.ruleId) : null;
         const cellCycle = activeBuildCycleId
-          ? constructionCycleById(activeBuildCycleId)
+          ? (editingRule ? constructionCycleForRuleById(editingRule, activeBuildCycleId) : constructionCycleById(activeBuildCycleId))
           : cycleForWeek(weekItem, blockLevel);
         const selectedClass = classParts(blockClass);
         const occupied = buildModalAvailability();
@@ -10039,7 +10063,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
             </div>
-            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span>${renderOtherCycleChoicesForRule(editingBuildBlock?.ruleId, cellCycle?.id || "")}</div>` : `<div class="buildField" style="margin-bottom:10px">
+            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span>${renderOtherCycleChoicesForRule(editingBuildBlock?.ruleId, cellCycle)}</div>` : `<div class="buildField" style="margin-bottom:10px">
               <label>Type de bloc</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-co-intervention ${blockIsOption ? "disabled" : ""}>Co-intervention</button>
@@ -13300,12 +13324,12 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const key = block.dataset.blockKey;
             const index = Number(block.dataset.editCycleDetails);
             const cycleId = block.dataset.cycleId || activeConstructionCycleId;
-            const cycle = constructionCycleById(cycleId) || activeConstructionCycle();
             const rule = block.dataset.ruleId ? constructionRules.find((entry) => entry.id === block.dataset.ruleId) : null;
+            const cycle = rule ? constructionCycleForRuleById(rule, cycleId) : constructionCycleById(cycleId) || activeConstructionCycle();
             const item = rule && cycle ? constructionCycleDisplayBlock({ ...(constructionPlan[key]?.[index] || {}), ruleId: rule.id }, cycle) : constructionPlan[key]?.[index];
             if (!item) return;
             activeBuildCell = key;
-            activeBuildCycleId = cycleId || item.cycleId || activeConstructionCycleId;
+            activeBuildCycleId = cycle?.id || cycleId || item.cycleId || activeConstructionCycleId;
             blockTeacherIds = teacherIdsForBlock(item);
             blockFacilityId = item.facilityId || "";
             blockActivityId = item.activityId || "";
