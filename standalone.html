@@ -758,6 +758,9 @@
       .alertCard.inlineConflict { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
       .alertCard.inlineConflict strong, .alertCard.inlineConflict span { line-height: 1.25; }
       .alertCard.inlineConflict span::before { color: #cbd5e1; content: "•"; font-weight: 950; margin-right: 8px; }
+      .conflictGrid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+      .conflictGrid .alertCard.inlineConflict { align-content: start; align-items: start; display: grid; gap: 5px; min-height: 86px; }
+      .conflictGrid .alertCard.inlineConflict span::before { content: ""; margin: 0; }
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
@@ -11165,6 +11168,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const visibleConflicts = conflicts.slice(0, 5);
         return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
+          <div class="conflictGrid">
           ${visibleConflicts.map((conflict) => {
             const details = constructionConflictDetails(conflict);
             return `<article class="alertCard inlineConflict">
@@ -11173,6 +11177,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <span>${details.detail}</span>
             </article>`;
           }).join("")}
+          </div>
           ${conflicts.length > visibleConflicts.length ? `<div class="conflictNotice">${conflicts.length - visibleConflicts.length} autre(s) conflit(s) visible(s) dans la construction.</div>` : ""}
         </section>`;
       }
