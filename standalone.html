@@ -755,6 +755,9 @@
       .alertCard { background: #fff; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 8px; display: grid; gap: 5px; padding: 12px; }
       .alertCard strong { color: #991b1b; }
       .alertCard span { color: #475569; font-size: 12px; font-weight: 850; }
+      .alertCard.inlineConflict { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+      .alertCard.inlineConflict strong, .alertCard.inlineConflict span { line-height: 1.25; }
+      .alertCard.inlineConflict span::before { color: #cbd5e1; content: "•"; font-weight: 950; margin-right: 8px; }
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
@@ -11164,7 +11167,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <h2>Conflits detectes</h2>
           ${visibleConflicts.map((conflict) => {
             const details = constructionConflictDetails(conflict);
-            return `<article class="alertCard">
+            return `<article class="alertCard inlineConflict">
               <strong>${constructionConflictTitle(conflict)}</strong>
               <span>${details.label}</span>
               <span>${details.detail}</span>
