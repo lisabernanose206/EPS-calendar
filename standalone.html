@@ -3350,7 +3350,16 @@
       }
 
       function cycleOverrideForRule(rule, cycleId) {
-        return rule?.cycleOverrides?.[cycleId] || {};
+        const overrides = rule?.cycleOverrides && typeof rule.cycleOverrides === "object" ? rule.cycleOverrides : {};
+        if (overrides[cycleId]) return overrides[cycleId];
+        const targetCycle = constructionCycleForRuleById(rule, cycleId) || constructionCycleById(cycleId) || { id: cycleId, name: cycleId };
+        const fallbackEntry = Object.entries(overrides).find(([overrideCycleId]) => {
+          const overrideCycle = constructionCycleForRuleById(rule, overrideCycleId)
+            || constructionCycleById(overrideCycleId)
+            || { id: overrideCycleId, name: overrideCycleId };
+          return cyclesRepresentSameSlot(overrideCycle, targetCycle);
+        });
+        return fallbackEntry?.[1] || {};
       }
 
       function blockWithCycleOverride(rule, cycle) {
