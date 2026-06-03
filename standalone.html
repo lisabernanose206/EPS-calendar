@@ -762,6 +762,7 @@
       .conflictGrid .alertCard.inlineConflict { align-content: start; align-items: start; display: grid; gap: 3px; min-height: 0; }
       .conflictGrid .alertCard.inlineConflict span::before { content: ""; margin: 0; }
       .conflictList { display: grid; gap: 3px; }
+      .conflictList > b { color: #334155; font-size: 11px; font-weight: 950; margin-top: 2px; }
       .conflictLine { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 7px; }
       .conflictLine b { color: #7f1d1d; font-size: 11px; font-weight: 950; }
       .conflictLine span { font-size: 11px; }
@@ -1790,7 +1791,6 @@
       let constructionOptimizeConfirmOpen = false;
       let constructionServiceSummaryHidden = localStorage.getItem("planningEpsConstructionServiceSummaryHidden2026") === "true";
       let constructionConflictsHidden = localStorage.getItem("planningEpsConstructionConflictsHidden2026") === "true";
-      let constructionQualitySummaryHidden = localStorage.getItem("planningEpsConstructionQualitySummaryHidden2026") === "true";
       let constructionVersionPanelOpen = false;
       let constructionVersionDraftName = "";
       let constructionVersionDraftParts = [];
@@ -11550,50 +11550,102 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         return displayCycleName(cycle) || `${cycleLabel()} ${cycleOrdinal(cycle) || ""}`.trim();
       }
 
-      function renderCycleDetailsQualitySummary() {
-        if (constructionBuildMode !== "cycleDetails") return "";
+      function conflictPeriodOrderFromCycle(cycle) {
+        const ordinal = cycleOrdinal(cycle);
+        return ordinal === null ? 999 : ordinal;
+      }
+
+      function conflictPeriodOrder(conflict) {
+        const itemCycles = (conflict.items || [])
+          .map((item) => item.cycleId ? { id: item.cycleId, name: item.cycleName || item.cycleId } : null)
+          .filter(Boolean);
+        if (itemCycles.length) return Math.min(...itemCycles.map(conflictPeriodOrderFromCycle));
+        return conflict.weekItem ? conflictPeriodOrderFromCycle(cycleForWeek(conflict.weekItem)) : 999;
+      }
+
+      function conflictClassSortLabel(schoolClass) {
+        return compactClassName(baseClassFromGroupedClass(schoolClass || "") || schoolClass || "zz");
+      }
+
+      function compareConflictLabels(first, second) {
+        return String(first || "").localeCompare(String(second || ""), "fr", { numeric: true, sensitivity: "base" });
+      }
+
+      function conflictClassOrderLabel(conflict) {
+        if (conflict.schoolClass) return conflictClassSortLabel(conflict.schoolClass);
+        const labels = (conflict.items || [])
+          .map((item) => blockClassLabel(item))
+          .filter(Boolean)
+          .map(conflictClassSortLabel)
+          .sort(compareConflictLabels);
+        return labels[0] || "zz";
+      }
+
+      function compareConstructionConflicts(first, second) {
+        return conflictPeriodOrder(first) - conflictPeriodOrder(second)
+          || compareConflictLabels(conflictClassOrderLabel(first), conflictClassOrderLabel(second))
+          || compareConflictLabels(constructionConflictTitle(first), constructionConflictTitle(second));
+      }
+
+      function compareQualityConflicts(first, second) {
+        return (first.periodOrder || 999) - (second.periodOrder || 999)
+          || compareConflictLabels(first.classLabel, second.classLabel)
+          || compareConflictLabels(first.title, second.title);
+      }
+
+      function cycleDetailsQualityConflictItems() {
+        if (constructionBuildMode !== "cycleDetails") return [];
         const repeatedItems = repeatedActivityByClassItems();
         const missingItems = cycleDetailsCompletionItems();
-        const repeatedGroups = groupBy(repeatedItems, (item) => compactClassName(item.schoolClass));
-        const missingGroups = groupBy(missingItems, (item) => periodLabelForCycle(item.cycle));
-        if (!repeatedItems.length && !missingItems.length) return "";
-        const totalItems = repeatedItems.length + missingItems.length;
-        if (constructionQualitySummaryHidden) {
-          return `<section class="alertsPage compactAlertSection">
-            <div class="alertsHeader">
-              <h2>Contrôles installations/activités</h2>
-              <button class="ghostButton" data-toggle-construction-quality-summary>Afficher</button>
-            </div>
-            <span class="muted">${totalItems} point${totalItems > 1 ? "s" : ""} à contrôler.</span>
-          </section>`;
-        }
-        return `<section class="alertsPage">
-          <div class="alertsHeader">
-            <h2>Contrôles installations/activités</h2>
-            <button class="ghostButton" data-toggle-construction-quality-summary>Masquer</button>
-          </div>
-          <div class="conflictGrid">
-            ${repeatedGroups.length ? repeatedGroups.map((group) => `<article class="alertCard inlineConflict">
-              <strong>${group.key} · activités répétées</strong>
-              <div class="conflictList">
-                ${group.values.map((item) => `<div class="conflictLine"><b>${item.activityLabel}</b><span>${item.cycleLabels}</span></div>`).join("")}
-              </div>
-              <span>Hors piscine/natation.</span>
-            </article>`).join("") : `<article class="alertCard inlineConflict acceptedConflictCard"><strong>Activités répétées</strong><span>Aucune activité hors piscine répétée sur plusieurs ${cycleLabel(true, true)}.</span></article>`}
-            ${missingGroups.length ? missingGroups.map((group) => `<article class="alertCard inlineConflict">
-              <strong>${group.key} · blocs à compléter</strong>
-              <div class="conflictList">
-                ${group.values.map((item) => `<div class="conflictLine"><b>${ruleRowLabel(item.rule.rowId)}</b><span>${item.detail}</span></div>`).join("")}
-              </div>
-            </article>`).join("") : `<article class="alertCard inlineConflict acceptedConflictCard"><strong>Blocs complétés</strong><span>Tous les cours hors option ont une installation et une activité.</span></article>`}
-          </div>
-        </section>`;
+        return [
+          ...repeatedItems.map((item) => ({
+            key: [
+              constructionBuildMode,
+              "quality",
+              "repeated-activity",
+              item.schoolClass,
+              item.activityId,
+              [...item.cycles.keys()].join("+")
+            ].join("::"),
+            groupTitle: `${compactClassName(item.schoolClass)} · activité répétée`,
+            periodOrder: Math.min(...[...item.cycles.values()].map((entry) => conflictPeriodOrderFromCycle(entry.cycle))),
+            classLabel: conflictClassSortLabel(item.schoolClass),
+            title: item.activityLabel,
+            label: `Activité présente sur plusieurs ${cycleLabel(true, true)}`,
+            detail: `${item.cycleLabels}. Hors piscine/natation.`
+          })),
+          ...missingItems.map((item) => ({
+            key: [
+              constructionBuildMode,
+              "quality",
+              "missing-details",
+              item.rule.id || "",
+              item.cycle.id || "",
+              item.block.facilityId || "missing-facility",
+              item.block.activityId || "missing-activity"
+            ].join("::"),
+            groupTitle: `${periodLabelForCycle(item.cycle)} · bloc incomplet`,
+            periodOrder: conflictPeriodOrderFromCycle(item.cycle),
+            classLabel: conflictClassSortLabel(classesForBlock(item.block)[0] || blockClassLabel(item.block)),
+            title: ruleRowLabel(item.rule.rowId),
+            label: "Installation / activité à compléter",
+            detail: item.detail
+          }))
+        ];
       }
 
       function constructionConflictGroupTitle(conflict) {
         if (conflict.type === "class") return `Classe ${compactClassName(conflict.schoolClass || "non renseignée")}`;
         if (constructionBuildMode === "cycleDetails") return conflict.cycleLabel || `${cycleLabel()} non renseigné`;
         return constructionConflictTitle(conflict);
+      }
+
+      function renderConflictValidationAction(key, title, label, detail, accepted) {
+        return `<div class="conflictCardActions">
+          ${accepted
+            ? `<button class="ghostButton" data-revoke-conflict="${encodedConflictValue(key)}">Annuler</button>`
+            : `<button class="ghostButton" data-accept-conflict="${encodedConflictValue(key)}" data-conflict-title="${encodedConflictValue(title)}" data-conflict-label="${encodedConflictValue(label)}" data-conflict-detail="${encodedConflictValue(detail)}">Valider</button>`}
+        </div>`;
       }
 
       function renderConstructionConflictLine(conflict) {
@@ -11606,11 +11658,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           <span>${details.label}</span>
           <span>${details.detail}</span>
           ${accepted ? `<span class="acceptedConflictBadge">Validé</span>` : ""}
-          <div class="conflictCardActions">
-            ${accepted
-              ? `<button class="ghostButton" data-revoke-conflict="${encodedConflictValue(key)}">Annuler</button>`
-              : `<button class="ghostButton" data-accept-conflict="${encodedConflictValue(key)}" data-conflict-title="${encodedConflictValue(title)}" data-conflict-label="${encodedConflictValue(details.label)}" data-conflict-detail="${encodedConflictValue(details.detail)}">Valider</button>`}
-          </div>
+          ${renderConflictValidationAction(key, title, details.label, details.detail, accepted)}
+        </div>`;
+      }
+
+      function renderQualityConflictLine(item) {
+        const accepted = acceptedConflictKeys().has(item.key);
+        return `<div class="conflictLine ${accepted ? "acceptedConflictLine" : ""}">
+          <b>${item.title}</b>
+          <span>${item.label}</span>
+          <span>${item.detail}</span>
+          ${accepted ? `<span class="acceptedConflictBadge">Validé</span>` : ""}
+          ${renderConflictValidationAction(item.key, item.title, item.label, item.detail, accepted)}
         </div>`;
       }
 
@@ -11625,13 +11684,18 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
-        const qualityHtml = renderCycleDetailsQualitySummary();
-        if (!conflicts.length) return `${hiddenReportHtml}${qualityHtml}`;
-        const conflictGroups = groupBy(conflicts, constructionConflictGroupTitle);
+        const sortedConflicts = [...conflicts].sort(compareConstructionConflicts);
+        const qualityItems = cycleDetailsQualityConflictItems().sort(compareQualityConflicts);
+        if (!conflicts.length && !qualityItems.length) return hiddenReportHtml;
+        const conflictGroups = groupBy(sortedConflicts, constructionConflictGroupTitle);
+        const qualityGroups = groupBy(qualityItems, (item) => item.groupTitle);
         const acceptedKeys = acceptedConflictKeys();
         const acceptedCount = conflicts.filter((conflict) => acceptedKeys.has(acceptedConflictKey(conflict, constructionBuildMode))).length;
-        const pendingCount = conflicts.length - acceptedCount;
-        const conflictSummaryText = `${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""} détecté${conflicts.length > 1 ? "s" : ""}${acceptedCount ? `, dont ${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}` : ""}${pendingCount ? ` (${pendingCount} à traiter)` : ""}.`;
+        const acceptedQualityCount = qualityItems.filter((item) => acceptedKeys.has(item.key)).length;
+        const totalCount = conflicts.length + qualityItems.length;
+        const totalAcceptedCount = acceptedCount + acceptedQualityCount;
+        const pendingCount = totalCount - totalAcceptedCount;
+        const conflictSummaryText = `${totalCount} conflit${totalCount > 1 ? "s" : ""} détecté${totalCount > 1 ? "s" : ""}${totalAcceptedCount ? `, dont ${totalAcceptedCount} validé${totalAcceptedCount > 1 ? "s" : ""}` : ""}${pendingCount ? ` (${pendingCount} à traiter)` : ""}.`;
         if (constructionConflictsHidden) {
           return `${hiddenReportHtml}<section class="alertsPage compactAlertSection">
             <div class="alertsHeader">
@@ -11639,7 +11703,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <button class="ghostButton" data-toggle-construction-conflicts>Afficher</button>
             </div>
             <span class="muted">${conflictSummaryText}</span>
-          </section>${qualityHtml}`;
+          </section>`;
         }
         return `${hiddenReportHtml}<section class="alertsPage">
           <div class="alertsHeader">
@@ -11648,12 +11712,20 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <button class="ghostButton" data-toggle-construction-conflicts>Masquer</button>
           </div>
           <div class="conflictGrid">
-          ${conflictGroups.map((group) => `<article class="alertCard inlineConflict">
-            <strong>${group.key}${group.values.length > 1 ? ` · ${group.values.length} conflits` : ""}</strong>
-            <div class="conflictList">${group.values.map(renderConstructionConflictLine).join("")}</div>
-          </article>`).join("")}
+          ${conflictGroups.length ? `<article class="alertCard inlineConflict">
+            <strong>Occupation des créneaux · ${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""}</strong>
+            <div class="conflictList">
+              ${conflictGroups.map((group) => `<div class="conflictList"><b>${group.key}${group.values.length > 1 ? ` · ${group.values.length}` : ""}</b>${group.values.map(renderConstructionConflictLine).join("")}</div>`).join("")}
+            </div>
+          </article>` : ""}
+          ${qualityGroups.length ? `<article class="alertCard inlineConflict">
+            <strong>Cohérence installations/activités · ${qualityItems.length} conflit${qualityItems.length > 1 ? "s" : ""}</strong>
+            <div class="conflictList">
+              ${qualityGroups.map((group) => `<div class="conflictList"><b>${group.key}${group.values.length > 1 ? ` · ${group.values.length}` : ""}</b>${group.values.map(renderQualityConflictLine).join("")}</div>`).join("")}
+            </div>
+          </article>` : ""}
           </div>
-        </section>${qualityHtml}`;
+        </section>`;
       }
 
       function renderAlertsView() {
@@ -14107,13 +14179,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           button.addEventListener("click", () => {
             constructionConflictsHidden = !constructionConflictsHidden;
             localStorage.setItem("planningEpsConstructionConflictsHidden2026", constructionConflictsHidden ? "true" : "false");
-            render();
-          });
-        });
-        document.querySelectorAll("[data-toggle-construction-quality-summary]").forEach((button) => {
-          button.addEventListener("click", () => {
-            constructionQualitySummaryHidden = !constructionQualitySummaryHidden;
-            localStorage.setItem("planningEpsConstructionQualitySummaryHidden2026", constructionQualitySummaryHidden ? "true" : "false");
             render();
           });
         });
