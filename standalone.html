@@ -9308,11 +9308,9 @@
 
       function renderConstructionStatusRow(helpText = "") {
         const readiness = renderConstructionWarnings();
-        const conflicts = conflictsForBuildMode(constructionBuildMode);
-        const conflictBadge = !conflicts.length ? `<div class="constructionOkBadge">Aucun conflit détecté</div>` : "";
         const helpButton = helpText ? `<button class="constructionHelpButton ${constructionHelpOpen ? "active" : ""}" type="button" data-toggle-construction-help aria-label="Afficher l'aide de ce sous-onglet" title="Afficher l'aide">?</button>` : "";
         const helpPanel = helpText && constructionHelpOpen ? `<div class="constructionHelpText">${helpText}</div>` : "";
-        return `<div class="constructionStatusBlock"><div class="constructionStatusRow">${readiness}${conflictBadge}${helpButton}</div>${helpPanel}</div>`;
+        return `<div class="constructionStatusBlock"><div class="constructionStatusRow">${readiness}${helpButton}</div>${helpPanel}</div>`;
       }
 
       function renderConstructionServiceSummary() {
@@ -11630,18 +11628,23 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const qualityHtml = renderCycleDetailsQualitySummary();
         if (!conflicts.length) return `${hiddenReportHtml}${qualityHtml}`;
         const conflictGroups = groupBy(conflicts, constructionConflictGroupTitle);
+        const acceptedKeys = acceptedConflictKeys();
+        const acceptedCount = conflicts.filter((conflict) => acceptedKeys.has(acceptedConflictKey(conflict, constructionBuildMode))).length;
+        const pendingCount = conflicts.length - acceptedCount;
+        const conflictSummaryText = `${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""} détecté${conflicts.length > 1 ? "s" : ""}${acceptedCount ? `, dont ${acceptedCount} validé${acceptedCount > 1 ? "s" : ""}` : ""}${pendingCount ? ` (${pendingCount} à traiter)` : ""}.`;
         if (constructionConflictsHidden) {
           return `${hiddenReportHtml}<section class="alertsPage compactAlertSection">
             <div class="alertsHeader">
               <h2>Conflits détectés</h2>
               <button class="ghostButton" data-toggle-construction-conflicts>Afficher</button>
             </div>
-            <span class="muted">${conflicts.length} conflit${conflicts.length > 1 ? "s" : ""} détecté${conflicts.length > 1 ? "s" : ""}.</span>
+            <span class="muted">${conflictSummaryText}</span>
           </section>${qualityHtml}`;
         }
         return `${hiddenReportHtml}<section class="alertsPage">
           <div class="alertsHeader">
             <h2>Conflits détectés</h2>
+            <span class="muted">${conflictSummaryText}</span>
             <button class="ghostButton" data-toggle-construction-conflicts>Masquer</button>
           </div>
           <div class="conflictGrid">
