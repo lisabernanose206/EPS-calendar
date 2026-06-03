@@ -11165,11 +11165,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           </article>`).join("")}
         </section>` : "";
         if (!conflicts.length) return hiddenReportHtml;
-        const visibleConflicts = conflicts.slice(0, 5);
         return `${hiddenReportHtml}<section class="alertsPage">
           <h2>Conflits detectes</h2>
           <div class="conflictGrid">
-          ${visibleConflicts.map((conflict) => {
+          ${conflicts.map((conflict) => {
             const details = constructionConflictDetails(conflict);
             return `<article class="alertCard inlineConflict">
               <strong>${constructionConflictTitle(conflict)}</strong>
@@ -11178,7 +11177,6 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             </article>`;
           }).join("")}
           </div>
-          ${conflicts.length > visibleConflicts.length ? `<div class="conflictNotice">${conflicts.length - visibleConflicts.length} autre(s) conflit(s) visible(s) dans la construction.</div>` : ""}
         </section>`;
       }
 
