@@ -7261,14 +7261,77 @@
         return true;
       }
 
+      function cycleDetailConflictCycleLabel(conflict) {
+        const cycleNames = [...new Set((conflict.items || []).map((item) => item.cycleName).filter(Boolean))];
+        if (cycleNames.length === 1) return cycleNames[0];
+        if (cycleNames.length > 1) return cycleNames.join(" / ");
+        const cycle = cycleForWeek(conflict.weekItem);
+        return cycle?.name || "";
+      }
+
+      function cycleDetailConflictCycleKey(conflict) {
+        const cycleIds = [...new Set((conflict.items || []).map((item) => item.cycleId || "").filter(Boolean))].sort();
+        if (cycleIds.length) return cycleIds.join("|");
+        const cycle = cycleForWeek(conflict.weekItem);
+        return cycle?.id || `week-${conflict.weekItem?.rank || ""}`;
+      }
+
+      function cycleDetailConflictWeekType(conflict) {
+        const letters = [...new Set((conflict.items || []).map((item) => item.weekLetter || "all").filter(Boolean))].sort();
+        return letters.length === 1 ? letters[0] : letters.join("+");
+      }
+
+      function aggregateCycleDetailConflicts(conflicts) {
+        const grouped = new Map();
+        conflicts.filter((conflict) => conflict.type === "facility").forEach((conflict) => {
+          const facility = conflict.facility || conflict.items?.[0]?.facilityId || conflict.items?.[0]?.facilityLabel || "";
+          const key = [
+            conflict.row?.id || "",
+            facility,
+            cycleDetailConflictCycleKey(conflict),
+            cycleDetailConflictWeekType(conflict)
+          ].join("::");
+          const existing = grouped.get(key);
+          if (existing) {
+            const itemKeys = new Set(existing.items.map((item) => `${item.ruleId || ""}:${item.index ?? ""}:${teacherLabelForBlock(item)}:${blockClassLabel(item)}`));
+            (conflict.items || []).forEach((item) => {
+              const itemKey = `${item.ruleId || ""}:${item.index ?? ""}:${teacherLabelForBlock(item)}:${blockClassLabel(item)}`;
+              if (!itemKeys.has(itemKey)) {
+                existing.items.push(item);
+                itemKeys.add(itemKey);
+              }
+            });
+            existing.weeks.push(conflict.weekItem);
+            return;
+          }
+          grouped.set(key, {
+            ...conflict,
+            key,
+            cycleLabel: cycleDetailConflictCycleLabel(conflict),
+            weekType: cycleDetailConflictWeekType(conflict),
+            weeks: [conflict.weekItem],
+            items: [...(conflict.items || [])]
+          });
+        });
+        return [...grouped.values()];
+      }
+
       function conflictsForBuildMode(buildMode = "") {
         if (!buildMode) return detectConflicts();
-        return cachedConstructionCheck(`conflicts:${buildMode}`, () => detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode)));
+        return cachedConstructionCheck(`conflicts:${buildMode}`, () => {
+          const conflicts = detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode));
+          return buildMode === "cycleDetails" ? aggregateCycleDetailConflicts(conflicts) : conflicts;
+        });
       }
 
       function conflictMap(buildMode = "") {
         const cacheKey = buildMode ? `conflictMap:${buildMode}` : "conflictMap";
-        return cachedConstructionCheck(cacheKey, () => new Set(conflictsForBuildMode(buildMode).map((conflict) => conflict.key)));
+        return cachedConstructionCheck(cacheKey, () => {
+          const conflicts = buildMode === "cycleDetails"
+            ? detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode))
+            : conflictsForBuildMode(buildMode);
+          return new Set(conflicts.map((conflict) => conflict.key));
+        });
       }
 
       function builderCellKey(day, slotId) {
@@ -7517,7 +7580,7 @@
         return "";
       }
 
-      function blockCycleConflictMessage(rowId, cycleId, candidate, ignoredRuleId = "", weekLetter = "all") {
+      function blockCycleConflictMessage(rowId, cycleId, candidate, ignoredRuleId = "", weekLetter = "all", showWeekDetail = true) {
         const cycle = cyclesForClassLevel(classParts(candidate.schoolClass).level).find((item) => item.id === cycleId) || cycles.find((item) => item.id === cycleId);
         if (!cycle) return "";
         for (const weekItem of weeksForCycle(cycle)) {
@@ -7525,7 +7588,7 @@
           const key = yearCellKey(rowId, weekItem.rank);
           const items = (constructionPlan[key] || []).filter((item) => !ignoredRuleId || item.ruleId !== ignoredRuleId);
           const message = blockConflictMessageForItems(items, candidate);
-          if (message) return `${message} Conflit sur la semaine ${weekItem.rank}${weekItem.letter}.`;
+          if (message) return showWeekDetail ? `${message} Conflit sur la semaine ${weekItem.rank}${weekItem.letter}.` : `${message} Conflit sur ce cycle.`;
         }
         return "";
       }
@@ -10007,7 +10070,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           : "";
         const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || facilityProgramMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
-          : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
+          : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter, !editingCycleDetails) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
         const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !selectedFacilityNoProgramActivity);
@@ -11075,6 +11138,15 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         };
       }
 
+      function constructionConflictTitle(conflict) {
+        if (constructionBuildMode === "cycleDetails") {
+          const weekType = conflict.weekType && conflict.weekType !== "all" ? ` · Semaine type ${conflict.weekType}` : "";
+          const cycleLabel = conflict.cycleLabel ? `${conflict.cycleLabel} · ` : "";
+          return `${cycleLabel}${conflict.row.day} · ${conflict.row.slot.label}${weekType}`;
+        }
+        return `${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}`;
+      }
+
       function renderConstructionConflictSummary() {
         const conflicts = conflictsForBuildMode(constructionBuildMode);
         const hiddenReport = loadHiddenConstructionReport();
@@ -11093,7 +11165,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           ${visibleConflicts.map((conflict) => {
             const details = constructionConflictDetails(conflict);
             return `<article class="alertCard">
-              <strong>${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}</strong>
+              <strong>${constructionConflictTitle(conflict)}</strong>
               <span>${details.label}</span>
               <span>${details.detail}</span>
             </article>`;
