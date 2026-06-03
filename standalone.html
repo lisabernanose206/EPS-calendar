@@ -758,6 +758,9 @@
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
+      .fixedBlockCycleChoices { display: grid; gap: 3px; margin-top: 4px; }
+      .fixedBlockCycleChoice { align-items: baseline; color: #475569; display: flex; flex-wrap: wrap; font-size: 11px; gap: 4px; }
+      .fixedBlockCycleChoice b { color: #334155; font-weight: 900; }
       .alertEmpty { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; color: #047857; font-weight: 900; padding: 12px; }
       .constructionOkBadge { align-items: center; background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 999px; color: #047857; display: inline-flex; font-size: 13px; font-weight: 950; gap: 7px; margin: 6px 0 8px; min-height: 34px; padding: 0 12px; width: fit-content; }
       .constructionOkBadge::before { content: "\2713"; }
@@ -7853,40 +7856,27 @@
         ])];
       }
 
-      function cycleActivityReuseLimit(activityId) {
-        return swimmingActivityIds().includes(activityId) ? 3 : 1;
-      }
-
-      function cycleActivityAssignmentsForRule(ruleId, activityId, excludedCycleId = "") {
-        if (!ruleId || !activityId) return [];
+      function otherCycleChoicesForRule(ruleId, excludedCycleId = "") {
+        if (!ruleId) return [];
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule) return [];
         return constructionCyclesForRule(rule)
           .filter((cycle) => cycle.id !== excludedCycleId)
           .map((cycle) => ({ cycle, block: blockWithCycleOverride(rule, cycle) }))
-          .filter(({ block }) => block.activityId === activityId)
-          .map(({ cycle }) => cycle.name || cycle.id);
+          .filter(({ block }) => block.facilityLabel || block.activityLabel)
+          .map(({ cycle, block }) => ({
+            cycleName: cycle.name || cycle.id,
+            facilityLabel: block.facilityLabel || "Sans installation",
+            activityLabel: block.activityLabel || "Sans activite"
+          }));
       }
 
-      function cycleActivityReuseMessage(ruleId, cycleId, activityId) {
-        const assignedCycles = cycleActivityAssignmentsForRule(ruleId, activityId, cycleId);
-        if (!assignedCycles.length) return "";
-        const activity = constructionActivityById(activityId);
-        const cycleList = assignedCycles.join(", ");
-        const limit = cycleActivityReuseLimit(activityId);
-        if (assignedCycles.length < limit) return "";
-        return limit > 1
-          ? `${activity?.label || "Cette activite"} deja affectee aux ${limit} cycles autorises : ${cycleList}.`
-          : `${activity?.label || "Cette activite"} deja affectee a ${cycleList}. Une activite ne peut pas etre sur deux cycles.`;
-      }
-
-      function cycleActivityReuseTitle(ruleId, cycleId, activityId, fallbackLabel = "Activite") {
-        const assignedCycles = cycleActivityAssignmentsForRule(ruleId, activityId, cycleId);
-        if (!assignedCycles.length) return `${fallbackLabel} disponible.`;
-        const limit = cycleActivityReuseLimit(activityId);
-        const cycleList = assignedCycles.join(", ");
-        if (assignedCycles.length >= limit) return cycleActivityReuseMessage(ruleId, cycleId, activityId);
-        return `${fallbackLabel} deja affectee a ${cycleList}. Piscine autorisee sur 3 cycles.`;
+      function renderOtherCycleChoicesForRule(ruleId, excludedCycleId = "") {
+        const choices = otherCycleChoicesForRule(ruleId, excludedCycleId);
+        if (!choices.length) return "";
+        return `<div class="fixedBlockCycleChoices">${choices.map((choice) => `
+          <div class="fixedBlockCycleChoice"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
+        `).join("")}</div>`;
       }
 
       function activitiesForFacilityAndBlockProgram(facilityId, block) {
@@ -9976,16 +9966,15 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         const activityProgramMessage = !activityProgramValid && block.activityId
           ? "Impossible : l'activite choisie n'est pas reliee a l'installation ou n'est pas au programme de la classe du bloc."
           : "";
-        const activityReuseMessage = editingCycleDetails ? cycleActivityReuseMessage(editingBuildBlock?.ruleId, cellCycle?.id || "", block.activityId) : "";
         const facilityProgramMessage = selectedFacilityNoProgramActivity
           ? "Impossible : cette installation ne propose aucune activite compatible avec le programme de la classe du bloc."
           : "";
-        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || activityReuseMessage || facilityProgramMessage || (weekLetterMismatch
+        const conflictMessage = unavailableMessage || cycleUnavailableMessage || activityProgramMessage || facilityProgramMessage || (weekLetterMismatch
           ? `Impossible : cette case est en semaine ${weekItem.letter}, pas en semaine ${blockWeekLetter}.`
           : cellCycle ? blockCycleConflictMessage(row.id, cellCycle.id, block, editingBuildBlock?.ruleId, blockWeekLetter) : "");
         const hardUnavailableMessage = unavailableMessage || cycleUnavailableMessage;
         const optionBlockValid = !block.optionBlock || Boolean(block.optionId && block.optionHours > 0);
-        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !activityReuseMessage && !selectedFacilityNoProgramActivity);
+        const canSaveBlock = Boolean(cellCycle && blockTeacherIds.length && !selectedTeachersUnavailable && !hardUnavailableMessage && !weekLetterMismatch && optionBlockValid && activityProgramValid && !selectedFacilityNoProgramActivity);
         const items = constructionPlan[activeBuildCell] || [];
         const events = eventsForPeriod(row, weekItem);
         const asItems = asSessionsForCell(row, weekItem);
@@ -10047,7 +10036,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
             </div>
-            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span></div>` : `<div class="buildField" style="margin-bottom:10px">
+            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span>${renderOtherCycleChoicesForRule(editingBuildBlock?.ruleId, cellCycle?.id || "")}</div>` : `<div class="buildField" style="margin-bottom:10px">
               <label>Type de bloc</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-co-intervention ${blockIsOption ? "disabled" : ""}>Co-intervention</button>
@@ -10106,11 +10095,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
-                  ${availableActivities.map((activity) => {
-                    const reuseMessage = editingCycleDetails ? cycleActivityReuseMessage(editingBuildBlock?.ruleId, cellCycle?.id || "", activity.id) : "";
-                    const reuseTitle = editingCycleDetails ? cycleActivityReuseTitle(editingBuildBlock?.ruleId, cellCycle?.id || "", activity.id, activity.label) : `${activity.label} disponible.`;
-                    return `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""} ${reuseMessage ? "unavailable" : ""}" data-pick-activity="${activity.id}" title="${reuseTitle}" aria-label="${reuseTitle}" ${reuseMessage ? "disabled" : ""}>${activity.label}</button>`;
-                  }).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
+                  ${availableActivities.map((activity) => `<button class="choiceButton ${activity.id === blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
                 </div>
                 ${availableFreeActivities.length ? `<label>Service libre</label>
                 <div class="choiceGrid">
