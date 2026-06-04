@@ -7588,6 +7588,12 @@
       function conflictMap(buildMode = "") {
         const cacheKey = buildMode ? `conflictMap:${buildMode}` : "conflictMap";
         return cachedConstructionCheck(cacheKey, () => {
+          if (!buildMode) {
+            return new Set([
+              ...conflictMap("blocks"),
+              ...conflictMap("cycleDetails")
+            ]);
+          }
           if (buildMode === "cycleDetails") {
             const rawConflicts = detectConflicts().filter((conflict) => conflictBelongsToBuildMode(conflict, buildMode));
             const activeConflicts = filterAcceptedConflicts(aggregateCycleDetailConflicts(rawConflicts), buildMode);
