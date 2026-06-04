@@ -534,6 +534,14 @@
       .constructionAsStack .buildBlock strong, .constructionAsStack .buildBlock span { font-size: 8px; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock { align-items: center !important; display: flex !important; justify-content: center !important; padding: 2px !important; text-align: center !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable .buildBlock strong { margin: 0 auto !important; text-align: center !important; width: 100%; }
+      .cycleSummarySplitCell { height: 100%; padding: 0 !important; }
+      .cycleSummarySplit { display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: 100%; min-height: 100%; }
+      .cycleSummaryHalf { align-content: stretch; border-right: 2px solid #000; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 100%; min-width: 0; padding: 2px; }
+      .cycleSummaryHalf:last-child { border-right: 0; }
+      .cycleSummaryHalf.cycleUnavailableCell { background: repeating-linear-gradient(135deg, #f1f5f9 0, #f1f5f9 6px, #cbd5e1 6px, #cbd5e1 12px); }
+      .cycleSummaryHalfLabel { color: #334155; font-size: 8px; font-weight: 950; line-height: 1; margin-bottom: 2px; text-align: left; }
+      .cycleSummarySplit .buildCellStack { height: 100%; min-height: 0; }
+      .cycleSummarySplit .buildBlock { min-height: 100% !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) th { background: #fff !important; color: #0f172a !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable { border: 2px solid #000 !important; }
       .cycleSummaryTableWrap .cycleTwoWeekTable th,
@@ -872,7 +880,7 @@
       .cyclePickerRow { align-items: end; display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
       .cyclePickerRow .constructionTabs, .cyclePickerRow .eventForm { margin: 0; }
       .cyclePickerRow .eventForm { padding: 10px 12px; }
-      .cycleSummaryHeader { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(190px, 1fr) minmax(210px, 280px) auto auto auto; margin-bottom: 10px; }
+      .cycleSummaryHeader { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(190px, 1fr) minmax(210px, 280px) auto auto; margin-bottom: 10px; }
       .cycleSummaryHeader h2 { margin: 0; }
       .cycleSummaryControl { display: grid; gap: 4px; }
       .cycleSummaryControl label { color: #64748b; font-size: 10px; font-weight: 950; text-transform: uppercase; }
@@ -8586,14 +8594,61 @@
         });
       }
 
-      function renderCycleLetterCell(row, cycle, letter, facilityId = "") {
+      function cycleLetterCellData(row, cycle, letter, facilityId = "") {
         const items = blocksForCycleLetter(row, cycle, letter, facilityId);
         const unavailableItems = unavailableForCycleLetter(row, cycle, letter, facilityId);
-        return `<td class="${unavailableItems.length ? "cycleUnavailableCell" : ""}"><div class="buildCellStack">
+        const blockSignature = items.map((item) => [
+          item.ruleId || "",
+          item.cycleId || "",
+          teacherIdsForBlock(item).join("+"),
+          item.schoolClass || "",
+          item.facilityId || "",
+          item.activityId || "",
+          item.weekLetter || "all"
+        ].join("|")).sort().join(";");
+        const unavailableSignature = unavailableItems.map((item) => item.id || [
+          item.type || "",
+          (item.facilityIds || []).join("+"),
+          (item.classIds || []).join("+"),
+          item.name || ""
+        ].join("|")).sort().join(";");
+        return {
+          items,
+          unavailableItems,
+          signature: `${blockSignature}::${unavailableSignature}`
+        };
+      }
+
+      function renderCycleCellStack(items) {
+        return `<div class="buildCellStack">
           ${items.map((item) => `<div class="buildBlock" style="${blockTeacherStyle(item)}">
             <strong>${compactClassName(item.schoolClass) || "Classe"}</strong>
           </div>`).join("")}
-        </div></td>`;
+        </div>`;
+      }
+
+      function renderCycleLetterCell(row, cycle, letter, facilityId = "") {
+        const data = cycleLetterCellData(row, cycle, letter, facilityId);
+        return `<td class="${data.unavailableItems.length ? "cycleUnavailableCell" : ""}">${renderCycleCellStack(data.items)}</td>`;
+      }
+
+      function renderCycleMergedCell(row, cycle, facilityId = "") {
+        const weekA = cycleLetterCellData(row, cycle, "A", facilityId);
+        const weekB = cycleLetterCellData(row, cycle, "B", facilityId);
+        if (weekA.signature === weekB.signature) {
+          return `<td class="${weekA.unavailableItems.length ? "cycleUnavailableCell" : ""}">${renderCycleCellStack(weekA.items)}</td>`;
+        }
+        return `<td class="cycleSummarySplitCell">
+          <div class="cycleSummarySplit">
+            ${[
+              ["A", weekA],
+              ["B", weekB]
+            ].map(([letter, data]) => `<div class="cycleSummaryHalf ${data.unavailableItems.length ? "cycleUnavailableCell" : ""}">
+              <div class="cycleSummaryHalfLabel">${letter}</div>
+              ${renderCycleCellStack(data.items)}
+            </div>`).join("")}
+          </div>
+        </td>`;
       }
 
       function renderCycleTwoWeekTable(cycle) {
@@ -8616,7 +8671,7 @@
                 const row = rows.find((item) => item.day === day && item.slot.id === slot.id);
                 const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
                 if (!row) return `<td class="${nonWorkingCell ? "holidayCell" : ""}"><div class="buildCellStack"></div></td>`;
-                return renderCycleLetterCell(row, cycle, activeCycleLetter, facility.id);
+                return renderCycleMergedCell(row, cycle, facility.id);
               })).join("")}
             </tr>`).join("")}
           </tbody>
@@ -8640,12 +8695,6 @@
               <select id="homeCycleSelect">
                 ${cycleChoices.map((cycleItem) => `<option value="${cycleItem.id}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${cycleItem.displayName}</option>`).join("")}
               </select>
-            </div>
-            <div class="cycleSummaryControl">
-              <label>Semaine</label>
-              <div class="choiceGrid">
-                ${["A", "B"].map((letter) => `<button class="choiceButton ${activeCycleLetter === letter ? "active" : ""}" data-cycle-letter="${letter}">${letter}</button>`).join("")}
-              </div>
             </div>
             <div class="zoomControls">
               <button class="ghostButton" data-cycle-view-zoom="-">-</button>
