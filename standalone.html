@@ -35,6 +35,14 @@
       .authForm select { background: #fff; color: #0f172a; font-weight: 850; min-width: 210px; }
       .defaultEtabButton { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 38px; padding: 0 10px; }
       .defaultEtabButton.active { background: #dcfce7; border-color: #86efac; color: #047857; }
+      .etabMembersList { border-top: 1px solid #e2e8f0; display: grid; gap: 6px; margin-top: 4px; padding-top: 8px; }
+      .etabMemberRow { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto auto; }
+      .etabMemberEmail { color: #0f172a; font-size: 11px; font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .etabMemberRole { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; font-size: 10px; font-weight: 950; padding: 3px 7px; white-space: nowrap; }
+      .etabMemberRole.owner { background: #dcfce7; border-color: #86efac; color: #047857; }
+      .etabMemberRole.creator { background: #e0f2fe; border-color: #bae6fd; color: #075985; }
+      .removeEtabMemberButton { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; cursor: pointer; font-size: 10px; font-weight: 950; min-height: 26px; padding: 0 8px; white-space: nowrap; }
+      .removeEtabMemberButton:disabled { cursor: not-allowed; opacity: .45; }
       .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
       .authButton.secondary { background: #e2e8f0; color: #0f172a; }
       .shareInviteWrap { align-items: center; display: inline-flex; gap: 8px; position: relative; }
@@ -2068,6 +2076,10 @@
       let currentEtabRole = localStorage.getItem(AUTH_ROLE_KEY) || "";
       let currentEtabName = localStorage.getItem(AUTH_ETAB_NAME_KEY) || "";
       let currentUserEtabs = [];
+      let accountMembersByEtabId = {};
+      let accountMembersRequestKey = "";
+      let accountMembersLoading = false;
+      let accountMembersStatus = "";
       let authStatus = "";
       if (adminSession && currentEtabRole === "owner") {
         week = "build";
@@ -5104,6 +5116,79 @@
         return fallbackId ? [{ etab_id: fallbackId, role: currentEtabRole, etab_name: currentEtabName || fallbackId }] : [];
       }
 
+      function etabMemberRoleLabel(role) {
+        return normalizeEtabRole(role) === "owner" ? "admin" : "consultation";
+      }
+
+      function normalizeEtabMemberRow(row) {
+        const email = String(row?.email || row?.user_email || row?.mail || row?.user_id || "").trim();
+        if (!email) return null;
+        return {
+          user_id: String(row?.user_id || row?.id || "").trim(),
+          email,
+          role: normalizeEtabRole(row?.role || "member"),
+          is_creator: Boolean(row?.is_creator)
+        };
+      }
+
+      async function fetchEtabMembers(etabId) {
+        if (!isSignedIn() || !etabId) return [];
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("list_etab_members"), {
+          method: "POST",
+          body: JSON.stringify({ check_etab_id: etabId })
+        });
+        const responseText = await response.text();
+        const result = responseText ? (() => {
+          try { return JSON.parse(responseText); } catch { return responseText; }
+        })() : [];
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || responseText);
+        const parsed = typeof result === "string" ? JSON.parse(result) : result;
+        const rows = Array.isArray(parsed) ? parsed : parsed?.items || [];
+        return rows.map(normalizeEtabMemberRow).filter(Boolean);
+      }
+
+      async function removeEtabMember(etabId, userId) {
+        if (!isSignedIn() || !etabId || !userId) throw new Error("membre introuvable");
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("remove_etab_member"), {
+          method: "POST",
+          body: JSON.stringify({ target_etab_id: etabId, target_user_id: userId })
+        });
+        const responseText = await response.text();
+        const result = responseText ? (() => {
+          try { return JSON.parse(responseText); } catch { return responseText; }
+        })() : null;
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || responseText);
+        accountMembersByEtabId = {
+          ...accountMembersByEtabId,
+          [etabId]: (accountMembersByEtabId[etabId] || []).filter((member) => member.user_id !== userId)
+        };
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        return result;
+      }
+
+      function refreshAccountMembersForRows(rows = []) {
+        if (!isSignedIn()) return;
+        const etabIds = rows.map((item) => item.etab_id).filter(Boolean);
+        if (!etabIds.length) return;
+        const key = `${adminSession?.user?.id || adminSession?.user?.email || ""}::${etabIds.join("|")}`;
+        if (accountMembersLoading || accountMembersRequestKey === key) return;
+        accountMembersRequestKey = key;
+        accountMembersLoading = true;
+        accountMembersStatus = "";
+        Promise.all(etabIds.map(async (etabId) => [etabId, await fetchEtabMembers(etabId)]))
+          .then((entries) => {
+            accountMembersByEtabId = { ...accountMembersByEtabId, ...Object.fromEntries(entries) };
+            accountMembersStatus = "";
+          })
+          .catch((error) => {
+            accountMembersStatus = `Membres non chargés : ${error.message || "fonction Supabase list_etab_members à installer"}`;
+          })
+          .finally(() => {
+            accountMembersLoading = false;
+            if (week === "account") render();
+          });
+      }
+
       function setActiveEtabFromRow(row) {
         const item = normalizeUserEtabRow(row);
         if (!item) return "";
@@ -5412,6 +5497,11 @@
         authInviteMenuOpen = false;
         currentEtabRole = "";
         currentEtabName = "";
+        currentUserEtabs = [];
+        accountMembersByEtabId = {};
+        accountMembersRequestKey = "";
+        accountMembersLoading = false;
+        accountMembersStatus = "";
         if (week === "build" || week === "alerts" || week === "log") week = "current";
         window.location.reload();
       }
@@ -10012,6 +10102,9 @@ create table if not exists public.etabs (
   created_at timestamptz not null default now()
 );
 
+alter table public.etabs
+add column if not exists created_by uuid references auth.users(id) on delete set null;
+
 create table if not exists public.etab_members (
   etab_id uuid not null references public.etabs(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -10189,6 +10282,17 @@ using (
   )
 );
 
+update public.etabs e
+set created_by = first_owner.user_id
+from (
+  select distinct on (etab_id) etab_id, user_id
+  from public.etab_members
+  where role = 'owner'
+  order by etab_id, created_at asc
+) first_owner
+where e.id = first_owner.etab_id
+and e.created_by is null;
+
 create or replace function public.create_etab_for_current_user(etab_name text, etab_slug text default null)
 returns uuid
 language plpgsql
@@ -10219,8 +10323,8 @@ begin
   end if;
   clean_slug := clean_slug || '-' || substr(gen_random_uuid()::text, 1, 8);
 
-  insert into public.etabs (name, slug)
-  values (clean_name, clean_slug)
+  insert into public.etabs (name, slug, created_by)
+  values (clean_name, clean_slug, auth.uid())
   returning id into new_etab_id;
 
   insert into public.etab_members (etab_id, user_id, role)
@@ -10372,6 +10476,126 @@ end;
 $$;
 
 grant execute on function public.list_current_user_etabs() to authenticated;
+
+create or replace function public.list_etab_members(check_etab_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    return '[]'::jsonb;
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = check_etab_id
+    and m.user_id = auth.uid()
+  ) then
+    raise exception 'Droits insuffisants pour consulter les membres';
+  end if;
+
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'user_id', m.user_id,
+      'email', coalesce(u.email, m.user_id::text),
+      'role', m.role,
+      'is_creator', m.user_id = e.created_by,
+      'created_at', m.created_at
+    ) order by (m.role = 'owner') desc, coalesce(u.email, m.user_id::text) asc)
+    from public.etab_members m
+    left join public.etabs e on e.id = m.etab_id
+    left join auth.users u on u.id = m.user_id
+    where m.etab_id = check_etab_id
+  ), '[]'::jsonb);
+end;
+$$;
+
+grant execute on function public.list_etab_members(uuid) to authenticated;
+
+create or replace function public.remove_etab_member(target_etab_id uuid, target_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  removed_email text;
+  removed_role text;
+  is_creator boolean;
+  owner_count integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'Un admin ne peut pas supprimer son propre acces depuis cette page';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = target_etab_id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  ) then
+    raise exception 'Droits insuffisants pour supprimer un membre';
+  end if;
+
+  select exists (
+    select 1 from public.etabs e
+    where e.id = target_etab_id
+    and e.created_by = target_user_id
+  )
+  into is_creator;
+
+  if is_creator then
+    raise exception 'Le createur de l''etablissement ne peut pas etre supprime';
+  end if;
+
+  select email
+  into removed_email
+  from auth.users
+  where id = target_user_id
+  limit 1;
+
+  select role
+  into removed_role
+  from public.etab_members
+  where etab_id = target_etab_id
+  and user_id = target_user_id
+  limit 1;
+
+  if removed_role is null then
+    raise exception 'Membre introuvable dans cet etablissement';
+  end if;
+
+  if removed_role = 'owner' then
+    select count(*)
+    into owner_count
+    from public.etab_members
+    where etab_id = target_etab_id
+    and role = 'owner';
+
+    if owner_count <= 1 then
+      raise exception 'Impossible de supprimer le dernier admin de l''etablissement';
+    end if;
+  end if;
+
+  delete from public.etab_members
+  where etab_id = target_etab_id
+  and user_id = target_user_id;
+
+  if not found then
+    raise exception 'Membre introuvable dans cet etablissement';
+  end if;
+
+  return jsonb_build_object('user_id', target_user_id, 'email', removed_email);
+end;
+$$;
+
+grant execute on function public.remove_etab_member(uuid, uuid) to authenticated;
 
 create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
 returns text
@@ -12084,21 +12308,43 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           role: currentEtabRole,
           etab_name: currentEtabDisplayName()
         }] : []);
+        setTimeout(() => refreshAccountMembersForRows(rows), 0);
+        const renderMembers = (etabId, canManageMembers) => {
+          const members = accountMembersByEtabId[etabId];
+          if (!members) return `<div class="etabMembersList"><span>${accountMembersLoading ? "Chargement des membres..." : "Membres à charger..."}</span></div>`;
+          if (!members.length) return `<div class="etabMembersList"><span>Aucun membre trouvé.</span></div>`;
+          const currentUserId = adminSession?.user?.id || "";
+          const ownerCount = members.filter((member) => member.role === "owner").length;
+          return `<div class="etabMembersList">
+            ${members.map((member) => {
+              const isLastOwner = member.role === "owner" && ownerCount <= 1;
+              const canRemove = canManageMembers && member.user_id && member.user_id !== currentUserId && !isLastOwner && !member.is_creator;
+              return `<div class="etabMemberRow">
+              <span class="etabMemberEmail">${escapeHtml(member.email)}</span>
+              <span class="etabMemberRole ${member.role === "owner" ? "owner" : ""}">${etabMemberRoleLabel(member.role)}</span>
+              ${member.is_creator ? `<span class="etabMemberRole creator">créateur</span>` : canRemove ? `<button class="removeEtabMemberButton" type="button" data-remove-etab-member="${escapeHtml(member.user_id)}" data-remove-etab-id="${escapeHtml(etabId)}" data-remove-member-email="${escapeHtml(member.email)}">Supprimer</button>` : `<span></span>`}
+            </div>`;
+            }).join("")}
+          </div>`;
+        };
         return `<section class="guidePage">
           <h2>Établissements</h2>
           <article class="alertHelp">
             <strong>Compte connecté</strong>
             <span>${escapeHtml(adminSession.user?.email || "utilisateur Supabase")}</span>
             <span>Établissement actif : ${escapeHtml(currentEtabDisplayName() || cloudConfig.etabId || "aucun")}</span>
+            ${accountMembersStatus ? `<span>${escapeHtml(accountMembersStatus)}</span>` : ""}
           </article>
           <div class="guideGrid guideProfessorGrid">
             ${rows.map((item) => {
               const active = item.etab_id === cloudConfig.etabId;
               const isDefault = item.etab_id === defaultEtabId;
+              const canManageMembers = normalizeEtabRole(item.role) === "owner";
               return `<article class="guideCard">
                 <strong>${escapeHtml(item.etab_name || item.etab_id)}</strong>
                 <span>${item.role === "owner" ? "admin" : "consultation"}${active ? " · actif" : ""}${isDefault ? " · par défaut" : ""}</span>
                 <button class="defaultEtabButton ${isDefault ? "active" : ""}" type="button" data-set-default-etab="${item.etab_id}" ${isDefault ? "disabled" : ""}>${isDefault ? "Par défaut" : "Définir par défaut"}</button>
+                ${renderMembers(item.etab_id, canManageMembers)}
               </article>`;
             }).join("") || `<article class="guideCard"><strong>Aucun établissement</strong><span>Reconnectez-vous ou acceptez une invitation pour rattacher ce compte.</span></article>`}
           </div>
@@ -12516,6 +12762,29 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
             render();
           }
+        });
+        document.querySelectorAll("[data-remove-etab-member]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const etabId = button.dataset.removeEtabId || "";
+            const userId = button.dataset.removeEtabMember || "";
+            const email = button.dataset.removeMemberEmail || "ce membre";
+            const etab = currentUserEtabs.find((item) => item.etab_id === etabId);
+            const etabName = etab?.etab_name || etabId;
+            const confirmed = window.confirm(`Supprimer ${email} de l'établissement ${etabName} ?\n\nCette personne perdra l'accès aux données de cet établissement.`);
+            if (!confirmed) return;
+            authStatus = `Suppression de ${email}...`;
+            render();
+            try {
+              await removeEtabMember(etabId, userId);
+              accountMembersRequestKey = "";
+              authStatus = `${email} a été retiré de l'établissement.`;
+              showValidationPopup("Membre supprimé");
+            } catch (error) {
+              authStatus = `Suppression impossible : ${error.message || "erreur inconnue"}`;
+            } finally {
+              render();
+            }
+          });
         });
         const acceptInviteForm = document.getElementById("acceptInviteForm");
         if (acceptInviteForm) acceptInviteForm.addEventListener("submit", async (event) => {
