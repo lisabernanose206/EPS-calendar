@@ -806,6 +806,9 @@
       .alertHelp { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 8px; color: #64748b; display: grid; gap: 4px; padding: 10px 12px; }
       .alertHelp strong { color: #475569; font-size: 12px; font-style: italic; font-weight: 800; }
       .alertHelp span { color: #64748b; font-size: 11px; font-style: italic; font-weight: 600; }
+      .fixedBlockContextGrid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 10px; }
+      .fixedBlockSlotGroup { border-top: 1px solid #e2e8f0; display: grid; gap: 3px; margin-top: 4px; padding-top: 5px; }
+      .fixedBlockSlotGroup:first-of-type { border-top: 0; padding-top: 0; }
       .fixedBlockCycleChoices { display: grid; gap: 3px; margin-top: 4px; }
       .fixedBlockCycleChoice { align-items: baseline; color: #475569; display: flex; flex-wrap: wrap; font-size: 11px; gap: 4px; }
       .fixedBlockCycleChoice b { color: #334155; font-weight: 900; }
@@ -1553,6 +1556,7 @@
         .miniDay + .miniDay { border-left: 0; }
         .balance { grid-template-columns: 1fr; }
         .modalGrid { grid-template-columns: 1fr; }
+        .fixedBlockContextGrid { grid-template-columns: 1fr; }
         .palette { position: static; }
       }
     </style>
@@ -8225,12 +8229,12 @@
         ])];
       }
 
-      function otherCycleChoicesForRule(ruleId, currentCycle = null) {
+      function otherCycleChoicesForRule(ruleId, currentCycle = null, includeCurrentCycle = false) {
         if (!ruleId) return [];
         const rule = constructionRules.find((item) => item.id === ruleId);
         if (!rule) return [];
         return constructionCyclesForRule(rule)
-          .filter((cycle) => !cyclesRepresentSameSlot(cycle, currentCycle))
+          .filter((cycle) => includeCurrentCycle || !cyclesRepresentSameSlot(cycle, currentCycle))
           .map((cycle) => ({ cycle, block: blockWithCycleOverride(rule, cycle) }))
           .map(({ cycle, block }) => ({
             cycleName: displayCycleName(cycle) || cycle.id,
@@ -8240,12 +8244,57 @@
           }));
       }
 
-      function renderOtherCycleChoicesForRule(ruleId, currentCycle = null) {
-        const choices = otherCycleChoicesForRule(ruleId, currentCycle);
+      function renderOtherCycleChoicesForRule(ruleId, currentCycle = null, includeCurrentCycle = false) {
+        const choices = otherCycleChoicesForRule(ruleId, currentCycle, includeCurrentCycle);
         if (!choices.length) return "";
         return `<div class="fixedBlockCycleChoices">${choices.map((choice) => `
           <div class="fixedBlockCycleChoice ${choice.missing ? "missing" : ""}"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
         `).join("")}</div>`;
+      }
+
+      function constructionRuleClassKeys(rule) {
+        return classesForBlock(rule?.block || {})
+          .map((schoolClass) => baseClassFromGroupedClass(schoolClass) || schoolClass)
+          .filter((schoolClass, index, list) => schoolClass && list.indexOf(schoolClass) === index);
+      }
+
+      function sameClassConstructionRule(firstRule, secondRule) {
+        const firstKeys = constructionRuleClassKeys(firstRule);
+        const secondKeys = constructionRuleClassKeys(secondRule);
+        return firstKeys.some((key) => secondKeys.includes(key));
+      }
+
+      function otherSlotRulesForSameCycle(ruleId, currentCycle = null) {
+        if (!ruleId || !currentCycle) return [];
+        const currentRule = constructionRules.find((item) => item.id === ruleId);
+        if (!currentRule) return [];
+        return annualConstructionRules()
+          .filter((rule) => rule.id !== currentRule.id)
+          .filter((rule) => !rule.block?.optionBlock)
+          .filter((rule) => rule.rowId !== currentRule.rowId)
+          .filter((rule) => sameClassConstructionRule(currentRule, rule))
+          .filter((rule) => constructionCyclesForRule(rule).some((cycle) => cyclesRepresentSameSlot(cycle, currentCycle)))
+          .sort((first, second) => ruleRowLabel(first.rowId).localeCompare(ruleRowLabel(second.rowId), "fr"));
+      }
+
+      function renderOtherSlotChoicesForSameCycle(ruleId, currentCycle = null) {
+        const slotRules = otherSlotRulesForSameCycle(ruleId, currentCycle);
+        if (!slotRules.length) return `<span>Aucun autre creneau pour cette classe sur ce cycle.</span>`;
+        return slotRules.map((rule) => {
+          const cycleBlock = blockWithCycleOverride(rule, constructionCycleForRuleById(rule, currentCycle.id) || currentCycle);
+          return `<div class="fixedBlockSlotGroup">
+            <strong>${ruleRowLabel(rule.rowId)}</strong>
+            <span>${teacherLabelForBlock(cycleBlock)} · ${blockClassLabel(cycleBlock)} · ${rule.weekLetter && rule.weekLetter !== "all" ? `Quinzaine ${rule.weekLetter}` : "Toutes les semaines"}</span>
+            ${renderOtherCycleChoicesForRule(rule.id, currentCycle, true)}
+          </div>`;
+        }).join("");
+      }
+
+      function renderFixedBlockContext(ruleId, currentCycle, block) {
+        return `<div class="fixedBlockContextGrid">
+          <div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span>${renderOtherCycleChoicesForRule(ruleId, currentCycle)}</div>
+          <div class="alertHelp"><strong>Autres creneaux du meme cycle</strong>${renderOtherSlotChoicesForSameCycle(ruleId, currentCycle)}</div>
+        </div>`;
       }
 
       function activitiesForFacilityAndBlockProgram(facilityId, block) {
@@ -10536,7 +10585,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </div>
               <button class="modalClose" id="closeBuildModal">x</button>
             </div>
-            ${!row.isAs ? `${editingCycleDetails ? `<div class="alertHelp"><strong>Bloc fixe</strong><span>${teacherLabelForBlock(block)} · ${blockClassLabel(block)} · ${block.weekLetter && block.weekLetter !== "all" ? `Quinzaine ${block.weekLetter}` : "Toutes les semaines"}</span>${renderOtherCycleChoicesForRule(editingBuildBlock?.ruleId, cellCycle)}</div>` : `<div class="buildField" style="margin-bottom:10px">
+            ${!row.isAs ? `${editingCycleDetails ? renderFixedBlockContext(editingBuildBlock?.ruleId, cellCycle, block) : `<div class="buildField" style="margin-bottom:10px">
               <label>Type de bloc</label>
               <div class="choiceGrid">
                 <button class="choiceButton ${blockCoIntervention && !blockIsOption ? "active" : ""}" data-toggle-co-intervention ${blockIsOption ? "disabled" : ""}>Co-intervention</button>
