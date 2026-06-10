@@ -1473,6 +1473,18 @@
       body.printA4 .homeTimetable .lessonTop strong, body.printA4 .homeTimetable .lessonMeta, body.printA4 .homeTimetable .lessonMeta .muted { font-size: 6.5px; line-height: 1; }
       body.printA3 .buildFacilitySlot { min-height: 20px; }
       body.printA2 .buildFacilitySlot { min-height: 24px; }
+      body.printCycleSummary.printA3 .cycleSummaryHeader, body.printCycleSummary.printA3 .teacherColorLegend { display: none !important; }
+      body.printCycleSummary.printA3 .panel { height: 100vh; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap { border: 0; display: flex; height: 100vh; min-height: 100vh; overflow: visible; width: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .yearWrap { display: flex; height: 100%; min-height: 100%; overflow: visible; padding: 0; width: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable { height: 100%; width: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:first-child { height: 8%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) { height: 8%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable tbody tr { height: auto; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable th, body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable td { font-size: 8px; padding: 2px; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead th { font-size: 10px; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .buildBlock { height: 100%; min-height: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .buildBlock strong { font-size: 8.5px; }
       body.printConstructionTrimesters .printOnly { border-bottom: 2px solid #0f172a; display: grid; gap: 2px; margin: 0 0 3mm; padding-bottom: 2mm; }
       body.printConstructionTrimesters .printOnly strong { font-size: 16px; }
       body.printConstructionTrimesters .printOnly span { color: #475569; font-size: 10px; font-weight: 850; }
@@ -1490,6 +1502,7 @@
       @page { size: A3 landscape; margin: 8mm; }
       @media print {
         body.printA3 { zoom: 0.48; }
+        body.printCycleSummary.printA3 { zoom: 1; }
         body.printA2 { zoom: 0.64; }
         body.printA4 { zoom: 0.86; }
         body.printConstructionTrimesters { zoom: 1 !important; }
@@ -12624,6 +12637,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           button.addEventListener("click", () => {
             const format = button.dataset.printFormat;
             const printTrimesters = button.dataset.printTrimesters === "construction";
+            const printCycleSummary = format === "A3" && Boolean(button.closest(".cycleSummaryHeader"));
             if (printTrimesters) {
               constructionPrintTrimesterExport = true;
               render();
@@ -12635,13 +12649,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               printStyle.id = "printPageStyle";
               printStyle.textContent = `@page { size: ${format} landscape; margin: ${printTrimesters ? "4mm" : "6mm"}; }`;
               document.head.appendChild(printStyle);
-              document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionTrimesters");
+              document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionTrimesters", "printCycleSummary");
               document.body.classList.add(`print${format}`);
               if (printTrimesters) document.body.classList.add("printConstructionTrimesters");
+              if (printCycleSummary) document.body.classList.add("printCycleSummary");
               setTimeout(() => {
                 window.print();
                 setTimeout(() => {
-                  document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionTrimesters");
+                  document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionTrimesters", "printCycleSummary");
                   const style = document.getElementById("printPageStyle");
                   if (style) style.remove();
                   if (printTrimesters) {
