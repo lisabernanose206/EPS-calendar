@@ -2058,6 +2058,7 @@
       let authMode = "signin";
       let authEtabName = "";
       let authInviteToken = inviteTokenFromUrl() || localStorage.getItem(AUTH_INVITE_KEY) || "";
+      let authInviteCodeDraft = "";
       let authInviteLink = "";
       let authInviteStatus = authInviteToken ? "Invitation équipe détectée." : "";
       let authInviteMenuOpen = false;
@@ -4673,6 +4674,16 @@
         }
       }
 
+      function normalizeInviteToken(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return "";
+        try {
+          return new URL(raw).searchParams.get("invite") || raw;
+        } catch {
+          return raw;
+        }
+      }
+
       function inviteLinkForToken(token) {
         const url = new URL(window.location.href);
         url.searchParams.set("invite", token);
@@ -4740,11 +4751,8 @@
         });
         const token = authInviteToken || localStorage.getItem(AUTH_INVITE_KEY) || "";
         if (token) {
-          const previousEtabId = cloudConfig.etabId;
-          await acceptEtabInvite(token);
-          authStatus = previousEtabId
-            ? "Invitation acceptée. Le nouvel établissement a été ajouté à votre compte."
-            : "Invitation acceptée.";
+          await acceptEtabInvite(token, { preserveCurrent: false });
+          authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
           cleanAuthUrl(true);
         } else {
           await ensureCurrentUserEtab();
@@ -5244,14 +5252,11 @@
           if (!response.ok) throw new Error(result.error_description || result.msg || result.message || "connexion impossible");
           saveAdminSession(result);
           const hadInvite = Boolean(authInviteToken);
-          const previousEtabId = cloudConfig.etabId;
-          if (hadInvite) await acceptEtabInvite(authInviteToken);
+          if (hadInvite) await acceptEtabInvite(authInviteToken, { preserveCurrent: false });
           else await resolveCurrentUserEtabs();
           authPassword = "";
           authStatus = hadInvite
-            ? previousEtabId
-              ? "Connexion Supabase active. Nouvel établissement ajouté à votre compte."
-              : "Connexion Supabase active. Invitation acceptée."
+            ? "Connexion Supabase active. Vous avez rejoint l'équipe EPS."
             : cloudReady()
             ? "Connexion Supabase active."
             : "Connexion Supabase active. Renseignez l'etab_id pour charger les données.";
@@ -5301,6 +5306,15 @@
         return etabId;
       }
 
+      async function createAndSwitchToNewEtab(name) {
+        const etabId = await createEtabForCurrentUser(name);
+        setCurrentEtabRole("owner");
+        clearLocalPlanningStorageForEtabSwitch();
+        resetCloudLoadState();
+        authStatus = "Nouvel établissement créé. Chargement de son espace indépendant...";
+        return etabId;
+      }
+
       async function signUpAdmin() {
         authStatus = "Création du compte...";
         render();
@@ -5327,17 +5341,14 @@
           }
           saveAdminSession(result);
           const hadInvite = Boolean(authInviteToken);
-          const previousEtabId = cloudConfig.etabId;
-          if (hadInvite) await acceptEtabInvite(authInviteToken);
+          if (hadInvite) await acceptEtabInvite(authInviteToken, { preserveCurrent: false });
           else {
             await createEtabForCurrentUser(authEtabName);
             setCurrentEtabRole("owner");
           }
           authPassword = "";
           authStatus = hadInvite
-            ? previousEtabId
-              ? "Compte connecté. Nouvel établissement ajouté à votre compte."
-              : "Compte créé et rattaché à l’équipe EPS."
+            ? "Compte créé. Vous avez rejoint l'équipe EPS."
             : "Compte et Établissement créés. Vous pouvez sauvegarder ce planning.";
           requestInitialCloudLoad(true, true);
         } catch (error) {
@@ -10404,6 +10415,7 @@ set search_path = public
 as $$
 declare
   invite_row public.etab_invites%rowtype;
+  invite_etab_name text;
 begin
   if auth.uid() is null then
     raise exception 'Utilisateur non connecte';
@@ -10428,7 +10440,13 @@ begin
   set used_count = used_count + 1
   where token = invite_row.token;
 
-  return jsonb_build_object('id', invite_row.etab_id, 'role', invite_row.role);
+  select name
+  into invite_etab_name
+  from public.etabs
+  where id = invite_row.etab_id
+  limit 1;
+
+  return jsonb_build_object('id', invite_row.etab_id, 'role', invite_row.role, 'etab_name', invite_etab_name);
 end;
 $$;
 
@@ -12084,6 +12102,14 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               </article>`;
             }).join("") || `<article class="guideCard"><strong>Aucun établissement</strong><span>Reconnectez-vous ou acceptez une invitation pour rattacher ce compte.</span></article>`}
           </div>
+          <article class="alertHelp">
+            <strong>Créer un autre établissement</strong>
+            <span>Créez un nouvel espace indépendant pour une mutation ou une nouvelle équipe EPS. Les données restent étanches entre établissements.</span>
+            <form class="authForm" id="createEtabForm">
+              <input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom du nouvel établissement" aria-label="Nom du nouvel établissement" />
+              <button class="authButton" type="submit">Créer un nouvel établissement</button>
+            </form>
+          </article>
         </section>`;
       }
 
@@ -12241,7 +12267,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <div class="authStatus">Connecté : ${adminSession.user?.email || "utilisateur Supabase"}${cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
             ${!cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form>` : ""}
             ${cloudConfig.etabId && authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Ajouter cet établissement</button></form>` : ""}
-            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="createEtabForm"><input id="authEtabName" value="${escapeHtml(authEtabName)}" placeholder="Nom de l’établissement" aria-label="Nom de l’établissement" /><button class="authButton" type="submit">Creer l’établissement</button></form>` : ""}
+            ${!cloudConfig.etabId && !authInviteToken ? `<form class="authForm" id="joinInviteForm"><input id="authInviteCode" value="${escapeHtml(authInviteCodeDraft)}" placeholder="Lien ou code d’invitation" aria-label="Lien ou code d’invitation" /><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form><div class="authStatus">Collez le lien d'invitation envoyé par l'équipe EPS de l'établissement.</div>` : ""}
             ${cloudConfig.etabId && !currentEtabRole ? `<div class="authStatus">Vérification du rôle en cours...</div>` : ""}
             ${cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
             ${authStatus ? `<div class="authStatus">${escapeHtml(authStatus)}</div>` : ""}
@@ -12282,8 +12308,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               <h3>Construisez votre planning sans y passer vos soirees.</h3>
             </div>
             <p>Loustic centralise l'emploi du temps EPS de l’établissement et aide l’équipe à garder une organisation claire, partagée et facile à ajuster.</p>
-            ${authInviteToken ? `<div class="homeInviteNotice">Lien d’invitation détecté. Connectez-vous pour rejoindre l'équipe.</div>` : ""}
-            <button class="authButton googleAuthButton" type="button" data-oauth-provider="google"><span class="googleAuthIcon" aria-hidden="true">G</span><span>Connexion via Google</span></button>
+            ${authInviteToken ? `<div class="homeInviteNotice">Lien d’invitation détecté. Créez ou connectez votre compte pour rejoindre automatiquement l'équipe EPS de l'établissement.</div>` : ""}
+            <button class="authButton googleAuthButton" type="button" data-oauth-provider="google"><span class="googleAuthIcon" aria-hidden="true">G</span><span>${authInviteToken ? "Créer / connecter mon compte et rejoindre l'équipe EPS" : "Connexion via Google"}</span></button>
             <div class="homeFeatures">
               <div class="homeFeature"><span class="homeFeatureIcon">✓</span><div class="homeFeatureText"><strong>Emploi du temps lisible</strong><span>Visualisez les semaines, les profs, les classes et les créneaux en un coup d'oeil.</span></div></div>
               <div class="homeFeature"><span class="homeFeatureIcon">↻</span><div class="homeFeatureText"><strong>Cycles et installations</strong><span>Construisez vos cycles avec les activités, les lieux disponibles et les contraintes de l’établissement.</span></div></div>
@@ -12454,19 +12480,40 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         if (adminPasswordInput) adminPasswordInput.addEventListener("input", () => authPassword = adminPasswordInput.value);
         const authEtabNameInput = document.getElementById("authEtabName");
         if (authEtabNameInput) authEtabNameInput.addEventListener("input", () => authEtabName = authEtabNameInput.value);
+        const authInviteCodeInput = document.getElementById("authInviteCode");
+        if (authInviteCodeInput) authInviteCodeInput.addEventListener("input", () => authInviteCodeDraft = authInviteCodeInput.value);
+        const joinInviteForm = document.getElementById("joinInviteForm");
+        if (joinInviteForm) joinInviteForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const token = normalizeInviteToken(document.getElementById("authInviteCode")?.value || authInviteCodeDraft);
+          if (!token) {
+            authStatus = "Collez un lien ou un code d'invitation pour rejoindre l'équipe EPS.";
+            render();
+            return;
+          }
+          authInviteCodeDraft = "";
+          authStatus = "Rattachement à l'équipe EPS...";
+          render();
+          try {
+            await acceptEtabInvite(token, { preserveCurrent: false });
+            authStatus = "Vous avez rejoint l'équipe EPS.";
+            requestInitialCloudLoad(false, true);
+          } catch (error) {
+            authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
+          }
+          render();
+        });
         const createEtabForm = document.getElementById("createEtabForm");
         if (createEtabForm) createEtabForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           authEtabName = document.getElementById("authEtabName")?.value.trim() || "";
           authStatus = "Création de l’établissement...";
           render();
-        try {
-          await createEtabForCurrentUser(authEtabName);
-          setCurrentEtabRole("owner");
-          authStatus = "Établissement créé.";
+          try {
+            await createAndSwitchToNewEtab(authEtabName);
+            window.location.reload();
           } catch (error) {
             authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
-          } finally {
             render();
           }
         });
@@ -12476,11 +12523,8 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           authStatus = "Rattachement à l'équipe EPS...";
           render();
           try {
-            const previousEtabId = cloudConfig.etabId;
-            await acceptEtabInvite(authInviteToken);
-            authStatus = previousEtabId
-              ? "Nouvel établissement ajouté à votre compte."
-              : "Vous avez rejoint l'équipe EPS.";
+            await acceptEtabInvite(authInviteToken, { preserveCurrent: false });
+            authStatus = "Vous avez rejoint l'équipe EPS.";
             cleanAuthUrl(true);
             requestInitialCloudLoad(false, true);
           } catch (error) {
@@ -14550,10 +14594,23 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         }
         render();
         if (isSignedIn()) {
-          setTimeout(() => ensureCurrentUserEtab().then(() => {
+          setTimeout(async () => {
+            if (authInviteToken) {
+              try {
+                authStatus = "Invitation équipe EPS détectée...";
+                render();
+                await acceptEtabInvite(authInviteToken, { preserveCurrent: false });
+                authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
+                cleanAuthUrl(true);
+              } catch (error) {
+                authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
+              }
+            } else {
+              await ensureCurrentUserEtab();
+            }
             render();
             requestInitialCloudLoad(false, true);
-          }), 0);
+          }, 0);
         }
         if (!cloudReady() || !cloudConfig.autoLoad || !isSignedIn()) {
           restartCloudAutoRefresh();
