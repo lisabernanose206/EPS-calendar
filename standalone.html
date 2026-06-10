@@ -41,7 +41,9 @@
       .etabMemberRole { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; font-size: 10px; font-weight: 950; padding: 3px 7px; white-space: nowrap; }
       .etabMemberRole.owner { background: #dcfce7; border-color: #86efac; color: #047857; }
       .etabMemberRole.creator { background: #e0f2fe; border-color: #bae6fd; color: #075985; }
+      .etabMemberActions { display: inline-flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
       .removeEtabMemberButton { background: #fee2e2; border: 1px solid #fecaca; border-radius: 999px; color: #991b1b; cursor: pointer; font-size: 10px; font-weight: 950; min-height: 26px; padding: 0 8px; white-space: nowrap; }
+      .transferCreatorButton { background: #e0f2fe; border-color: #bae6fd; color: #075985; }
       .removeEtabMemberButton:disabled { cursor: not-allowed; opacity: .45; }
       .authButton { background: #0f172a; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 900; min-height: 38px; padding: 0 12px; }
       .authButton.secondary { background: #e2e8f0; color: #0f172a; }
@@ -4897,6 +4899,7 @@
           "Bonjour,",
           "",
           `Je t'invite a rejoindre l'espace EPS de l’établissement ${etabName}.`,
+          "Ce lien est personnel et utilisable une seule fois.",
           "",
           "Lien d'acces :",
           authInviteLink,
@@ -4925,7 +4928,7 @@
             <div class="modalHeader">
               <div>
                 <h3>Partager l'accès à ${escapeHtml(currentEtabDisplayName() || "l'établissement")}</h3>
-                <p class="muted">Créez un lien d'invitation, puis copiez-le ou envoyez-le directement par mail.</p>
+                <p class="muted">Créez un lien d'invitation unique, utilisable une seule fois, puis copiez-le ou envoyez-le directement par mail.</p>
               </div>
               <button class="modalClose" type="button" data-close-invite-modal aria-label="Fermer">x</button>
             </div>
@@ -5166,6 +5169,63 @@
         return result;
       }
 
+      async function promoteEtabMemberToAdmin(etabId, userId) {
+        if (!isSignedIn() || !etabId || !userId) throw new Error("membre introuvable");
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("promote_etab_member_to_owner"), {
+          method: "POST",
+          body: JSON.stringify({ target_etab_id: etabId, target_user_id: userId })
+        });
+        const responseText = await response.text();
+        const result = responseText ? (() => {
+          try { return JSON.parse(responseText); } catch { return responseText; }
+        })() : null;
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || responseText);
+        accountMembersByEtabId = {
+          ...accountMembersByEtabId,
+          [etabId]: await fetchEtabMembers(etabId)
+        };
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        return result;
+      }
+
+      async function demoteEtabAdminToMember(etabId, userId) {
+        if (!isSignedIn() || !etabId || !userId) throw new Error("membre introuvable");
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("demote_etab_owner_to_member"), {
+          method: "POST",
+          body: JSON.stringify({ target_etab_id: etabId, target_user_id: userId })
+        });
+        const responseText = await response.text();
+        const result = responseText ? (() => {
+          try { return JSON.parse(responseText); } catch { return responseText; }
+        })() : null;
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || responseText);
+        accountMembersByEtabId = {
+          ...accountMembersByEtabId,
+          [etabId]: await fetchEtabMembers(etabId)
+        };
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        return result;
+      }
+
+      async function transferEtabCreator(etabId, userId) {
+        if (!isSignedIn() || !etabId || !userId) throw new Error("membre introuvable");
+        const response = await cloudFetchWithAuthRetry(rpcEndpoint("transfer_etab_creator"), {
+          method: "POST",
+          body: JSON.stringify({ target_etab_id: etabId, target_user_id: userId })
+        });
+        const responseText = await response.text();
+        const result = responseText ? (() => {
+          try { return JSON.parse(responseText); } catch { return responseText; }
+        })() : null;
+        if (!response.ok) throw new Error(result?.message || result?.error_description || result?.msg || responseText);
+        accountMembersByEtabId = {
+          ...accountMembersByEtabId,
+          [etabId]: await fetchEtabMembers(etabId)
+        };
+        currentUserEtabs = await fetchCurrentUserEtabs();
+        return result;
+      }
+
       function refreshAccountMembersForRows(rows = []) {
         if (!isSignedIn()) return;
         const etabIds = rows.map((item) => item.etab_id).filter(Boolean);
@@ -5181,7 +5241,11 @@
             accountMembersStatus = "";
           })
           .catch((error) => {
-            accountMembersStatus = `Membres non chargés : ${error.message || "fonction Supabase list_etab_members à installer"}`;
+            const rawMessage = String(error.message || "");
+            const missingFunction = rawMessage.includes("list_etab_members") || rawMessage.includes("schema cache");
+            accountMembersStatus = missingFunction
+              ? "Membres non chargés : appliquez le SQL cloud mis à jour dans Supabase, puis rechargez le cache/API."
+              : `Membres non chargés : ${rawMessage || "erreur Supabase"}`;
           })
           .finally(() => {
             accountMembersLoading = false;
@@ -10597,6 +10661,166 @@ $$;
 
 grant execute on function public.remove_etab_member(uuid, uuid) to authenticated;
 
+create or replace function public.promote_etab_member_to_owner(target_etab_id uuid, target_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_email text;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = target_etab_id
+    and m.user_id = auth.uid()
+    and m.role = 'owner'
+  ) then
+    raise exception 'Droits insuffisants pour donner le role admin';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = target_etab_id
+    and m.user_id = target_user_id
+  ) then
+    raise exception 'Le membre cible est introuvable dans cet etablissement';
+  end if;
+
+  update public.etab_members
+  set role = 'owner'
+  where etab_id = target_etab_id
+  and user_id = target_user_id;
+
+  select email
+  into target_email
+  from auth.users
+  where id = target_user_id
+  limit 1;
+
+  return jsonb_build_object('user_id', target_user_id, 'email', target_email, 'role', 'owner');
+end;
+$$;
+
+grant execute on function public.promote_etab_member_to_owner(uuid, uuid) to authenticated;
+
+create or replace function public.demote_etab_owner_to_member(target_etab_id uuid, target_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_email text;
+  is_target_creator boolean;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if not exists (
+    select 1 from public.etabs e
+    where e.id = target_etab_id
+    and e.created_by = auth.uid()
+  ) then
+    raise exception 'Seul le createur peut retrograder un admin';
+  end if;
+
+  select exists (
+    select 1 from public.etabs e
+    where e.id = target_etab_id
+    and e.created_by = target_user_id
+  )
+  into is_target_creator;
+
+  if is_target_creator then
+    raise exception 'Le createur de l''etablissement ne peut pas etre retrograde';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = target_etab_id
+    and m.user_id = target_user_id
+    and m.role = 'owner'
+  ) then
+    raise exception 'L''admin cible est introuvable dans cet etablissement';
+  end if;
+
+  update public.etab_members
+  set role = 'member'
+  where etab_id = target_etab_id
+  and user_id = target_user_id;
+
+  select email
+  into target_email
+  from auth.users
+  where id = target_user_id
+  limit 1;
+
+  return jsonb_build_object('user_id', target_user_id, 'email', target_email, 'role', 'member');
+end;
+$$;
+
+grant execute on function public.demote_etab_owner_to_member(uuid, uuid) to authenticated;
+
+create or replace function public.transfer_etab_creator(target_etab_id uuid, target_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_email text;
+begin
+  if auth.uid() is null then
+    raise exception 'Utilisateur non connecte';
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'Le createur actuel est deja createur de cet etablissement';
+  end if;
+
+  if not exists (
+    select 1 from public.etabs e
+    where e.id = target_etab_id
+    and e.created_by = auth.uid()
+  ) then
+    raise exception 'Seul le createur actuel peut transmettre ce statut';
+  end if;
+
+  if not exists (
+    select 1 from public.etab_members m
+    where m.etab_id = target_etab_id
+    and m.user_id = target_user_id
+  ) then
+    raise exception 'Le nouveau createur doit deja etre membre de cet etablissement';
+  end if;
+
+  update public.etab_members
+  set role = 'owner'
+  where etab_id = target_etab_id
+  and user_id = target_user_id;
+
+  update public.etabs
+  set created_by = target_user_id
+  where id = target_etab_id;
+
+  select email
+  into target_email
+  from auth.users
+  where id = target_user_id
+  limit 1;
+
+  return jsonb_build_object('user_id', target_user_id, 'email', target_email);
+end;
+$$;
+
+grant execute on function public.transfer_etab_creator(uuid, uuid) to authenticated;
+
 create or replace function public.create_etab_invite(invite_etab_id uuid, invite_role text default 'member')
 returns text
 language plpgsql
@@ -10623,8 +10847,8 @@ begin
     invite_role := 'member';
   end if;
 
-  insert into public.etab_invites (etab_id, created_by, role)
-  values (invite_etab_id, auth.uid(), invite_role)
+  insert into public.etab_invites (etab_id, created_by, role, max_uses)
+  values (invite_etab_id, auth.uid(), invite_role, 1)
   returning token into invite_token;
 
   return invite_token;
@@ -12314,15 +12538,25 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
           if (!members) return `<div class="etabMembersList"><span>${accountMembersLoading ? "Chargement des membres..." : "Membres à charger..."}</span></div>`;
           if (!members.length) return `<div class="etabMembersList"><span>Aucun membre trouvé.</span></div>`;
           const currentUserId = adminSession?.user?.id || "";
+          const currentUserIsCreator = members.some((member) => member.user_id === currentUserId && member.is_creator);
           const ownerCount = members.filter((member) => member.role === "owner").length;
           return `<div class="etabMembersList">
             ${members.map((member) => {
               const isLastOwner = member.role === "owner" && ownerCount <= 1;
               const canRemove = canManageMembers && member.user_id && member.user_id !== currentUserId && !isLastOwner && !member.is_creator;
+              const canPromoteAdmin = canManageMembers && member.user_id && member.role !== "owner";
+              const canDemoteAdmin = currentUserIsCreator && member.user_id && member.user_id !== currentUserId && member.role === "owner" && !member.is_creator;
+              const canTransferCreator = currentUserIsCreator && member.user_id && member.user_id !== currentUserId && !member.is_creator;
               return `<div class="etabMemberRow">
               <span class="etabMemberEmail">${escapeHtml(member.email)}</span>
               <span class="etabMemberRole ${member.role === "owner" ? "owner" : ""}">${etabMemberRoleLabel(member.role)}</span>
-              ${member.is_creator ? `<span class="etabMemberRole creator">créateur</span>` : canRemove ? `<button class="removeEtabMemberButton" type="button" data-remove-etab-member="${escapeHtml(member.user_id)}" data-remove-etab-id="${escapeHtml(etabId)}" data-remove-member-email="${escapeHtml(member.email)}">Supprimer</button>` : `<span></span>`}
+              <span class="etabMemberActions">
+                ${member.is_creator ? `<span class="etabMemberRole creator">créateur</span>` : ""}
+                ${canPromoteAdmin ? `<button class="removeEtabMemberButton transferCreatorButton" type="button" data-promote-etab-member="${escapeHtml(member.user_id)}" data-promote-etab-id="${escapeHtml(etabId)}" data-promote-member-email="${escapeHtml(member.email)}">Passer admin</button>` : ""}
+                ${canDemoteAdmin ? `<button class="removeEtabMemberButton transferCreatorButton" type="button" data-demote-etab-admin="${escapeHtml(member.user_id)}" data-demote-etab-id="${escapeHtml(etabId)}" data-demote-member-email="${escapeHtml(member.email)}">Rétrograder</button>` : ""}
+                ${canTransferCreator ? `<button class="removeEtabMemberButton transferCreatorButton" type="button" data-transfer-etab-creator="${escapeHtml(member.user_id)}" data-transfer-etab-id="${escapeHtml(etabId)}" data-transfer-member-email="${escapeHtml(member.email)}">Passer créateur</button>` : ""}
+                ${canRemove ? `<button class="removeEtabMemberButton" type="button" data-remove-etab-member="${escapeHtml(member.user_id)}" data-remove-etab-id="${escapeHtml(etabId)}" data-remove-member-email="${escapeHtml(member.email)}">Supprimer</button>` : ""}
+              </span>
             </div>`;
             }).join("")}
           </div>`;
@@ -12786,6 +13020,75 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             }
           });
         });
+        document.querySelectorAll("[data-promote-etab-member]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const etabId = button.dataset.promoteEtabId || "";
+            const userId = button.dataset.promoteEtabMember || "";
+            const email = button.dataset.promoteMemberEmail || "ce membre";
+            const etab = currentUserEtabs.find((item) => item.etab_id === etabId);
+            const etabName = etab?.etab_name || etabId;
+            const confirmed = window.confirm(`Donner le rôle admin à ${email} dans ${etabName} ?\n\nCette personne pourra modifier la configuration et gérer les membres de cet établissement.`);
+            if (!confirmed) return;
+            authStatus = `Promotion admin de ${email}...`;
+            render();
+            try {
+              await promoteEtabMemberToAdmin(etabId, userId);
+              accountMembersRequestKey = "";
+              authStatus = `${email} est maintenant admin de l'établissement.`;
+              showValidationPopup("Rôle admin ajouté");
+            } catch (error) {
+              authStatus = `Promotion impossible : ${error.message || "erreur inconnue"}`;
+            } finally {
+              render();
+            }
+          });
+        });
+        document.querySelectorAll("[data-demote-etab-admin]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const etabId = button.dataset.demoteEtabId || "";
+            const userId = button.dataset.demoteEtabAdmin || "";
+            const email = button.dataset.demoteMemberEmail || "ce membre";
+            const etab = currentUserEtabs.find((item) => item.etab_id === etabId);
+            const etabName = etab?.etab_name || etabId;
+            const confirmed = window.confirm(`Rétrograder ${email} en consultation dans ${etabName} ?\n\nCette personne ne pourra plus modifier la configuration ni gérer les membres de cet établissement.`);
+            if (!confirmed) return;
+            authStatus = `Rétrogradation de ${email}...`;
+            render();
+            try {
+              await demoteEtabAdminToMember(etabId, userId);
+              accountMembersRequestKey = "";
+              authStatus = `${email} est maintenant en consultation.`;
+              showValidationPopup("Admin rétrogradé");
+            } catch (error) {
+              authStatus = `Rétrogradation impossible : ${error.message || "erreur inconnue"}`;
+            } finally {
+              render();
+            }
+          });
+        });
+        document.querySelectorAll("[data-transfer-etab-creator]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const etabId = button.dataset.transferEtabId || "";
+            const userId = button.dataset.transferEtabCreator || "";
+            const email = button.dataset.transferMemberEmail || "ce membre";
+            const etab = currentUserEtabs.find((item) => item.etab_id === etabId);
+            const etabName = etab?.etab_name || etabId;
+            const confirmed = window.confirm(`Transférer le statut de créateur de ${etabName} à ${email} ?\n\nCette personne deviendra créateur et admin de l'établissement. Vous resterez admin, mais vous ne serez plus le créateur protégé.`);
+            if (!confirmed) return;
+            authStatus = `Transfert du créateur vers ${email}...`;
+            render();
+            try {
+              await transferEtabCreator(etabId, userId);
+              accountMembersRequestKey = "";
+              authStatus = `${email} est maintenant créateur de l'établissement.`;
+              showValidationPopup("Créateur transféré");
+            } catch (error) {
+              authStatus = `Transfert impossible : ${error.message || "erreur inconnue"}`;
+            } finally {
+              render();
+            }
+          });
+        });
         const acceptInviteForm = document.getElementById("acceptInviteForm");
         if (acceptInviteForm) acceptInviteForm.addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -12839,10 +13142,10 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             try {
               const link = await createEtabInvite(role);
               authInviteModalOpen = true;
-              authInviteStatus = `Lien d'invitation ${label} prêt à partager.`;
+              authInviteStatus = `Lien d'invitation ${label} à usage unique prêt à partager.`;
               if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(link).catch(() => {});
-                authInviteStatus = `Lien d'invitation ${label} prêt à partager et copié.`;
+                authInviteStatus = `Lien d'invitation ${label} à usage unique prêt à partager et copié.`;
               }
             } catch (error) {
               authInviteStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
