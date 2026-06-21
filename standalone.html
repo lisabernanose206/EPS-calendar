@@ -8950,7 +8950,7 @@
               <button class="ghostButton" data-cycle-view-zoom="+">+</button>
             </div>
             <div class="yearActionsRight">
-              <button class="ghostButton" data-print-format="A3">Exporter A3</button>
+              <button class="ghostButton" data-print-format="A3">Exporter</button>
             </div>
           </div>
           ${renderTeacherLegend("homeTeacherLegend", false)}
@@ -13267,6 +13267,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             const format = button.dataset.printFormat;
             const printTrimesters = button.dataset.printTrimesters === "construction";
             const printCycleSummary = format === "A3" && Boolean(button.closest(".cycleSummaryHeader"));
+            const isIOSPrint = printCycleSummary && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
             if (printTrimesters) {
               constructionPrintTrimesterExport = true;
               render();
@@ -13276,7 +13277,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               if (existingPrintStyle) existingPrintStyle.remove();
               const printStyle = document.createElement("style");
               printStyle.id = "printPageStyle";
-              const printPageSize = printCycleSummary && format === "A3" ? "420mm 297mm" : `${format} landscape`;
+              const printPageSize = printCycleSummary && format === "A3" ? (isIOSPrint ? "A4 landscape" : "420mm 297mm") : `${format} landscape`;
               const printPageMargin = printTrimesters || printCycleSummary ? "4mm" : "6mm";
               printStyle.textContent = `@page { size: ${printPageSize}; margin: ${printPageMargin}; }`;
               document.head.appendChild(printStyle);
@@ -13284,28 +13285,40 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
               document.body.classList.add(`print${format}`);
               if (printTrimesters) document.body.classList.add("printConstructionTrimesters");
               if (printCycleSummary) document.body.classList.add("printCycleSummary");
+              if (isIOSPrint) {
+                document.body.style.setProperty("--cycle-summary-print-width", "289mm");
+                document.body.style.setProperty("--cycle-summary-print-height", "202mm");
+              }
               setTimeout(() => {
                 if (printCycleSummary) {
                   const summaryWrap = document.querySelector(".printCycleSummary .cycleSummaryTableWrap");
                   const summaryTable = summaryWrap?.querySelector(".cycleTwoWeekTable");
-                  const availableWidth = summaryWrap?.clientWidth || 0;
-                  const requiredWidth = summaryTable?.scrollWidth || 0;
-                  const scale = availableWidth && requiredWidth ? Math.min(1, Math.max(0.35, (availableWidth - 8) / requiredWidth)) : 1;
+                  const availableWidth = Math.max(0, Math.min(summaryWrap?.clientWidth || 0, window.innerWidth || 0) - 12);
+                  const requiredWidth = summaryTable?.scrollWidth || summaryTable?.getBoundingClientRect().width || 0;
+                  const scale = availableWidth && requiredWidth ? Math.min(1, Math.max(0.25, availableWidth / requiredWidth)) : 1;
                   document.body.style.setProperty("--cycle-summary-print-scale", String(scale));
                 } else {
                   document.body.style.removeProperty("--cycle-summary-print-scale");
                 }
-                window.print();
-                setTimeout(() => {
+                let printCleanupDone = false;
+                const cleanupPrintState = () => {
+                  if (printCleanupDone) return;
+                  printCleanupDone = true;
+                  window.removeEventListener("afterprint", cleanupPrintState);
                   document.body.classList.remove("printA3", "printA2", "printA4", "printConstructionTrimesters", "printCycleSummary");
                   document.body.style.removeProperty("--cycle-summary-print-scale");
+                  document.body.style.removeProperty("--cycle-summary-print-width");
+                  document.body.style.removeProperty("--cycle-summary-print-height");
                   const style = document.getElementById("printPageStyle");
                   if (style) style.remove();
                   if (printTrimesters) {
                     constructionPrintTrimesterExport = false;
                     render();
                   }
-                }, 500);
+                };
+                window.addEventListener("afterprint", cleanupPrintState, { once: true });
+                window.print();
+                setTimeout(cleanupPrintState, isIOSPrint ? 15000 : 1200);
               }, 50);
             }, printTrimesters ? 60 : 0);
           });
