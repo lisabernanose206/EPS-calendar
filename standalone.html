@@ -35,9 +35,10 @@
       .authForm select { background: #fff; color: #0f172a; font-weight: 850; min-width: 210px; }
       .defaultEtabButton { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 900; min-height: 38px; padding: 0 10px; }
       .defaultEtabButton.active { background: #dcfce7; border-color: #86efac; color: #047857; }
+      .accountEtabGrid { grid-template-columns: 1fr !important; }
       .etabMembersList { border-top: 1px solid #e2e8f0; display: grid; gap: 6px; margin-top: 4px; padding-top: 8px; }
-      .etabMemberRow { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto auto; }
-      .etabMemberEmail { color: #0f172a; font-size: 11px; font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .etabMemberRow { align-items: start; display: grid; gap: 8px; grid-template-columns: minmax(240px, 1fr) auto minmax(0, auto); }
+      .etabMemberEmail { color: #0f172a; font-size: 11px; font-weight: 900; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; white-space: normal; word-break: break-word; }
       .etabMemberRole { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; font-size: 10px; font-weight: 950; padding: 3px 7px; white-space: nowrap; }
       .etabMemberRole.owner { background: #dcfce7; border-color: #86efac; color: #047857; }
       .etabMemberRole.creator { background: #e0f2fe; border-color: #bae6fd; color: #075985; }
@@ -1484,17 +1485,20 @@
       body.printA4 .homeTimetable .lessonTop strong, body.printA4 .homeTimetable .lessonMeta, body.printA4 .homeTimetable .lessonMeta .muted { font-size: 6.5px; line-height: 1; }
       body.printA3 .buildFacilitySlot { min-height: 20px; }
       body.printA2 .buildFacilitySlot { min-height: 24px; }
-      body.printCycleSummary.printA3 { --cycle-summary-print-width: 412mm; --cycle-summary-print-height: 289mm; margin: 0; overflow: hidden; }
+      body.printCycleSummary.printA3 { --cycle-summary-print-width: 408mm; --cycle-summary-print-height: 285mm; margin: 0; overflow: hidden; }
       body.printCycleSummary.printA3 .cycleSummaryHeader, body.printCycleSummary.printA3 .teacherColorLegend { display: none !important; }
       body.printCycleSummary.printA3 .app, body.printCycleSummary.printA3 .workspace, body.printCycleSummary.printA3 .panel { height: var(--cycle-summary-print-height); max-height: var(--cycle-summary-print-height); min-height: var(--cycle-summary-print-height); width: var(--cycle-summary-print-width); max-width: var(--cycle-summary-print-width) !important; min-width: var(--cycle-summary-print-width); overflow: hidden; }
       body.printCycleSummary.printA3 .panel { display: flex; margin: 0; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap { border: 0; display: flex; flex: 1 1 auto; height: var(--cycle-summary-print-height); min-height: var(--cycle-summary-print-height); overflow: hidden; width: var(--cycle-summary-print-width); }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .yearWrap { display: flex; flex: 1 1 auto; height: 100%; min-height: 100%; overflow: hidden; padding: 0; width: 100%; }
-      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable { border-collapse: separate; height: 100%; table-layout: fixed; width: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable { border-collapse: separate; box-sizing: border-box; height: 100%; max-width: 100%; min-width: 0 !important; table-layout: fixed; width: 100%; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable th, body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable td { min-width: 0 !important; max-width: none !important; overflow: hidden; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable .timeHead { min-width: 16mm !important; width: 16mm !important; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable .weekTypeHead { min-width: 0 !important; width: auto !important; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:first-child { height: 7%; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead tr:nth-child(2) { height: 7%; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable tbody tr { height: calc(86% / 6); }
-      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable th, body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable td { font-size: 8px; padding: 2px; }
+      body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable th, body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable td { font-size: 7.6px; padding: 1px; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .cycleTwoWeekTable thead th { font-size: 10px; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .buildCellStack { height: 100%; }
       body.printCycleSummary.printA3 .cycleSummaryTableWrap .buildBlock { height: 100%; min-height: 100%; overflow: hidden; }
@@ -1572,6 +1576,8 @@
         .navGroup { align-items: center; grid-template-columns: 72px minmax(0, 1fr); }
         .questionNavGroup { justify-self: stretch; }
         .weeks, .tabs { flex-wrap: nowrap; overflow-x: auto; }
+        .etabMemberRow { grid-template-columns: 1fr; }
+        .etabMemberActions { justify-content: flex-start; }
         .cycleSummaryHeader { grid-template-columns: 1fr; }
         .fiveCardGrid, .classConfigGrid { grid-template-columns: 1fr; }
         .constructionRuleGroupsGrid { grid-template-columns: 1fr; }
@@ -1862,7 +1868,7 @@
       let yearPrerequisiteLocks = {};
       let constructionZoom = 1;
       let constructionPrintTrimesterExport = false;
-      let cycleViewZoom = 0.8;
+      let cycleViewZoom = 0.6;
       let clearConstructionPanelOpen = false;
       let activeHomeCycleId = null;
       let activeCycleLetter = "A";
@@ -12573,7 +12579,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
             <span>Établissement actif : ${escapeHtml(currentEtabDisplayName() || cloudConfig.etabId || "aucun")}</span>
             ${accountMembersStatus ? `<span>${escapeHtml(accountMembersStatus)}</span>` : ""}
           </article>
-          <div class="guideGrid guideProfessorGrid">
+          <div class="guideGrid guideProfessorGrid accountEtabGrid">
             ${rows.map((item) => {
               const active = item.etab_id === cloudConfig.etabId;
               const isDefault = item.etab_id === defaultEtabId;
@@ -13327,7 +13333,7 @@ grant execute on function public.accept_etab_invite(text) to authenticated;`;
         });
         document.querySelectorAll("[data-cycle-view-zoom-reset]").forEach((button) => {
           button.addEventListener("click", () => {
-            cycleViewZoom = 0.8;
+            cycleViewZoom = 0.6;
             render();
           });
         });
