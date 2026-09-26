@@ -1,3 +1,5 @@
+import { securityEvent } from "../security/log.js";
+import { safeHtml } from "../security/html.js";
 import { state } from "./state.js";
 import { renderTeacherLegend } from "../domain/assignments.js";
 import { generateCycle } from "../domain/schedule.js";
@@ -45,7 +47,7 @@ export function render() {
     sidebarToggle.setAttribute("title", state.sidebarCollapsed ? "Afficher le menu" : "Masquer le menu");
   }
   dateInfo.style.display = "none";
-  dateInfo.innerHTML = "";
+  dateInfo.innerHTML = safeHtml("");
   renderAuthBox();
   const adminNavGroup = document.getElementById("adminNavGroup");
   if (adminNavGroup) adminNavGroup.classList.toggle("locked", !isAdmin());
@@ -54,11 +56,11 @@ export function render() {
     const top = document.querySelector(".top");
     if (top) top.style.display = "none";
     legend.style.display = "none";
-    legend.innerHTML = "";
-    root.innerHTML = renderLoggedOutHome();
-    root.insertAdjacentHTML("beforeend", renderValidationPopup());
-    root.insertAdjacentHTML("beforeend", renderShareInviteModal());
-    root.insertAdjacentHTML("beforeend", renderEtabSwitchModal());
+    legend.innerHTML = safeHtml("");
+    root.innerHTML = safeHtml(renderLoggedOutHome());
+    root.insertAdjacentHTML("beforeend", safeHtml(renderValidationPopup()));
+    root.insertAdjacentHTML("beforeend", safeHtml(renderShareInviteModal()));
+    root.insertAdjacentHTML("beforeend", safeHtml(renderEtabSwitchModal()));
     attachAuthControls();
     return;
   }
@@ -69,17 +71,17 @@ export function render() {
     const cycle = generateCycle();
     const hideLegend = state.week === "build" || state.week === "guide" || state.week === "request" || state.week === "account" || state.week === "cycle" || state.week === "year" || state.week === "current";
     legend.style.display = hideLegend ? "none" : "flex";
-    legend.innerHTML = hideLegend ? "" : renderTeacherLegend();
-    if (state.week === "year") root.innerHTML = renderYearView(cycle);else if (state.week === "cycle") root.innerHTML = renderCycleView();else if (state.week === "build") root.innerHTML = renderConstructionView();else if (state.week === "guide") root.innerHTML = renderGuideView();else if (state.week === "request") root.innerHTML = renderRequestView();else if (state.week === "account") root.innerHTML = renderAccountView();else root.innerHTML = renderCalendar(cycle);
+    legend.innerHTML = safeHtml(hideLegend ? "" : renderTeacherLegend());
+    if (state.week === "year") root.innerHTML = safeHtml(renderYearView(cycle));else if (state.week === "cycle") root.innerHTML = safeHtml(renderCycleView());else if (state.week === "build") root.innerHTML = safeHtml(renderConstructionView());else if (state.week === "guide") root.innerHTML = safeHtml(renderGuideView());else if (state.week === "request") root.innerHTML = safeHtml(renderRequestView());else if (state.week === "account") root.innerHTML = safeHtml(renderAccountView());else root.innerHTML = safeHtml(renderCalendar(cycle));
   } catch (error) {
-    console.error(error);
+    securityEvent("render_failed");
     legend.style.display = "none";
-    legend.innerHTML = "";
-    root.innerHTML = renderAppError(error);
+    legend.innerHTML = safeHtml("");
+    root.innerHTML = safeHtml(renderAppError(error));
   }
-  root.insertAdjacentHTML("beforeend", renderValidationPopup());
-  root.insertAdjacentHTML("beforeend", renderShareInviteModal());
-  root.insertAdjacentHTML("beforeend", renderEtabSwitchModal());
+  root.insertAdjacentHTML("beforeend", safeHtml(renderValidationPopup()));
+  root.insertAdjacentHTML("beforeend", safeHtml(renderShareInviteModal()));
+  root.insertAdjacentHTML("beforeend", safeHtml(renderEtabSwitchModal()));
   applyPrerequisitesLockState();
   bindAccountEvents();
   bindClassesEvents();

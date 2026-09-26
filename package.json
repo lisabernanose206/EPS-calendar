@@ -9,17 +9,25 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "build:web": "vite build && node scripts/copy-assets.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
-    "test": "playwright test"
+    "test": "playwright test",
+    "audit:security": "node audit/run.mjs",
+    "audit:sql": "node audit/sql-security.mjs",
+    "audit:runtime": "node audit/runtime-security.mjs",
+    "audit:browser": "playwright test --config audit/playwright.config.js",
+    "audit:frontend": "node audit/frontend-static.mjs && npm run audit:runtime && npm run audit:browser"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
+    "dompurify": "^3.4.16",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vite": "^6.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
+    "acorn": "^8.18.0",
     "esbuild": "^0.28.2"
   }
 }

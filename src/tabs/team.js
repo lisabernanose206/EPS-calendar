@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { availableTeacherPalette, firstAvailableTeacherColor, syncConstructionRulesForTeacher, teacherBorderForColor, teacherIdsForBlock, teacherNamesForBlock } from "../domain/assignments.js";
@@ -17,11 +18,11 @@ export function renderTeamSettings() {
             <h3>Ajouter un professeur</h3>
             <div class="eventField">
               <label>Prénom</label>
-              <input id="teacherDraftName" placeholder="Ex. Lisa" value="${state.teacherDraftName}" />
+              <input id="teacherDraftName" placeholder="Ex. Lisa" value="${escapeHtml(state.teacherDraftName)}" />
             </div>
             <div class="eventField">
               <label>Couleur</label>
-              <div class="teacherColorPalette">${draftPalette.map(item => `<button class="teacherColorSwatch ${state.teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${item.color}" style="background:${item.color};border-color:${state.teacherDraftColor === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("") || `<span class="muted">Toutes les couleurs sont déjà utilisées.</span>`}</div>
+              <div class="teacherColorPalette">${draftPalette.map(item => `<button class="teacherColorSwatch ${state.teacherDraftColor === item.color ? "active" : ""}" data-teacher-draft-color="${escapeHtml(item.color)}" style="background:${escapeHtml(item.color)};border-color:${state.teacherDraftColor === item.color ? escapeHtml(item.border) : "transparent"}" title="Couleur"></button>`).join("") || `<span class="muted">Toutes les couleurs sont déjà utilisées.</span>`}</div>
             </div>
             <div class="eventField">
               <label>Statut</label>
@@ -30,7 +31,7 @@ export function renderTeamSettings() {
                 <button class="choiceButton ${state.teacherDraftStatus === "agrégé" ? "active" : ""}" data-teacher-status="agrégé">Agrégé · 14h</button>
               </div>
             </div>
-            <div class="teamPreview" style="background:${state.teacherDraftColor || "#f8fafc"};border-color:${state.teacherDraftColor ? teacherBorderForColor(state.teacherDraftColor) : "#cbd5e1"}">
+            <div class="teamPreview" style="background:${escapeHtml((state.teacherDraftColor || "#f8fafc"))};border-color:${state.teacherDraftColor ? teacherBorderForColor(state.teacherDraftColor) : "#cbd5e1"}">
               <strong>${state.teacherDraftName.trim() || "Nouveau prof"}</strong>
               <span class="muted">Cours classiques : ${teacherDraftHours}h · AS : 3h</span>
             </div>
@@ -41,21 +42,21 @@ export function renderTeamSettings() {
           <div class="eventList">
             <h3>Équipe EPS</h3>
             <div class="compactCardGrid">${state.teachers.map(teacher => `<article class="eventCard teamCard">
-              <div class="teamPreview" style="background:${teacher.color};border-color:${teacher.border}">
-                <input class="teamNameEdit" data-rename-teacher="${teacher.id}" value="${teacher.name}" aria-label="Prenom du professeur" />
-                <span>${teacher.weeklyReference}h cours classiques · 3h AS</span>
-                ${teacher.replacementName ? `<span>Remplacant : ${teacher.replacementName}</span>` : ""}
+              <div class="teamPreview" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">
+                <input class="teamNameEdit" data-rename-teacher="${escapeHtml(teacher.id)}" value="${escapeHtml(teacher.name)}" aria-label="Prenom du professeur" />
+                <span>${escapeHtml(teacher.weeklyReference)}h cours classiques · 3h AS</span>
+                ${teacher.replacementName ? `<span>Remplacant : ${escapeHtml(teacher.replacementName)}</span>` : ""}
               </div>
               <div class="eventField">
                 <label>Couleur</label>
-                <button class="ghostButton teacherColorToggle" data-toggle-teacher-color="${teacher.id}">${state.expandedTeacherColorId === teacher.id ? "Masquer les couleurs" : "Changer la couleur"}</button>
-                ${state.expandedTeacherColorId === teacher.id ? `<div class="teacherColorPalette">${availableTeacherPalette(teacher.id).map(item => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${teacher.id}" data-color="${item.color}" style="background:${item.color};border-color:${teacher.color === item.color ? item.border : "transparent"}" title="Couleur"></button>`).join("")}</div>` : ""}
+                <button class="ghostButton teacherColorToggle" data-toggle-teacher-color="${escapeHtml(teacher.id)}">${state.expandedTeacherColorId === teacher.id ? "Masquer les couleurs" : "Changer la couleur"}</button>
+                ${state.expandedTeacherColorId === teacher.id ? `<div class="teacherColorPalette">${availableTeacherPalette(teacher.id).map(item => `<button class="teacherColorSwatch ${teacher.color === item.color ? "active" : ""}" data-update-teacher-color="${escapeHtml(teacher.id)}" data-color="${escapeHtml(item.color)}" style="background:${escapeHtml(item.color)};border-color:${teacher.color === item.color ? escapeHtml(item.border) : "transparent"}" title="Couleur"></button>`).join("")}</div>` : ""}
               </div>
               <div class="eventField">
                 <label>Remplacant</label>
-                <input class="replacementEdit" data-teacher-replacement="${teacher.id}" placeholder="Ex. Nom du remplacant" value="${teacher.replacementName || ""}" />
+                <input class="replacementEdit" data-teacher-replacement="${escapeHtml(teacher.id)}" placeholder="Ex. Nom du remplacant" value="${escapeHtml((teacher.replacementName || ""))}" />
               </div>
-              <button class="ghostButton" data-delete-teacher="${teacher.id}">Supprimer</button>
+              <button class="ghostButton" data-delete-teacher="${escapeHtml(teacher.id)}">Supprimer</button>
             </article>`).join("")}</div>
           </div>
         </section>`;

@@ -22,7 +22,7 @@ export function renderConstructionRulesView() {
     return `<section class="unavailableGroup ${isEstablishmentGroup ? "establishmentRuleGroup" : ""}">
               <button class="${isOpen ? "active" : ""}" data-toggle-construction-rule-category="${escapeHtml(category)}">
                 <span>${escapeHtml(category)}</span>
-                <span>${rules.length} · ${isOpen ? "Masquer" : "Afficher"}</span>
+                <span>${escapeHtml(rules.length)} · ${isOpen ? "Masquer" : "Afficher"}</span>
               </button>
               ${isOpen ? `<div class="constructionRulesGrid">${rules.map(rule => `<article class="constructionRuleCard ${isEstablishmentGroup ? "establishmentRuleCard" : ""}">
                 <div class="constructionRuleCardHead">

@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { classParts, schoolClassLabel, toggleExclusiveClassSelection, toggleWholeLevelSelection } from "../domain/assignments.js";
@@ -14,7 +15,7 @@ export function renderEventsView() {
             <h3>${state.editingEventId ? "Modifier l'événement sportif" : "Ajouter un événement sportif"}</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="eventName" value="${state.eventName}" />
+              <input id="eventName" value="${escapeHtml(state.eventName)}" />
             </div>
             <div class="eventField">
               <label>Dates</label>
@@ -35,12 +36,12 @@ export function renderEventsView() {
   }, ...state.slots.map(slot => ({
     id: `slot-${slot.id}`,
     label: slot.label
-  }))].map(period => `<button class="choiceButton ${state.eventHalfDay === period.id ? "active" : ""}" data-event-half-day="${period.id}">${period.label}</button>`).join("")}
+  }))].map(period => `<button class="choiceButton ${state.eventHalfDay === period.id ? "active" : ""}" data-event-half-day="${escapeHtml(period.id)}">${escapeHtml(period.label)}</button>`).join("")}
               </div>
             </div>
             <div class="eventField">
               <label>Profs concernés</label>
-              <div class="choiceGrid">${state.teachers.map(teacher => `<button class="choiceButton ${state.eventTeacherIds.includes(teacher.id) ? "active" : ""}" data-event-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("")}</div>
+              <div class="choiceGrid">${state.teachers.map(teacher => `<button class="choiceButton ${state.eventTeacherIds.includes(teacher.id) ? "active" : ""}" data-event-teacher="${escapeHtml(teacher.id)}" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</button>`).join("")}</div>
             </div>
             <div class="eventField">
               <label>Classes concernées</label>
@@ -64,15 +65,15 @@ export function renderEventsView() {
             <h3>Événements existants</h3>
             ${state.sportEvents.length === 0 ? `<div class="alertEmpty">Aucun événement sportif ajouté.</div>` : `<div class="compactCardGrid fiveCardGrid">${state.sportEvents.map(event => `
               <article class="eventCard">
-                <input class="eventNameEdit" data-rename-event="${event.id}" value="${event.name}" aria-label="Nom de l'événement" />
-                <span>${event.start} ↔ ${event.end} · ${eventPeriodLabel(event)}</span>
+                <input class="eventNameEdit" data-rename-event="${escapeHtml(event.id)}" value="${escapeHtml(event.name)}" aria-label="Nom de l'événement" />
+                <span>${escapeHtml(event.start)} ↔ ${escapeHtml(event.end)} · ${eventPeriodLabel(event)}</span>
                 <span>Classes : ${eventClassSummary(event)}</span>
-                <span class="eventTeacherSummary">${event.teacherIds.length} prof(s) ${event.teacherIds.map(teacherId => {
+                <span class="eventTeacherSummary">${escapeHtml(event.teacherIds.length)} prof(s) ${event.teacherIds.map(teacherId => {
     const teacher = state.teachers.find(item => item.id === teacherId);
-    return teacher ? `<i class="eventTeacherSwatch" style="background:${teacher.color};border-color:${teacher.border}" title="${teacher.name}"></i>` : "";
+    return teacher ? `<i class="eventTeacherSwatch" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}" title="${escapeHtml(teacher.name)}"></i>` : "";
   }).join("")}</span>
-                <button class="ghostButton" data-edit-event="${event.id}">Modifier</button>
-                <button class="ghostButton" data-delete-event="${event.id}">Supprimer</button>
+                <button class="ghostButton" data-edit-event="${escapeHtml(event.id)}">Modifier</button>
+                <button class="ghostButton" data-delete-event="${escapeHtml(event.id)}">Supprimer</button>
               </article>`).join("")}</div>`}
           </div>
         </section>`;

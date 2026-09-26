@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activeCycles, setCycleCount } from "../domain/cycles.js";
@@ -40,9 +41,9 @@ export function renderEstablishmentSettings() {
                 <div class="cycleList">
                   ${state.slots.map((slot, index) => `<div class="cycleRow schoolSlotGrid">
                     <label>Cours ${index + 1}</label>
-                    <input data-course-slot-start="${slot.id}" type="time" value="${slot.startTime}" aria-label="Heure de début" />
-                    <input data-course-slot-end="${slot.id}" type="time" value="${slot.endTime}" aria-label="Heure de fin" />
-                    <button class="ghostButton" data-delete-course-slot="${slot.id}" ${state.slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
+                    <input data-course-slot-start="${escapeHtml(slot.id)}" type="time" value="${escapeHtml(slot.startTime)}" aria-label="Heure de début" />
+                    <input data-course-slot-end="${escapeHtml(slot.id)}" type="time" value="${escapeHtml(slot.endTime)}" aria-label="Heure de fin" />
+                    <button class="ghostButton" data-delete-course-slot="${escapeHtml(slot.id)}" ${state.slots.length <= 1 ? "disabled" : ""}>Supprimer</button>
                   </div>`).join("")}
                 </div>
                 <button class="ghostButton" id="addCourseSlot">Ajouter un créneau de cours</button>
@@ -53,8 +54,8 @@ export function renderEstablishmentSettings() {
                   ${(state.schoolConstraints.asSlots || []).map((slot, index) => `<div class="cycleRow">
                     <label>AS ${index + 1}</label>
                     <div class="asSlotGrid">
-                      <input data-as-slot-start="${index}" type="time" value="${slot.startTime}" aria-label="Heure de début AS" />
-                      <input data-as-slot-end="${index}" type="time" value="${slot.endTime}" aria-label="Heure de fin AS" />
+                      <input data-as-slot-start="${index}" type="time" value="${escapeHtml(slot.startTime)}" aria-label="Heure de début AS" />
+                      <input data-as-slot-end="${index}" type="time" value="${escapeHtml(slot.endTime)}" aria-label="Heure de fin AS" />
                       <div class="asSlotDays">${state.days.map(day => `<button class="choiceButton ${(slot.days || []).includes(day) ? "active" : ""}" data-as-slot-day="${index}" data-day="${day}">${day}</button>`).join("")}</div>
                     </div>
                     <button class="ghostButton asSlotDelete" data-delete-as-slot="${index}" ${(state.schoolConstraints.asSlots || []).length <= 1 ? "disabled" : ""}>Supprimer</button>

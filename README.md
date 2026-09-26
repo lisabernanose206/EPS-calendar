@@ -93,3 +93,10 @@ npm.cmd test
 Les tests utilisent des sessions fictives et interceptent les requêtes externes : aucune donnée de production n’est modifiée. Ils vérifient les points d’entrée web et standalone, les onglets et sous-onglets, les rôles de navigation, l’état partagé et les accents. Ils ne constituent pas une vérification des politiques du serveur Supabase.
 
 Tous les fichiers texte doivent rester en UTF-8.
+
+## Audit de sécurité
+
+Le [rapport du 26 septembre 2026](SECURITY-AUDIT-2026-09-26.md) documente les failles reproduites, les limites de vérification de la production et les priorités de correction. Les [tests dédiés](audit/README.md) se lancent avec `npm run audit:security` et restent en échec tant que les protections attendues ne sont pas corrigées. Ils sont isolés des données réelles.
+
+
+Les [corrections frontend du 26 septembre](SECURITY-FIXES-2026-09-26.md) ajoutent le filtrage HTML, OAuth PKCE, la révocation à la déconnexion, le contrôle des sauvegardes concurrentes, la validation des données et une CSP compatible avec le standalone. Lancer `npm run build`, puis `npm run audit:frontend` et `npm test`. Les failles serveur Supabase restent ouvertes conformément au périmètre demandé.

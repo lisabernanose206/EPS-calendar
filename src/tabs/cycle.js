@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { blockTeacherStyle, renderTeacherLegend, teacherIdsForBlock } from "../domain/assignments.js";
@@ -97,12 +98,12 @@ export function renderCycleTwoWeekTable(cycle) {
             ${state.days.flatMap(() => displayedFacilities.map(() => `<col class="cycleFacilityCol" />`)).join("")}
           </colgroup>
           <thead>
-            <tr><th class="timeHead" rowspan="2">Créneau</th>${state.days.map(day => `<th colspan="${displayedFacilities.length}">${day}</th>`).join("")}</tr>
-            <tr>${state.days.flatMap(() => displayedFacilities.map(facility => `<th class="weekTypeHead" title="${facility.label}">${facilityShortLabel(facility.id, facility.label)}</th>`)).join("")}</tr>
+            <tr><th class="timeHead" rowspan="2">Créneau</th>${state.days.map(day => `<th colspan="${escapeHtml(displayedFacilities.length)}">${day}</th>`).join("")}</tr>
+            <tr>${state.days.flatMap(() => displayedFacilities.map(facility => `<th class="weekTypeHead" title="${escapeHtml(facility.label)}">${facilityShortLabel(facility.id, facility.label)}</th>`)).join("")}</tr>
           </thead>
           <tbody>
             ${cycleSlots.map(slot => `<tr>
-              <th class="timeHead">${slot.label}</th>
+              <th class="timeHead">${escapeHtml(slot.label)}</th>
               ${state.days.flatMap(day => displayedFacilities.map(facility => {
     const row = rows.find(item => item.day === day && item.slot.id === slot.id);
     const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
@@ -128,7 +129,7 @@ export function renderCycleView() {
             <div class="cycleSummaryControl">
               <label>${cycleLabel()}</label>
               <select id="homeCycleSelect">
-                ${cycleChoices.map(cycleItem => `<option value="${cycleItem.id}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${cycleItem.displayName}</option>`).join("")}
+                ${cycleChoices.map(cycleItem => `<option value="${escapeHtml(cycleItem.id)}" ${cycleItem.id === selectedCycle.id ? "selected" : ""}>${escapeHtml(cycleItem.displayName)}</option>`).join("")}
               </select>
             </div>
             <div class="zoomControls">
@@ -141,7 +142,7 @@ export function renderCycleView() {
             </div>
           </div>
           ${renderTeacherLegend("homeTeacherLegend", false)}
-          <div class="constructionZoomWrap cycleSummaryTableWrap" style="--table-zoom:${state.cycleViewZoom};--table-offset:150px;zoom:${state.cycleViewZoom}">${renderCycleTwoWeekTable(selectedCycle)}</div>
+          <div class="constructionZoomWrap cycleSummaryTableWrap" style="--table-zoom:${escapeHtml(state.cycleViewZoom)};--table-offset:150px;zoom:${escapeHtml(state.cycleViewZoom)}">${renderCycleTwoWeekTable(selectedCycle)}</div>
         </section>`;
 }
 export function bindCycleEvents() {

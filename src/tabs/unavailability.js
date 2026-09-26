@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { classParts, schoolClassLabel, toggleUnavailableClass, toggleUnavailableGridCell, toggleUnavailableTeacher, unavailableCellSelected } from "../domain/assignments.js";
@@ -42,20 +43,20 @@ export function renderFacilityUnavailabilityView() {
             </div>
             ${state.unavailablePeriodMode === "cycles" ? `<div class="eventField">
               <label>${isCollegeEstablishment() ? "P\u00e9riodes concern\u00e9es" : "Cycles concern\u00e9s"}</label>
-              ${cyclesAvailable ? `<div class="choiceGrid">${state.cycles.map(cycle => `<button class="choiceButton ${state.unavailableCycleIds.includes(cycle.id) ? "active" : ""}" data-unavailable-cycle="${cycle.id}">${displayCycleName(cycle)}</button>`).join("")}</div>
+              ${cyclesAvailable ? `<div class="choiceGrid">${state.cycles.map(cycle => `<button class="choiceButton ${state.unavailableCycleIds.includes(cycle.id) ? "active" : ""}" data-unavailable-cycle="${escapeHtml(cycle.id)}">${displayCycleName(cycle)}</button>`).join("")}</div>
               <span class="muted">${selectedCycles.length ? `Dates appliquées : ${period.start} -> ${period.end}` : `Sélectionnez ${isCollegeEstablishment() ? "une ou plusieurs périodes" : "un ou plusieurs cycles"}.`}</span>` : `<span class="muted">Si vous voulez paramêtrer vos indispo sur des ${cycleLabel(true, true)}, définissez-les avant.</span>`}
             </div>` : ""}
             ${state.unavailableType === "facility" ? `<div class="eventField">
               <label>Contraintes installations</label>
               <div class="choiceGrid">
-                ${state.facilities.map(facility => `<button class="choiceButton ${state.unavailableFacilityIds.includes(facility.id) ? "active" : ""}" data-unavailable-facility="${facility.id}">${facility.label}</button>`).join("") || `<span class="muted">Aucune installation disponible.</span>`}
+                ${state.facilities.map(facility => `<button class="choiceButton ${state.unavailableFacilityIds.includes(facility.id) ? "active" : ""}" data-unavailable-facility="${escapeHtml(facility.id)}">${escapeHtml(facility.label)}</button>`).join("") || `<span class="muted">Aucune installation disponible.</span>`}
               </div>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${state.days.map(day => `<th>${day}</th>`).join("")}</tr></thead>
                 <tbody>${state.slots.map(slot => `<tr>
-                  <th>${slot.label}</th>
-                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
+                  <th>${escapeHtml(slot.label)}</th>
+                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${escapeHtml(slot.id)}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
                 </tr>`).join("")}</tbody>
               </table>
             </div>` : state.unavailableType === "class" ? `<div class="eventField">
@@ -70,22 +71,22 @@ export function renderFacilityUnavailabilityView() {
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${state.days.map(day => `<th>${day}</th>`).join("")}</tr></thead>
                 <tbody>${state.slots.map(slot => `<tr>
-                  <th>${slot.label}</th>
-                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
+                  <th>${escapeHtml(slot.label)}</th>
+                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${escapeHtml(slot.id)}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
                 </tr>`).join("")}</tbody>
               </table>
             </div>` : `<div class="eventField">
               <label>Contraintes profs</label>
               <div class="choiceGrid">
-                ${state.teachers.map(teacher => `<button class="choiceButton ${state.unavailableTeacherIds.includes(teacher.id) ? "active" : ""}" data-unavailable-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("") || `<span class="muted">Aucun prof disponible.</span>`}
+                ${state.teachers.map(teacher => `<button class="choiceButton ${state.unavailableTeacherIds.includes(teacher.id) ? "active" : ""}" data-unavailable-teacher="${escapeHtml(teacher.id)}" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</button>`).join("") || `<span class="muted">Aucun prof disponible.</span>`}
               </div>
               <span class="muted">${state.unavailableTeacherIds.length ? `Profs sélectionnés : ${teacherNamesFromIds(state.unavailableTeacherIds).join(", ")}` : "Aucun prof sélectionné"}</span>
               <label>Créneaux indisponibles</label>
               <table class="availabilityGrid">
                 <thead><tr><th>Créneau</th>${state.days.map(day => `<th>${day}</th>`).join("")}</tr></thead>
                 <tbody>${state.slots.map(slot => `<tr>
-                  <th>${slot.label}</th>
-                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${slot.id}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
+                  <th>${escapeHtml(slot.label)}</th>
+                  ${state.days.map(day => `<td><button class="choiceButton unavailableCellButton ${unavailableCellSelected(day, slot.id) ? "active" : ""}" data-unavailable-cell-day="${day}" data-unavailable-cell-slot="${escapeHtml(slot.id)}">${unavailableCellSelected(day, slot.id) ? "x" : ""}</button></td>`).join("")}
                 </tr>`).join("")}</tbody>
               </table>
             </div>`}

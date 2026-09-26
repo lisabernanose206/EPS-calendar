@@ -1,3 +1,4 @@
+import { escapeHtml } from "./format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activeCycles, saveCycles, validateCycles } from "../domain/cycles.js";
@@ -64,7 +65,7 @@ export function renderDateRangePicker(id, start, end, disabled = false) {
               <button type="button" data-date-range-month="+">›</button>
             </div>
             <div class="dateRangeGrid">${["L", "M", "M", "J", "V", "S", "D"].map(day => `<span class="dateRangeWeekday">${day}</span>`).join("")}${dayButtons}</div>
-            <span class="dateRangeHint ${state.dateRangeSelectionError ? "error" : ""}">${state.dateRangeSelectionError || (state.dateRangeDraftStart && !state.dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de début.")}</span>
+            <span class="dateRangeHint ${state.dateRangeSelectionError ? "error" : ""}">${escapeHtml((state.dateRangeSelectionError || state.dateRangeDraftStart && !state.dateRangeDraftEnd ? "Choisissez la date de fin." : "Choisissez la date de début."))}</span>
             <div class="dateRangeActions">
               <button type="button" class="dateRangeValidate" data-validate-date-range="${id}" ${state.dateRangeDraftStart && state.dateRangeDraftEnd ? "" : "disabled"}>Valider les dates</button>
             </div>

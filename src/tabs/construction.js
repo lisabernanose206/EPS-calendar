@@ -104,7 +104,7 @@ export function renderConstructionView() {
   const lockLabel = "Sous-onglet verrouill&eacute;";
   const unlockLabel = "Verrouiller ce sous-onglet";
   const constructionHelpText = state.constructionBuildMode === "blocks" ? `Blocs annuels : posez uniquement profs, classes, co-intervention et type de semaine. Les installations et activités se renseignent ensuite par ${cycleLabel(true)}.` : `Installations/activités : choisissez ${isCollegeEstablishment() ? "une période" : "un cycle"}, puis cliquez sur un bloc pour lui affecter une installation et une activité. Les choix sont enregistrés pour ${isCollegeEstablishment() ? "la période sélectionnée" : "le cycle sélectionné"}.`;
-  const constructionTableContent = state.constructionBuildMode === "versions" ? renderConstructionVersionsView() : `<div class="constructionZoomWrap" style="--table-zoom:${state.constructionZoom};--table-offset:150px;zoom:${state.constructionZoom}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
+  const constructionTableContent = state.constructionBuildMode === "versions" ? renderConstructionVersionsView() : `<div class="constructionZoomWrap" style="--table-zoom:${escapeHtml(state.constructionZoom)};--table-offset:150px;zoom:${escapeHtml(state.constructionZoom)}">${renderConstructionCycleTable(selectedCycle, rows, !currentConstructionLocked)}</div>`;
   return `<section class="builderPage">
           <div class="constructionBuilderBody">
             <h2 class="prerequisitesPageTitle">Construction</h2>
@@ -118,11 +118,11 @@ export function renderConstructionView() {
             </div>` : ""}
             ${state.constructionBuildMode === "cycleDetails" ? renderConstructionConflictSummary() : ""}
             ${state.constructionBuildMode === "cycleDetails" ? `<div class="cycleConstructionTabs">
-              ${constructionCycles.map(cycle => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${cycle.id}">${displayCycleName(cycle)}${state.constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
+              ${constructionCycles.map(cycle => `<button class="choiceButton ${selectedCycle?.id === cycle.id ? "active" : ""}" data-construction-cycle="${escapeHtml(cycle.id)}">${displayCycleName(cycle)}${state.constructionLocks.cycleDetails?.[cycle.id] ? " &#128274;" : ""}</button>`).join("")}
             </div>` : ""}
             ${state.constructionBuildMode !== "versions" ? `<div class="prerequisitesLockRow">
               <label class="lockToggle" title="Verrouiller les modifications de cette partie">
-                <input type="checkbox" data-construction-lock="${state.constructionBuildMode}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
+                <input type="checkbox" data-construction-lock="${escapeHtml(state.constructionBuildMode)}" data-construction-lock-cycle="${selectedCycle?.id || ""}" ${currentConstructionLocked ? "checked" : ""} />
                 <span class="lockToggleTrack"></span>
                 <span>${currentConstructionLocked ? lockLabel : unlockLabel}</span>
               </label>
@@ -136,7 +136,7 @@ export function renderConstructionView() {
             ${state.constructionBuildMode === "blocks" ? renderConstructionConflictSummary() : ""}
             ${state.constructionBuildMode !== "versions" ? `<div class="builderActions constructionSubtabActions constructionTableActions">
               <div class="teacherColorLegend">
-                ${state.teachers.map(teacher => `<span style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
+                ${state.teachers.map(teacher => `<span style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</span>`).join("")}
               </div>
               <div class="zoomControls">
                 <button class="ghostButton" data-construction-zoom="-">-</button>
@@ -188,7 +188,7 @@ export function renderClearConstructionPanel() {
               <h3>Installations / activités</h3>
               <div class="clearConstructionOptions">
                 <label><input type="checkbox" data-clear-option="constructionDetailsAll" /> Tous les cycles</label>
-                ${constructionCycles.map(cycle => `<label><input type="checkbox" data-clear-cycle-detail="${cycle.id}" /> ${escapeHtml(displayCycleName(cycle) || cycle.id)}</label>`).join("")}
+                ${constructionCycles.map(cycle => `<label><input type="checkbox" data-clear-cycle-detail="${escapeHtml(cycle.id)}" /> ${escapeHtml(displayCycleName(cycle) || cycle.id)}</label>`).join("")}
               </div>
             </div>
             <div class="clearConstructionPanel">
@@ -217,8 +217,8 @@ export function renderConstructionVersionsView() {
                 <span>${ruleCount} bloc(s) · ${exclusionCount} exclusion(s)</span>
                 <span>${version.mode === "optimized" ? "Construction optimisée" : "Construction manuelle"}</span>
                 <div class="constructionRuleActions">
-                  <button class="ghostButton" data-restore-construction-version="${version.id}">Charger</button>
-                  <button class="ghostButton" data-delete-construction-version="${version.id}">Supprimer</button>
+                  <button class="ghostButton" data-restore-construction-version="${escapeHtml(version.id)}">Charger</button>
+                  <button class="ghostButton" data-delete-construction-version="${escapeHtml(version.id)}">Supprimer</button>
                 </div>
               </article>`;
   }).join("")}</div>` : `<div class="alertEmpty">Aucune version sauvegardee pour le moment.</div>`}
@@ -246,7 +246,7 @@ export function renderSaveConstructionVersionModal() {
               <label>Contenu sauvegarde</label>
               <div class="constructionVersionChoices">
                 ${options.map(option => `<label class="constructionVersionChoice">
-                  <input type="checkbox" data-construction-version-part="${option.id}" ${selectedParts.includes(option.id) ? "checked" : ""} />
+                  <input type="checkbox" data-construction-version-part="${escapeHtml(option.id)}" ${selectedParts.includes(option.id) ? "checked" : ""} />
                   ${escapeHtml(option.label)}
                 </label>`).join("")}
               </div>

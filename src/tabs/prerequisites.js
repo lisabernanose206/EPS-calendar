@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { adminStepComplete } from "../domain/readiness.js";
@@ -14,7 +15,7 @@ export function renderPrerequisiteTabs(items, active, datasetName, lockState = (
           ${items.map(item => {
     const complete = adminStepComplete(item.id);
     const locked = lockState(item.id);
-    return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${item.id}">${item.label}<span class="subtabStatusStack"><span class="subtabLockIcon ${locked ? "locked" : ""}" aria-label="${locked ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${complete ? "Étape complète" : "Étape incomplète"}"></span></span></button>`;
+    return `<button class="${active === item.id ? "active" : ""} ${complete ? "stepComplete" : "stepIncomplete"}" ${datasetName}="${escapeHtml(item.id)}">${escapeHtml(item.label)}<span class="subtabStatusStack"><span class="subtabLockIcon ${locked ? "locked" : ""}" aria-label="${locked ? "Verrouille" : "Deverrouillé"}">&#128274;</span><span class="stepStatus" aria-label="${complete ? "Étape complète" : "Étape incomplète"}"></span></span></button>`;
   }).join("")}
         </div>`;
 }
@@ -44,7 +45,7 @@ export function renderPrerequisitesView() {
           ${renderPrerequisiteTabs(tabs, state.prerequisiteMode, "data-prerequisite-mode", prerequisiteLocked)}
           <div class="prerequisitesLockRow">
             <label class="lockToggle" title="Verrouiller les modifications de ce sous-onglet">
-              <input type="checkbox" data-prerequisites-lock="${state.prerequisiteMode}" ${currentLocked ? "checked" : ""} />
+              <input type="checkbox" data-prerequisites-lock="${escapeHtml(state.prerequisiteMode)}" ${currentLocked ? "checked" : ""} />
               <span class="lockToggleTrack"></span>
               <span>${currentLocked ? "Sous-onglet verrouill&eacute;" : "Verrouiller ce sous-onglet"}</span>
             </label>

@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { schoolClassLabel } from "../domain/assignments.js";
@@ -30,7 +31,7 @@ export function renderClassesView() {
                 <h4>${level}</h4>
                 <div class="classConfigControls">
                   <label>Nombre
-                    <input type="number" min="0" max="99" value="${config.labels.length}" data-class-count="${level}" />
+                    <input type="number" min="0" max="99" value="${escapeHtml(config.labels.length)}" data-class-count="${level}" />
                   </label>
                   <label>Format
                     <select data-class-mode="${level}">
@@ -46,7 +47,7 @@ export function renderClassesView() {
             <div class="specialClassPanel">
               <h3>Classes à besoin spécifique</h3>
               <div class="specialClassForm">
-                <input id="specialClassName" value="${state.specialClassDraftName}" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
+                <input id="specialClassName" value="${escapeHtml(state.specialClassDraftName)}" placeholder="Ex. Segpa, Ulysse, Dispositif..." />
                 <div class="choiceGrid">
                   ${standardClasses.map(schoolClass => `<button class="choiceButton ${state.specialClassDraftBaseIds.includes(schoolClass) ? "active" : ""}" data-special-class-draft-base="${schoolClass}">${compactClassName(schoolClass)}</button>`).join("")}
                 </div>
@@ -55,12 +56,12 @@ export function renderClassesView() {
               <div class="cycleList">${specialClasses().length ? specialClasses().map(item => {
     const baseClassIds = specialClassBaseIds(item);
     return `<div class="cycleRow">
-                <label>${item.label}</label>
+                <label>${escapeHtml(item.label)}</label>
                 <div class="choiceGrid">
-                  ${standardClasses.map(schoolClass => `<button class="choiceButton ${baseClassIds.includes(schoolClass) ? "active" : ""}" data-special-class-base="${item.id}" data-special-class-value="${schoolClass}">${compactClassName(schoolClass)}</button>`).join("")}
+                  ${standardClasses.map(schoolClass => `<button class="choiceButton ${baseClassIds.includes(schoolClass) ? "active" : ""}" data-special-class-base="${escapeHtml(item.id)}" data-special-class-value="${schoolClass}">${compactClassName(schoolClass)}</button>`).join("")}
                 </div>
                 <span class="muted">${specialClassBaseLabel(item)}</span>
-                <button class="ghostButton" data-remove-special-class="${item.id}" title="Supprimer cette classe">Supprimer</button>
+                <button class="ghostButton" data-remove-special-class="${escapeHtml(item.id)}" title="Supprimer cette classe">Supprimer</button>
               </div>`;
   }).join("") : `<span class="muted">Aucune classe spécifique définie.</span>`}</div>
             </div>
@@ -248,6 +249,7 @@ export function bindClassesEvents() {
       const file = classCsvImport.files?.[0];
       if (!file) return;
       try {
+        if (file.size > 2_000_000) throw new Error("Import limité à 2 Mo.");
         const text = await file.text();
         const total = importClassesFromCsvText(text);
         showValidationPopup(`${total} classe(s) importée(s) depuis Pronote`);

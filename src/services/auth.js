@@ -1,3 +1,8 @@
+import { fetchBackend } from "../security/fetch.js";
+import { createOAuthChallenge, consumeOAuthVerifier, clearOAuthVerifier } from "../security/oauth.js";
+import { secureBackendUrl } from "../security/transport.js";
+import { securityEvent } from "../security/log.js";
+import { safeHtml } from "../security/html.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { conflictsForBuildMode } from "../domain/assignments.js";
@@ -6,11 +11,11 @@ import { clearLocalPlanningStorageForEtabSwitch, cloudAnonAuthHeaders, cloudFetc
 import { escapeHtml } from "../ui/format.js";
 
 export function authEndpoint(path) {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/auth/v1/${path}`;
 }
 export function rpcEndpoint(name) {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/rest/v1/rpc/${name}`;
 }
 export function inviteTokenFromUrl() {
@@ -40,6 +45,9 @@ export function cleanAuthUrl(removeInvite = false) {
   try {
     const url = new URL(window.location.href);
     url.hash = "";
+    url.searchParams.delete("code");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
     if (removeInvite) url.searchParams.delete("invite");
     window.history.replaceState({}, document.title, url.toString());
   } catch {}
@@ -47,63 +55,72 @@ export function cleanAuthUrl(removeInvite = false) {
 export function oauthRedirectUrl() {
   const url = new URL(window.location.href);
   url.hash = "";
+  for (const key of ["code", "error", "error_description"]) url.searchParams.delete(key);
   return url.toString();
 }
-export function startOAuthProvider(provider) {
-  if (!state.cloudConfig.url || !state.cloudConfig.anonKey) {
-    state.authStatus = "Configuration Supabase incomplete.";
+export async function startOAuthProvider(provider) {
+  try {
+    if (provider !== "google" || !state.cloudConfig.anonKey) throw new Error("Configuration de connexion invalide.");
+    if (state.authInviteToken) localStorage.setItem(state.AUTH_INVITE_KEY, state.authInviteToken);
+    const redirect = oauthRedirectUrl();
+    const challenge = await createOAuthChallenge(state.cloudConfig.url, redirect);
+    const target = new URL(authEndpoint("authorize"));
+    target.search = new URLSearchParams({ provider, redirect_to: redirect, code_challenge: challenge, code_challenge_method: "s256" }).toString();
+    window.location.assign(target.toString());
+  } catch {
+    securityEvent("oauth_failed");
+    state.authStatus = "Connexion impossible. Ouvrez le site en HTTPS et réessayez.";
     render();
-    return;
   }
-  if (state.authInviteToken) localStorage.setItem(state.AUTH_INVITE_KEY, state.authInviteToken);
-  const target = `${authEndpoint("authorize")}?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(oauthRedirectUrl())}`;
-  window.location.assign(target);
 }
 export async function fetchAuthUser(accessToken) {
-  const response = await fetch(authEndpoint("user"), {
-    headers: {
-      apikey: state.cloudConfig.anonKey,
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    }
+  const response = await fetchBackend(authEndpoint("user"), {
+    headers: { apikey: state.cloudConfig.anonKey, Authorization: "Bearer " + accessToken, "Content-Type": "application/json" }
   });
-  if (!response.ok) return null;
-  return response.json();
+  if (!response.ok) throw new Error("Session refusée. Relancez la connexion.");
+  const user = await response.json();
+  if (!user || typeof user.id !== "string" || !user.id) throw new Error("Utilisateur non vérifié.");
+  return user;
 }
 export async function handleOAuthRedirect() {
-  const hash = window.location.hash?.startsWith("#") ? window.location.hash.slice(1) : "";
-  if (!hash) return false;
-  const params = new URLSearchParams(hash);
-  const error = params.get("error_description") || params.get("error");
-  if (error) {
-    state.authStatus = `Connexion OAuth refusée : ${error}`;
-    cleanAuthUrl(false);
-    return true;
-  }
-  const accessToken = params.get("access_token");
-  if (!accessToken) return false;
-  const expiresIn = Number(params.get("expires_in") || 3600);
-  const user = await fetchAuthUser(accessToken);
-  saveAdminSession({
-    access_token: accessToken,
-    refresh_token: params.get("refresh_token") || "",
-    token_type: params.get("token_type") || "bearer",
-    expires_at: Math.floor(Date.now() / 1000) + expiresIn,
-    user
-  });
-  const token = state.authInviteToken || localStorage.getItem(state.AUTH_INVITE_KEY) || "";
-  if (token) {
-    await acceptEtabInvite(token, {
-      preserveCurrent: false
+  const url = new URL(window.location.href);
+  const hash = new URLSearchParams(url.hash.slice(1));
+  const error = url.searchParams.get("error_description") || url.searchParams.get("error") || hash.get("error_description") || hash.get("error");
+  const code = url.searchParams.get("code");
+  if (!error && !code && !hash.has("access_token")) return false;
+  const redirect = oauthRedirectUrl();
+  // Remove credentials from the address immediately, including on network errors.
+  cleanAuthUrl(false);
+  try {
+    if (error) throw new Error("Connexion OAuth refusée : " + error);
+    if (!code) throw new Error("Ancien lien de connexion refusé. Relancez la connexion Google.");
+    const verifier = consumeOAuthVerifier(state.cloudConfig.url, redirect);
+    const response = await fetchBackend(authEndpoint("token") + "?grant_type=pkce", {
+      method: "POST",
+      headers: { apikey: state.cloudConfig.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ auth_code: code, code_verifier: verifier })
     });
-    state.authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
-    cleanAuthUrl(true);
-  } else {
-    await ensureCurrentUserEtab();
-    state.authStatus = "";
-    cleanAuthUrl(false);
+    if (!response.ok) throw new Error("Échange de connexion refusé. Relancez la connexion.");
+    const result = await response.json();
+    if (typeof result.access_token !== "string" || !result.access_token || typeof result.refresh_token !== "string" || !result.refresh_token) throw new Error("Session incomplète.");
+    const user = await fetchAuthUser(result.access_token);
+    saveAdminSession({ access_token: result.access_token, refresh_token: result.refresh_token, token_type: "bearer", expires_at: Math.floor(Date.now() / 1000) + (Number(result.expires_in) || 3600), user });
+    const token = state.authInviteToken || localStorage.getItem(state.AUTH_INVITE_KEY) || "";
+    if (token) {
+      await acceptEtabInvite(token, { preserveCurrent: false });
+      state.authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
+      cleanAuthUrl(true);
+    } else {
+      await ensureCurrentUserEtab();
+      state.authStatus = "";
+    }
+    requestInitialCloudLoad(false, true);
+  } catch (error) {
+    securityEvent("oauth_failed");
+    state.authStatus = error.message || "Connexion impossible.";
+  } finally {
+    clearOAuthVerifier();
   }
-  requestInitialCloudLoad(false, true);
   return true;
 }
 export function loadAdminSession() {
@@ -266,7 +283,7 @@ export function renderEtabSwitchModal() {
             </div>
             <div class="inviteModalBody">
               <div class="inviteRoleGrid">
-                ${otherEtabs.map(item => `<button class="inviteRoleButton" type="button" data-switch-etab="${item.etab_id}">
+                ${otherEtabs.map(item => `<button class="inviteRoleButton" type="button" data-switch-etab="${escapeHtml(item.etab_id)}">
                   <strong>${escapeHtml(item.etab_name || item.etab_id)}</strong>
                   <span>${item.role === "owner" ? "admin" : "consultation"}${item.etab_id === defaultEtabId ? " · établissement par défaut" : ""}</span>
                 </button>`).join("")}
@@ -283,7 +300,7 @@ export function renderBrandEtabName() {
   if (logo) logo.src = iconSrc;
   if (label) {
     if (isSignedIn() && state.currentUserEtabs.length > 1) {
-      label.innerHTML = `<span>${escapeHtml(currentEtabDisplayName())}</span><button class="brandSwitchButton" type="button" id="openEtabSwitch" aria-label="Changer d'établissement" title="Changer d'établissement"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 3h10a4 4 0 0 1 4 4v2h-2V7a2 2 0 0 0-2-2H7.83l2.58 2.59L9 9 4 4l5-5 1.41 1.41L7.83 3Zm10 18H7a4 4 0 0 1-4-4v-2h2v2a2 2 0 0 0 2 2h9.17l-2.58-2.59L15 15l5 5-5 5-1.41-1.41L16.17 21Z"/></svg></button>`;
+      label.innerHTML = safeHtml(`<span>${escapeHtml(currentEtabDisplayName())}</span><button class="brandSwitchButton" type="button" id="openEtabSwitch" aria-label="Changer d'établissement" title="Changer d'établissement"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 3h10a4 4 0 0 1 4 4v2h-2V7a2 2 0 0 0-2-2H7.83l2.58 2.59L9 9 4 4l5-5 1.41 1.41L7.83 3Zm10 18H7a4 4 0 0 1-4-4v-2h2v2a2 2 0 0 0 2 2h9.17l-2.58-2.59L15 15l5 5-5 5-1.41-1.41L16.17 21Z"/></svg></button>`);
       label.title = currentEtabDisplayName();
     } else {
       label.textContent = state.cloudConfig.etabId ? currentEtabDisplayName() : "";
@@ -715,7 +732,7 @@ export async function signInAdmin() {
   render();
   try {
     if (!state.cloudConfig.url || !state.cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
-    const response = await fetch(authEndpoint("token?grant_type=password"), {
+    const response = await fetchBackend(authEndpoint("token?grant_type=password"), {
       method: "POST",
       headers: cloudAnonAuthHeaders(),
       body: JSON.stringify({
@@ -789,7 +806,7 @@ export async function signUpAdmin() {
   try {
     if (!state.cloudConfig.url || !state.cloudConfig.anonKey) throw new Error("configuration Supabase incomplete");
     if (!state.authInviteToken && !state.authEtabName.trim()) throw new Error("renseignéz le nom de l’établissement");
-    const response = await fetch(authEndpoint("signup"), {
+    const response = await fetchBackend(authEndpoint("signup"), {
       method: "POST",
       headers: cloudAnonAuthHeaders(),
       body: JSON.stringify({
@@ -825,7 +842,20 @@ export async function signUpAdmin() {
     render();
   }
 }
-export function signOutAdmin() {
+export async function signOutAdmin() {
+  if (state.signingOut) return;
+  state.signingOut = true;
+  clearTimeout(state.cloudSaveTimer);
+  state.cloudSaveTimer = null;
+  state.cloudSaveQueued = false;
+  try {
+    const response = await cloudFetchWithAuthRetry(authEndpoint("logout") + "?scope=local", { method: "POST", signal: AbortSignal.timeout(8000) });
+    if (!response.ok && response.status !== 401 && response.status !== 403) throw new Error("Revocation failed");
+  } catch {
+    securityEvent("logout_failed");
+    sessionStorage.setItem("planningEpsLogoutWarning", "Déconnexion locale effectuée. La révocation de la session distante n’a pas pu être confirmée (réseau indisponible).");
+  }
+  clearOAuthVerifier();
   const keptCloudConfig = {
     ...state.cloudConfig,
     etabId: "",

@@ -1,9 +1,15 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { cloudFetchWithAuthRetry, cloudReady, cloudWriteAllowed, cloudWriteBlockedMessage, feedbackEndpoint } from "../services/cloud.js";
 
 export async function submitFeedback() {
   if (!state.requestMessage.trim() || state.requestSubmitting) return;
+  if (state.requestMessage.length > 5000 || state.requestAuthor.length > 200 || !["bug", "improvement"].includes(state.requestKind)) {
+    state.requestStatus = "Message limité à 5 000 caractères et nom à 200 caractères.";
+    render();
+    return;
+  }
   state.requestSubmitting = true;
   state.requestStatus = "Envoi en cours...";
   render();
@@ -19,7 +25,7 @@ export async function submitFeedback() {
       context: {
         page: state.week,
         schoolYear: state.schoolYear.label,
-        userAgent: navigator.userAgent,
+
         sentAt: new Date().toISOString()
       },
       status: "new"
@@ -57,16 +63,16 @@ export function renderRequestView() {
             </div>
             <div class="requestField">
               <label>Votre nom ou email</label>
-              <input id="requestAuthor" value="${state.requestAuthor}" placeholder="Facultatif" />
+              <input id="requestAuthor" value="${escapeHtml(state.requestAuthor)}" placeholder="Facultatif" />
             </div>
             <div class="requestField">
               <label>Message</label>
-              <textarea id="requestMessage" placeholder="Décrivez le bug, ce que vous vouliez faire, ou l'amélioration souhaitée.">${state.requestMessage}</textarea>
+              <textarea id="requestMessage" placeholder="Décrivez le bug, ce que vous vouliez faire, ou l'amélioration souhaitée.">${escapeHtml(state.requestMessage)}</textarea>
             </div>
             <div class="modalFooter">
               <button class="ghostButton primaryWeekButton" id="sendFeedback" ${canSend ? "" : "disabled"}>${state.requestSubmitting ? "Envoi..." : "Envoyer la requête"}</button>
             </div>
-            ${state.requestStatus ? `<div class="requestStatus ${requestStatusClass}">${state.requestStatus}</div>` : ""}
+            ${state.requestStatus ? `<div class="requestStatus ${requestStatusClass}">${escapeHtml(state.requestStatus)}</div>` : ""}
           </div>
         </section>`;
 }

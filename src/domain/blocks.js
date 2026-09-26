@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { blockCycleConflictMessage, blockCycleUnavailableMessage, classParts, parseYearCellKey } from "./assignments.js";
@@ -28,7 +29,7 @@ export function movingBlockGhostHtml() {
   if (!block) return "";
   const x = Number(state.movingBuildBlock.x || 0);
   const y = Number(state.movingBuildBlock.y || 0);
-  return `<div class="movingBlockGhost" id="movingBlockGhost" style="left:${x}px;top:${y}px;"><strong>${block.title}</strong><span>${block.detail || ""}</span></div>`;
+  return `<div class="movingBlockGhost" id="movingBlockGhost" style="left:${x}px;top:${y}px;"><strong>${escapeHtml(block.title)}</strong><span>${escapeHtml((block.detail || ""))}</span></div>`;
 }
 export function movingBlockPayload() {
   if (!state.movingBuildBlock) return null;

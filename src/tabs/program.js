@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activityProgramForClass, classesFromStandardConfig, normalizeSchoolClassId, saveActivityProgramByClass, saveActivityProgramByLevel } from "../services/settings-storage.js";
@@ -17,10 +18,10 @@ export function renderActivityProgramSettings() {
     return `<article class="facilityActivityRow">
                 <strong>${level}</strong>
                 ${selectedActivities.length ? `<div class="choiceGrid">${selectedActivities.map(activity => `
-                  <button class="choiceButton active" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
+                  <button class="choiceButton active" data-program-activity-level="${level}" data-program-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>
                 `).join("")}</div>` : `<span class="muted">Aucune activité affectée a ce niveau.</span>`}
                 ${unselectedActivities.length ? `<div class="choiceGrid">${unselectedActivities.map(activity => `
-                  <button class="choiceButton" data-program-activity-level="${level}" data-program-activity="${activity.id}">${activity.label}</button>
+                  <button class="choiceButton" data-program-activity-level="${level}" data-program-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>
                 `).join("")}</div>` : ""}
               </article>`;
   }).join("")}</div>` : `<div class="alertEmpty">Ajoutez d'abord les activités dans Installations & activités.</div>`}
@@ -36,10 +37,10 @@ export function renderActivityProgramSettings() {
     return `<article class="facilityActivityRow">
                 <strong>${compactClassName(schoolClass)}</strong>
                 ${selectedActivities.length ? `<div class="choiceGrid">${selectedActivities.map(activity => `
-                  <button class="choiceButton active" data-program-class="${schoolClass}" data-program-activity="${activity.id}">${activity.label}</button>
+                  <button class="choiceButton active" data-program-class="${schoolClass}" data-program-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>
                 `).join("")}</div>` : `<span class="muted">Programme du niveau utilisé (${inheritedCount} activité(s)).</span>`}
                 ${unselectedActivities.length ? `<div class="choiceGrid">${unselectedActivities.map(activity => `
-                  <button class="choiceButton" data-program-class="${schoolClass}" data-program-activity="${activity.id}">${activity.label}</button>
+                  <button class="choiceButton" data-program-class="${schoolClass}" data-program-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>
                 `).join("")}</div>` : ""}
               </article>`;
   }).join("")}</div>` : ""}

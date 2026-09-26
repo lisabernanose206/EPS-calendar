@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activeCycles, cyclesForScope, validateCycles } from "../domain/cycles.js";
@@ -15,10 +16,10 @@ export function renderCycleDefinition() {
             <button class="${state.activeCycleScope === "default" ? "active" : ""}" data-cycle-scope="default">Tous niveaux</button>
             ${state.classLevels.map(level => `<button class="${state.activeCycleScope === level ? "active" : ""}" data-cycle-scope="${level}">${level}</button>`).join("")}
           </div>
-          ${state.activeCycleScope === "default" ? `<p class="muted">Par défaut, ces ${cycleLabel(true, true)} s’appliquent à tous les niveaux.</p>` : `<p class="muted">${cycleLabel(false, true)} spécifiques aux ${state.activeCycleScope}. Ils seront utilisés pour les blocs de classes ${state.activeCycleScope}.</p>`}
+          ${state.activeCycleScope === "default" ? `<p class="muted">Par défaut, ces ${cycleLabel(true, true)} s’appliquent à tous les niveaux.</p>` : `<p class="muted">${cycleLabel(false, true)} spécifiques aux ${escapeHtml(state.activeCycleScope)}. Ils seront utilisés pour les blocs de classes ${escapeHtml(state.activeCycleScope)}.</p>`}
           <div class="cycleCount">
             <label for="cycleCount">Nombre de ${cycleLabel(true, true)}</label>
-            <input id="cycleCount" type="number" min="1" max="12" value="${shownCycles.length}" />
+            <input id="cycleCount" type="number" min="1" max="12" value="${escapeHtml(shownCycles.length)}" />
           </div>
           <div class="cycleList">${shownCycles.map(cycle => `
             <div class="cycleRow">
@@ -26,7 +27,7 @@ export function renderCycleDefinition() {
               ${renderDateRangePicker(`cycle:${cycle.id}`, cycle.start, cycle.end)}
             </div>`).join("")}</div>
           ${cycleErrors.length ? `<div class="cycleErrorBox">${cycleErrors.map(message => `<span>${message}</span>`).join("")}</div>` : ""}
-          ${state.cycleSaveStatus ? `<div class="cloudStatus">${state.cycleSaveStatus}</div>` : ""}
+          ${state.cycleSaveStatus ? `<div class="cloudStatus">${escapeHtml(state.cycleSaveStatus)}</div>` : ""}
           ${renderCycleCoverage(state.activeCycleScope)}`;
 }
 export function renderCycleCoverage(scope = "default") {
@@ -63,7 +64,7 @@ export function renderCycleCoverage(scope = "default") {
         });
       }
     });
-    return groups.map(group => `<td colspan="${group.span}" class="${group.className}" style="${group.style}" title="${group.title}">
+    return groups.map(group => `<td colspan="${escapeHtml(group.span)}" class="${escapeHtml(group.className)}" style="${escapeHtml(group.style)}" title="${escapeHtml(group.title)}">
             <div class="cycleCoverageBlock">
               <strong>du ${shortDate(weekDisplayStart(group.start))} au ${shortDate(weekDisplayEnd(group.end))}</strong>
             </div>
@@ -80,7 +81,7 @@ export function renderCycleCoverage(scope = "default") {
     const cycle = shownCycles.find(item => weeksForCycle(item).some(cycleWeek => cycleWeek.rank === weekItem.rank));
     return vacation ? "V" : cycle ? displayCycleName(cycle, true) : "";
   }, weekItem => vacationForWeek(weekItem) ? "vacationHeader" : shownCycles.find(item => weeksForCycle(item).some(cycleWeek => cycleWeek.rank === weekItem.rank)) ? "cycleHeader" : "gapCell")}</tr>
-              <tr><th class="timeHead">Semaine</th>${weeks.map(weekItem => `<th>${weekItem.rank}${weekItem.letter}</th>`).join("")}</tr>
+              <tr><th class="timeHead">Semaine</th>${weeks.map(weekItem => `<th>${escapeHtml(weekItem.rank)}${escapeHtml(weekItem.letter)}</th>`).join("")}</tr>
             </thead>
             <tbody>
               <tr>

@@ -11,6 +11,11 @@ export async function bootstrapApp() {
   } catch (error) {
     state.authStatus = `Retour OAuth impossible : ${error.message || "erreur inconnue"}`;
   }
+  const logoutWarning = sessionStorage.getItem("planningEpsLogoutWarning");
+  if (logoutWarning) {
+    state.authStatus = logoutWarning;
+    sessionStorage.removeItem("planningEpsLogoutWarning");
+  }
   render();
   if (isSignedIn()) {
     setTimeout(async () => {

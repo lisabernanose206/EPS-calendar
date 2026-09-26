@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { asSessionStyle, asSessionTeacherLabel, resetAsForm, saveAsSessionFromForm } from "../domain/events.js";
@@ -12,7 +13,7 @@ export function renderAsView() {
             <h3>${state.editingAsId ? "Modifier l'AS" : "Ajouter une AS"}</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="asName" value="${state.asName}" />
+              <input id="asName" value="${escapeHtml(state.asName)}" />
             </div>
             <div class="eventField">
               <label>Dates</label>
@@ -24,7 +25,7 @@ export function renderAsView() {
             </div>
             <div class="eventField">
               <label>Profs concernés</label>
-              <div class="choiceGrid">${state.teachers.map(teacher => `<button class="choiceButton ${state.asTeacherIds.includes(teacher.id) ? "active" : ""}" data-as-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`).join("")}</div>
+              <div class="choiceGrid">${state.teachers.map(teacher => `<button class="choiceButton ${state.asTeacherIds.includes(teacher.id) ? "active" : ""}" data-as-teacher="${escapeHtml(teacher.id)}" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</button>`).join("")}</div>
             </div>
             <div class="modalFooter">
               ${state.editingAsId ? `<button class="ghostButton" id="cancelAsEdit">Annuler</button>` : ""}
@@ -35,11 +36,11 @@ export function renderAsView() {
             <h3>AS existantes</h3>
             ${state.asSessions.length === 0 ? `<div class="alertEmpty">Aucune AS ajoutée.</div>` : `<div class="compactCardGrid fiveCardGrid">${state.asSessions.map(session => `
               <article class="eventCard asExistingCard" style="${asSessionStyle(session)}">
-                <strong>${session.name}</strong>
-                <span>${session.start} ↔ ${session.end} · ${session.weekdays.join(", ")} · AS midi</span>
+                <strong>${escapeHtml(session.name)}</strong>
+                <span>${escapeHtml(session.start)} ↔ ${escapeHtml(session.end)} · ${session.weekdays.join(", ")} · AS midi</span>
                 <span>${asSessionTeacherLabel(session)}</span>
-                <button class="ghostButton" data-edit-as="${session.id}">Modifier</button>
-                <button class="ghostButton" data-delete-as="${session.id}">Supprimer</button>
+                <button class="ghostButton" data-edit-as="${escapeHtml(session.id)}">Modifier</button>
+                <button class="ghostButton" data-delete-as="${escapeHtml(session.id)}">Supprimer</button>
               </article>`).join("")}</div>`}
           </div>
         </section>`;

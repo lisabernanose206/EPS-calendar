@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { acceptedConflictKey, acceptedConflictKeys, allConflictsForBuildMode, blockClassLabel, classesForBlock, constructionActivityById, serviceFreeActivityById, swimmingActivityIds, teacherLabelForBlock } from "./assignments.js";
 import { yearRows } from "./dates.js";
@@ -233,8 +234,8 @@ export function renderConstructionConflictLine(conflict, omitPeriod = false) {
   const accepted = acceptedConflictKeys().has(key);
   return `<div class="conflictLine ${accepted ? "acceptedConflictLine" : ""}">
           <b>${title}</b>
-          <span>${details.label}</span>
-          <span>${details.detail}</span>
+          <span>${escapeHtml(details.label)}</span>
+          <span>${escapeHtml(details.detail)}</span>
           ${accepted ? `<span class="acceptedConflictBadge">Validé</span>` : ""}
           ${renderConflictValidationAction(key, title, details.label, details.detail, accepted)}
         </div>`;
@@ -242,9 +243,9 @@ export function renderConstructionConflictLine(conflict, omitPeriod = false) {
 export function renderQualityConflictLine(item) {
   const accepted = acceptedConflictKeys().has(item.key);
   return `<div class="conflictLine ${accepted ? "acceptedConflictLine" : ""}">
-          <b>${item.title}</b>
-          <span>${item.label}</span>
-          <span>${item.detail}</span>
+          <b>${escapeHtml(item.title)}</b>
+          <span>${escapeHtml(item.label)}</span>
+          <span>${escapeHtml(item.detail)}</span>
           ${accepted ? `<span class="acceptedConflictBadge">Validé</span>` : ""}
           ${renderConflictValidationAction(item.key, item.title, item.label, item.detail, accepted)}
         </div>`;
@@ -305,9 +306,9 @@ export function renderConstructionConflictSummary() {
   const hiddenReportHtml = state.constructionBuildMode === "blocks" && hiddenReport?.items?.length ? `<section class="alertsPage">
           <h2>Blocs cachés trouvés</h2>
           ${hiddenReport.items.map(item => `<article class="alertCard">
-            <strong>${item.day} ${item.slot} · ${item.rhythm}</strong>
-            <span>${item.classes || "Classe non renseignée"} · ${item.teachers || "Prof non renseigné"}</span>
-            <span>${item.reason}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
+            <strong>${escapeHtml(item.day)} ${escapeHtml(item.slot)} · ${escapeHtml(item.rhythm)}</strong>
+            <span>${escapeHtml((item.classes || "Classe non renseignée"))} · ${escapeHtml((item.teachers || "Prof non renseigné"))}</span>
+            <span>${escapeHtml(item.reason)}${item.hiddenSlots ? ` · ${item.hiddenSlots} créneau(x) masqué(s)` : ""}</span>
           </article>`).join("")}
         </section>` : "";
   const sortedConflicts = [...conflicts].sort(compareConstructionConflicts);

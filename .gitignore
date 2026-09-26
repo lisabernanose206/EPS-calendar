@@ -3,3 +3,4 @@ dist/
 .refactor/
 test-results/
 playwright-report/
+audit/results/

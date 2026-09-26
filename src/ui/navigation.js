@@ -1,3 +1,4 @@
+import { safeHtml } from "../security/html.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { adminStepComplete, canAccessConstructionPlanning } from "../domain/readiness.js";
@@ -12,8 +13,8 @@ export function renderAuthBox() {
   renderBrandEtabName();
   if (!authBox) return;
   if (isSignedIn()) {
-    authBox.innerHTML = `
-            <div class="authStatus">Connecté : ${state.adminSession.user?.email || "utilisateur Supabase"}${state.cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
+    authBox.innerHTML = safeHtml(`
+            <div class="authStatus">Connecté : ${escapeHtml(state.adminSession.user?.email || "utilisateur Supabase")}${state.cloudConfig.etabId ? ` · ${currentEtabRoleLabel()}` : ""}</div>
             ${!state.cloudConfig.etabId && state.authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form>` : ""}
             ${state.cloudConfig.etabId && state.authInviteToken ? `<form class="authForm" id="acceptInviteForm"><button class="authButton" type="submit">Ajouter cet établissement</button></form>` : ""}
             ${!state.cloudConfig.etabId && !state.authInviteToken ? `<form class="authForm" id="joinInviteForm"><input id="authInviteCode" value="${escapeHtml(state.authInviteCodeDraft)}" placeholder="Lien ou code d’invitation" aria-label="Lien ou code d’invitation" /><button class="authButton" type="submit">Rejoindre l'équipe EPS</button></form><div class="authStatus">Collez le lien d'invitation envoyé par l'équipe EPS de l'établissement.</div>` : ""}
@@ -21,12 +22,12 @@ export function renderAuthBox() {
             ${state.cloudConfig.etabId && isAdmin() ? `<div class="authForm">${renderShareInviteControl()}</div>` : ""}
             ${state.authStatus ? `<div class="authStatus">${escapeHtml(state.authStatus)}</div>` : ""}
             <button class="authButton secondary" id="logoutAdmin">Déconnexion</button>
-          `;
-    authBox.querySelector(".authStatus").innerHTML = `Connecté : ${state.adminSession.user?.email || "utilisateur Supabase"}${state.cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`;
-    authBox.querySelector("#logoutAdmin").innerHTML = "Déconnexion";
+          `);
+    authBox.querySelector(".authStatus").innerHTML = safeHtml(`Connecté : ${escapeHtml(state.adminSession.user?.email || "utilisateur Supabase")}${state.cloudConfig.etabId ? ` &middot; ${currentEtabRoleLabel()}` : ""}`);
+    authBox.querySelector("#logoutAdmin").innerHTML = safeHtml("Déconnexion");
     return;
   }
-  authBox.innerHTML = "";
+  authBox.innerHTML = safeHtml("");
 }
 export function renderLoggedOutHome() {
   return `<section class="homeShell">

@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { allTeachersSelected, asMatchesTeacherSelection, blockClassLabel, blockTeacherStyle, eventMatchesTeacherSelection, renderTeacherLegend, teacherLabelForBlock, yearCellKey } from "../domain/assignments.js";
@@ -37,14 +38,14 @@ export function renderDateInfo() {
             <button class="weekArrow" id="prevWeek" title="Semaine precedente" ${weekInfo.rank <= 1 ? "disabled" : ""}>‹</button>
             <div class="dateMain">
               <span>Semaine sélectionnée</span>
-              <strong>Semaine ${weekInfo.rank}${weekInfo.letter} - ${weekDateLabel(weekInfo)}</strong>
+              <strong>Semaine ${escapeHtml(weekInfo.rank)}${escapeHtml(weekInfo.letter)} - ${weekDateLabel(weekInfo)}</strong>
               <small>${weekWorkingDaysLabel(weekInfo)}</small>
             </div>
             <button class="weekArrow" id="nextWeek" title="Semaine suivante" ${weekInfo.rank >= schoolWeeks.length ? "disabled" : ""}>›</button>
           </div>
           <div class="dateChips">
             <span class="dateChip">Mois <strong>${monthName}</strong></span>
-            <span class="dateChip">Template <strong>${state.schoolYear.label}</strong></span>
+            <span class="dateChip">Template <strong>${escapeHtml(state.schoolYear.label)}</strong></span>
             <button class="ghostButton" data-print-format="A4">Exporter A4</button>
           </div>
         </section>`;
@@ -56,7 +57,7 @@ export function renderCalendar(cycle) {
   return `${renderDateInfo()}${renderTeacherLegend("homeTeacherLegend")}<div class="homeTimetableWrap"><table class="homeTimetable">
           <thead><tr><th class="timeColumn">Créneau</th>${state.days.map(day => `<th>${day}</th>`).join("")}</tr></thead>
           <tbody>${calendarSlots.map(slot => `<tr>
-            <th class="timeColumn">${slot.label}</th>
+            <th class="timeColumn">${escapeHtml(slot.label)}</th>
             ${state.days.map(day => {
     const row = slot.isAsSummary ? rows.find(item => item.day === day && item.isAs) : rows.find(item => item.day === day && item.slot.id === slot.id && item.slot.label === slot.label);
     const nonWorkingCell = day === "Mercredi" && ["13", "15"].includes(slot.id);
@@ -68,14 +69,14 @@ export function renderCalendar(cycle) {
     const events = slot.isAsSummary ? [] : eventsForPeriod(row, weekItem).filter(eventMatchesTeacherSelection);
     const asItems = (slot.isAsSummary ? asSessionsForDay(rows, day, weekItem) : asSessionsForCell(row, weekItem)).filter(asMatchesTeacherSelection);
     return `<td><div class="homeTimetableSlot">
-                ${vacation ? `<div class="emptyLesson">${vacation.name}</div>` : ""}
+                ${vacation ? `<div class="emptyLesson">${escapeHtml(vacation.name)}</div>` : ""}
                 ${!vacation && holiday ? `<div class="emptyLesson">${holiday}</div>` : ""}
                 ${lessons.map(lesson => `
                   <div class="lesson" style="${blockTeacherStyle(lesson)}">
                     <div class="lessonTop"><strong>${blockClassLabel(lesson)}</strong></div>
-                    <div class="lessonMeta"><span class="muted">${lesson.facilityLabel}</span></div>
+                    <div class="lessonMeta"><span class="muted">${escapeHtml(lesson.facilityLabel)}</span></div>
                   </div>`).join("")}
-                ${events.map(event => `<div class="lesson eventBlock"><strong>${event.name}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
+                ${events.map(event => `<div class="lesson eventBlock"><strong>${escapeHtml(event.name)}</strong><span>${eventPeriodLabel(event)}</span>${eventTeacherDots(event)}</div>`).join("")}
                 ${asItems.map(session => `<div class="lesson asBlock" style="${asSessionStyle(session)}"><strong>${asBlockLabel(session)}</strong><span>${asSessionTeacherLabel(session)}</span></div>`).join("")}
                 ${!vacation && !holiday && !lessons.length && !events.length && !asItems.length ? "" : ""}
               </div></td>`;
@@ -93,8 +94,8 @@ export function renderFacilitiesCalendar(cycle) {
             </thead>
             <tbody>${state.slots.map(slot => state.facilities.map((facility, facilityIndex) => `
               <tr>
-                ${facilityIndex === 0 ? `<th class="slotName" rowspan="${state.facilities.length}">${slot.label}</th>` : ""}
-                <th class="facilityName">${facility.label}</th>
+                ${facilityIndex === 0 ? `<th class="slotName" rowspan="${escapeHtml(state.facilities.length)}">${escapeHtml(slot.label)}</th>` : ""}
+                <th class="facilityName">${escapeHtml(facility.label)}</th>
                 ${state.days.map(day => {
     const row = rows.find(item => item.day === day && item.slot.id === slot.id);
     const key = row ? yearCellKey(row.id, weekItem.rank) : "";
@@ -124,18 +125,18 @@ export function renderTeachers(cycle) {
     const stats = statFor(cycle, teacher.id);
     const lessons = assignments.filter(item => item.teacher.id === teacher.id);
     return `<article class="teacherMini">
-              <div class="teacherMiniHead" style="background:${teacher.color};border-bottom:1px solid ${teacher.border}">
-                <strong>${teacher.name}</strong>
-                <span class="muted">${stats.total}h / ${teacher.weekTargets[selectedWeek]}h</span>
+              <div class="teacherMiniHead" style="background:${escapeHtml(teacher.color)};border-bottom:1px solid ${escapeHtml(teacher.border)}">
+                <strong>${escapeHtml(teacher.name)}</strong>
+                <span class="muted">${escapeHtml(stats.total)}h / ${escapeHtml(teacher.weekTargets[selectedWeek])}h</span>
               </div>
               <div class="miniWeek">${state.days.map(day => {
       const dayLessons = lessons.filter(lesson => lesson.day === day).sort((a, b) => state.slots.findIndex(slot => slot.id === a.slot.id) - state.slots.findIndex(slot => slot.id === b.slot.id));
       return `<section class="miniDay">
                   <h3>${day}</h3>
                   ${dayLessons.length ? dayLessons.map(lesson => `
-                    <div class="miniLesson" style="background:${teacher.color};border-color:${teacher.border}">
-                      <strong>${lesson.slot.label}</strong>
-                      <span>${compactClassName(lesson.schoolClass)} · ${lesson.facility.label}</span>
+                    <div class="miniLesson" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">
+                      <strong>${escapeHtml(lesson.slot.label)}</strong>
+                      <span>${compactClassName(lesson.schoolClass)} · ${escapeHtml(lesson.facility.label)}</span>
                     </div>`).join("") : `<div class="miniEmpty">Libre</div>`}
                 </section>`;
     }).join("")}</div>

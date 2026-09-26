@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { activitiesForFacility, classParts, classesForBlock, effectiveTeacherHoursForBlock, fullServiceSlotHours, optionBlockAvailableForTeachers, serviceAlerts, serviceClassRowsForTeacher, serviceClassTarget, serviceFreeActivityById, serviceFreeOptionById, serviceFreeOptionId, serviceFreeRowsForTeacher, serviceRowsForTeacher, serviceTargetForTeacher, serviceTotalForTeacher, teacherClassForBlock, teacherHoursForBlock, teacherIdsForBlock } from "./assignments.js";
 import { validateCycles } from "./cycles.js";
@@ -438,12 +439,12 @@ export function adminStepComplete(buildMode) {
 export function renderConstructionWarnings() {
   const items = constructionReadinessItems();
   if (!items.length) return `<div class="constructionWarningPanel constructionStatusPanel"><div class="constructionWarning ready"><strong>Paramétrage prêt</strong><span>Les éléments essentiels sont renseignés pour construire l'emploi du temps.</span></div></div>`;
-  return `<div class="constructionWarningPanel constructionStatusPanel">${items.map(item => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></div>`).join("")}</div>`;
+  return `<div class="constructionWarningPanel constructionStatusPanel">${items.map(item => `<div class="constructionWarning ${item.level === "blocking" ? "blocking" : ""}" ${item.buildMode ? `data-warning-build-mode="${escapeHtml(item.buildMode)}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concerne"` : ""}><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></div>`).join("")}</div>`;
 }
 export function renderConstructionLockedWarnings() {
   const items = constructionReadinessItems();
   if (!items.length) return "";
-  return `<ul class="constructionLockedList">${items.map(item => `<li ${item.buildMode ? `data-warning-build-mode="${item.buildMode}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concern&eacute;"` : ""}><strong>${item.title}</strong><span>${item.detail}</span></li>`).join("")}</ul>`;
+  return `<ul class="constructionLockedList">${items.map(item => `<li ${item.buildMode ? `data-warning-build-mode="${escapeHtml(item.buildMode)}" ${item.subMode ? `data-warning-sub-mode="${item.subMode}"` : ""} title="Ouvrir l'onglet concern&eacute;"` : ""}><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></li>`).join("")}</ul>`;
 }
 export function renderConstructionStatusRow(helpText = "") {
   const readiness = renderConstructionWarnings();
@@ -501,14 +502,14 @@ export function renderConstructionServiceSummary() {
       ...item,
       label: item.label
     }))];
-    return `<article class="hoursCard" style="background:${teacher.color};border-color:${teacher.border}">
-                <div class="hoursCardTop"><strong>${teacher.name}</strong><span class="hoursStatus ${status.className}">${status.label}</span></div>
+    return `<article class="hoursCard" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">
+                <div class="hoursCardTop"><strong>${escapeHtml(teacher.name)}</strong><span class="hoursStatus ${escapeHtml(status.className)}">${escapeHtml(status.label)}</span></div>
                 <div class="hoursMain"><strong>${formatHours(total)}</strong><span class="muted">/ ${formatHours(target)}${overtimeHours ? ` <span class="hoursOvertime">${formatHours(overtimeHours)} HSA</span>` : ""}</span></div>
                 <div class="hoursProgress"><span style="width:${progress}%"></span></div>
                 <div class="classPills">
                   ${serviceDetails.length ? serviceDetails.map(item => {
       const detail = item.missing ? ` &middot; manque ${formatHours(item.missing)}` : item.excess ? ` &middot; trop ${formatHours(item.excess)}` : "";
-      return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${item.label} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
+      return `<span class="classPill ${item.ok ? "" : "needsValidation"}">${escapeHtml(item.label)} &middot; ${formatHours(item.total)} / ${formatHours(item.target)}${detail}</span>`;
     }).join("") : `<span class="classPill">Aucun service affecté</span>`}
                 </div>
               </article>`;

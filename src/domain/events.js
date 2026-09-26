@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { blockMatchesTeacherSelection, classesForBlock, classesOverlap, teacherIdsForBlock, yearCellKey } from "./assignments.js";
 import { rowDateForWeek, schoolYearWeeks, yearRows } from "./dates.js";
@@ -38,7 +39,7 @@ export function eventPeriodLabel(event) {
 export function eventTeacherDots(event) {
   return `<div class="eventTeacherDots">${(event.teacherIds || []).map(teacherId => {
     const teacher = state.teachers.find(item => item.id === teacherId);
-    return teacher ? `<span class="eventTeacherDot" title="${teacher.name}" style="background:${teacher.color};border-color:${teacher.border}"></span>` : "";
+    return teacher ? `<span class="eventTeacherDot" title="${escapeHtml(teacher.name)}" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}"></span>` : "";
   }).join("")}</div>`;
 }
 export function eventSpanClass(event) {

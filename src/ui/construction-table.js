@@ -35,15 +35,15 @@ export function renderConstructionCellStack(items, events, asItems, editable, ke
                 ${showCycleDetails ? `<span>${blockDetailLabel(item)}</span>` : ""}
               </div>`).join("");
   return `<div class="buildCellStack">${lessonBlocks}${events.map(event => `
-          <div class="buildBlock eventBlock ${state.movingBuildBlock?.type === "event" && state.movingBuildBlock?.id === event.id ? "moveSelected" : ""}" data-move-kind="event" data-move-id="${event.id}" data-block-key="${key}">
-            <strong>${event.name} : ${eventClassSummary(event)}</strong>
+          <div class="buildBlock eventBlock ${state.movingBuildBlock?.type === "event" && state.movingBuildBlock?.id === event.id ? "moveSelected" : ""}" data-move-kind="event" data-move-id="${escapeHtml(event.id)}" data-block-key="${key}">
+            <strong>${escapeHtml(event.name)} : ${eventClassSummary(event)}</strong>
             <div class="eventBlockControls">
-              <button class="moveBlockButton" data-start-move-kind="event" data-move-id="${event.id}" data-block-key="${key}" title="Déplacer">↔</button>
+              <button class="moveBlockButton" data-start-move-kind="event" data-move-id="${escapeHtml(event.id)}" data-block-key="${key}" title="Déplacer">↔</button>
               ${eventTeacherDots(event)}
             </div>
           </div>`).join("")}${asItems.map(session => `
-          <div class="buildBlock asBlock ${state.movingBuildBlock?.type === "as" && state.movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${state.constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
-            ${state.constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Déplacer">↔</button>` : ""}
+          <div class="buildBlock asBlock ${state.movingBuildBlock?.type === "as" && state.movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${state.constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${escapeHtml(session.id)}" data-block-key="${key}" style="${asSessionStyle(session)}">
+            ${state.constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${escapeHtml(session.id)}" data-block-key="${key}" title="Déplacer">↔</button>` : ""}
             <strong>${asBlockLabel(session)}</strong>
           </div>`).join("")}</div>`;
 }
@@ -81,7 +81,7 @@ export function renderConstructionCycleBlocks(indexedItems, key, editable = true
     const optimizationIssue = constructionOptimizationIssueForBlock(displayItem, cycle);
     const showCycleDetails = state.constructionBuildMode !== "blocks";
     return `
-          <div class="buildBlock ${state.movingBuildBlock?.type === "course" && state.movingBuildBlock?.key === key && state.movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? state.constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"` : ""} data-move-index="${index}" data-block-key="${key}" data-rule-id="${displayItem.ruleId || ""}" data-cycle-id="${cycle?.id || ""}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(displayItem)}">
+          <div class="buildBlock ${state.movingBuildBlock?.type === "course" && state.movingBuildBlock?.key === key && state.movingBuildBlock?.index === index ? "moveSelected" : ""} ${optimizationIssue ? "optimizationIssue" : ""}" ${editable ? state.constructionBuildMode === "blocks" ? `data-move-kind="course"` : `data-edit-cycle-details="${index}"` : ""} data-move-index="${index}" data-block-key="${key}" data-rule-id="${escapeHtml((displayItem.ruleId || ""))}" data-cycle-id="${cycle?.id || ""}" title="${optimizationIssue ? escapeHtml(optimizationIssue.reason) : ""}" style="${blockTeacherStyle(displayItem)}">
             ${editable && state.constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="course" data-move-index="${index}" data-block-key="${key}" title="Déplacer">↔</button>
             <button class="removeBlockButton" data-remove-cell="${key}" data-remove-index="${index}" title="Retirer">x</button>` : ""}
             <strong>${blockClassLabel(displayItem)}</strong>
@@ -117,8 +117,8 @@ export function renderConstructionCycleArea(row, cycle, letter, label, filterSel
   return `<div title="${cellTitle}" class="${letter ? "cycleConstructionHalf" : "cycleConstructionFull"} ${row.isAs ? "cycleConstructionAsCell" : ""} ${blocked ? "constructionBlockedCell" : ""} ${canOpenHere ? "buildDropCell availableTeacherBg" : ""}" style="${availableStyle}" ${canOpenHere ? `data-open-cell="${key}" data-open-cycle-id="${cycle.id}" data-open-week-letter="${letter || "all"}" data-move-cell="${key}"` : ""}>
           ${letter ? `<span class="cycleConstructionHalfLabel">${label}</span>` : ""}
           ${blocked ? "" : row.isAs ? `<div class="constructionAsStack">${asItems.length ? asItems.map(session => `
-            <div class="buildBlock asBlock ${state.movingBuildBlock?.type === "as" && state.movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${editable && state.constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${session.id}" data-block-key="${key}" style="${asSessionStyle(session)}">
-              ${editable && state.constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${session.id}" data-block-key="${key}" title="Déplacer">↔</button>` : ""}
+            <div class="buildBlock asBlock ${state.movingBuildBlock?.type === "as" && state.movingBuildBlock?.id === session.id ? "moveSelected" : ""}" ${editable && state.constructionBuildMode === "blocks" ? `data-move-kind="as"` : ""} data-move-id="${escapeHtml(session.id)}" data-block-key="${key}" style="${asSessionStyle(session)}">
+              ${editable && state.constructionBuildMode === "blocks" ? `<button class="moveBlockButton" data-start-move-kind="as" data-move-id="${escapeHtml(session.id)}" data-block-key="${key}" title="Déplacer">↔</button>` : ""}
               <strong>${asBlockLabel(session)}</strong>
               <span>${asSessionTeacherLabel(session)}</span>
             </div>`).join("") : `<span class="muted">-</span>`}</div>` : renderConstructionCycleBlocks(indexedItems, key, editable, cycle)}
@@ -145,7 +145,7 @@ export function renderConstructionCycleTable(cycle, rows, editable, filterSelect
           </thead>
           <tbody>
             ${slotRows.map(slot => `<tr>
-              <th class="timeHead">${slot.label}</th>
+              <th class="timeHead">${escapeHtml(slot.label)}</th>
               ${state.days.map(day => {
     const row = constructionRowForSlot(day, slot);
     if (!row) return `<td class="mergedOff"><span class="muted">-</span></td>`;
@@ -189,19 +189,19 @@ export function renderConstructionTable(weeks, current, monthLabels, rows, edita
     const cycle = cycleForWeek(weekItem);
     return `<th class="${vacation ? "vacationHeader vacationWeekCell" : "cycleHeader"}">${vacation ? "V" : cycle ? displayCycleName(cycle, true) : "-"}</th>`;
   }).join("")}</tr>
-            <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map(weekItem => `<th class="${vacationForWeek(weekItem) ? "vacationWeekCell" : ""}"><span class="constructionWeekHead"><strong>${weekItem.rank}${weekItem.letter}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
+            <tr><th class="rowHead"></th><th class="timeHead">Semaine</th>${weeks.map(weekItem => `<th class="${vacationForWeek(weekItem) ? "vacationWeekCell" : ""}"><span class="constructionWeekHead"><strong>${escapeHtml(weekItem.rank)}${escapeHtml(weekItem.letter)}</strong><small>${weekDateLabel(weekItem)}</small></span></th>`).join("")}</tr>
           </thead>
           <tbody>
             ${rowsByDay.map(group => group.rows.map((row, rowIndex) => {
     const alignmentTeacherIds = state.teachers.filter(teacher => weeks.some(weekItem => (state.constructionPlan[yearCellKey(row.id, weekItem.rank)] || []).some(item => teacherIdsForBlock(item)[0] === teacher.id))).map(teacher => teacher.id);
     return `<tr>
-              ${rowIndex === 0 ? `<th class="rowHead" rowspan="${group.rows.length}">${group.day}</th>` : ""}
-              <th class="timeHead">${row.slot.label}</th>${weeks.map(weekItem => {
+              ${rowIndex === 0 ? `<th class="rowHead" rowspan="${escapeHtml(group.rows.length)}">${escapeHtml(group.day)}</th>` : ""}
+              <th class="timeHead">${escapeHtml(row.slot.label)}</th>${weeks.map(weekItem => {
       const key = yearCellKey(row.id, weekItem.rank);
       const dayOff = dayOffFor(group.day, weekItem);
       const isVacationWeek = Boolean(vacationForWeek(weekItem));
       if (dayOff && rowIndex > 0) return "";
-      if (dayOff) return `<td rowspan="${group.rows.length}" title="${dayOff.title}" class="mergedOff ${dayOff.className} ${isVacationWeek ? "vacationWeekCell" : ""}">${dayOff.label}</td>`;
+      if (dayOff) return `<td rowspan="${escapeHtml(group.rows.length)}" title="${escapeHtml(dayOff.title)}" class="mergedOff ${escapeHtml(dayOff.className)} ${isVacationWeek ? "vacationWeekCell" : ""}">${escapeHtml(dayOff.label)}</td>`;
       const continuedEvent = eventForContinuation(row, weekItem);
       if (!editable && continuedEvent && (!filterSelection || eventMatchesTeacherSelection(continuedEvent)) && canMergeEventCell(continuedEvent, group.rows, weekItem)) return "";
       const mergeableEvents = editable ? [] : eventsForCell(row, weekItem).filter(event => (!filterSelection || eventMatchesTeacherSelection(event)) && canMergeEventCell(event, group.rows, weekItem));
@@ -209,7 +209,7 @@ export function renderConstructionTable(weeks, current, monthLabels, rows, edita
         const event = mergeableEvents[0];
         return `<td rowspan="${eventRowSpan(event, group.rows)}">
                     <div class="buildBlock eventBlock">
-                      <strong>${event.name} : ${eventClassSummary(event)}</strong>
+                      <strong>${escapeHtml(event.name)} : ${eventClassSummary(event)}</strong>
                       <div class="eventBlockControls">
                         ${eventTeacherDots(event)}
                       </div>

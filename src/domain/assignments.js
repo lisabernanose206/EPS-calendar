@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { ruleRowLabel } from "./conflict-summary.js";
 import { detectConflicts } from "./conflicts.js";
@@ -361,7 +362,7 @@ export function teacherBorderForColor(color) {
 export function renderTeacherLegend(className = "", interactive = true) {
   if (!interactive) {
     return `<div class="teacherColorLegend ${className}">
-            ${state.teachers.map(teacher => `<span class="legendItem" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</span>`).join("")}
+            ${state.teachers.map(teacher => `<span class="legendItem" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</span>`).join("")}
           </div>`;
   }
   const allSelected = allTeachersSelected();
@@ -369,7 +370,7 @@ export function renderTeacherLegend(className = "", interactive = true) {
           <button class="legendItem ${allSelected ? "selected" : ""}" data-teacher="all" style="background:#d6b98c;border-color:#a6783e;color:#172033;">Tous</button>
           ${state.teachers.map(teacher => {
     const selected = state.selectedTeacherIds.includes(teacher.id);
-    return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${teacher.id}" style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
+    return `<button class="legendItem ${selected && !allSelected ? "selected" : ""} ${!selected ? "dimmed" : ""}" data-teacher="${escapeHtml(teacher.id)}" style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</button>`;
   }).join("")}
         </div>`;
 }
@@ -760,7 +761,7 @@ export function renderOtherCycleChoicesForRule(ruleId, currentCycle = null, incl
   const choices = otherCycleChoicesForRule(ruleId, currentCycle, includeCurrentCycle);
   if (!choices.length) return "";
   return `<div class="fixedBlockCycleChoices">${choices.map(choice => `
-          <div class="fixedBlockCycleChoice ${choice.missing ? "missing" : ""}"><b>${choice.cycleName}</b><span>${choice.facilityLabel} · ${choice.activityLabel}</span></div>
+          <div class="fixedBlockCycleChoice ${choice.missing ? "missing" : ""}"><b>${escapeHtml(choice.cycleName)}</b><span>${escapeHtml(choice.facilityLabel)} · ${escapeHtml(choice.activityLabel)}</span></div>
         `).join("")}</div>`;
 }
 export function constructionRuleClassKeys(rule) {

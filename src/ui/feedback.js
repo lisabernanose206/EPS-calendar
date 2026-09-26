@@ -1,3 +1,4 @@
+import { escapeHtml } from "./format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { prerequisiteLocked, yearPrerequisiteLocked } from "../services/cloud.js";
@@ -13,7 +14,7 @@ export function showValidationPopup(message, type = "success") {
   }, state.validationPopupType === "error" ? 5200 : 2400);
 }
 export function renderValidationPopup() {
-  return state.validationPopupMessage ? `<div class="validationPopup ${state.validationPopupType === "error" ? "error" : ""}">${state.validationPopupMessage}</div>` : "";
+  return state.validationPopupMessage ? `<div class="validationPopup ${state.validationPopupType === "error" ? "error" : ""}">${escapeHtml(state.validationPopupMessage)}</div>` : "";
 }
 export function renderAppError(error) {
   const message = String(error?.message || error || "Erreur inconnue").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

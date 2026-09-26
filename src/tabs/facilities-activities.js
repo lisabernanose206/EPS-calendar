@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activityAllowedForFacility } from "../domain/assignments.js";
@@ -34,7 +35,7 @@ export function renderFacilitiesSettings() {
             <h3>Ajouter une installation</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${state.facilityDraftName}" />
+              <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${escapeHtml(state.facilityDraftName)}" />
             </div>
             <div class="eventField">
               <label>Position par rapport a l’établissement</label>
@@ -60,15 +61,15 @@ export function renderFacilitiesSettings() {
             ${state.facilities.length ? `<div class="compactCardGrid fiveCardGrid">${state.facilities.map(facility => `<article class="eventCard">
               <label class="eventField">
                 <span>Nom</span>
-                <input data-rename-facility="${facility.id}" value="${attrValue(facility.label)}" />
+                <input data-rename-facility="${escapeHtml(facility.id)}" value="${attrValue(facility.label)}" />
               </label>
               <span>${facilityTypeLabel(facility.type)}</span>
               <span>${facilityLocationTypeLabel(facility.locationType)}</span>
               <div class="choiceGrid">
-                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="outdoor">Exterieur</button>
-                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
+                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${escapeHtml(facility.id)}" data-location-type="outdoor">Exterieur</button>
+                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${escapeHtml(facility.id)}" data-location-type="indoor">Interieur</button>
               </div>
-              <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
+              <button class="ghostButton" data-delete-facility="${escapeHtml(facility.id)}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutée.</div>`}
           </div>
         </section>`;
@@ -80,7 +81,7 @@ export function renderActivitiesSettings() {
             <h3>Ajouter une activité</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${state.activityDraftName}" />
+              <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${escapeHtml(state.activityDraftName)}" />
             </div>
             <div class="modalFooter">
               <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activité</button>
@@ -89,8 +90,8 @@ export function renderActivitiesSettings() {
           <div class="eventList">
             <h3>Activités existantes</h3>
             ${state.activities.length ? `<div class="compactCardGrid compactActivityGrid">${state.activities.map(activity => `<article class="eventCard">
-              <strong>${activity.label}</strong>
-              <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
+              <strong>${escapeHtml(activity.label)}</strong>
+              <button class="ghostButton" data-delete-activity="${escapeHtml(activity.id)}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
           </div>
         </section>`;
@@ -113,18 +114,18 @@ export function renderFacilityActivityLinks() {
       sensitivity: "base"
     }));
     return `<article class="facilityActivityRow">
-              <strong>${facility.label}</strong>
+              <strong>${escapeHtml(facility.label)}</strong>
               ${linkedActivities.length ? `<div class="facilityActivityOrdered">${linkedActivities.map((activity, index) => `
                 <div class="facilityActivityOrderedItem">
                   <span class="facilityActivityRank">${index + 1}</span>
-                  <strong>${activity.label}</strong>
-                  <button class="ghostButton" data-move-facility-activity="${facility.id}" data-activity-id="${activity.id}" data-direction="up" ${index === 0 ? "disabled" : ""}>↑</button>
-                  <button class="ghostButton" data-move-facility-activity="${facility.id}" data-activity-id="${activity.id}" data-direction="down" ${index === linkedActivities.length - 1 ? "disabled" : ""}>↓</button>
-                  <button class="ghostButton" data-toggle-facility-activity="${facility.id}" data-activity-id="${activity.id}">Retirer</button>
+                  <strong>${escapeHtml(activity.label)}</strong>
+                  <button class="ghostButton" data-move-facility-activity="${escapeHtml(facility.id)}" data-activity-id="${escapeHtml(activity.id)}" data-direction="up" ${index === 0 ? "disabled" : ""}>↑</button>
+                  <button class="ghostButton" data-move-facility-activity="${escapeHtml(facility.id)}" data-activity-id="${escapeHtml(activity.id)}" data-direction="down" ${index === linkedActivities.length - 1 ? "disabled" : ""}>↓</button>
+                  <button class="ghostButton" data-toggle-facility-activity="${escapeHtml(facility.id)}" data-activity-id="${escapeHtml(activity.id)}">Retirer</button>
                 </div>
               `).join("")}</div>` : `<span class="muted">Aucune activité priorisée pour cette installation.</span>`}
               ${unlinkedActivities.length ? `<div class="choiceGrid">${unlinkedActivities.map(activity => `
-                <button class="choiceButton" data-toggle-facility-activity="${facility.id}" data-activity-id="${activity.id}">${activity.label}</button>
+                <button class="choiceButton" data-toggle-facility-activity="${escapeHtml(facility.id)}" data-activity-id="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>
               `).join("")}</div>` : ""}
             </article>`;
   }).join("")}</div>
@@ -138,7 +139,7 @@ export function renderFacilitiesActivitiesSettings() {
             <h3>Ajouter une installation</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${state.facilityDraftName}" />
+              <input id="facilityDraftName" placeholder="Ex. Stade, Dojo, Gymnase municipal" value="${escapeHtml(state.facilityDraftName)}" />
             </div>
             <div class="eventField">
               <label>Position par rapport a l’établissement</label>
@@ -164,22 +165,22 @@ export function renderFacilitiesActivitiesSettings() {
             ${state.facilities.length ? `<div class="compactCardGrid fiveCardGrid">${state.facilities.map(facility => `<article class="eventCard">
               <label class="eventField">
                 <span>Nom</span>
-                <input data-rename-facility="${facility.id}" value="${attrValue(facility.label)}" />
+                <input data-rename-facility="${escapeHtml(facility.id)}" value="${attrValue(facility.label)}" />
               </label>
               <span>${facilityTypeLabel(facility.type)}</span>
               <span>${facilityLocationTypeLabel(facility.locationType)}</span>
               <div class="choiceGrid">
-                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="outdoor">Exterieur</button>
-                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${facility.id}" data-location-type="indoor">Interieur</button>
+                <button class="choiceButton ${facility.locationType === "outdoor" ? "active" : ""}" data-set-facility-location="${escapeHtml(facility.id)}" data-location-type="outdoor">Exterieur</button>
+                <button class="choiceButton ${facility.locationType === "indoor" ? "active" : ""}" data-set-facility-location="${escapeHtml(facility.id)}" data-location-type="indoor">Interieur</button>
               </div>
-              <button class="ghostButton" data-delete-facility="${facility.id}">Supprimer</button>
+              <button class="ghostButton" data-delete-facility="${escapeHtml(facility.id)}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune installation ajoutée.</div>`}
           </div>
           <div class="eventForm">
             <h3>Ajouter une activité</h3>
             <div class="eventField">
               <label>Nom</label>
-              <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${state.activityDraftName}" />
+              <input id="activityDraftName" placeholder="Ex. Badminton, Boxe, Natation" value="${escapeHtml(state.activityDraftName)}" />
             </div>
             <div class="modalFooter">
               <button class="addButton" id="addActivity" ${canAddActivity ? "" : "disabled"}>Ajouter l'activité</button>
@@ -188,8 +189,8 @@ export function renderFacilitiesActivitiesSettings() {
           <div class="eventList">
             <h3>Activités existantes</h3>
             ${state.activities.length ? `<div class="compactCardGrid compactActivityGrid">${state.activities.map(activity => `<article class="eventCard">
-              <strong>${activity.label}</strong>
-              <button class="ghostButton" data-delete-activity="${activity.id}">Supprimer</button>
+              <strong>${escapeHtml(activity.label)}</strong>
+              <button class="ghostButton" data-delete-activity="${escapeHtml(activity.id)}">Supprimer</button>
             </article>`).join("")}</div>` : `<div class="alertEmpty">Aucune activité ajoutée.</div>`}
           </div>
           ${renderFacilityActivityLinks()}

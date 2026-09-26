@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 
 export function renderBugFixLogView() {
@@ -27,7 +28,7 @@ export function renderBugFixLogView() {
           </article>
           ${Object.keys(groups).length ? `<div class="logGroupGrid">${Object.entries(groups).map(([title, items]) => `
               <details class="logGroup">
-                <summary>${title}<span>${items.length}</span></summary>
+                <summary>${title}<span>${escapeHtml(items.length)}</span></summary>
                 <div class="logEntries">
                   ${items.map(item => `<p class="logEntry">${item}</p>`).join("")}
                 </div>

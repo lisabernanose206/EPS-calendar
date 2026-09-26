@@ -108,7 +108,7 @@ export function groupedHeaderCells(weeks, labelForWeek, classForWeek) {
       span: 1
     });
   });
-  return groups.map(group => `<th class="${group.className}" colspan="${group.span}">${group.label}</th>`).join("");
+  return groups.map(group => `<th class="${escapeHtml(group.className)}" colspan="${escapeHtml(group.span)}">${escapeHtml(group.label)}</th>`).join("");
 }
 export function hourStatus(diff) {
   if (diff < -0.25) return {
@@ -125,5 +125,5 @@ export function hourStatus(diff) {
   };
 }
 export function escapeHtml(value) {
-  return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }

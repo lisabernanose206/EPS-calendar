@@ -1,3 +1,4 @@
+import { escapeHtml } from "./format.js";
 import { state } from "../app/state.js";
 import { activitiesForFacility, activityAllowedForBuildBlock, blockClassLabel, blockCycleConflictMessage, blockCycleUnavailableMessage, blockDetailLabel, blockTeacherStyle, buildModalAvailability, classCollectionHasOverlap, classGroupVariant, classGroupVariants, classParts, classSameBase, classesForBlock, currentBlock, facilityHasActivityForBlockProgram, optionBlockAvailableForTeachers, optionBlockUnavailableReason, optionDurationMax, parseYearCellKey, programActivityIdsForBlock, renderFixedBlockContext, serviceAllowsClassForTeacher, serviceClassRestrictionMessage, serviceFreeActivities, serviceFreeOptionById, serviceFreeOptionsForTeachers, teacherClassForBlock } from "../domain/assignments.js";
 import { schoolYearWeeks, yearRows } from "../domain/dates.js";
@@ -64,14 +65,14 @@ export function renderBuildModal() {
     const visibleClasses = selectedLevel ? constructionClassChoicesForLevel(selectedLevel) : [];
     const teacherClassUnavailable = schoolClass => classCollectionHasOverlap(occupied.classes, schoolClass) || classCollectionHasOverlap(occupied.unavailableClasses, schoolClass) || !serviceAllowsClassForTeacher(teacher.id, schoolClass);
     return `<div class="buildField">
-            <label>Classe de ${teacher.name}</label>
+            <label>Classe de ${escapeHtml(teacher.name)}</label>
             <div class="choiceGrid">
-              <button class="choiceButton ${!state.blockTeacherClasses[teacher.id] && !selectedLevel ? "active" : ""}" data-clear-teacher-class="${teacher.id}">Sans classe</button>
+              <button class="choiceButton ${!state.blockTeacherClasses[teacher.id] && !selectedLevel ? "active" : ""}" data-clear-teacher-class="${escapeHtml(teacher.id)}">Sans classe</button>
               ${state.classLevels.map(level => {
       const levelClasses = constructionClassChoicesForLevel(level);
       const unavailable = !levelClasses.length || levelClasses.every(schoolClass => classGroupVariants(schoolClass).every(teacherClassUnavailable));
       const reason = unavailable ? `Classes de ${level} déjà prises, indisponibles ou hors service théorique pour ${teacher.name}.` : `Afficher les classes de ${level}.`;
-      return `<button class="choiceButton ${level === selectedLevel ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-level="${teacher.id}" data-class-level="${level}" title="${reason}" aria-label="${reason}" ${!levelClasses.length ? "disabled" : ""}>${level}</button>`;
+      return `<button class="choiceButton ${level === selectedLevel ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-level="${escapeHtml(teacher.id)}" data-class-level="${level}" title="${reason}" aria-label="${reason}" ${!levelClasses.length ? "disabled" : ""}>${level}</button>`;
     }).join("")}
             </div>
             ${selectedLevel ? `<div class="choiceGrid">${visibleClasses.map(schoolClass => {
@@ -81,7 +82,7 @@ export function renderBuildModal() {
       const reason = unavailable ? serviceMessage || `${compactClassName(schoolClass)} est déjà prise ou indisponible sur ce créneau.` : `${compactClassName(schoolClass)} disponible.`;
       const classChoiceLabel = constructionClassChoiceLabel(schoolClass);
       const hardUnavailable = variants.every(variant => classCollectionHasOverlap(occupied.unavailableClasses, variant));
-      return `<button class="choiceButton serviceClassButton${classSelectionButtonClass(schoolClass)} ${classSameBase(schoolClass, selectedBaseClass) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${teacher.id}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${classChoiceLabel}</button>`;
+      return `<button class="choiceButton serviceClassButton${classSelectionButtonClass(schoolClass)} ${classSameBase(schoolClass, selectedBaseClass) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class="${escapeHtml(teacher.id)}" data-school-class="${schoolClass}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${classChoiceLabel}</button>`;
     }).join("")}</div>` : `<span class="muted">Choisissez un niveau pour afficher les classes.</span>`}
             ${selectedBaseClass ? `<div class="choiceGrid">
               ${state.classGroups.map(group => {
@@ -92,7 +93,7 @@ export function renderBuildModal() {
       const hardUnavailable = classCollectionHasOverlap(occupied.unavailableClasses, variant);
       const label = group.id === "whole" ? "Classe entière" : group.label;
       const reason = unavailable ? serviceMessage || `${compactClassName(variant)} est déjà prise ou indisponible sur ce créneau.` : `${label} disponible.`;
-      return `<button class="choiceButton ${groupActive ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-group="${teacher.id}" data-class-group="${group.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${label}</button>`;
+      return `<button class="choiceButton ${groupActive ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher-class-group="${escapeHtml(teacher.id)}" data-class-group="${escapeHtml(group.id)}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${label}</button>`;
     }).join("")}
             </div>` : ""}
           </div>`;
@@ -101,7 +102,7 @@ export function renderBuildModal() {
           <section class="modal">
             <div class="modalHeader">
               <div>
-                <h3>${row.day} · ${row.slot.label}</h3>
+                <h3>${escapeHtml(row.day)} · ${escapeHtml(row.slot.label)}</h3>
                 <p class="muted">${editingCycleDetails ? `${cycleLabel()} ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? displayCycleName(cellCycle) : `aucune ${cycleLabel(true)} définie`}.` : `Semaine ${weekItem.rank}${weekItem.letter}. ${cycleLabel()} ${blockLevel ? blockLevel : "commun"} : ${cellCycle ? displayCycleName(cellCycle) : `aucune ${cycleLabel(true)} définie`}.`}</p>
                 ${editingLabel ? `<p class="muted">${editingLabel}</p>` : ""}
               </div>
@@ -121,7 +122,7 @@ export function renderBuildModal() {
                 <div class="choiceGrid">${state.teachers.map(teacher => {
     const unavailable = occupied.teacherIds.has(teacher.id) || occupied.unavailableTeacherIds.has(teacher.id) || cycleUnavailableTeacherIds.has(teacher.id);
     const reason = occupied.teacherIds.has(teacher.id) ? `${teacher.name} est déjà pris sur ce créneau.` : occupied.unavailableTeacherIds.has(teacher.id) ? `${teacher.name} est indisponible sur ce créneau.` : cycleUnavailableTeacherIds.has(teacher.id) ? `${teacher.name} est indisponible sur une semaine de ce cycle.` : `${teacher.name} disponible.`;
-    return `<button class="choiceButton ${state.blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${teacher.id}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${teacher.color};border-color:${teacher.border}">${teacher.name}</button>`;
+    return `<button class="choiceButton ${state.blockTeacherIds.includes(teacher.id) ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-teacher="${escapeHtml(teacher.id)}" title="${reason}" aria-label="${reason}" ${unavailable ? "disabled" : ""} style="background:${escapeHtml(teacher.color)};border-color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</button>`;
   }).join("")}</div>
               </div>` : ""}
               ${state.constructionBuildMode === "cycleDetails" ? `<div class="buildField">
@@ -135,40 +136,40 @@ export function renderBuildModal() {
     const hardUnavailable = occupied.unavailableFacilityIds.has(facility.id) || !hasProgramActivity;
     const unavailable = occupiedByCourse && !state.blockCoIntervention || hardUnavailable;
     const reason = !hasLinkedActivities ? `${facility.label} n'a aucune activite reliee.` : !hasProgramActivity ? `${facility.label} ne propose aucune activite au programme de la classe du bloc.` : occupied.facilityIds.has(facility.id) ? state.blockCoIntervention ? `${facility.label} déjà occupée : autorisée en co-intervention si profs et classes sont différents.` : `${facility.label} est déjà occupée sur ce créneau.` : occupied.unavailableFacilityIds.has(facility.id) ? `${facility.label} est indisponible sur ce créneau.` : `${facility.label} disponible.`;
-    return `<button class="choiceButton ${facility.id === state.blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${facility.id}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${facility.label}</button>`;
+    return `<button class="choiceButton ${facility.id === state.blockFacilityId ? "active" : ""} ${unavailable ? "unavailable" : ""}" data-pick-facility="${escapeHtml(facility.id)}" title="${reason}" aria-label="${reason}" ${hardUnavailable ? "disabled" : ""}>${escapeHtml(facility.label)}</button>`;
   }).join("")}</div>
               </div>
               ${false && state.blockIsOption ? `<div class="buildField">
                 <label>Option</label>
                 <div class="choiceGrid">
-                  ${availableOptions.map(option => `<button class="choiceButton ${option.id === state.blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${state.blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
+                  ${availableOptions.map(option => `<button class="choiceButton ${option.id === state.blockOptionId ? "active" : ""}" data-pick-option="${escapeHtml(option.id)}">${escapeHtml(option.label)}${state.blockTeacherIds.length > 1 ? ` · ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
                 </div>
                 ${selectedOption ? `<label>Duree</label>
-                <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${state.blockOptionHours || selectedOptionDefaultHours}" />
+                <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${escapeHtml((state.blockOptionHours || selectedOptionDefaultHours))}" />
                 <span class="muted">Durée libre : renseignéz le volume à compter dans le service réel.</span>` : `<span class="muted">Choisissez l'option concernee pour ${isCollegeEstablishment() ? "cette période" : "ce cycle"}.</span>`}
               </div>` : `<div class="buildField">
                 <label>Activité (optionnel)</label>
                 <div class="choiceGrid">
                   <button class="choiceButton ${!state.blockActivityId ? "active" : ""}" data-clear-activity>Sans activite</button>
-                  ${availableActivities.map(activity => `<button class="choiceButton ${activity.id === state.blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
+                  ${availableActivities.map(activity => `<button class="choiceButton ${activity.id === state.blockActivityId ? "active" : ""}" data-pick-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>`).join("") || `<span class="muted">${activityEmptyMessage}</span>`}
                 </div>
                 ${availableFreeActivities.length ? `<label>Service libre</label>
                 <div class="choiceGrid">
-                  ${availableFreeActivities.map(activity => `<button class="choiceButton ${activity.id === state.blockActivityId ? "active" : ""}" data-pick-activity="${activity.id}">${activity.label}</button>`).join("")}
+                  ${availableFreeActivities.map(activity => `<button class="choiceButton ${activity.id === state.blockActivityId ? "active" : ""}" data-pick-activity="${escapeHtml(activity.id)}">${escapeHtml(activity.label)}</button>`).join("")}
                 </div>` : ""}
                 <span class="muted">Optionnel : les services libres peuvent etre choisis sans installation.</span>
               </div>`}` : ""}
               ${!editingCycleDetails ? state.blockIsOption ? `<div class="buildField">
                   <label>Option</label>
                   <div class="choiceGrid">
-                    ${availableOptions.map(option => `<button class="choiceButton ${option.id === state.blockOptionId ? "active" : ""}" data-pick-option="${option.id}">${option.label}${state.blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
+                    ${availableOptions.map(option => `<button class="choiceButton ${option.id === state.blockOptionId ? "active" : ""}" data-pick-option="${escapeHtml(option.id)}">${escapeHtml(option.label)}${state.blockTeacherIds.length > 1 ? ` &middot; ${option.teacherName}` : ""}</button>`).join("") || `<span class="muted">Aucune option disponible pour le ou les profs sélectionnés.</span>`}
                   </div>
                   ${selectedOption ? `<label>Duree</label>
-                  <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${state.blockOptionHours || selectedOptionDefaultHours}" />
+                  <input id="blockOptionHours" type="number" min="0.25" step="0.25" value="${escapeHtml((state.blockOptionHours || selectedOptionDefaultHours))}" />
                   <span class="muted">Durée libre : renseignéz le volume à compter dans le service réel.</span>
                   <label>${isCollegeEstablishment() ? "P\u00e9riodes concern\u00e9es" : "Cycles concern\u00e9s"}</label>
                   <div class="choiceGrid">
-                    ${optionCycleChoices().map(cycle => `<button class="choiceButton ${selectedOptionCycleIds.includes(cycle.id) ? "active" : ""}" data-pick-option-cycle="${cycle.id}">${displayCycleName(cycle)}</button>`).join("")}
+                    ${optionCycleChoices().map(cycle => `<button class="choiceButton ${selectedOptionCycleIds.includes(cycle.id) ? "active" : ""}" data-pick-option-cycle="${escapeHtml(cycle.id)}">${displayCycleName(cycle)}</button>`).join("")}
                   </div>` : `<span class="muted">Choisissez l'option concernee.</span>`}
                   <span class="muted">Aucune classe n'est obligatoire pour valider ce bloc.</span>
                 </div>` : state.blockTeacherIds.length ? `<div class="coTeacherClassGrid">${state.blockTeacherIds.map(teacherId => state.teachers.find(teacher => teacher.id === teacherId)).filter(Boolean).map(renderTeacherClassPicker).join("")}</div>` : `<div class="buildField"><label>Classe</label><span class="muted">Selectionnez d'abord un professeur, puis attribuez-lui sa classe.</span></div>` : ""}
@@ -183,9 +184,9 @@ export function renderBuildModal() {
             </div>` : ""}
             <div class="buildPreview" style="${blockTeacherStyle(block)}">
               <strong>${classesForBlock(block).length ? blockClassLabel(block) : block.optionBlock ? "Option" : "Classe libre"}</strong>
-              ${state.constructionBuildMode === "cycleDetails" && block.facilityLabel ? `<span>${block.facilityLabel}</span>
-              ${block.activityLabel ? `<span>${block.activityLabel}</span>` : ""}` : ""}
-              <span>${block.teacherNames || "Professeur a sélectionnér"}</span>
+              ${state.constructionBuildMode === "cycleDetails" && block.facilityLabel ? `<span>${escapeHtml(block.facilityLabel)}</span>
+              ${block.activityLabel ? `<span>${escapeHtml(block.activityLabel)}</span>` : ""}` : ""}
+              <span>${escapeHtml((block.teacherNames || "Professeur a sélectionnér"))}</span>
               ${state.blockCoIntervention ? `<span>Co-intervention</span>` : ""}
             </div>
             ${conflictMessage ? `<div class="conflictNotice">${conflictMessage}</div>` : ""}
@@ -197,19 +198,19 @@ export function renderBuildModal() {
               <h3>${editingCycleDetails ? "Blocs présents sur ce cycle" : "Blocs présents sur ce créneau"}</h3>
               <div class="buildCellStack">${presentCount ? `${items.map((item, index) => `
                 <div class="buildBlock" data-edit-built-block="${index}" style="${blockTeacherStyle(item)}">
-                  ${editingCycleDetails ? "" : `<button data-remove-cell="${state.activeBuildCell}" data-remove-index="${index}" title="Retirer">x</button>`}
+                  ${editingCycleDetails ? "" : `<button data-remove-cell="${escapeHtml(state.activeBuildCell)}" data-remove-index="${index}" title="Retirer">x</button>`}
                   <strong>${blockClassLabel(item)}</strong>
                   <span>${blockDetailLabel(item)}</span>
                   ${item.coIntervention ? `<span>Co-intervention</span>` : ""}
-                  <span>${item.cycleName || ""}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
+                  <span>${escapeHtml((item.cycleName || ""))}${item.weekLetter && item.weekLetter !== "all" ? ` · Quinzaine ${item.weekLetter}` : ""}</span>
                 </div>`).join("")}${events.map(event => `
                 <div class="buildBlock eventBlock">
-                  <button data-delete-cell-event="${event.id}" data-delete-cell-key="${state.activeBuildCell}" title="Retirer de ce créneau">x</button>
-                  <strong>${event.name} : ${eventClassSummary(event)}</strong>
+                  <button data-delete-cell-event="${escapeHtml(event.id)}" data-delete-cell-key="${escapeHtml(state.activeBuildCell)}" title="Retirer de ce créneau">x</button>
+                  <strong>${escapeHtml(event.name)} : ${eventClassSummary(event)}</strong>
                   ${eventTeacherDots(event)}
                 </div>`).join("")}${asItems.map(session => `
                 <div class="buildBlock asBlock" style="${asSessionStyle(session)}">
-                  <button data-delete-cell-as="${session.id}" data-delete-cell-key="${state.activeBuildCell}" title="Retirer de ce créneau">x</button>
+                  <button data-delete-cell-as="${escapeHtml(session.id)}" data-delete-cell-key="${escapeHtml(state.activeBuildCell)}" title="Retirer de ce créneau">x</button>
                   <strong>${asBlockLabel(session)}</strong>
                   <span>${asSessionTeacherLabel(session)}</span>
                 </div>`).join("")}` : `<span class="muted">Aucun bloc pour cette case.</span>`}</div>

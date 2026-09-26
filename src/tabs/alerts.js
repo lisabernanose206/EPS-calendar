@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { blockClassLabel, teacherLabelForBlock } from "../domain/assignments.js";
 import { detectConflicts } from "../domain/conflicts.js";
@@ -10,13 +11,13 @@ export function renderConstraints(cycle) {
           <div class="check"><strong>Objectif mensuel : 68h pour 4 professeurs, 52h pour le professeur agrégé. Les semaines A et B peuvent donc être différentes.</strong></div>
           <h2 style="margin-top:18px">Priorite de generation</h2>
           <div class="list">${state.facilities.map((facility, index) => `
-            <article class="priority"><strong>${index + 1}</strong><div><b>${facility.label}</b><span class="muted">${facility.type === "external" ? "Installation extérieure au collège" : "Installation dans le collège"}</span></div></article>
+            <article class="priority"><strong>${index + 1}</strong><div><b>${escapeHtml(facility.label)}</b><span class="muted">${facility.type === "external" ? "Installation extérieure au collège" : "Installation dans le collège"}</span></div></article>
           `).join("")}</div>
           <h2 style="margin-top:18px">${selectedWeek === "year" ? "Bilan mensuel A/B" : `Bilan semaine ${selectedWeek}`}</h2>
           <div class="list">${state.teachers.map(teacher => {
     const stats = selectedWeek === "year" ? statFor(cycle, teacher.id) : selected.stats[teacher.id];
     const target = selectedWeek === "year" ? "" : ` / ${teacher.weekTargets[selectedWeek]}h`;
-    return `<article class="stat"><strong style="color:${teacher.border}">${teacher.name}</strong><span>${stats.total}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${stats.external}${selectedWeek === "year" ? "" : "h"} ext. · ${stats.internal}${selectedWeek === "year" ? "" : "h"} collège</small></article>`;
+    return `<article class="stat"><strong style="color:${escapeHtml(teacher.border)}">${escapeHtml(teacher.name)}</strong><span>${escapeHtml(stats.total)}${selectedWeek === "year" ? "" : "h"}${target}</span><small class="muted">${escapeHtml(stats.external)}${selectedWeek === "year" ? "" : "h"} ext. · ${escapeHtml(stats.internal)}${selectedWeek === "year" ? "" : "h"} collège</small></article>`;
   }).join("")}</div>
         </section>`;
 }
@@ -31,21 +32,21 @@ export function renderAlertsView() {
           </article>
           ${conflicts.length === 0 ? `<div class="alertEmpty">Aucun conflit détecté dans le planning construit.</div>` : conflicts.map(conflict => `
             <article class="alertCard">
-              <strong>${conflict.row.day} · ${conflict.row.slot.label} · Semaine ${conflict.weekItem.rank}${conflict.weekItem.letter}</strong>
+              <strong>${escapeHtml(conflict.row.day)} · ${escapeHtml(conflict.row.slot.label)} · Semaine ${escapeHtml(conflict.weekItem.rank)}${escapeHtml(conflict.weekItem.letter)}</strong>
               ${conflict.type === "teacher" ? `
-                <span>Professeur en conflit : ${state.teachers.find(teacher => teacher.id === conflict.teacher)?.name || conflict.teacher}</span>
+                <span>Professeur en conflit : ${escapeHtml((state.teachers.find(teacher => teacher.id === conflict.teacher)?.name || conflict.teacher))}</span>
                 <span>${conflict.items.map(item => `${blockClassLabel(item) || "classe"} · ${item.facilityLabel || "installation"}`).join(" / ")}</span>
                 <span>Règle : un professeur ne peut pas avoir cours avec deux classes en même temps.</span>
               ` : conflict.type === "asTeacher" ? `
-                <span>Professeur en conflit AS : ${state.teachers.find(teacher => teacher.id === conflict.teacher)?.name || conflict.teacher}</span>
+                <span>Professeur en conflit AS : ${escapeHtml((state.teachers.find(teacher => teacher.id === conflict.teacher)?.name || conflict.teacher))}</span>
                 <span>${conflict.items.map(item => `${item.name || "AS"} · ${item.weekdays.join(", ")}`).join(" / ")}</span>
                 <span>Règle : un professeur ne peut pas être affecté à deux AS en même temps.</span>
               ` : conflict.type === "class" ? `
-                <span>Classe en conflit : ${conflict.schoolClass}</span>
+                <span>Classe en conflit : ${escapeHtml(conflict.schoolClass)}</span>
                 <span>${conflict.items.map(item => `${teacherLabelForBlock(item)} · ${item.facilityLabel || "installation"}`).join(" / ")}</span>
                 <span>Règle : une classe ne peut pas avoir deux cours différents en même temps. Pour un cours conjoint, sélectionnez deux profs dans un seul bloc.</span>
               ` : `
-                <span>Installation en conflit : ${conflict.items[0].facilityLabel || conflict.facility}</span>
+                <span>Installation en conflit : ${escapeHtml((conflict.items[0].facilityLabel || conflict.facility))}</span>
                 <span>${conflict.items.map(item => `${teacherLabelForBlock(item)} avec ${blockClassLabel(item) || "classe"}`).join(" / ")}</span>
                 <span>Règle : une installation ne peut pas accueillir deux blocs sur le même créneau, sauf co-intervention volontaire avec profs et classes différents.</span>
               `}

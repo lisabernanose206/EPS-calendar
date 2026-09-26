@@ -1,3 +1,7 @@
+import { fetchBackend } from "../security/fetch.js";
+import { validatePlanningData } from "../security/data.js";
+import { secureBackendUrl, isSecureBackend } from "../security/transport.js";
+import { securityEvent } from "../security/log.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { loadCycles, loadCyclesByLevel } from "../domain/cycles.js";
@@ -52,6 +56,7 @@ export function cloudConfigIdentity(config) {
   return [config?.url || "", config?.etabId || "", config?.planningId || ""].join("|");
 }
 export function resetCloudLoadState() {
+  state.cloudBaseData = null;
   state.cloudSourceLoaded = false;
   state.cloudInitialLoadKey = "";
   state.cloudLastUpdatedAt = "";
@@ -251,7 +256,7 @@ export function isLocalRuntime() {
   return protocol === "file:" || hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname.endsWith(".local");
 }
 export function cloudWriteAllowed() {
-  return cloudReady() && !isLocalRuntime();
+  return cloudReady() && isSecureBackend(state.cloudConfig.url) && !isLocalRuntime();
 }
 export function cloudSourceReadyForWrite() {
   return cloudWriteAllowed() && (!state.cloudConfig.autoLoad || state.cloudSourceLoaded);
@@ -270,19 +275,19 @@ export function criticalCloudNotice(label = "Modifications") {
   return `<div class="cloudStatus">${message}</div>`;
 }
 export function cloudEndpoint() {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/rest/v1/eps_plannings`;
 }
 export function feedbackEndpoint() {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/rest/v1/eps_feedback`;
 }
 export function etabMembersEndpoint() {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/rest/v1/etab_members`;
 }
 export function etabsEndpoint() {
-  const base = state.cloudConfig.url.replace(/\/$/, "");
+  const base = secureBackendUrl(state.cloudConfig.url);
   return `${base}/rest/v1/etabs`;
 }
 export function etabByIdQuery(etabId = state.cloudConfig.etabId) {
@@ -328,8 +333,10 @@ export function cloudErrorLooksLikeExpiredJwt(message = "") {
   return text.includes("jwt expired") || text.includes("token is expired") || text.includes("invalid jwt") || text.includes("expired token");
 }
 export async function refreshAdminSessionForCloud() {
+  const originalSession = state.adminSession;
+  const scope = operationScope();
   if (!state.adminSession?.refresh_token || !state.cloudConfig.url || !state.cloudConfig.anonKey) return false;
-  const response = await fetch(`${authEndpoint("token")}?grant_type=refresh_token`, {
+  const response = await fetchBackend(`${authEndpoint("token")}?grant_type=refresh_token`, {
     method: "POST",
     headers: {
       apikey: state.cloudConfig.anonKey,
@@ -341,7 +348,7 @@ export async function refreshAdminSessionForCloud() {
   });
   if (!response.ok) return false;
   const refreshed = await response.json();
-  if (!refreshed?.access_token) return false;
+  if (!refreshed?.access_token || originalSession !== state.adminSession || scope !== operationScope()) return false;
   saveAdminSession({
     ...state.adminSession,
     access_token: refreshed.access_token,
@@ -358,19 +365,23 @@ export async function ensureCloudSessionFresh() {
   return refreshAdminSessionForCloud();
 }
 export async function cloudFetchWithAuthRetry(url, options = {}, retryOnExpiredJwt = true) {
+  const scope = operationScope();
+  if (new URL(url).origin !== secureBackendUrl(state.cloudConfig.url)) throw new Error("Destination réseau refusée.");
   await ensureCloudSessionFresh();
+  assertOperationScope(scope);
   const buildOptions = () => ({
     ...options,
     headers: cloudHeaders(options.headers || {})
   });
-  let response = await fetch(url, buildOptions());
+  let response = await fetchBackend(url, buildOptions());
   if (!retryOnExpiredJwt || response.ok) return response;
   const errorText = await response.clone().text();
   if (!cloudErrorLooksLikeExpiredJwt(errorText)) return response;
   state.cloudStatus = "Session Supabase expirée : reconnexion automatique...";
   const refreshed = await refreshAdminSessionForCloud();
   if (!refreshed) return response;
-  return fetch(url, buildOptions());
+  assertOperationScope(scope);
+  return fetchBackend(url, buildOptions());
 }
 export function clearLocalPlanningStorageForEtabSwitch() {
   ["planningEpsTeachers2026", "planningEpsClassConfig2026", "planningEpsFacilities2026", "planningEpsActivities2026", "planningEpsFacilityActivities2026", "planningEpsActivityProgramByLevel2026", "planningEpsActivityProgramByClass2026", "planningEpsYearPlan2026", "planningEpsCycles2026", "planningEpsCyclesByLevel2026", "planningEpsServiceHoursByLevel2026", "planningEpsServiceAssignments2026", "planningEpsSchoolConstraints2026", state.PREREQUISITE_LOCKS_KEY, state.YEAR_PREREQUISITE_LOCKS_KEY, state.PREREQUISITES_LOCK_KEY, "planningEpsConstructionWorkspaceMode2026", "planningEpsConstructionVersions2026", "planningEpsConstructionLocks2026", "planningEpsConstructionRuleSettings2026", "planningEpsConstructionRules2026", "planningEpsConstruction2026", "planningEpsBlockExclusions2026", "planningEpsAcceptedConflicts2026", "planningEpsSportEvents2026", "planningEpsAsSessions2026", "planningEpsFacilityUnavailability2026", "planningEpsEventExclusions2026", "planningEpsAsExclusions2026", "planningEpsHiddenConstructionBlocksReport2026", state.CLOUD_LOCAL_UNSYNCED_KEY, state.CLOUD_DIRTY_KEYS_KEY].forEach(key => localStorage.removeItem(key));
@@ -480,6 +491,7 @@ export function assertPlanningDataMatchesActiveScope(data, actionLabel = "Operat
 }
 export function applyPlanningData(data) {
   if (!data || typeof data !== "object") return;
+  validatePlanningData(data);
   assertPlanningDataMatchesActiveScope(data, "Chargement Supabase");
   state.teachers = Array.isArray(data.teachers) ? data.teachers : state.teachers;
   state.schoolConstraints = data.schoolConstraints && typeof data.schoolConstraints === "object" ? normalizeSchoolConstraints(data.schoolConstraints) : state.schoolConstraints;
@@ -591,106 +603,99 @@ export function scheduleCloudSave(keys = []) {
   }), 900);
 }
 export async function cloudSaveToRemote(shouldRender = true, options = {}) {
-  const allowBeforeSourceLoaded = Boolean(options.allowBeforeSourceLoaded);
   clearTimeout(state.cloudSaveTimer);
   state.cloudSaveTimer = null;
-  let cloudSaveSucceeded = false;
-  let shouldDiscardLocalChanges = false;
+  if (state.cloudSyncing) { state.cloudSaveQueued = true; return; }
+  if (state.signingOut || !isAdmin() || !cloudWriteAllowed()) {
+    state.cloudStatus = "Sauvegarde indisponible : vos modifications locales sont conservées.";
+    if (shouldRender) render();
+    return;
+  }
   const changedKeys = [...state.cloudDirtyKeys].filter(key => state.cloudDataKeys.includes(key));
-  if (!isAdmin()) {
-    state.cloudStatus = "Lecture seule : connexion admin requise pour sauvegarder.";
-    discardLocalChangesFromCloudSoon();
-    if (shouldRender) render();
-    return;
-  }
-  if (!cloudReady()) {
-    state.cloudStatus = "Cloud non configuré.";
-    if (shouldRender) render();
-    return;
-  }
-  if (!cloudWriteAllowed() || state.cloudConfig.autoLoad && !state.cloudSourceLoaded && !allowBeforeSourceLoaded) {
-    state.cloudStatus = cloudWriteBlockedMessage();
-    discardLocalChangesFromCloudSoon();
-    if (shouldRender) render();
-    return;
-  }
-  if (!changedKeys.length) {
-    state.cloudStatus = "Aucune modification locale recente a envoyer. Supabase reste la source officielle.";
-    clearLocalChangedForCloud();
-    if (shouldRender) render();
-    return;
-  }
+  if (!changedKeys.length) return;
+  const scope = operationScope();
+  const currentData = JSON.parse(JSON.stringify(collectPlanningData()));
+  const baseData = state.cloudBaseData;
   state.cloudSyncing = true;
   state.cloudStatus = "Sauvegarde cloud en cours...";
   if (shouldRender) render();
+  let succeeded = false;
   try {
-    const updatedAt = new Date().toISOString();
-    const currentData = collectPlanningData();
-    const remoteResponse = await cloudFetchWithAuthRetry(`${cloudEndpoint()}?select=id,etab_id,data,updated_at&${planningQuery()}`);
-    if (!remoteResponse.ok) throw new Error(await remoteResponse.text());
-    const remoteRows = sortedPlanningRowsForCurrentEtab(await remoteResponse.json());
-    const remoteRow = remoteRows[0] || null;
-    const remoteData = remoteRow?.data && typeof remoteRow.data === "object" ? remoteRow.data : null;
-    if (remoteData) assertPlanningDataMatchesActiveScope(remoteData, "Sauvegarde Supabase");
-    const dataToSave = remoteData ? {
-      ...remoteData,
-      version: currentData.version,
-      etabId: state.cloudConfig.etabId,
-      planningId: state.cloudConfig.planningId,
-      savedAt: updatedAt
-    } : {
-      ...currentData,
-      savedAt: updatedAt
-    };
-    if (remoteData) {
-      changedKeys.forEach(key => {
-        dataToSave[key] = currentData[key];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      assertOperationScope(scope);
+      const remoteResponse = await cloudFetchWithAuthRetry(`${cloudEndpoint()}?select=id,etab_id,data,updated_at&${planningQuery()}`);
+      if (!remoteResponse.ok) throw new Error("Lecture avant sauvegarde impossible.");
+      const rows = await remoteResponse.json();
+      assertOperationScope(scope);
+      const remoteRow = sortedPlanningRowsForCurrentEtab(rows)[0] || null;
+      const remoteData = remoteRow?.data || null;
+      if (remoteData) {
+        assertPlanningDataMatchesActiveScope(remoteData, "Sauvegarde");
+        if (!remoteRow.updated_at) throw new Error("Version distante absente : sauvegarde suspendue.");
+        // Never overwrite a concurrent edit to the same section after a prior load.
+        if (baseData && changedKeys.some(key => JSON.stringify(baseData[key]) !== JSON.stringify(remoteData[key]) && JSON.stringify(currentData[key]) !== JSON.stringify(remoteData[key]))) {
+          throw new Error("Conflit : une même zone a été modifiée ailleurs. Vos modifications locales sont conservées ; comparez-les avant de recharger.");
+        }
+      }
+      const updatedAt = new Date(Math.max(Date.now(), (Date.parse(remoteRow?.updated_at) || 0) + 1)).toISOString();
+      const dataToSave = { ...(remoteData || currentData), savedAt: updatedAt, etabId: currentData.etabId, planningId: currentData.planningId };
+      for (const key of changedKeys) dataToSave[key] = currentData[key];
+      const rowPayload = { etab_id: currentData.etabId, id: remoteRow?.id || cloudPlanningRowId(), data: dataToSave, updated_at: updatedAt };
+      const target = remoteRow ? `${cloudEndpoint()}?${planningRowQuery(remoteRow.id)}&updated_at=eq.${encodeURIComponent(remoteRow.updated_at)}` : cloudEndpoint();
+      assertOperationScope(scope);
+      const response = await cloudFetchWithAuthRetry(target, {
+        method: remoteRow ? "PATCH" : "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(rowPayload)
       });
+      assertOperationScope(scope);
+      if (response.status === 409 && !remoteRow) continue;
+      if (!response.ok) throw new Error("Sauvegarde refusée par le serveur. Vos modifications locales sont conservées.");
+      const acknowledged = await response.json();
+      assertOperationScope(scope);
+      // A successful HTTP response with zero updated rows is a concurrency conflict.
+      if (Array.isArray(acknowledged) && acknowledged.length === 0) continue;
+      if (!Array.isArray(acknowledged) || acknowledged.length !== 1 || acknowledged[0].id !== rowPayload.id || acknowledged[0].etab_id !== rowPayload.etab_id) throw new Error("Sauvegarde non confirmée par le serveur.");
+      state.cloudLastUpdatedAt = acknowledged[0].updated_at || updatedAt;
+      state.cloudSourceLoaded = true;
+      // Keep the old baseline for untouched local sections: these were not reloaded.
+      if (baseData) {
+        state.cloudBaseData = { ...baseData };
+        for (const key of changedKeys) state.cloudBaseData[key] = currentData[key];
+      }
+      const latest = collectPlanningData();
+      for (const key of changedKeys) {
+        if (JSON.stringify(latest[key]) === JSON.stringify(currentData[key])) state.cloudDirtyKeys.delete(key);
+      }
+      if (state.cloudDirtyKeys.size) localStorage.setItem(state.CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...state.cloudDirtyKeys]));
+      else clearLocalChangedForCloud();
+      state.cloudStatus = `Sauvegarde confirmée à ${new Date(updatedAt).toLocaleTimeString("fr-FR")}.`;
+      showValidationPopup(state.cloudStatus);
+      succeeded = true;
+      break;
     }
-    dataToSave.etabId = state.cloudConfig.etabId;
-    dataToSave.planningId = state.cloudConfig.planningId;
-    assertPlanningDataMatchesActiveScope(dataToSave, "Sauvegarde Supabase");
-    const rowPayload = {
-      etab_id: state.cloudConfig.etabId,
-      id: remoteRow?.id || cloudPlanningRowId(),
-      data: dataToSave,
-      updated_at: updatedAt
-    };
-    const response = await cloudFetchWithAuthRetry(remoteRow ? `${cloudEndpoint()}?${planningRowQuery(remoteRow.id)}` : cloudEndpoint(), {
-      method: remoteRow ? "PATCH" : "POST",
-      headers: {
-        Prefer: "return=minimal"
-      },
-      body: JSON.stringify(rowPayload)
-    });
-    if (!response.ok) throw new Error(await response.text());
-    cloudSaveSucceeded = true;
-    if (allowBeforeSourceLoaded) state.cloudSourceLoaded = true;
-    state.cloudLastUpdatedAt = updatedAt;
-    const savedDate = new Date(updatedAt);
-    const savedTimeLabel = savedDate.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-    const savedDateLabel = savedDate.toLocaleDateString("fr-FR");
-    state.cloudStatus = `Sauvegardé dans le cloud à ${savedTimeLabel} le ${savedDateLabel} (${changedKeys.length} zone${changedKeys.length > 1 ? "s" : ""}).`;
-    showValidationPopup(`Sauvegardé dans le cloud à ${savedTimeLabel} le ${savedDateLabel}`);
+    if (!succeeded) throw new Error("Sauvegardes concurrentes : réessayez. Vos modifications locales sont conservées.");
   } catch (error) {
-    const message = error.message || "sauvegarde impossible";
-    state.cloudStatus = cloudErrorLooksLikeExpiredJwt(message) ? "Erreur cloud : session Supabase expirée. Reconnectez-vous, puis relancez la sauvegarde." : message.includes("42501") || message.includes("permission denied") ? "Erreur cloud : droits Supabase/RLS manquants. Verifiez que l'utilisateur est membre de cet etab_id." : `Erreur cloud : ${message}`;
-    showValidationPopup(state.cloudStatus, "error");
-    shouldDiscardLocalChanges = false;
+    securityEvent("save_failed");
+    if (operationScope() === scope) {
+      state.cloudStatus = error.message || "Sauvegarde impossible. Vos modifications locales sont conservées.";
+      showValidationPopup(state.cloudStatus, "error");
+    }
   } finally {
     state.cloudSyncing = false;
-    if (cloudSaveSucceeded && !state.cloudSaveQueued) clearLocalChangedForCloud();
-    if (state.cloudSaveQueued) {
+    if (operationScope() === scope && state.cloudSaveQueued) {
       state.cloudSaveQueued = false;
-      scheduleCloudSave();
-    } else if (shouldDiscardLocalChanges) {
-      discardLocalChangesFromCloudSoon();
+      if (succeeded && state.cloudDirtyKeys.size) scheduleCloudSave();
     }
-    if (shouldRender || cloudSaveSucceeded) render();
+    if (shouldRender || succeeded) render();
   }
+}
+
+function operationScope() {
+  return cloudConfigIdentity(state.cloudConfig) + "|" + (state.adminSession?.user?.id || state.adminSession?.access_token || "") + "|" + Boolean(state.signingOut);
+}
+function assertOperationScope(scope) {
+  if (operationScope() !== scope) throw new Error("Opération annulée : le compte ou l’établissement a changé.");
 }
 export function cloudRemoteIsNewer(updatedAt) {
   if (!updatedAt) return true;
@@ -703,19 +708,26 @@ export async function cloudLoadFromRemote(shouldRender = true, silent = false, f
     if (shouldRender) render();
     return;
   }
-  if (state.cloudSaveTimer || state.cloudSaveQueued) {
+  if (state.cloudSyncing || state.cloudSaveTimer || state.cloudSaveQueued || state.cloudDirtyKeys.size) {
     if (!silent) state.cloudStatus = "Chargement reporte : une sauvegarde locale est en attente.";
     if (shouldRender) render();
     return;
   }
-  clearLocalChangedForCloud();
+  const scope = operationScope();
   state.cloudSyncing = true;
   if (!silent) state.cloudStatus = "Chargement depuis le cloud...";
   if (shouldRender) render();
   try {
     const response = await cloudFetchWithAuthRetry(`${cloudEndpoint()}?select=id,etab_id,data,updated_at&${planningQuery()}`);
     if (!response.ok) throw new Error(await response.text());
-    const rows = sortedPlanningRowsForCurrentEtab(await response.json());
+    const received = await response.json();
+    assertOperationScope(scope);
+    const rows = sortedPlanningRowsForCurrentEtab(received);
+    if (state.cloudDirtyKeys.size) {
+      state.cloudSourceLoaded = true;
+      state.cloudStatus = "Modifications locales conservées pendant le chargement.";
+      return;
+    }
     if (!rows.length) {
       if (!silent) state.cloudStatus = "Aucune sauvegarde cloud trouvée pour cet identifiant.";
       state.cloudSourceLoaded = true;
@@ -724,17 +736,23 @@ export async function cloudLoadFromRemote(shouldRender = true, silent = false, f
       state.cloudSourceLoaded = true;
     } else {
       applyPlanningData(rows[0].data);
+      state.cloudBaseData = JSON.parse(JSON.stringify(rows[0].data));
       state.cloudLastUpdatedAt = rows[0].updated_at;
       state.cloudSourceLoaded = true;
       state.cloudStatus = `Données cloud chargées (${new Date(rows[0].updated_at).toLocaleString("fr-FR")}).`;
     }
   } catch (error) {
-    if (!silent) {
+    securityEvent("load_failed");
+    if (!silent && operationScope() === scope) {
       const message = error.message || "chargement impossible";
       state.cloudStatus = cloudErrorLooksLikeExpiredJwt(message) ? "Erreur cloud : session Supabase expirée. Reconnectez-vous, puis rechargez le planning." : `Erreur cloud : ${message}`;
     }
   } finally {
     state.cloudSyncing = false;
+    if (operationScope() === scope && state.cloudSaveQueued) {
+      state.cloudSaveQueued = false;
+      scheduleCloudSave();
+    }
     if (shouldRender) render();
   }
 }

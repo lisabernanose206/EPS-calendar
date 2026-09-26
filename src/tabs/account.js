@@ -60,7 +60,7 @@ export function renderAccountView() {
     return `<article class="guideCard">
                 <strong>${escapeHtml(item.etab_name || item.etab_id)}</strong>
                 <span>${item.role === "owner" ? "admin" : "consultation"}${active ? " · actif" : ""}${isDefault ? " · par défaut" : ""}</span>
-                <button class="defaultEtabButton ${isDefault ? "active" : ""}" type="button" data-set-default-etab="${item.etab_id}" ${isDefault ? "disabled" : ""}>${isDefault ? "Par défaut" : "Définir par défaut"}</button>
+                <button class="defaultEtabButton ${isDefault ? "active" : ""}" type="button" data-set-default-etab="${escapeHtml(item.etab_id)}" ${isDefault ? "disabled" : ""}>${isDefault ? "Par défaut" : "Définir par défaut"}</button>
                 ${renderMembers(item.etab_id, canManageMembers)}
               </article>`;
   }).join("") || `<article class="guideCard"><strong>Aucun établissement</strong><span>Reconnectez-vous ou acceptez une invitation pour rattacher ce compte.</span></article>`}

@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { state } from "../app/state.js";
 import { classCollectionHasOverlap, classesForBlock, teacherIdsForBlock, teacherLabelForBlock, yearCellKey } from "./assignments.js";
 import { rowDateForWeek, yearRows } from "./dates.js";
@@ -158,10 +159,10 @@ export function renderUnavailableCard(item) {
   return `<article class="eventCard unavailableCard">
           <strong>${unavailableTitle(item)}</strong>
           ${(item.cycleIds || []).length ? `<span>Cycle(s) : ${(item.cycleIds || []).map(id => state.cycles.find(cycle => cycle.id === id)?.name || id).join(", ")}</span>` : ""}
-          <span>${item.start} -> ${item.end} · ${(item.weekdays || []).join(", ")}</span>
+          <span>${escapeHtml(item.start)} -> ${escapeHtml(item.end)} · ${(item.weekdays || []).join(", ")}</span>
           <span>${unavailableCellSummary(item)}</span>
-          <button class="ghostButton" data-edit-unavailable="${item.id}">Modifier</button>
-          <button class="ghostButton" data-delete-unavailable="${item.id}">Supprimer</button>
+          <button class="ghostButton" data-edit-unavailable="${escapeHtml(item.id)}">Modifier</button>
+          <button class="ghostButton" data-delete-unavailable="${escapeHtml(item.id)}">Supprimer</button>
         </article>`;
 }
 export function renderUnavailableGroup(label, type) {
@@ -171,7 +172,7 @@ export function renderUnavailableGroup(label, type) {
   return `<section class="unavailableGroup">
           <button class="${isOpen ? "active" : ""}" data-toggle-unavailable-group="${type}">
             <span>${label}</span>
-            <span>${items.length} · ${isOpen ? "Masquer" : "Afficher"}</span>
+            <span>${escapeHtml(items.length)} · ${isOpen ? "Masquer" : "Afficher"}</span>
           </button>
           ${isOpen ? `<div class="unavailableGrid">${items.map(renderUnavailableCard).join("")}</div>` : ""}
         </section>`;

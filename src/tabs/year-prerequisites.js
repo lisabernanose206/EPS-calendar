@@ -1,3 +1,4 @@
+import { escapeHtml } from "../ui/format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { saveYearPrerequisiteLocks, yearPrerequisiteLocked } from "../services/cloud.js";
@@ -38,7 +39,7 @@ export function renderYearPrerequisitesView() {
           ${renderPrerequisiteTabs(tabs, state.yearPrerequisiteMode, "data-year-prerequisite-mode", yearPrerequisiteLocked)}
           <div class="prerequisitesLockRow">
             <label class="lockToggle" title="Verrouiller les modifications de ce sous-onglet">
-              <input type="checkbox" data-year-prerequisites-lock="${state.yearPrerequisiteMode}" ${yearPrerequisiteLocked(state.yearPrerequisiteMode) ? "checked" : ""} />
+              <input type="checkbox" data-year-prerequisites-lock="${escapeHtml(state.yearPrerequisiteMode)}" ${yearPrerequisiteLocked(state.yearPrerequisiteMode) ? "checked" : ""} />
               <span class="lockToggleTrack"></span>
               <span>${yearPrerequisiteLocked(state.yearPrerequisiteMode) ? "Sous-onglet verrouill&eacute;" : "Verrouiller ce sous-onglet"}</span>
             </label>

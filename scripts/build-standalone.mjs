@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -30,6 +31,7 @@ const [template, styles, shell, bundle] = await Promise.all([
 
 const script = bundle.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
 const output = template
+  .replace("APP_SCRIPT_HASH", createHash("sha256").update("\n" + script).digest("base64"))
   .replace("<!-- APP_STYLES -->", () => `<style>\n${styles}</style>`)
   .replace("<!-- APP_SHELL -->", () => shell)
   .replace("<!-- APP_SCRIPT -->", () => `<script>\n${script}</script>`);
