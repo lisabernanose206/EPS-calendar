@@ -100,3 +100,8 @@ Le [rapport du 26 septembre 2026](SECURITY-AUDIT-2026-09-26.md) documente les fa
 
 
 Les [corrections frontend du 26 septembre](SECURITY-FIXES-2026-09-26.md) ajoutent le filtrage HTML, OAuth PKCE, la révocation à la déconnexion, le contrôle des sauvegardes concurrentes, la validation des données et une CSP compatible avec le standalone. Lancer `npm run build`, puis `npm run audit:frontend` et `npm test`. Les failles serveur Supabase restent ouvertes conformément au périmètre demandé.
+
+
+## Corrections Supabase à appliquer
+
+Le schéma sécurisé et la [migration du 26 septembre 2026](supabase/migrations/20260926_security_hardening.sql) sont prêts. Pour une base existante, suivre [les instructions du SQL Editor](supabase/README.md). Les changements ne sont pas déployés automatiquement. Les constats serveur précédemment laissés ouverts ont maintenant des corrections SQL testées localement ; leur application et leur vérification sur la base réelle restent nécessaires. Les suites `npm run audit:sql` et `npm run audit:sql:migration` vérifient le schéma neuf et la migration.

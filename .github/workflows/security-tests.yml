@@ -21,5 +21,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+      - run: npm run audit:sql
+      - run: npm run audit:sql:migration
+      - run: npm run audit:sql:observed
       - run: npm run audit:frontend
       - run: npm test

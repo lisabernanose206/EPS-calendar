@@ -5,6 +5,8 @@ const cwd = fileURLToPath(new URL("../", import.meta.url));
 const suites = [
   ["audit/frontend-static.mjs"],
   ["audit/sql-security.mjs"],
+  ["audit/sql-security.mjs", "--legacy"],
+  ["audit/sql-security.mjs", "--observed"],
   ["audit/runtime-security.mjs"],
   ["node_modules/@playwright/test/cli.js", "test", "--config", "audit/playwright.config.js"]
 ];

@@ -1,96 +1,6 @@
--- Installation neuve. Pour une base existante, utiliser migrations/20260926_security_hardening.sql.
-begin;
-create extension if not exists pgcrypto;
-
-create table if not exists public.etabs (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  slug text unique,
-  created_at timestamptz not null default now()
-);
-
-alter table public.etabs
-add column if not exists created_by uuid references auth.users(id) on delete set null;
-
-create table if not exists public.etab_members (
-  etab_id uuid not null references public.etabs(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  role text not null default 'member' check (role in ('owner', 'member')),
-  created_at timestamptz not null default now(),
-  primary key (etab_id, user_id)
-);
-
-create table if not exists public.etab_invites (
-  token text primary key default replace(gen_random_uuid()::text, '-', ''),
-  etab_id uuid not null references public.etabs(id) on delete cascade,
-  created_by uuid not null references auth.users(id) on delete cascade,
-  role text not null default 'member' check (role in ('owner', 'member')),
-  expires_at timestamptz not null default now() + interval '30 days',
-  used_count integer not null default 0,
-  max_uses integer,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.eps_plannings (
-  etab_id uuid not null references public.etabs(id) on delete cascade,
-  id text not null,
-  data jsonb not null,
-  updated_at timestamptz not null default now(),
-  primary key (id),
-  constraint eps_plannings_one_save_per_etab unique (etab_id)
-);
-
-alter table public.eps_plannings
-add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
-
--- Migration si eps_plannings existait déjà avec id comme seule clé primaire :
--- 1. creez d'abord l’établissement et récupérez son UUID.
--- 2. adaptez puis lancez :
--- alter table public.eps_plannings add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
--- update public.eps_plannings set etab_id = 'ETAB_UUID_ICI' where etab_id is null;
--- alter table public.eps_plannings alter column etab_id set not null;
--- Pour garantir une seule sauvegarde par etablissement :
--- Vérifier les doublons avant toute migration de cette contrainte.
-
--- AS et événements sportifs sont rattachés au planning dans data :
--- data->'asSessions' et data->'sportEvents'.
--- Chaque entree contient etabId + planningId.
-
-create table if not exists public.eps_feedback (
-  id uuid primary key default gen_random_uuid(),
-  etab_id uuid not null references public.etabs(id) on delete cascade,
-  planning_id text not null,
-  kind text not null check (kind in ('bug', 'improvement')),
-  author text,
-  message text not null,
-  context jsonb not null default '{}'::jsonb,
-  status text not null default 'new',
-  created_at timestamptz not null default now()
-);
-
-alter table public.eps_feedback
-add column if not exists etab_id uuid references public.etabs(id) on delete cascade;
-
-alter table public.etabs enable row level security;
-alter table public.etab_members enable row level security;
-alter table public.etab_invites enable row level security;
-alter table public.eps_plannings enable row level security;
-alter table public.eps_feedback enable row level security;
-
-update public.etabs e
-set created_by = first_owner.user_id
-from (
-  select distinct on (etab_id) etab_id, user_id
-  from public.etab_members
-  where role = 'owner'
-  order by etab_id, created_at asc
-) first_owner
-where e.id = first_owner.etab_id
-and e.created_by is null;
-
 -- EPS Loustic : migration transactionnelle, à exécuter dans le SQL Editor.
 -- Ne supprime aucun planning. Si une instruction échoue, tout est annulé.
-
+begin;
 set local lock_timeout = '10s';
 -- Ne pas écraser silencieusement une politique ajoutée dans le SQL Editor.
 do $$ declare unexpected text; begin
@@ -199,6 +109,8 @@ using (
     and m.user_id = auth.uid()
   )
 );
+
+
 
 alter table public.etab_invites add column if not exists max_uses integer;
 alter table public.etab_invites add column if not exists used_count integer not null default 0;
@@ -835,5 +747,4 @@ begin
   end loop;
 end $$;
 notify pgrst, 'reload schema';
-
 commit;

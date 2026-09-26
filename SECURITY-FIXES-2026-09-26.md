@@ -1,5 +1,7 @@
 # Corrections de sécurité frontend — 26 septembre 2026
 
+> **Mise à jour Supabase :** après autorisation, les corrections SQL ont été préparées et testées localement. Voir [la migration et ses limites](supabase/README.md). Elles ne sont pas encore appliquées à la base hébergée. Les mentions « serveur inchangé / failles ouvertes » ci-dessous décrivent le périmètre de la phase précédente.
+
 Ce suivi complète [l’audit initial](SECURITY-AUDIT-2026-09-26.md). Les corrections concernent uniquement le code de l’application. **Aucun SQL, aucune politique RLS, aucune configuration ni donnée Supabase n’a été modifié.** Les requêtes de tests utilisent des réponses et des identités fictives.
 
 ## Corrections appliquées

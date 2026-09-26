@@ -1,5 +1,7 @@
 # Audit de sécurité EPS Loustic — 26 septembre 2026
 
+> **Mise à jour Supabase :** après autorisation, les corrections SQL ont été préparées et testées localement. Voir [la migration et ses limites](supabase/README.md). Elles ne sont pas encore appliquées à la base hébergée. Les mentions « serveur inchangé / failles ouvertes » ci-dessous décrivent le périmètre de la phase précédente.
+
 > **Suivi des corrections :** ce rapport décrit le code avant correction. Voir [les corrections frontend et leurs limites](SECURITY-FIXES-2026-09-26.md). Le schéma et la configuration Supabase restent inchangés ; les constats serveur restent ouverts. Les références de lignes ci-dessous correspondent à la version auditée.
 
 **Conclusion : plusieurs failles importantes sont reproduites localement. La sécurité de la production ne peut pas être certifiée sans vérifier son schéma et sa configuration Supabase.** Le schéma du dépôt autorise une promotion illégitime de membre en administrateur. Le frontend permet une injection JavaScript à partir de données de planning et expose alors les jetons stockés dans le navigateur.

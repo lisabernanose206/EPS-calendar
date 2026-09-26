@@ -14,7 +14,9 @@
     "audit:sql": "node audit/sql-security.mjs",
     "audit:runtime": "node audit/runtime-security.mjs",
     "audit:browser": "playwright test --config audit/playwright.config.js",
-    "audit:frontend": "node audit/frontend-static.mjs && npm run audit:runtime && npm run audit:browser"
+    "audit:frontend": "node audit/frontend-static.mjs && npm run audit:runtime && npm run audit:browser",
+    "audit:sql:migration": "node audit/sql-security.mjs --legacy",
+    "audit:sql:observed": "node audit/sql-security.mjs --observed"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

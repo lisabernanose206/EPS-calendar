@@ -41,3 +41,14 @@ Le navigateur de test utilise le port local 5182. Si le code applicatif est modi
 - `production-readonly.sql` est un contrôle **optionnel**, à exécuter dans l’éditeur SQL Supabase. Il inspecte les politiques, privilèges, fonctions et contraintes déployés, sans lire les lignes métier ni effectuer de modification. Il n’a pas été exécuté sur le serveur durant cet audit.
 
 Le code de retour de `audit:security` reste non nul tant qu’une propriété testée n’est pas satisfaite. Ne pas neutraliser les assertions ou marquer les failles comme « succès » pour obtenir un résultat vert.
+
+
+## Après correction SQL
+
+Les suites SQL sont désormais attendues au vert : `npm run audit:sql` (installation neuve) et `npm run audit:sql:migration` (ancienne base sans `max_uses`, permissions excessives, migration répétée). `npm run audit:security` inclut les deux suites SQL et les tests frontend. Les descriptions des échecs initiaux ci-dessus sont historiques. Voir [le guide Supabase](../supabase/README.md). La fixture historique dans `audit/fixtures/` ne doit jamais être déployée.
+
+
+`npm run audit:sql:observed` vérifie également les colonnes communiquées par l’utilisatrice : invitations UUID, expiration de 14 jours, plannings sans établissement possibles, demandes historiques sans colonne établissement. Les données fictives existantes sont comparées avant/après migration. Cela ne vérifie pas les fonctions ou politiques de sa base réelle.
+
+
+La suite observée intègre désormais les sept politiques transmises et vérifie la disparition de la lecture générale et du privilège lié à un email, sans supprimer les données. Les helpers de politiques non exportés sont simulés dans la fixture. Résultats : 26 contrôles pour chaque suite standard/historique et 28 pour la suite observée.
