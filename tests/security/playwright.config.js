@@ -15,7 +15,7 @@ export default defineConfig({
   },
   webServer: {
     command: "node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5182 --strictPort",
-    cwd: fileURLToPath(new URL("../", import.meta.url)),
+    cwd: fileURLToPath(new URL("../../", import.meta.url)),
     url: "http://127.0.0.1:5182",
     reuseExistingServer: false
   }

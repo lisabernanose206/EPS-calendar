@@ -1,107 +1,69 @@
 # EPS Loustic
 
-Application de planning EPS en JavaScript, compilée avec Vite. Les sources de la version web et de la version HTML autonome sont communes.
+Application de planning EPS en JavaScript : préparation d'établissement et d'année, construction, consultation et partage via Supabase. La version web et le HTML autonome partagent leurs sources.
 
 ## Développement
 
-Avec Node.js 22 ou plus récent :
+Node.js 22 ou plus récent :
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Sous PowerShell, utiliser `npm.cmd` si l’exécution de `npm.ps1` est bloquée.
+Sous PowerShell, utiliser `npm.cmd` si l'exécution de `npm.ps1` est bloquée.
 
-## Organisation du code
+## Documentation du projet
 
-`src/main.jsx` est uniquement le point d’entrée web : chargement des styles, configuration publique et démarrage. Il ne lit plus le standalone et n’utilise plus `new Function`.
-
-| Emplacement | Responsabilité |
+| Document | Contenu |
 | --- | --- |
-| `src/app/start.js` | Montage de la structure HTML, initialisation et démarrage |
-| `src/app/shell.html` | Structure commune : en-tête, navigation, conteneurs |
-| `src/app/state.js` | État partagé entre les modules, sans exposition sur `window` |
-| `src/app/initialize.js` | Valeurs initiales et chargement des données locales, dans leur ordre de dépendance |
-| `src/app/bootstrap.js` | Retour OAuth et chargement initial du planning |
-| `src/app/render.js` | Coordination du rendu et branchement des événements |
-| `src/tabs/` | Affichage et événements des onglets et sous-onglets |
-| `src/domain/` | Calculs du planning : dates, cycles, heures, blocs, conflits et optimisation |
-| `src/services/` | Stockage local, authentification et synchronisation Supabase |
-| `src/ui/` | Éléments partagés : navigation, modales, tableaux, sélecteur de dates et messages |
-| `assets/` | Images et icônes partagées par les deux versions |
-| `src/styles.css` | Styles communs aux deux versions |
-| `supabase/schema.sql` | Script SQL historique extrait de l’interface ; son extraction n’applique aucune modification à la base |
+| [PRD](docs/PRD.md) | Périmètre produit, utilisateurs et parcours |
+| [Architecture](docs/ARCHITECTURE.md) | Structure réelle, données, synchronisation et déploiement |
+| [Design](docs/DESIGN.md) | Conventions visuelles, UX et accessibilité |
+| [Sécurité](docs/SECURITY.md) | Protections actuelles, six dimensions et limites |
+| [Tâches](docs/TASKS.md) | Priorités et validations restantes |
+| [Mémoire](docs/MEMORY.md) | État du projet et décisions à préserver |
 
-### Trouver le fichier d’un onglet
+L'audit initial et le suivi des corrections sont intégrés à [SECURITY.md](docs/SECURITY.md). La documentation de projet reste limitée aux six fichiers de `docs/`.
 
-| Onglet | Fichier dans `src/tabs/` |
-| --- | --- |
-| Emploi du temps | `timetable.js` |
-| Année scolaire | `year.js` |
-| Résumé période | `cycle.js` |
-| Pré-requis établissement | `prerequisites.js` |
-| Établissement / Profs / Classes | `establishment.js` / `team.js` / `classes.js` |
-| Installations et activités / Programme | `facilities-activities.js` / `program.js` |
-| Pré-requis année scolaire | `year-prerequisites.js` |
-| Indisponibilités / Cycles | `unavailability.js` / `cycle-settings.js` |
-| AS / Événements / Service | `sport-association.js` / `events.js` / `hours.js` |
-| Construction | `construction.js` |
-| Mode d’emploi / Une question ? | `guide.js` / `request.js` |
-| Établissements du compte | `account.js` |
-
-Les vues secondaires existantes restent dans `alerts.js`, `rules.js`, `changelog.js` et `cloud.js`.
-
-Les fonctions `render…` produisent l’interface et les fonctions `bind…Events` raccordent ses actions après le rendu. Le code métier commun est importé depuis `domain/` et `services/`. Les modules partagent un seul objet `state` : ne pas en créer une copie par onglet. Certains modules s’importent mutuellement ; leur chargement ne doit pas exécuter de calcul dépendant de l’état. Le démarrage passe par `startApp()`.
-
-## Version web et standalone
+## Versions web et standalone
 
 ```sh
-npm run build              # Produit les deux versions
-npm run build:web          # Produit dist/ pour un serveur statique
-npm run build:standalone   # Régénère standalone.html
-npm run preview           # Sert dist/ localement
+npm run build
+npm run build:web
+npm run build:standalone
+npm run preview
 ```
 
-**Modifier les fichiers de `src/`, pas `standalone.html`.** Ce dernier est un fichier généré, conservé dans le dépôt pour pouvoir être ouvert directement. Son gabarit est `src/standalone.template.html` et son point d’entrée est `src/standalone.js`.
+**Modifier `src/`, pas `standalone.html`.** Le build web produit `dist/`. Le standalone généré intègre JavaScript et CSS et s'ouvre directement ; conserver `assets/` à côté pour les images. Les polices externes et Supabase nécessitent le réseau.
 
-Le générateur regroupe les modules JavaScript et les styles dans le HTML, sans chargement de modules au moment de son ouverture. Le standalone peut donc toujours être ouvert avec un double-clic, sans serveur local. Conserver le dossier `assets/` à côté du HTML pour les illustrations. Les polices Google et les fonctions Supabase nécessitent une connexion, comme auparavant.
+GitHub Pages régénère le standalone et le publie comme `index.html`. Le détail des workflows et leurs limites est dans [Architecture](docs/ARCHITECTURE.md).
 
-GitHub Pages régénère le standalone depuis les sources avant de le publier comme `index.html`. Il n’est plus nécessaire de maintenir manuellement deux copies du code.
+## Configuration et Supabase
 
-## Configuration et sécurité
+La version Vite accepte `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ETAB_ID` et `VITE_SUPABASE_PLANNING_ID`. Le standalone accepte une configuration préalable `window.__EPS_CLOUD_CONFIG__` respectant sa CSP.
 
-La version Vite accepte `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ETAB_ID` et `VITE_SUPABASE_PLANNING_ID`. Le standalone conserve sa configuration intégrée et la possibilité de fournir `window.__EPS_CLOUD_CONFIG__` avant son script.
+Seules l'URL et une clé Supabase publique appartiennent au navigateur. Aucun secret serveur ni clé `service_role`. Les autorisations effectives relèvent des RLS et RPC Supabase.
 
-Seules l’URL et une clé Supabase **publique** appartiennent au navigateur. Ne jamais y mettre de clé `service_role` ou de secret serveur. Les vérifications de rôle dans l’interface facilitent la navigation ; les autorisations effectives relèvent des politiques RLS et fonctions RPC Supabase. Le refactoring conserve les appels existants et ne modifie pas le serveur. Le schéma SQL n’est plus affiché ni intégré dans le JavaScript des écrans.
+Le schéma sécurisé et la migration sont présents dans le dépôt. **Un build ou un push n'applique pas la migration à la base hébergée.** Suivre [la procédure de migration](docs/ARCHITECTURE.md#migration-supabase) pour une base existante ; son application réelle reste à confirmer.
 
 ## Vérification
 
 ```sh
 npm run build
 npx playwright install chromium
+npm run audit:security
 npm test
 ```
 
-Pour utiliser Edge déjà installé sous PowerShell :
+Pour Edge déjà installé sous PowerShell :
 
 ```powershell
 $env:PLAYWRIGHT_CHANNEL = "msedge"
+npm.cmd run audit:security
 npm.cmd test
 ```
 
-Les tests utilisent des sessions fictives et interceptent les requêtes externes : aucune donnée de production n’est modifiée. Ils vérifient les points d’entrée web et standalone, les onglets et sous-onglets, les rôles de navigation, l’état partagé et les accents. Ils ne constituent pas une vérification des politiques du serveur Supabase.
+Les tests utilisent des identités et données fictives. Ils ne modifient pas la production et ne prouvent pas sa configuration. Voir [les commandes et détails des tests de sécurité](docs/SECURITY.md#commandes-de-validation).
 
-Tous les fichiers texte doivent rester en UTF-8.
-
-## Audit de sécurité
-
-Le [rapport du 26 septembre 2026](SECURITY-AUDIT-2026-09-26.md) documente les failles reproduites, les limites de vérification de la production et les priorités de correction. Les [tests dédiés](audit/README.md) se lancent avec `npm run audit:security` et restent en échec tant que les protections attendues ne sont pas corrigées. Ils sont isolés des données réelles.
-
-
-Les [corrections frontend du 26 septembre](SECURITY-FIXES-2026-09-26.md) ajoutent le filtrage HTML, OAuth PKCE, la révocation à la déconnexion, le contrôle des sauvegardes concurrentes, la validation des données et une CSP compatible avec le standalone. Lancer `npm run build`, puis `npm run audit:frontend` et `npm test`. Les failles serveur Supabase restent ouvertes conformément au périmètre demandé.
-
-
-## Corrections Supabase à appliquer
-
-Le schéma sécurisé et la [migration du 26 septembre 2026](supabase/migrations/20260926_security_hardening.sql) sont prêts. Pour une base existante, suivre [les instructions du SQL Editor](supabase/README.md). Les changements ne sont pas déployés automatiquement. Les constats serveur précédemment laissés ouverts ont maintenant des corrections SQL testées localement ; leur application et leur vérification sur la base réelle restent nécessaires. Les suites `npm run audit:sql` et `npm run audit:sql:migration` vérifient le schéma neuf et la migration.
+Tous les fichiers texte doivent rester en UTF-8 ; vérifier également les accents dans le rendu.

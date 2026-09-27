@@ -10,13 +10,13 @@
     "build:web": "vite build && node scripts/copy-assets.mjs",
     "build:standalone": "node scripts/build-standalone.mjs",
     "test": "playwright test",
-    "audit:security": "node audit/run.mjs",
-    "audit:sql": "node audit/sql-security.mjs",
-    "audit:runtime": "node audit/runtime-security.mjs",
-    "audit:browser": "playwright test --config audit/playwright.config.js",
-    "audit:frontend": "node audit/frontend-static.mjs && npm run audit:runtime && npm run audit:browser",
-    "audit:sql:migration": "node audit/sql-security.mjs --legacy",
-    "audit:sql:observed": "node audit/sql-security.mjs --observed"
+    "audit:security": "node tests/security/run.mjs",
+    "audit:sql": "node tests/security/sql-security.mjs",
+    "audit:runtime": "node tests/security/runtime-security.mjs",
+    "audit:browser": "playwright test --config tests/security/playwright.config.js",
+    "audit:frontend": "node tests/security/frontend-static.mjs && npm run audit:runtime && npm run audit:browser",
+    "audit:sql:migration": "node tests/security/sql-security.mjs --legacy",
+    "audit:sql:observed": "node tests/security/sql-security.mjs --observed"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

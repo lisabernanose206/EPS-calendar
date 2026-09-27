@@ -20,7 +20,7 @@ await db.exec(`
   grant execute on function auth.uid() to anon, authenticated;
 `);
 // PGlite does not ship pgcrypto. The schema only uses gen_random_uuid(), built into Postgres.
-const schema = (await readFile(new URL("../supabase/schema.sql", import.meta.url), "utf8"))
+const schema = (await readFile(new URL("../../supabase/schema.sql", import.meta.url), "utf8"))
   .replace(/create extension if not exists pgcrypto;\s*/i, "");
 const observed = process.argv.includes("--observed");
 const legacyFixture = process.env.EPS_SQL_LEGACY_FIXTURE || ((process.argv.includes("--legacy") || observed) ? new URL("./fixtures/schema-before-security.sql", import.meta.url) : null);
@@ -45,7 +45,7 @@ if (legacyFixture) {
     await db.exec(await readFile(new URL("./fixtures/observed-policies.sql",import.meta.url),"utf8"));
     snapshot=(await db.query("select (select jsonb_agg(to_jsonb(p)) from public.eps_plannings p) plannings, (select jsonb_agg(to_jsonb(i)) from public.etab_invites i) invites, (select jsonb_agg(to_jsonb(f)) from public.eps_feedback f) feedback")).rows[0];
   }
-  const migration=await readFile(new URL("../supabase/migrations/20260926_security_hardening.sql",import.meta.url),"utf8");
+  const migration=await readFile(new URL("../../supabase/migrations/20260926_security_hardening.sql",import.meta.url),"utf8");
   if (observed) {
     await db.exec('create policy "unexpected custom policy" on public.eps_plannings for select using (true)');
     await assert.rejects(db.exec(migration),/Politiques supplémentaires/);

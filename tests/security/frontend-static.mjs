@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { parse } from "acorn";
-import { validatePlanningData } from "../src/security/data.js";
-import { secureBackendUrl } from "../src/security/transport.js";
-import { securityDiagnostics, securityEvent } from "../src/security/log.js";
+import { validatePlanningData } from "../../src/security/data.js";
+import { secureBackendUrl } from "../../src/security/transport.js";
+import { securityDiagnostics, securityEvent } from "../../src/security/log.js";
 
 function walk(node, visit) {
   if (!node || typeof node !== "object") return;
