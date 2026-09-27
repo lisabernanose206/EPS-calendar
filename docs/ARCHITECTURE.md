@@ -89,6 +89,14 @@ Un échec de chargement bloque le planning et propose de réessayer. Toute sauve
 
 Le standalone ouvre ses ressources compilées sans serveur ; authentification, données distantes et polices externes nécessitent le réseau. Les sauvegardes de planning et demandes sont bloquées par le client depuis `file:`, localhost et les hôtes locaux reconnus. Ce blocage n'est pas une protection serveur générale de toutes les RPC.
 
+## Écrans d’erreur Loustic
+
+`src/ui/error-state.js` et `error-state.css` partagent le rendu entre l’application et la 404. Le composant de présentation ne dépend d’aucun service métier. `src/app/error-boundary.js` intercepte les erreurs JavaScript et promesses non traitées après son installation au démarrage ; les actions de reprise sont fournies par le démarrage pour éviter une nouvelle boucle d’imports. Les erreurs de rendu et de premier chargement disposent aussi d’une action locale de reprise.
+
+`scripts/build-errors.mjs` génère `dist/404.html` depuis `src/404.template.html` lors des builds web et standalone. Icône et CSS sont incorporés : aucun script, police ou asset externe n’est nécessaire à cette page. `PAGES_BASE_PATH` fixe le lien d’accueil, y compris depuis une URL inexistante profonde. Le workflow Pages obtient ce préfixe avec [actions/configure-pages](https://github.com/actions/configure-pages/blob/main/action.yml), puis publie la 404 avec le standalone. La configuration de publication est modifiée, sans déclencher de déploiement.
+
+Limites : une erreur native du navigateur, une indisponibilité totale de l’hébergeur ou un échec de chargement du JavaScript avant installation du gestionnaire ne peuvent pas être interceptés par ce gestionnaire. Le statut HTTP 404 est fourni par l’hébergeur, pas par le HTML.
+
 ## Configuration et livrables
 
 Vite accepte `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ETAB_ID` et `VITE_SUPABASE_PLANNING_ID`. Des valeurs publiques par défaut existent dans les sources. Le standalone accepte `window.__EPS_CLOUD_CONFIG__` avant son script, sous réserve de respecter la CSP.

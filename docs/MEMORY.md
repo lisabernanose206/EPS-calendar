@@ -25,6 +25,10 @@ Décision du 27 septembre : revue systématique de la dette technique avant tout
 
 **État actuel : aucune revue complète de candidat de production n’est attestée.** Les nettoyages de dépendances, dates et CSS sont ciblés : ils ne clôturent pas les autres imports circulaires connus autour du rendu et des services. Les autres surcharges CSS restent à examiner pour distinguer les variantes justifiées des doublons inutiles. Ces points doivent être examinés et les dettes confirmées corrigées avant de déclarer une version prête. Retirer la rubrique de TASKS.md ne supprime pas ces constats. Les workflows ne font pas automatiquement respecter ce prérequis.
 
+## Écrans Loustic — changement local
+
+404 autonome générée dans `dist/`, composant d’erreur partagé, récupération des erreurs de rendu/démarrage et des promesses non traitées. Styles isolés, aucune dépendance ajoutée, aucune persistance ni permission modifiée. La configuration Pages inclut le chemin d’accueil de la 404. Validation locale : builds web/standalone, contrôles statiques, 11 tests runtime, 23 tests navigateur de sécurité et 20 tests fonctionnels réussis (dont quatre nouveaux scénarios d’erreur). Capture mobile inspectée ; 404 vérifiée sans dépendance réseau, avec un vrai statut simulé et un préfixe de site. Ce travail n’est pas un déploiement et ne satisfait pas à lui seul la revue globale préalable à la production.
+
 ## Organisation des tests
 
 Les tests de sécurité sont dans `tests/security/` ; les commandes `audit:*` sont conservées. Les anciens dossiers racine d’audit et de refactoring ont été retirés. Le test Playwright fonctionnel exclut les scénarios de sécurité, exécutés avec leur configuration dédiée.

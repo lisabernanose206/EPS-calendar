@@ -104,6 +104,10 @@ Pour chaque dimension affectée, identifier contrôle réel, emplacement serveur
 
 Revue du changement « Supabase seul stockage métier » : Authentification (session seule et revalidation), Autorisation (rôles relus et blocage avant chargement), Encryption (suppression des copies métier persistantes), Logging (pas de données ajoutées aux journaux), Testing (lecture/sauvegarde/rechargement/panne/changement de rôle testés) et Data Processing (purge des anciennes copies sans import). Aucun SQL de production ni déploiement n'est exécuté.
 
+## Sécurité des écrans d’erreur
+
+Revue des six dimensions : authentification et autorisations inchangées ; aucun appel serveur ni modification SQL ajouté ; 404 sans JavaScript ni connexion externe, CSP restrictive avec empreinte du CSS ; diagnostic limité au code existant `render_failed`, sans contenu d’exception ; tests des erreurs, de la reprise, des URL profondes et du clavier ; aucun stockage ou transfert de données ajouté. Les messages des nouveaux écrans sont prédéfinis et passent par le filtre HTML dans l’application ; les détails techniques de l’exception ne sont pas exposés. Le préfixe d’accueil de la 404 est validé au build. Les erreurs de service déjà traitées conservent leurs messages contextualisés.
+
 ## Audit et suivi des corrections
 
 ### Périmètre de l'audit du 26 septembre 2026

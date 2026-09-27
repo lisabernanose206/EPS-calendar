@@ -1,3 +1,4 @@
+import { renderErrorState } from "./error-state.js";
 import { escapeHtml } from "./format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
@@ -14,16 +15,10 @@ export function showValidationPopup(message, type = "success") {
   }, state.validationPopupType === "error" ? 5200 : 2400);
 }
 export function renderValidationPopup() {
-  return state.validationPopupMessage ? `<div class="validationPopup ${state.validationPopupType === "error" ? "error" : ""}">${escapeHtml(state.validationPopupMessage)}</div>` : "";
+  return state.validationPopupMessage ? `<div class="validationPopup ${state.validationPopupType === "error" ? "error" : ""}">${state.validationPopupType === "error" ? '<img class="lousticErrorMini" src="./assets/icon_app_small.png" alt="">' : ""}${escapeHtml(state.validationPopupMessage)}</div>` : "";
 }
-export function renderAppError(error) {
-  const message = String(error?.message || error || "Erreur inconnue").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return `
-          <section class="panel">
-            <h2>Affichage interrompu</h2>
-            <p class="muted">Une erreur bloque le chargement de cet onglet. Rechargez la page, ou envoyez une requête avec le message ci-dessous si le problème revient.</p>
-            <div class="warningItem">${message}</div>
-          </section>`;
+export function renderAppError() {
+  return renderErrorState("unexpected");
 }
 export function applyPrerequisitesLockState() {
   const locked = state.week === "build" && (state.constructionMode === "prerequisites" && prerequisiteLocked(state.prerequisiteMode) || state.constructionMode === "yearPrerequisites" && yearPrerequisiteLocked(state.yearPrerequisiteMode));

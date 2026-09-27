@@ -63,6 +63,10 @@ Ces fonctionnalités sont identifiées dans les modules ; elles ne sont pas tout
 
 Pas de service worker, de PWA installable déclarée, de synchronisation hors ligne complète, de portail élèves/parents ni de gestion des notes identifiés. Aucun stockage de fichiers utilisateurs Supabase Storage n'est utilisé dans les sources examinées. Ces absences ne constituent pas un backlog approuvé.
 
+## Récupération après erreur
+
+Les pages introuvables et erreurs applicatives bloquantes présentent Loustic, une explication simple et une action de reprise adaptée. Réessayer un affichage ne doit pas recharger l’onglet ni supprimer les valeurs en mémoire. Les erreurs de saisie et de sauvegarde restent proches de l’action concernée.
+
 ## Critères de recette
 
 - Un administrateur prépare et construit un planning, puis retrouve sa sauvegarde après reconnexion.

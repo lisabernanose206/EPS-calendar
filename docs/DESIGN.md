@@ -59,6 +59,12 @@ Prévoir chargement, vide, succès, erreur, accès refusé et indisponibilité r
 
 Des media queries existent notamment à 980, 900, 760 et 720 px, ainsi que des styles d'impression. Certains tableaux sont larges : préserver des libellés lisibles et un défilement explicite plutôt que compresser toutes les colonnes. Des styles responsives ne démontrent pas une recette mobile réussie.
 
+## Erreurs et récupération
+
+Loustic accompagne la page introuvable, les erreurs inattendues, les échecs de démarrage et de chargement. Palette crème/pêche/lavande, contours foncés, message français bref et action principale visible. Les erreurs de saisie et de sauvegarde restent contextualisées ; les notifications d’échec portent une petite icône Loustic. Ne pas transformer une erreur récupérable en navigation forcée.
+
+La 404 propose le retour à l’accueil. Un échec de lecture propose Réessayer ; une erreur de rendu propose Réessayer ou Revenir au planning sans rechargement. Les erreurs non traitées ouvrent un dialogue natif accessible au clavier et fermable par Échap. Un rechargement après échec de démarrage demande confirmation et rappelle le risque pour les modifications non sauvegardées. Aucun détail brut d’exception n’est affiché dans ces nouveaux écrans.
+
 ## Accessibilité, français et vérification
 
 Vérifier à chaque modification : navigation clavier, focus visible et retour de focus des modales, libellés, contrastes, zoom et compréhension sans couleur. Aucun audit complet WCAG/RGAA n'est établi dans le dépôt.

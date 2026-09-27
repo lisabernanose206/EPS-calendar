@@ -44,6 +44,8 @@ npm test
 
 ## Réalisé dans le dépôt
 
+- [x] Écrans d’erreur Loustic et 404 autonome intégrés aux builds ; reprise sans rechargement, messages neutres et démarrage interrompu testés. Publication effective à vérifier après la revue préalable requise.
+
 - [x] Supabase seul stockage métier ; session de connexion seule dans sessionStorage, validation serveur au démarrage, préférence d'établissement dans Supabase et avertissement avant perte d'un brouillon.
 
 - [x] Sources web/standalone communes, état partagé et modules organisés.

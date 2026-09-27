@@ -107,7 +107,7 @@ test("Une lecture Supabase échouée bloque le planning puis permet de réessaye
   remote.offline = true;
   await page.goto(origin);
   await expect(page.locator("#retryCloudLoad")).toBeVisible();
-  await expect(page.locator("#root")).toContainText("Lecture de Supabase");
+  await expect(page.locator("#root")).toContainText("Le planning se fait attendre…");
   await expect(page.locator('[data-rename-teacher]')).toHaveCount(0);
   expect(remote.writes).toBe(0);
   remote.offline = false;

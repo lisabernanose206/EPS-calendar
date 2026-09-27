@@ -1,0 +1,28 @@
+/* Shared error surface: scoped styles, also embedded in the static 404. */
+.lousticError { box-sizing: border-box; width: min(100%, 720px); margin: 28px auto; padding: clamp(24px, 5vw, 56px); border: 3px solid #2d3748; border-radius: 30px; background: #fff; color: #2d3748; box-shadow: 8px 8px 0 #2d3748; text-align: center; font-family: Nunito, ui-sans-serif, system-ui, sans-serif; }
+.lousticErrorBrand { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; font-size: 13px; letter-spacing: .08em; }
+.lousticErrorBrand span { flex-basis: 100%; margin-top: 4px; color: #526173; font-size: 12px; letter-spacing: 0; }
+.lousticErrorScene { position: relative; display: grid; place-items: center; width: 240px; max-width: 100%; height: 218px; margin: 24px auto 8px; }
+.lousticErrorScene img { z-index: 1; width: 164px; height: 164px; object-fit: contain; transform: rotate(-8deg); }
+.lousticErrorOrbit { position: absolute; width: 198px; height: 176px; max-width: 90%; border: 2px solid #2d3748; border-radius: 48% 52% 43% 57%; background: #e6e6fa; transform: rotate(12deg); }
+.lousticErrorSpark { position: absolute; top: 2px; right: 6px; font-size: 42px; color: #2d3748; }
+.lousticErrorDot { position: absolute; bottom: 14px; left: 8px; width: 22px; height: 22px; border: 2px solid #2d3748; border-radius: 50%; background: #fdbcb4; }
+.lousticErrorCode { display: inline-block; margin: 0 0 16px; padding: 6px 14px; border: 2px solid #2d3748; border-radius: 999px; background: #add8e6; font-size: 13px; font-weight: 900; letter-spacing: .1em; }
+.lousticError h1 { margin: 0; font-family: Fredoka, ui-rounded, system-ui, sans-serif; font-size: clamp(25px, 4vw, 38px); line-height: 1.2; letter-spacing: -.035em; }
+.lousticErrorMessage { max-width: 470px; margin: 18px auto 26px; color: #526173; font-size: 16px; line-height: 1.65; }
+.lousticErrorActions { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; }
+.lousticErrorActions a, .lousticErrorActions button { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 14px; min-height: 48px; max-width: 100%; padding: 12px 20px; border: 2px solid #2d3748; border-radius: 13px; color: #2d3748; font: 800 15px Nunito, system-ui, sans-serif; text-decoration: none; cursor: pointer; }
+.lousticErrorActions .lousticErrorPrimary { background: #fdbcb4; box-shadow: 3px 3px 0 #2d3748; }
+.lousticErrorActions .lousticErrorSecondary { background: #fff; }
+.lousticErrorActions a:hover, .lousticErrorActions button:hover { background: #add8e6; }
+.lousticErrorActions :focus-visible { outline: 3px solid #155e75; outline-offset: 5px; }
+.lousticErrorNote { max-width: 460px; margin: 24px auto 0; font-size: 12px; line-height: 1.6; color: #526173; }
+.lousticErrorDialog { width: min(780px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 0 10px 12px 0; border: 0; background: transparent; }
+.lousticErrorDialog::backdrop { background: rgb(45 55 72 / .6); }
+.lousticErrorDialog .lousticError { margin: 0; }
+.validationPopup.error .lousticErrorMini { width: 32px; height: 32px; margin-right: 10px; vertical-align: middle; object-fit: contain; }
+@media (max-width: 480px) { .lousticError { margin: 12px auto; border-radius: 22px; box-shadow: 4px 4px 0 #2d3748; } .lousticErrorScene { height: 180px; margin-top: 16px; } .lousticErrorScene img { width: 140px; height: 140px; } .lousticErrorOrbit { height: 150px; width: 172px; } .lousticErrorActions { flex-direction: column; } }
+@media print { .lousticError { box-shadow: none; } .lousticErrorActions { display: none; } }
+
+.lousticErrorPage { margin: 0; min-height: 100vh; padding: 20px; box-sizing: border-box; background: #fff9f5; }
+.lousticErrorPage main { width: 100%; }

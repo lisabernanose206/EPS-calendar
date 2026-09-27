@@ -1,5 +1,5 @@
+import { renderErrorState } from "../ui/error-state.js";
 import { cloudLoadFromRemote } from "../services/cloud.js";
-import { escapeHtml } from "../ui/format.js";
 import { securityEvent } from "../security/log.js";
 import { safeHtml } from "../security/html.js";
 import { state } from "./state.js";
@@ -71,7 +71,8 @@ export function render() {
   if (!state.authReady || (state.cloudConfig.etabId && !state.cloudSourceLoaded && state.week !== "account")) {
     legend.style.display = "none";
     legend.innerHTML = safeHtml("");
-    root.innerHTML = safeHtml(`<section class="panel" role="status"><h2>Lecture de Supabase</h2><p>Le planning sera disponible après confirmation du serveur.</p><p>${escapeHtml(state.cloudStatus || state.authStatus || "")}</p>${state.authReady && !state.cloudSyncing ? '<button class="primary" id="retryCloudLoad">Réessayer</button>' : ""}</section>`);
+    const waiting = !state.authReady || state.cloudSyncing;
+    root.innerHTML = safeHtml(renderErrorState(waiting ? "loading" : "load"));
     root.insertAdjacentHTML("beforeend", safeHtml(renderEtabSwitchModal()));
     attachAuthControls();
     root.querySelector("#retryCloudLoad")?.addEventListener("click", () => cloudLoadFromRemote(true, false, true));
@@ -88,7 +89,11 @@ export function render() {
     securityEvent("render_failed");
     legend.style.display = "none";
     legend.innerHTML = safeHtml("");
-    root.innerHTML = safeHtml(renderAppError(error));
+    root.innerHTML = safeHtml(renderAppError());
+    root.querySelector("[data-error-retry]")?.addEventListener("click", render);
+    root.querySelector("[data-error-home]")?.addEventListener("click", () => { state.week = "current"; render(); });
+    root.querySelector("h1")?.focus();
+    return;
   }
   root.insertAdjacentHTML("beforeend", safeHtml(renderValidationPopup()));
   root.insertAdjacentHTML("beforeend", safeHtml(renderShareInviteModal()));
