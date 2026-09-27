@@ -16,6 +16,10 @@ Before making a significant change, inspect the relevant documentation rather th
 - `docs/MEMORY.md` — current project state and important previous decisions.
 - `docs/SECURITY.md` — security requirements and project security decisions.
 
+## Data persistence
+
+Supabase is the only persistent source of business data. Do not store planning, roles or settings in localStorage, sessionStorage, IndexedDB or offline caches. Only authentication session data and its short-lived OAuth flow may use sessionStorage. Working drafts may live in page memory until the server confirms a save.
+
 ## Working rules
 
 1. Understand the existing implementation before changing it.
@@ -67,6 +71,21 @@ When security may be affected, read `docs/SECURITY.md` before implementation and
 
 Do not silently bypass a documented security requirement. If a requested implementation conflicts with a security requirement, identify the conflict and propose an implementation that preserves the requirement.
 
+## Mandatory technical debt review before production
+
+A technical debt review is a release prerequisite for every production publication, including urgent fixes. Do not deploy, trigger a publication workflow or declare a release ready before completing this review on the final candidate.
+
+Technical debt means a concrete design, code, dependency or tooling limitation that increases maintenance cost or regression risk. The objective is to correct identified debt before release, not accumulate it in a dedicated TASKS.md backlog.
+
+1. Review the repository's known limitations and the candidate changes, including their affected dependencies. Inspect unused dependencies and code, duplicated logic, circular imports and initialization order, redundant CSS overrides, temporary workarounds, data persistence, server-side security, test coverage, build/deployment configuration and documentation consistency.
+2. Record concrete findings with their location, impact and required correction. An intentional CSS variant or justified architectural choice is not automatically debt; explain that conclusion rather than forcing cosmetic rewrites.
+3. Resolve identified technical debt before production. Do not silently defer an unresolved finding to a future task, hide it by deleting documentation, or treat passing tests as proof that it is resolved. If a finding cannot be corrected within the authorized scope, report the blocker and keep the release blocked.
+4. Validate the final candidate: web and standalone builds, applicable tests and security checks, UTF-8/accents, and desktop/mobile/print comparisons when relevant. Reassess changes made after the review before publication.
+5. Keep a concise review result in the existing docs/MEMORY.md: candidate identifier (commit or exact working changes), scope inspected, findings and resolutions, validation evidence and remaining blockers. Keep architecture, design and security decisions in their existing documents. Do not create another Markdown report or a technical debt section in TASKS.md.
+6. State whether this release prerequisite is satisfied. Use “no unresolved technical debt identified in the reviewed scope” only when supported by the review; never claim that an absolute absence of debt has been proven. Previously known unresolved debt must remain visible and blocks release until resolved.
+
+This is a working rule for agents, not an automated CI enforcement mechanism. Do not assume that GitHub Pages or branch protection enforces it; verify the actual publication controls separately.
+
 ## Definition of Done
 
 Before declaring significant work complete:
@@ -76,4 +95,5 @@ Before declaring significant work complete:
 - applicable tests/build checks have been run;
 - applicable security dimensions have been reviewed;
 - documentation has been updated when the implementation changes a documented decision;
-- remaining limitations or manual checks are clearly identified.
+- remaining limitations or manual checks are clearly identified;
+- for a production release, the mandatory technical debt review is completed on the final candidate, its findings are resolved and its validation evidence is recorded.

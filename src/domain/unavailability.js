@@ -7,7 +7,7 @@ import { findCycleForRule, weeksForCycle } from "./hours.js";
 import { clearConstructionCycleDetails } from "./optimizer.js";
 import { saveConstructionPlan } from "../services/planning-storage.js";
 import { isBlockExcluded, rebuildConstructionPlan, saveAcceptedConflicts, saveBlockExclusions, saveConstructionRules, saveFacilityUnavailability } from "../services/settings-storage.js";
-import { dateOnly } from "../ui/date-picker.js";
+import { dateOnly } from "./dates.js";
 
 export function unavailableForCell(row, weekItem, includeAs = false) {
   if (row.isAs && !includeAs) return [];

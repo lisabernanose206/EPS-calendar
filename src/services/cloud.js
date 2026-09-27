@@ -1,3 +1,4 @@
+import { pageMemory } from "./page-memory.js";
 import { fetchBackend } from "../security/fetch.js";
 import { validatePlanningData } from "../security/data.js";
 import { secureBackendUrl, isSecureBackend } from "../security/transport.js";
@@ -28,7 +29,7 @@ export function loadCloudConfig() {
   if (!defaults.planningId) defaults.planningId = "planning-eps-2026-2027";
   if (defaults.url && defaults.anonKey) defaults.enabled = defaults.enabled || true;
   try {
-    const saved = localStorage.getItem(state.CLOUD_CONFIG_KEY);
+    const saved = pageMemory.getItem(state.CLOUD_CONFIG_KEY);
     const savedConfig = saved ? JSON.parse(saved) : {};
     const merged = {
       ...defaults,
@@ -67,14 +68,14 @@ export function resetCloudLoadState() {
 export function saveCloudConfig() {
   const previousConfig = (() => {
     try {
-      return JSON.parse(localStorage.getItem(state.CLOUD_CONFIG_KEY) || "null");
+      return JSON.parse(pageMemory.getItem(state.CLOUD_CONFIG_KEY) || "null");
     } catch {
       return null;
     }
   })();
   const previousIdentity = cloudConfigIdentity(previousConfig);
   const nextIdentity = cloudConfigIdentity(state.cloudConfig);
-  localStorage.setItem(state.CLOUD_CONFIG_KEY, JSON.stringify(state.cloudConfig));
+  pageMemory.setItem(state.CLOUD_CONFIG_KEY, JSON.stringify(state.cloudConfig));
   if (previousIdentity && previousIdentity !== nextIdentity) resetCloudLoadState();
 }
 export function defaultPrerequisiteLocks(value = false) {
@@ -85,7 +86,7 @@ export function defaultYearPrerequisiteLocks(value = false) {
 }
 export function loadPrerequisiteLocks() {
   try {
-    const saved = localStorage.getItem(state.PREREQUISITE_LOCKS_KEY);
+    const saved = pageMemory.getItem(state.PREREQUISITE_LOCKS_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       return {
@@ -93,7 +94,7 @@ export function loadPrerequisiteLocks() {
         ...parsed
       };
     }
-    return defaultPrerequisiteLocks(localStorage.getItem(state.PREREQUISITES_LOCK_KEY) === "true");
+    return defaultPrerequisiteLocks(pageMemory.getItem(state.PREREQUISITES_LOCK_KEY) === "true");
   } catch {
     return defaultPrerequisiteLocks(false);
   }
@@ -103,7 +104,7 @@ export function prerequisiteLocked(mode = state.prerequisiteMode) {
 }
 export function loadYearPrerequisiteLocks() {
   try {
-    const saved = localStorage.getItem(state.YEAR_PREREQUISITE_LOCKS_KEY);
+    const saved = pageMemory.getItem(state.YEAR_PREREQUISITE_LOCKS_KEY);
     const parsed = saved ? JSON.parse(saved) : {};
     return {
       ...defaultYearPrerequisiteLocks(false),
@@ -117,15 +118,15 @@ export function yearPrerequisiteLocked(mode = state.yearPrerequisiteMode) {
   return Boolean(state.yearPrerequisiteLocks[mode]);
 }
 export function savePrerequisiteLocks() {
-  localStorage.setItem(state.PREREQUISITE_LOCKS_KEY, JSON.stringify({
+  pageMemory.setItem(state.PREREQUISITE_LOCKS_KEY, JSON.stringify({
     ...defaultPrerequisiteLocks(false),
     ...state.prerequisiteLocks
   }));
-  localStorage.setItem(state.PREREQUISITES_LOCK_KEY, state.prerequisiteSubModes.every(mode => prerequisiteLocked(mode)) ? "true" : "false");
+  pageMemory.setItem(state.PREREQUISITES_LOCK_KEY, state.prerequisiteSubModes.every(mode => prerequisiteLocked(mode)) ? "true" : "false");
   saveLocksToCloudNow(["prerequisiteLocks"]);
 }
 export function saveYearPrerequisiteLocks() {
-  localStorage.setItem(state.YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify({
+  pageMemory.setItem(state.YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify({
     ...defaultYearPrerequisiteLocks(false),
     ...state.yearPrerequisiteLocks
   }));
@@ -133,7 +134,7 @@ export function saveYearPrerequisiteLocks() {
 }
 export function loadCloudDirtyKeys() {
   try {
-    const saved = JSON.parse(localStorage.getItem(state.CLOUD_DIRTY_KEYS_KEY) || "[]");
+    const saved = JSON.parse(pageMemory.getItem(state.CLOUD_DIRTY_KEYS_KEY) || "[]");
     return Array.isArray(saved) ? saved.filter(key => state.cloudDataKeys.includes(key)) : [];
   } catch {
     return [];
@@ -145,15 +146,15 @@ export function normalizeCloudDirtyKeys(keys = []) {
 }
 export function markLocalChangedForCloud(keys = []) {
   state.localUnsyncedChanges = new Date().toISOString();
-  localStorage.setItem(state.CLOUD_LOCAL_UNSYNCED_KEY, state.localUnsyncedChanges);
+  pageMemory.setItem(state.CLOUD_LOCAL_UNSYNCED_KEY, state.localUnsyncedChanges);
   normalizeCloudDirtyKeys(keys).forEach(key => state.cloudDirtyKeys.add(key));
-  localStorage.setItem(state.CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...state.cloudDirtyKeys]));
+  pageMemory.setItem(state.CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...state.cloudDirtyKeys]));
 }
 export function clearLocalChangedForCloud() {
   state.localUnsyncedChanges = "";
   state.cloudDirtyKeys = new Set();
-  localStorage.removeItem(state.CLOUD_LOCAL_UNSYNCED_KEY);
-  localStorage.removeItem(state.CLOUD_DIRTY_KEYS_KEY);
+  pageMemory.removeItem(state.CLOUD_LOCAL_UNSYNCED_KEY);
+  pageMemory.removeItem(state.CLOUD_DIRTY_KEYS_KEY);
 }
 export function hasPendingCloudSave() {
   return Boolean(state.cloudSaveTimer || state.cloudSaveQueued || state.cloudDirtyKeys.size);
@@ -190,7 +191,7 @@ export function saveCloudNowIfPossible(keys = []) {
     discardLocalChangesFromCloudSoon();
     return false;
   }
-  if (!cloudWriteAllowed()) {
+  if (!cloudSourceReadyForWrite()) {
     state.cloudStatus = cloudWriteBlockedMessage();
     return false;
   }
@@ -213,7 +214,7 @@ export function saveCloudPatchNow(keys = []) {
   if (!isAdmin() || !cloudReady() || !state.cloudConfig.autoSave) {
     return saveCloudNowIfPossible(normalizedKeys);
   }
-  if (!cloudWriteAllowed()) {
+  if (!cloudSourceReadyForWrite()) {
     state.cloudStatus = cloudWriteBlockedMessage();
     return false;
   }
@@ -259,7 +260,7 @@ export function cloudWriteAllowed() {
   return cloudReady() && isSecureBackend(state.cloudConfig.url) && !isLocalRuntime();
 }
 export function cloudSourceReadyForWrite() {
-  return cloudWriteAllowed() && (!state.cloudConfig.autoLoad || state.cloudSourceLoaded);
+  return cloudWriteAllowed() && state.cloudSourceLoaded;
 }
 export function cloudWriteBlockedMessage() {
   if (cloudReady() && state.cloudConfig.autoLoad && !state.cloudSourceLoaded) return "Chargement Supabase requis avant toute sauvegarde.";
@@ -383,12 +384,12 @@ export async function cloudFetchWithAuthRetry(url, options = {}, retryOnExpiredJ
   assertOperationScope(scope);
   return fetchBackend(url, buildOptions());
 }
-export function clearLocalPlanningStorageForEtabSwitch() {
-  ["planningEpsTeachers2026", "planningEpsClassConfig2026", "planningEpsFacilities2026", "planningEpsActivities2026", "planningEpsFacilityActivities2026", "planningEpsActivityProgramByLevel2026", "planningEpsActivityProgramByClass2026", "planningEpsYearPlan2026", "planningEpsCycles2026", "planningEpsCyclesByLevel2026", "planningEpsServiceHoursByLevel2026", "planningEpsServiceAssignments2026", "planningEpsSchoolConstraints2026", state.PREREQUISITE_LOCKS_KEY, state.YEAR_PREREQUISITE_LOCKS_KEY, state.PREREQUISITES_LOCK_KEY, "planningEpsConstructionWorkspaceMode2026", "planningEpsConstructionVersions2026", "planningEpsConstructionLocks2026", "planningEpsConstructionRuleSettings2026", "planningEpsConstructionRules2026", "planningEpsConstruction2026", "planningEpsBlockExclusions2026", "planningEpsAcceptedConflicts2026", "planningEpsSportEvents2026", "planningEpsAsSessions2026", "planningEpsFacilityUnavailability2026", "planningEpsEventExclusions2026", "planningEpsAsExclusions2026", "planningEpsHiddenConstructionBlocksReport2026", state.CLOUD_LOCAL_UNSYNCED_KEY, state.CLOUD_DIRTY_KEYS_KEY].forEach(key => localStorage.removeItem(key));
+export function clearPlanningMemoryForEtabSwitch() {
+  ["planningEpsTeachers2026", "planningEpsClassConfig2026", "planningEpsFacilities2026", "planningEpsActivities2026", "planningEpsFacilityActivities2026", "planningEpsActivityProgramByLevel2026", "planningEpsActivityProgramByClass2026", "planningEpsYearPlan2026", "planningEpsCycles2026", "planningEpsCyclesByLevel2026", "planningEpsServiceHoursByLevel2026", "planningEpsServiceAssignments2026", "planningEpsSchoolConstraints2026", state.PREREQUISITE_LOCKS_KEY, state.YEAR_PREREQUISITE_LOCKS_KEY, state.PREREQUISITES_LOCK_KEY, "planningEpsConstructionWorkspaceMode2026", "planningEpsConstructionVersions2026", "planningEpsConstructionLocks2026", "planningEpsConstructionRuleSettings2026", "planningEpsConstructionRules2026", "planningEpsConstruction2026", "planningEpsBlockExclusions2026", "planningEpsAcceptedConflicts2026", "planningEpsSportEvents2026", "planningEpsAsSessions2026", "planningEpsFacilityUnavailability2026", "planningEpsEventExclusions2026", "planningEpsAsExclusions2026", "planningEpsHiddenConstructionBlocksReport2026", state.CLOUD_LOCAL_UNSYNCED_KEY, state.CLOUD_DIRTY_KEYS_KEY].forEach(key => pageMemory.removeItem(key));
   state.localUnsyncedChanges = "";
   state.cloudDirtyKeys = new Set();
 }
-export function resetPlanningStateFromLocalDefaults() {
+export function resetPlanningStateFromDefaults() {
   state.teachers = loadTeachers();
   state.schoolConstraints = loadSchoolConstraints();
   state.classLevels = classLevelsForEstablishmentType(state.schoolConstraints.establishmentType);
@@ -539,35 +540,35 @@ export function applyPlanningData(data) {
   state.selectedTeacherIds = state.teachers.map(teacher => teacher.id);
   state.cycleTeacherIds = state.teachers.map(teacher => teacher.id);
   state.cycleFacilityIds = state.facilities.map(facility => facility.id);
-  localStorage.setItem("planningEpsTeachers2026", JSON.stringify(state.teachers));
-  localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
-  localStorage.setItem("planningEpsFacilities2026", JSON.stringify(state.facilities));
-  localStorage.setItem("planningEpsActivities2026", JSON.stringify(state.activities));
-  localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(state.facilityActivities));
-  localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
-  localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
-  localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(state.yearPlan));
-  localStorage.setItem("planningEpsCycles2026", JSON.stringify(state.cycles));
-  localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
-  localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
-  localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
-  localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
-  localStorage.setItem(state.PREREQUISITE_LOCKS_KEY, JSON.stringify(state.prerequisiteLocks));
-  localStorage.setItem(state.YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify(state.yearPrerequisiteLocks));
-  localStorage.setItem(state.PREREQUISITES_LOCK_KEY, state.prerequisiteSubModes.every(mode => prerequisiteLocked(mode)) ? "true" : "false");
-  localStorage.setItem("planningEpsConstructionWorkspaceMode2026", state.constructionWorkspaceMode);
-  localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
-  localStorage.setItem("planningEpsConstructionLocks2026", JSON.stringify(state.constructionLocks));
-  localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(state.constructionRuleSettings));
-  localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
-  localStorage.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
-  localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
-  localStorage.setItem("planningEpsAcceptedConflicts2026", JSON.stringify(state.acceptedConflicts));
-  localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
-  localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
-  localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
-  localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(state.eventExclusions));
-  localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(state.asExclusions));
+  pageMemory.setItem("planningEpsTeachers2026", JSON.stringify(state.teachers));
+  pageMemory.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
+  pageMemory.setItem("planningEpsFacilities2026", JSON.stringify(state.facilities));
+  pageMemory.setItem("planningEpsActivities2026", JSON.stringify(state.activities));
+  pageMemory.setItem("planningEpsFacilityActivities2026", JSON.stringify(state.facilityActivities));
+  pageMemory.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
+  pageMemory.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
+  pageMemory.setItem("planningEpsYearPlan2026", JSON.stringify(state.yearPlan));
+  pageMemory.setItem("planningEpsCycles2026", JSON.stringify(state.cycles));
+  pageMemory.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
+  pageMemory.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
+  pageMemory.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
+  pageMemory.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
+  pageMemory.setItem(state.PREREQUISITE_LOCKS_KEY, JSON.stringify(state.prerequisiteLocks));
+  pageMemory.setItem(state.YEAR_PREREQUISITE_LOCKS_KEY, JSON.stringify(state.yearPrerequisiteLocks));
+  pageMemory.setItem(state.PREREQUISITES_LOCK_KEY, state.prerequisiteSubModes.every(mode => prerequisiteLocked(mode)) ? "true" : "false");
+  pageMemory.setItem("planningEpsConstructionWorkspaceMode2026", state.constructionWorkspaceMode);
+  pageMemory.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
+  pageMemory.setItem("planningEpsConstructionLocks2026", JSON.stringify(state.constructionLocks));
+  pageMemory.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(state.constructionRuleSettings));
+  pageMemory.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
+  pageMemory.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
+  pageMemory.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
+  pageMemory.setItem("planningEpsAcceptedConflicts2026", JSON.stringify(state.acceptedConflicts));
+  pageMemory.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
+  pageMemory.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
+  pageMemory.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
+  pageMemory.setItem("planningEpsEventExclusions2026", JSON.stringify(state.eventExclusions));
+  pageMemory.setItem("planningEpsAsExclusions2026", JSON.stringify(state.asExclusions));
   invalidateConstructionChecksCache();
 }
 export function scheduleCloudSave(keys = []) {
@@ -585,7 +586,7 @@ export function scheduleCloudSave(keys = []) {
     discardLocalChangesFromCloudSoon();
     return;
   }
-  if (!cloudWriteAllowed()) {
+  if (!cloudSourceReadyForWrite()) {
     state.cloudStatus = cloudWriteBlockedMessage();
     return;
   }
@@ -606,8 +607,8 @@ export async function cloudSaveToRemote(shouldRender = true, options = {}) {
   clearTimeout(state.cloudSaveTimer);
   state.cloudSaveTimer = null;
   if (state.cloudSyncing) { state.cloudSaveQueued = true; return; }
-  if (state.signingOut || !isAdmin() || !cloudWriteAllowed()) {
-    state.cloudStatus = "Sauvegarde indisponible : vos modifications locales sont conservées.";
+  if (state.signingOut || !isAdmin() || !cloudSourceReadyForWrite()) {
+    state.cloudStatus = "Sauvegarde indisponible : vos modifications restent dans cet onglet jusqu'à sa fermeture.";
     if (shouldRender) render();
     return;
   }
@@ -634,7 +635,7 @@ export async function cloudSaveToRemote(shouldRender = true, options = {}) {
         if (!remoteRow.updated_at) throw new Error("Version distante absente : sauvegarde suspendue.");
         // Never overwrite a concurrent edit to the same section after a prior load.
         if (baseData && changedKeys.some(key => JSON.stringify(baseData[key]) !== JSON.stringify(remoteData[key]) && JSON.stringify(currentData[key]) !== JSON.stringify(remoteData[key]))) {
-          throw new Error("Conflit : une même zone a été modifiée ailleurs. Vos modifications locales sont conservées ; comparez-les avant de recharger.");
+          throw new Error("Conflit : une même zone a été modifiée ailleurs. Vos modifications restent dans cet onglet ; comparez-les avant de recharger.");
         }
       }
       const updatedAt = new Date(Math.max(Date.now(), (Date.parse(remoteRow?.updated_at) || 0) + 1)).toISOString();
@@ -650,7 +651,7 @@ export async function cloudSaveToRemote(shouldRender = true, options = {}) {
       });
       assertOperationScope(scope);
       if (response.status === 409 && !remoteRow) continue;
-      if (!response.ok) throw new Error("Sauvegarde refusée par le serveur. Vos modifications locales sont conservées.");
+      if (!response.ok) throw new Error("Sauvegarde refusée par le serveur. Vos modifications restent dans cet onglet jusqu'à sa fermeture.");
       const acknowledged = await response.json();
       assertOperationScope(scope);
       // A successful HTTP response with zero updated rows is a concurrency conflict.
@@ -667,18 +668,19 @@ export async function cloudSaveToRemote(shouldRender = true, options = {}) {
       for (const key of changedKeys) {
         if (JSON.stringify(latest[key]) === JSON.stringify(currentData[key])) state.cloudDirtyKeys.delete(key);
       }
-      if (state.cloudDirtyKeys.size) localStorage.setItem(state.CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...state.cloudDirtyKeys]));
+      if (state.cloudDirtyKeys.size) pageMemory.setItem(state.CLOUD_DIRTY_KEYS_KEY, JSON.stringify([...state.cloudDirtyKeys]));
       else clearLocalChangedForCloud();
       state.cloudStatus = `Sauvegarde confirmée à ${new Date(updatedAt).toLocaleTimeString("fr-FR")}.`;
       showValidationPopup(state.cloudStatus);
       succeeded = true;
       break;
     }
-    if (!succeeded) throw new Error("Sauvegardes concurrentes : réessayez. Vos modifications locales sont conservées.");
+    if (!succeeded) throw new Error("Sauvegardes concurrentes : réessayez. Vos modifications restent dans cet onglet jusqu'à sa fermeture.");
   } catch (error) {
     securityEvent("save_failed");
     if (operationScope() === scope) {
-      state.cloudStatus = error.message || "Sauvegarde impossible. Vos modifications locales sont conservées.";
+      const networkFailure = /fetch|network|réseau/i.test(error.message || "");
+      state.cloudStatus = networkFailure ? "Sauvegarde impossible : connexion à Supabase indisponible. Vos modifications restent dans cet onglet jusqu'à sa fermeture." : error.message || "Sauvegarde impossible. Vos modifications restent dans cet onglet jusqu'à sa fermeture.";
       showValidationPopup(state.cloudStatus, "error");
     }
   } finally {
@@ -687,7 +689,8 @@ export async function cloudSaveToRemote(shouldRender = true, options = {}) {
       state.cloudSaveQueued = false;
       if (succeeded && state.cloudDirtyKeys.size) scheduleCloudSave();
     }
-    if (shouldRender || succeeded) render();
+    if (operationScope() === scope) render();
+    else if (!state.cloudSourceLoaded) requestInitialCloudLoad(false, true);
   }
 }
 
@@ -709,7 +712,7 @@ export async function cloudLoadFromRemote(shouldRender = true, silent = false, f
     return;
   }
   if (state.cloudSyncing || state.cloudSaveTimer || state.cloudSaveQueued || state.cloudDirtyKeys.size) {
-    if (!silent) state.cloudStatus = "Chargement reporte : une sauvegarde locale est en attente.";
+    if (!silent) state.cloudStatus = "Chargement reporté : une sauvegarde Supabase est en attente.";
     if (shouldRender) render();
     return;
   }
@@ -753,6 +756,7 @@ export async function cloudLoadFromRemote(shouldRender = true, silent = false, f
       state.cloudSaveQueued = false;
       scheduleCloudSave();
     }
+    if (operationScope() !== scope && !state.cloudSourceLoaded) requestInitialCloudLoad(false, true);
     if (shouldRender) render();
   }
 }

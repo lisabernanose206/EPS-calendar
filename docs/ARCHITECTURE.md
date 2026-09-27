@@ -4,7 +4,7 @@
 
 ## Architecture générale
 
-Navigateur → modules JavaScript et stockage local → API HTTPS Supabase Auth / REST / RPC → PostgreSQL avec RLS, fonctions et triggers.
+Navigateur → modules JavaScript et état temporaire en mémoire → API HTTPS Supabase Auth / REST / RPC → PostgreSQL avec RLS, fonctions et triggers.
 
 L'hébergement est statique. Aucun serveur Node applicatif, aucune Edge Function et aucun SDK Supabase ne sont utilisés dans le périmètre examiné : les échanges passent par `fetch`.
 
@@ -12,9 +12,9 @@ L'hébergement est statique. Aucun serveur Node applicatif, aucune Edge Function
 | --- | --- |
 | Interface | JavaScript ES modules, HTML généré, CSS partagé |
 | Compilation | Vite 6 ; esbuild pour le standalone ; Node.js 22 dans la CI |
-| Dépendances | DOMPurify ; React, React DOM, Lucide et le plugin React sont déclarés mais ne structurent pas le rendu actuel |
+| Dépendances | DOMPurify pour filtrer le HTML ; React, React DOM, Lucide React et le plugin React ont été retirés après vérification de leur absence d’usage |
 | État | Objet partagé `state`, privé aux modules |
-| Persistance locale | `localStorage` ; `sessionStorage` pour la preuve OAuth temporaire |
+| Persistance navigateur | Session de connexion uniquement dans `sessionStorage`, avec preuve OAuth temporaire ; aucune donnée métier persistée |
 | Backend | Supabase Auth, REST PostgreSQL et RPC |
 | Publication | GitHub Pages publie le standalone généré comme `index.html` |
 | Tests | Playwright, assertions Node et PostgreSQL embarqué PGlite |
@@ -30,7 +30,7 @@ L'hébergement est statique. Aucun serveur Node applicatif, aucune Edge Function
 | `src/app/` | Structure HTML, état, initialisation, bootstrap et coordination du rendu |
 | `src/tabs/` | Affichage et événements des onglets |
 | `src/domain/` | Dates, cycles, affectations, conflits, service et optimisation |
-| `src/services/` | Authentification, stockage local et synchronisation |
+| `src/services/` | Authentification, mémoire temporaire et échanges Supabase |
 | `src/security/` | HTML, validation, OAuth, transport, fetch et diagnostic |
 | `src/ui/` | Navigation, modales, tableaux, dates et messages |
 | `src/styles.css`, `assets/` | Styles, images et icônes partagés |
@@ -51,6 +51,8 @@ Réutiliser ces dossiers. Ne pas créer une arborescence React, `backend/`, `pub
 
 Les fonctions `render…` produisent l'interface ; les fonctions `bind…Events` raccordent ses actions après rendu. Certains modules s'importent mutuellement : éviter les calculs dépendant de l'état au chargement des modules. Ne pas recopier `state` par onglet et ne pas l'exposer sur `window`.
 
+Les calculs et libellés de dates partagés sont regroupés dans `src/domain/dates.js`, qui dépend uniquement de l’état. Le calendrier visuel `src/ui/date-picker.js` les importe et conserve ses fonctions de rendu et ses événements. Aucun module métier ne doit importer ce calendrier pour un calcul de date. Cette extraction supprime les boucles directes dates/calendrier et cycles/calendrier ; les autres cycles existants restent à réduire lors des interventions concernées.
+
 ## Modèle de données
 
 | Table | Données et relations principales |
@@ -67,9 +69,9 @@ Le document JSON regroupe référentiels, cycles, règles/blocs, verrous, versio
 
 La migration conserve les différences historiques prises en charge, notamment les jetons UUID et certaines lignes sans établissement. Ne pas supposer que la production possède toutes les contraintes du schéma neuf. Voir [la procédure de migration](#migration-supabase).
 
-## Synchronisation et fonctionnement local
+## Synchronisation et source Supabase
 
-1. Une modification actualise l'état et le stockage local, puis marque les clés modifiées.
+1. Le planning ne devient disponible qu'après vérification de la session, des appartenances et lecture de Supabase. Une modification actualise uniquement l'état en mémoire, puis marque les clés modifiées.
 2. Le service capture le compte, l'établissement, le planning et les données.
 3. Il lit la version distante et conditionne le PATCH à `updated_at`.
 4. Il vérifie l'accusé serveur, conserve les modifications survenues pendant l'envoi et limite les tentatives à trois.
@@ -77,7 +79,13 @@ La migration conserve les différences historiques prises en charge, notamment l
 
 Les chargements ne doivent pas écraser les changements en attente. Les triggers SQL du dépôt imposent l'horodatage serveur.
 
-Limites : pas de service worker, d'IndexedDB, de file persistante complète multi-onglet ni de fusion automatique sur une même zone. La référence de comparaison est perdue au rechargement. Les clés locales ne sont pas toutes isolées par compte/établissement ; des purges sont réalisées à la déconnexion et au changement d'établissement.
+Aucune donnée métier n'est conservée dans localStorage, sessionStorage, IndexedDB ou un cache hors ligne. Le module `page-memory.js` fournit une Map privée, vidée au rechargement, pour les valeurs de travail utilisées par les modules existants. Supabase est l'unique source persistante. Le changement d'établissement réinitialise ces valeurs puis recharge son planning.
+
+La connexion est conservée dans sessionStorage, revalidée auprès d'Auth à chaque démarrage ; rôles et préférences ne sont pas persistés dans cette session. L'établissement par défaut est enregistré dans les métadonnées du compte Supabase et ne confère aucun droit. La preuve PKCE et un éventuel message de déconnexion sont transitoires. Les anciennes clés `planningEps*` sont supprimées du navigateur sans réimporter leurs données ; les autres applications sont épargnées.
+
+La suppression du stockage métier dans le navigateur ne nécessite aucune nouvelle migration SQL : la préférence d’établissement utilise l’API Auth existante. La migration de sécurité décrite ci-dessous est indépendante ; son application sur le serveur reste à confirmer.
+
+Un échec de chargement bloque le planning et propose de réessayer. Toute sauvegarde de planning exige une lecture serveur préalable, même si un ancien appel demande de contourner cette attente. Les modifications non confirmées restent en mémoire ; quitter ou recharger les perd après avertissement du navigateur. Aucune fusion automatique de la même zone ni file hors ligne persistante n'est proposée.
 
 Le standalone ouvre ses ressources compilées sans serveur ; authentification, données distantes et polices externes nécessitent le réseau. Les sauvegardes de planning et demandes sont bloquées par le client depuis `file:`, localhost et les hôtes locaux reconnus. Ce blocage n'est pas une protection serveur générale de toutes les RPC.
 
@@ -103,9 +111,11 @@ Pages s'exécute sur les pushes de `main` ou manuellement, génère le standalon
 
 Restent à confirmer : recette distincte, version publiée, migration appliquée, protections de branche, supervision, sauvegardes/PITR, restauration et responsables d'exploitation.
 
+Avant chaque publication, appliquer la [revue obligatoire définie dans AGENTS.md](../AGENTS.md#mandatory-technical-debt-review-before-production). Toute dette identifiée non résolue bloque la mise en production ; consigner le résultat et les validations du candidat final dans MEMORY.md. Cette règle documentaire ne constitue pas un verrou automatique des workflows actuels.
+
 ## Décisions à préserver
 
-Sources communes web/standalone ; autorisations serveur ; installation neuve distincte de la migration ; pas de réorganisation cosmétique. Le dossier `docs/` conserve uniquement PRD, ARCHITECTURE, DESIGN, SECURITY, TASKS et MEMORY. [SECURITY.md](SECURITY.md) intègre l'audit et le suivi des corrections.
+Sources communes web/standalone ; Supabase seul stockage métier ; session de connexion seule dans le navigateur ; autorisations serveur ; installation neuve distincte de la migration ; pas de réorganisation cosmétique. Le dossier `docs/` conserve uniquement PRD, ARCHITECTURE, DESIGN, SECURITY, TASKS et MEMORY. [SECURITY.md](SECURITY.md) intègre l'audit et le suivi des corrections.
 
 ## Retrouver un écran
 

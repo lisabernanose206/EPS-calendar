@@ -41,6 +41,8 @@ GitHub Pages régénère le standalone et le publie comme `index.html`. Le déta
 
 ## Configuration et Supabase
 
+Supabase est l'unique stockage des données métier. Le navigateur conserve seulement la connexion dans sessionStorage ; aucun planning ni rôle n'est mis en cache. Les modifications non confirmées restent en mémoire et sont perdues si la page est fermée ou rechargée. Les anciennes copies locales sont supprimées au démarrage.
+
 La version Vite accepte `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ETAB_ID` et `VITE_SUPABASE_PLANNING_ID`. Le standalone accepte une configuration préalable `window.__EPS_CLOUD_CONFIG__` respectant sa CSP.
 
 Seules l'URL et une clé Supabase publique appartiennent au navigateur. Aucun secret serveur ni clé `service_role`. Les autorisations effectives relèvent des RLS et RPC Supabase.

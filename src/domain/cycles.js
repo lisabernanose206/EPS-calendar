@@ -1,9 +1,10 @@
+import { pageMemory } from "../services/page-memory.js";
 import { state } from "../app/state.js";
 import { displayCycleName } from "./settings.js";
 import { isAdmin } from "../services/auth.js";
 import { cloudSaveToRemote, cloudSourceReadyForWrite, markLocalChangedForCloud, scheduleCloudSave } from "../services/cloud.js";
 import { rebuildConstructionPlan } from "../services/settings-storage.js";
-import { dateOnly } from "../ui/date-picker.js";
+import { dateOnly } from "./dates.js";
 
 export function defaultCycles(count = 5) {
   const startDates = ["2026-09-01", "2026-11-03", "2027-01-05", "2027-03-09", "2027-05-04"];
@@ -19,7 +20,7 @@ export function defaultCycles(count = 5) {
 }
 export function loadCycles() {
   try {
-    const saved = localStorage.getItem("planningEpsCycles2026");
+    const saved = pageMemory.getItem("planningEpsCycles2026");
     return saved ? JSON.parse(saved) : defaultCycles();
   } catch {
     return defaultCycles();
@@ -27,7 +28,7 @@ export function loadCycles() {
 }
 export function loadCyclesByLevel() {
   try {
-    const saved = localStorage.getItem("planningEpsCyclesByLevel2026");
+    const saved = pageMemory.getItem("planningEpsCyclesByLevel2026");
     const parsed = saved ? JSON.parse(saved) : {};
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
@@ -35,8 +36,8 @@ export function loadCyclesByLevel() {
   }
 }
 export function saveCycles(saveCloudNow = false) {
-  localStorage.setItem("planningEpsCycles2026", JSON.stringify(state.cycles));
-  localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
+  pageMemory.setItem("planningEpsCycles2026", JSON.stringify(state.cycles));
+  pageMemory.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
   state.cycleSaveStatus = cloudSourceReadyForWrite() && isAdmin() ? "Cycles sauvegardes localement. Sauvegarde cloud en cours." : "Cycles sauvegardes localement.";
   if (saveCloudNow && isAdmin() && cloudSourceReadyForWrite()) {
     clearTimeout(state.cloudSaveTimer);

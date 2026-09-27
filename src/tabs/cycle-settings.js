@@ -5,7 +5,8 @@ import { activeCycles, cyclesForScope, validateCycles } from "../domain/cycles.j
 import { schoolYearWeeks, vacationForWeek } from "../domain/dates.js";
 import { monthLabelForWeek, weeksForCycle } from "../domain/hours.js";
 import { cycleLabel, displayCycleName } from "../domain/settings.js";
-import { renderDateRangePicker, shortDate, weekDisplayEnd, weekDisplayStart } from "../ui/date-picker.js";
+import { renderDateRangePicker } from "../ui/date-picker.js";
+import { shortDate, weekDisplayEnd, weekDisplayStart } from "../domain/dates.js";
 import { groupedHeaderCells } from "../ui/format.js";
 
 export function renderCycleDefinition() {

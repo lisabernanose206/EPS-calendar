@@ -18,7 +18,7 @@ Supabase Auth gère les identités. Le parcours visible propose Google ; des fon
 
 Le flux Google utilise PKCE SHA-256. La preuve temporaire est liée à l'onglet, au backend et à l'URL de retour, avec expiration après dix minutes. Le retour échange le code et vérifie l'utilisateur via Auth avant d'enregistrer la session. Les anciens retours implicites sont refusés et les paramètres sensibles sont nettoyés de l'URL.
 
-La session et ses jetons restent dans `localStorage`. Le service sait rafraîchir la session. La déconnexion demande la révocation de la session courante puis purge le stockage applicatif ; un avertissement est conservé si la révocation n'est pas confirmée.
+La session et ses jetons sont conservés dans `sessionStorage`, sans planning, rôle ni métadonnées de préférence. Elle est revalidée auprès de Supabase Auth au démarrage et peut être rafraîchie. Fermer la session de navigation met fin à cette conservation. La déconnexion demande la révocation courante puis supprime la session ; un avertissement transitoire indique une révocation non confirmée.
 
 Exigences : ne pas déduire une identité du champ auteur libre, ne pas conserver de mot de passe applicatif, refuser les retours OAuth non sollicités. Tester les retours refusés et expirés.
 
@@ -50,7 +50,7 @@ DOMPurify filtre les insertions HTML. Les gabarits contiennent une CSP ; le stan
 
 Limites :
 
-- aucun chiffrement applicatif des sessions/plannings locaux, ni cookie HttpOnly ;
+- jetons de session lisibles par le JavaScript de l’origine ; aucun cookie HttpOnly ; aucune copie persistante du planning dans le navigateur ;
 - pas de chiffrement de bout en bout identifié ;
 - une CSP meta ne fournit pas `frame-ancestors` ;
 - chiffrement serveur au repos, sauvegardes, en-têtes publiés et accès opérateur non vérifiés ;
@@ -92,7 +92,9 @@ Le SQL valide les invariants principaux du JSON, sa cohérence avec l'établisse
 
 La synchronisation utilise un PATCH conditionnel sur `updated_at`, vérifie l'accusé serveur et protège le contexte capturé. Elle refuse les collisions sur une même zone. Les anciens clients peuvent contourner cette convention de concurrence et doivent être remplacés.
 
-Les caches et jetons locaux sont purgés à plusieurs transitions, mais l'isolation complète par utilisateur/établissement reste à renforcer. Les modifications en attente et la référence de comparaison ne constituent pas une file hors ligne complète.
+Les anciennes clés applicatives localStorage sont supprimées au démarrage, sans lecture ni migration de leur contenu ; les données des autres applications restent intactes. Les anciennes copies métier dans sessionStorage sont aussi retirées. Seules la session de connexion, la preuve PKCE et un message temporaire de déconnexion y sont admis.
+
+Supabase est l'unique stockage métier. Les rôles proviennent des RPC et ne sont pas restaurés depuis un cache. L'établissement par défaut est une préférence dans les métadonnées Supabase Auth, jamais une autorisation. Son choix est confronté aux appartenances renvoyées par le serveur. Les brouillons, préférences visuelles et marqueurs de sauvegarde restent en mémoire de page. Un rechargement relit le serveur ; les changements non confirmés sont perdus après avertissement. Les données du compte ou de l'établissement précédent sont réinitialisées lors du changement.
 
 Ne pas ajouter de données nominatives d'élèves ou de données sensibles sans besoin établi. Destinataires, rétention, effacement et restauration doivent être définis par le responsable du traitement ; aucune conformité juridique n'est attestée ici.
 
@@ -100,7 +102,7 @@ Ne pas ajouter de données nominatives d'élèves ou de données sensibles sans 
 
 Pour chaque dimension affectée, identifier contrôle réel, emplacement serveur/client et preuve de test. Vérifier scénarios de refus, minimisation et limites restantes.
 
-Cette mise à jour documentaire ne modifie ni authentification, ni permissions, ni traitement des données. Elle centralise les exigences sans exécuter de migration ni publier de contenu.
+Revue du changement « Supabase seul stockage métier » : Authentification (session seule et revalidation), Autorisation (rôles relus et blocage avant chargement), Encryption (suppression des copies métier persistantes), Logging (pas de données ajoutées aux journaux), Testing (lecture/sauvegarde/rechargement/panne/changement de rôle testés) et Data Processing (purge des anciennes copies sans import). Aucun SQL de production ni déploiement n'est exécuté.
 
 ## Audit et suivi des corrections
 
@@ -111,6 +113,8 @@ Version auditée : commit `1a7acc760a1473fb6cdd6050c9f4c10a50421059` (`refactori
 Les preuves SQL provenaient de PostgreSQL éphémère avec identités simulées ; les preuves navigateur et runtime utilisaient uniquement des données fictives. Aucune donnée métier de production n'a été lue ou modifiée. Seule une requête HEAD du site public a relevé HTTP 200, HSTS et HTML UTF-8, sans CSP ni protections d'encadrement observées à cet instant. Les comptes hébergés, secrets historiques Git, sauvegardes et paramètres serveur n'ont pas été audités.
 
 Les priorités ci-dessous sont qualitatives, sans score CVSS. Un défaut reproduit localement ne démontre ni son déploiement ni une exploitation passée.
+
+Les constats et résultats historiques ci-dessous décrivent leurs phases respectives. La suppression du cache métier du 27 septembre leur succède ; les sections courantes ci-dessus décrivent le fonctionnement maintenu.
 
 ### Constats, corrections et preuves
 
@@ -151,6 +155,14 @@ Les priorités ci-dessous sont qualitatives, sans score CVSS. Un défaut reprodu
 | Corrections SQL puis validation du 27 septembre | Installation neuve : 26/26 ; migration historique : 26/26 ; colonnes et politiques observées : 28/28 ; runtime : 10/10 ; navigateur : 18/18 ; fonctionnel : 16/16. Builds et contrôles statiques réussis. |
 
 Les tests ne sont pas neutralisés pour masquer les constats. Les résultats bruts locaux sont générés dans `tests/security/results/` et ignorés par Git. Les contrôles npm sont des résultats ponctuels, pas une garantie continue.
+
+### Suppression du cache métier — 27 septembre 2026
+
+Session de connexion autorisée seule par l'utilisatrice. Les usages métier de localStorage sont remplacés par une mémoire de page, les anciens caches sont purgés et chaque démarrage recharge Supabase. Aucun contenu local n'est importé sur le serveur. Un chargement échoué bloque le planning ; une sauvegarde exige un chargement confirmé et son erreur est affichée.
+
+Le contrôle statique interdit les accès directs à localStorage et limite les usages de sessionStorage aux modules de connexion. SOURCE-01 vérifie le refus d'écrire avant lecture, même avec l'ancien paramètre de contournement. Les tests navigateur vérifient la purge sélective, la sauvegarde puis relecture serveur, le refus d'utiliser une copie locale après panne, les changements d'établissement, la préférence distante et la relecture d'un rôle rétrogradé. Les données et requêtes restent fictives.
+
+Validation finale : builds et contrôles statiques réussis ; SQL 80/80, runtime 11/11, navigateur de sécurité 23/23 et fonctionnel 16/16. Exécution locale sous Edge, sans accès aux données réelles.
 
 ### Maintenance et clôture
 

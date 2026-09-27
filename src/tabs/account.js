@@ -132,7 +132,8 @@ export function bindAccountEvents() {
     render();
     try {
       await createAndSwitchToNewEtab(state.authEtabName);
-      window.location.reload();
+      render();
+      requestInitialCloudLoad(false, true);
     } catch (error) {
       state.authStatus = `Création impossible : ${error.message || "erreur inconnue"}`;
       render();

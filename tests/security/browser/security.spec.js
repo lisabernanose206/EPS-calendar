@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 const etab = { etab_id: "audit-etab", etab_name: "Collège Émile Zola", role: "owner" };
 const sessionKey = "planningEpsAdminSession2026";
 const session = { access_token: "AUDIT-FAKE-ACCESS", refresh_token: "AUDIT-FAKE-REFRESH", expires_at: 4102444800, user: { id: "audit-user", email: "audit@example.invalid" } };
-const payload = `<img src="/audit-missing-image" onerror="window.__auditExecuted=true;window.__auditCanReadToken=!!JSON.parse(localStorage.getItem('planningEpsAdminSession2026')).refresh_token">`;
+const payload = `<img src="/audit-missing-image" onerror="window.__auditExecuted=true;window.__auditCanReadToken=!!JSON.parse(sessionStorage.getItem('planningEpsAdminSession2026')).refresh_token">`;
 
 async function sandbox(page, { signedIn = true, planning = null, userStatus = 200 } = {}) {
   const requests = [];
@@ -23,12 +23,9 @@ async function sandbox(page, { signedIn = true, planning = null, userStatus = 20
     await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
   });
   if (signedIn) await page.addInitScript(({ session, etab, sessionKey }) => {
-    if (sessionStorage.getItem("audit-seeded")) return;
-    sessionStorage.setItem("audit-seeded", "1");
-    localStorage.setItem(sessionKey, JSON.stringify(session));
-    localStorage.setItem("planningEpsEtabRole2026", "owner");
-    localStorage.setItem("planningEpsEtabName2026", etab.etab_name);
-    localStorage.setItem("planningEpsCloudConfig2026", JSON.stringify({ etabId: etab.etab_id }));
+    if (window.name === "audit-seeded") return;
+    window.name = "audit-seeded";
+    sessionStorage.setItem(sessionKey, JSON.stringify(session));
   }, { session, etab, sessionKey });
   return requests;
 }
@@ -37,7 +34,9 @@ for (const entry of ["/", "/standalone.html"]) {
   test(`${entry} XSS-01: un nom de professeur distant ne doit pas exécuter du JavaScript`, async ({ page }) => {
     await sandbox(page, { planning: { etabId: etab.etab_id, teachers: [{ id: "p1", name: payload, color: "#93c5fd", border: "#1d4ed8", weeklyReference: 17, monthlyTarget: 68, weekTargets: { A: 17, B: 17 } }] } });
     await page.goto(entry);
-    await expect.poll(() => page.evaluate(() => localStorage.getItem("planningEpsTeachers2026"))).toContain("__auditExecuted");
+    await page.locator('[data-build-mode="prerequisites"]').click();
+    await page.locator('[data-prerequisite-mode="team"]').click();
+    await expect(page.locator('[data-rename-teacher]').first()).toHaveValue(payload);
     await page.locator('[data-build-mode="yearPrerequisites"]').click();
     await page.locator('[data-year-prerequisite-mode="events"]').click();
     // Finding includes a harmless proof that the injected code can read a fake refresh token.
@@ -62,7 +61,7 @@ for (const entry of ["/", "/standalone.html"]) {
     await sandbox(page, { signedIn: false, userStatus: 401 });
     await page.goto(`${entry}#access_token=AUDIT-INVALID&refresh_token=AUDIT-INVALID&expires_in=3600`);
     await expect.poll(() => page.evaluate(() => location.hash)).toBe("");
-    expect(await page.evaluate(key => localStorage.getItem(key), sessionKey)).toBeNull();
+    expect(await page.evaluate(key => sessionStorage.getItem(key), sessionKey)).toBeNull();
   });
 
   test(`${entry} AUTH-02: la déconnexion doit demander la révocation de session au serveur`, async ({ page }) => {
@@ -74,7 +73,7 @@ for (const entry of ["/", "/standalone.html"]) {
     ]);
     await page.waitForLoadState();
     await expect.poll(() => requests.some(item => item.path.endsWith("/auth/v1/logout") && item.method === "POST")).toBe(true);
-    await expect.poll(() => page.evaluate(key => localStorage.getItem(key), sessionKey)).toBeNull();
+    await expect.poll(() => page.evaluate(key => sessionStorage.getItem(key), sessionKey)).toBeNull();
   });
 
   for (const validUser of [true, false]) {
@@ -93,7 +92,7 @@ for (const entry of ["/", "/standalone.html"]) {
       await expect.poll(() => exchanged).toBe(true);
       if (validUser) await expect(page.locator("#logoutAdmin")).toBeVisible();
       else await expect(page.locator("#root")).toContainText("Session refusée");
-      const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), sessionKey);
+      const saved = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), sessionKey);
       expect(saved?.user?.id || null).toBe(validUser ? session.user.id : null);
       expect(await page.evaluate(() => location.search)).toBe("");
       expect(await page.evaluate(() => sessionStorage.getItem("planningEpsOAuthPKCE"))).toBeNull();
@@ -105,7 +104,7 @@ for (const entry of ["/", "/standalone.html"]) {
     await page.goto(`${entry}?code=UNSOLICITED`);
     await expect(page.locator("#root")).toContainText("non initiée");
     expect(requests.some(item => item.path.endsWith("/auth/v1/token"))).toBe(false);
-    expect(await page.evaluate(key => localStorage.getItem(key), sessionKey)).toBeNull();
+    expect(await page.evaluate(key => sessionStorage.getItem(key), sessionKey)).toBeNull();
   });
 
   test(`${entry} XSS-CSP: les gestionnaires HTML injectés sont bloqués`, async ({ page }) => {

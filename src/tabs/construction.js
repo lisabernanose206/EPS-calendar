@@ -1,3 +1,4 @@
+import { pageMemory } from "../services/page-memory.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activityAllowedForBuildBlock, blockCycleUnavailableMessage, classGroupVariant, classParts, classSameBase, clearInvalidBlockActivitySelection, constructionActivityById, constructionVersionLabel, constructionVersionPartOptions, constructionVersionPartsLabel, currentBlock, normalizedOptionHours, optionBlockAvailableForTeachers, optionDurationMax, parseYearCellKey, promoteRestoredConstructionVersionToCloud, restoreConstructionVersion, saveCurrentConstructionVersion, serviceFreeActivityById, setBlockTeacherClass, setBlockTeacherClassGroup, syncPrimaryBlockClassFromTeacherClasses, teacherIdsForBlock, updateBlockClass, updateBlockTeacherClass, updateSpecialBlockClass } from "../domain/assignments.js";
@@ -909,14 +910,14 @@ export function bindConstructionEvents() {
   document.querySelectorAll("[data-toggle-construction-service-summary]").forEach(button => {
     button.addEventListener("click", () => {
       state.constructionServiceSummaryHidden = !state.constructionServiceSummaryHidden;
-      localStorage.setItem("planningEpsConstructionServiceSummaryHidden2026", state.constructionServiceSummaryHidden ? "true" : "false");
+      pageMemory.setItem("planningEpsConstructionServiceSummaryHidden2026", state.constructionServiceSummaryHidden ? "true" : "false");
       render();
     });
   });
   document.querySelectorAll("[data-toggle-construction-conflicts]").forEach(button => {
     button.addEventListener("click", () => {
       state.constructionConflictsHidden = !state.constructionConflictsHidden;
-      localStorage.setItem("planningEpsConstructionConflictsHidden2026", state.constructionConflictsHidden ? "true" : "false");
+      pageMemory.setItem("planningEpsConstructionConflictsHidden2026", state.constructionConflictsHidden ? "true" : "false");
       render();
     });
   });

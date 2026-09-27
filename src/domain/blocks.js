@@ -9,7 +9,7 @@ import { cycleForWeek } from "./hours.js";
 import { isCollegeEstablishment } from "./settings.js";
 import { blockUnavailableMessage, unavailableTeachersForCell } from "./unavailability.js";
 import { isAnnualConstructionRule, rebuildConstructionPlan, saveAsExclusions, saveAsSessions, saveBlockExclusions, saveEventExclusions, saveSportEvents } from "../services/settings-storage.js";
-import { dateOnly } from "../ui/date-picker.js";
+import { dateOnly } from "./dates.js";
 import { showValidationPopup } from "../ui/feedback.js";
 import { eventClassSummary } from "../ui/format.js";
 

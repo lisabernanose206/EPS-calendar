@@ -6,7 +6,7 @@ import { currentSchoolWeek, dayOffFor, holidayFor, schoolYearWeeks, vacationForC
 import { asSessionStyle, asSessionTeacherLabel, asSessionsForCell, canMergeEventCell, eventForContinuation, eventPeriodLabel, eventRowSpan, eventTeacherDots, eventsForCell, eventsForPeriod, teacherNamesFromIds, visibleCourseBlocksForCell } from "../domain/events.js";
 import { cycleForWeek, monthLabelForWeek } from "../domain/hours.js";
 import { cycleLabel, displayCycleName } from "../domain/settings.js";
-import { weekDateLabel, weekWorkingDaysLabel } from "../ui/date-picker.js";
+import { weekDateLabel, weekWorkingDaysLabel } from "../domain/dates.js";
 import { compactClassName, eventShortName, facilityShortLabel, groupedHeaderCells, serviceFreeShortLabel } from "../ui/format.js";
 import { updateNavigationActive } from "../ui/navigation.js";
 

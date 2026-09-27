@@ -10,7 +10,7 @@ import { annualConstructionRules } from "../domain/readiness.js";
 import { cycleLabel, displayCycleName } from "../domain/settings.js";
 import { unavailableCoversFacility, unavailableForCell } from "../domain/unavailability.js";
 import { blockWithCycleOverride, constructionCyclesForRule, cyclesRepresentSameSlot } from "../services/settings-storage.js";
-import { formatDate } from "../ui/date-picker.js";
+import { formatDate } from "../domain/dates.js";
 import { compactClassName, facilityShortLabel } from "../ui/format.js";
 
 export function cycleWeeksByLetter(cycle, letter) {

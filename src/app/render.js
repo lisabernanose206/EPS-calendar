@@ -1,3 +1,5 @@
+import { cloudLoadFromRemote } from "../services/cloud.js";
+import { escapeHtml } from "../ui/format.js";
 import { securityEvent } from "../security/log.js";
 import { safeHtml } from "../security/html.js";
 import { state } from "./state.js";
@@ -66,6 +68,15 @@ export function render() {
   }
   const top = document.querySelector(".top");
   if (top) top.style.display = "";
+  if (!state.authReady || (state.cloudConfig.etabId && !state.cloudSourceLoaded && state.week !== "account")) {
+    legend.style.display = "none";
+    legend.innerHTML = safeHtml("");
+    root.innerHTML = safeHtml(`<section class="panel" role="status"><h2>Lecture de Supabase</h2><p>Le planning sera disponible après confirmation du serveur.</p><p>${escapeHtml(state.cloudStatus || state.authStatus || "")}</p>${state.authReady && !state.cloudSyncing ? '<button class="primary" id="retryCloudLoad">Réessayer</button>' : ""}</section>`);
+    root.insertAdjacentHTML("beforeend", safeHtml(renderEtabSwitchModal()));
+    attachAuthControls();
+    root.querySelector("#retryCloudLoad")?.addEventListener("click", () => cloudLoadFromRemote(true, false, true));
+    return;
+  }
   try {
     updateNavigationActive();
     const cycle = generateCycle();

@@ -1,7 +1,7 @@
 import { render } from "./render.js";
 import { state } from "./state.js";
-import { acceptEtabInvite, cleanAuthUrl, ensureCurrentUserEtab, handleOAuthRedirect, isSignedIn } from "../services/auth.js";
-import { cloudReady, requestInitialCloudLoad, restartCloudAutoRefresh } from "../services/cloud.js";
+import { acceptEtabInvite, cleanAuthUrl, ensureCurrentUserEtab, handleOAuthRedirect, isSignedIn, fetchAuthUser, saveAdminSession } from "../services/auth.js";
+import { cloudReady, ensureCloudSessionFresh, hasPendingCloudSave, requestInitialCloudLoad, restartCloudAutoRefresh } from "../services/cloud.js";
 import { refreshConstructionPlanFromRulesLocalOnly } from "../services/settings-storage.js";
 
 export async function bootstrapApp() {
@@ -18,27 +18,28 @@ export async function bootstrapApp() {
   }
   render();
   if (isSignedIn()) {
-    setTimeout(async () => {
+    try {
+      await ensureCloudSessionFresh();
+      const user = await fetchAuthUser(state.adminSession.access_token);
+      saveAdminSession({ ...state.adminSession, user });
       if (state.authInviteToken) {
-        try {
-          state.authStatus = "Invitation équipe EPS détectée...";
-          render();
-          await acceptEtabInvite(state.authInviteToken, {
-            preserveCurrent: false
-          });
-          state.authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
-          cleanAuthUrl(true);
-        } catch (error) {
-          state.authStatus = `Invitation impossible : ${error.message || "erreur inconnue"}`;
-        }
-      } else {
-        await ensureCurrentUserEtab();
+        await acceptEtabInvite(state.authInviteToken, { preserveCurrent: false });
+        cleanAuthUrl(true);
       }
+      await ensureCurrentUserEtab();
+      state.authReady = true;
       render();
       requestInitialCloudLoad(false, true);
-    }, 0);
+    } catch {
+      saveAdminSession(null);
+      state.authStatus = "Connexion non vérifiée. Reconnectez-vous pour lire Supabase.";
+      render();
+    }
   }
-  if (!cloudReady() || !state.cloudConfig.autoLoad || !isSignedIn()) {
-    restartCloudAutoRefresh();
-  }
+  window.addEventListener("beforeunload", event => {
+    if (!hasPendingCloudSave()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+  if (!cloudReady() || !state.cloudConfig.autoLoad || !isSignedIn()) restartCloudAutoRefresh();
 }

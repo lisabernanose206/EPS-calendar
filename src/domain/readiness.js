@@ -6,7 +6,7 @@ import { yearRows } from "./dates.js";
 import { isCollegeEstablishment } from "./settings.js";
 import { cachedConstructionCheck } from "../services/planning-storage.js";
 import { baseClassFromGroupedClass, blockWithCycleOverride, constructionCyclesForRule, constructionServiceClassIdForTotals, isAnnualConstructionRule, optionAnnualFactorForRule, serviceClassIdForBaseClass, serviceClassesForLevel, specialClassInstances } from "../services/settings-storage.js";
-import { weekDisplayStart } from "../ui/date-picker.js";
+import { weekDisplayStart } from "./dates.js";
 import { compactClassName, hourStatus } from "../ui/format.js";
 
 export function constructionReadinessItems() {

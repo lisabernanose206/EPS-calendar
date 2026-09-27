@@ -1,3 +1,4 @@
+import { pageMemory } from "./page-memory.js";
 import { fetchBackend } from "../security/fetch.js";
 import { createOAuthChallenge, consumeOAuthVerifier, clearOAuthVerifier } from "../security/oauth.js";
 import { secureBackendUrl } from "../security/transport.js";
@@ -7,7 +8,7 @@ import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { conflictsForBuildMode } from "../domain/assignments.js";
 import { adminStepComplete, constructionBlocksStepComplete, constructionCycleDetailsStepComplete } from "../domain/readiness.js";
-import { clearLocalPlanningStorageForEtabSwitch, cloudAnonAuthHeaders, cloudFetchWithAuthRetry, cloudReady, etabByIdQuery, etabMembersEndpoint, etabsEndpoint, requestInitialCloudLoad, resetCloudLoadState, saveCloudConfig } from "./cloud.js";
+import { clearPlanningMemoryForEtabSwitch, cloudAnonAuthHeaders, cloudFetchWithAuthRetry, cloudReady, etabByIdQuery, etabMembersEndpoint, etabsEndpoint, requestInitialCloudLoad, resetCloudLoadState, resetPlanningStateFromDefaults, saveCloudConfig } from "./cloud.js";
 import { escapeHtml } from "../ui/format.js";
 
 export function authEndpoint(path) {
@@ -21,7 +22,7 @@ export function rpcEndpoint(name) {
 export function inviteTokenFromUrl() {
   try {
     const token = new URL(window.location.href).searchParams.get("invite") || "";
-    if (token) localStorage.setItem(state.AUTH_INVITE_KEY, token);
+    if (token) pageMemory.setItem(state.AUTH_INVITE_KEY, token);
     return token;
   } catch {
     return "";
@@ -61,7 +62,7 @@ export function oauthRedirectUrl() {
 export async function startOAuthProvider(provider) {
   try {
     if (provider !== "google" || !state.cloudConfig.anonKey) throw new Error("Configuration de connexion invalide.");
-    if (state.authInviteToken) localStorage.setItem(state.AUTH_INVITE_KEY, state.authInviteToken);
+    if (state.authInviteToken) pageMemory.setItem(state.AUTH_INVITE_KEY, state.authInviteToken);
     const redirect = oauthRedirectUrl();
     const challenge = await createOAuthChallenge(state.cloudConfig.url, redirect);
     const target = new URL(authEndpoint("authorize"));
@@ -105,7 +106,7 @@ export async function handleOAuthRedirect() {
     if (typeof result.access_token !== "string" || !result.access_token || typeof result.refresh_token !== "string" || !result.refresh_token) throw new Error("Session incomplète.");
     const user = await fetchAuthUser(result.access_token);
     saveAdminSession({ access_token: result.access_token, refresh_token: result.refresh_token, token_type: "bearer", expires_at: Math.floor(Date.now() / 1000) + (Number(result.expires_in) || 3600), user });
-    const token = state.authInviteToken || localStorage.getItem(state.AUTH_INVITE_KEY) || "";
+    const token = state.authInviteToken || pageMemory.getItem(state.AUTH_INVITE_KEY) || "";
     if (token) {
       await acceptEtabInvite(token, { preserveCurrent: false });
       state.authStatus = "Invitation acceptée. Vous avez rejoint l'équipe EPS.";
@@ -125,7 +126,7 @@ export async function handleOAuthRedirect() {
 }
 export function loadAdminSession() {
   try {
-    const saved = localStorage.getItem(state.AUTH_SESSION_KEY);
+    const saved = sessionStorage.getItem(state.AUTH_SESSION_KEY);
     if (!saved) return null;
     const session = JSON.parse(saved);
     const expiresAt = Number(session.expires_at || 0) * 1000;
@@ -136,13 +137,18 @@ export function loadAdminSession() {
 }
 export function saveAdminSession(session) {
   state.adminSession = session;
-  if (session) localStorage.setItem(state.AUTH_SESSION_KEY, JSON.stringify(session));else {
-    localStorage.removeItem(state.AUTH_SESSION_KEY);
+  if (session) {
+    // Persist authentication only, never planning, roles or user preferences.
+    const { access_token, refresh_token, expires_at, expires_in, token_type } = session;
+    const user = session.user ? { id: session.user.id, email: session.user.email } : null;
+    sessionStorage.setItem(state.AUTH_SESSION_KEY, JSON.stringify({ access_token, refresh_token, expires_at, expires_in, token_type, user }));
+  } else {
+    sessionStorage.removeItem(state.AUTH_SESSION_KEY);
     state.currentEtabRole = "";
     state.currentEtabName = "";
     state.currentUserEtabs = [];
-    localStorage.removeItem(state.AUTH_ROLE_KEY);
-    localStorage.removeItem(state.AUTH_ETAB_NAME_KEY);
+    pageMemory.removeItem(state.AUTH_ROLE_KEY);
+    pageMemory.removeItem(state.AUTH_ETAB_NAME_KEY);
   }
 }
 export function isSignedIn() {
@@ -153,36 +159,32 @@ export function normalizeEtabRole(role) {
 }
 export function setCurrentEtabRole(role) {
   state.currentEtabRole = normalizeEtabRole(role);
-  if (state.currentEtabRole) localStorage.setItem(state.AUTH_ROLE_KEY, state.currentEtabRole);else localStorage.removeItem(state.AUTH_ROLE_KEY);
+  if (state.currentEtabRole) pageMemory.setItem(state.AUTH_ROLE_KEY, state.currentEtabRole);else pageMemory.removeItem(state.AUTH_ROLE_KEY);
   return state.currentEtabRole;
 }
 export function setCurrentEtabName(name) {
   state.currentEtabName = normalizeEtabDisplayName(name);
-  if (state.currentEtabName) localStorage.setItem(state.AUTH_ETAB_NAME_KEY, state.currentEtabName);else localStorage.removeItem(state.AUTH_ETAB_NAME_KEY);
+  if (state.currentEtabName) pageMemory.setItem(state.AUTH_ETAB_NAME_KEY, state.currentEtabName);else pageMemory.removeItem(state.AUTH_ETAB_NAME_KEY);
   return state.currentEtabName;
 }
 export function currentAuthUserId() {
   return state.adminSession?.user?.id || state.adminSession?.user?.email || "";
 }
-export function loadDefaultEtabMap() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(state.AUTH_DEFAULT_ETAB_BY_USER_KEY) || "{}");
-    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
-  } catch {
-    return {};
-  }
-}
 export function getDefaultEtabId() {
-  const userId = currentAuthUserId();
-  if (!userId) return "";
-  return String(loadDefaultEtabMap()[userId] || "");
+  return String(state.adminSession?.user?.user_metadata?.eps_default_etab_id || "");
 }
-export function setDefaultEtabId(etabId) {
+export async function setDefaultEtabId(etabId) {
   const userId = currentAuthUserId();
-  if (!userId || !etabId) return "";
-  const defaults = loadDefaultEtabMap();
-  defaults[userId] = etabId;
-  localStorage.setItem(state.AUTH_DEFAULT_ETAB_BY_USER_KEY, JSON.stringify(defaults));
+  if (!userId || !state.currentUserEtabs.some(item => item.etab_id === etabId)) throw new Error("Établissement non autorisé.");
+  const response = await cloudFetchWithAuthRetry(authEndpoint("user"), {
+    method: "PUT",
+    body: JSON.stringify({ data: { eps_default_etab_id: etabId } })
+  });
+  if (!response.ok) throw new Error("Préférence non enregistrée dans Supabase.");
+  const user = await response.json();
+  if (currentAuthUserId() !== userId || user.id !== userId) throw new Error("Le compte a changé.");
+  if (user.user_metadata?.eps_default_etab_id !== etabId) throw new Error("Préférence non confirmée par Supabase.");
+  state.adminSession.user = user;
   return etabId;
 }
 export function isAdmin() {
@@ -277,7 +279,7 @@ export function renderEtabSwitchModal() {
             <div class="modalHeader">
               <div>
                 <h3>Changer d'établissement</h3>
-                <p class="muted">Établissement actif : ${escapeHtml(currentEtabDisplayName() || state.cloudConfig.etabId)}. Le changement recharge la page depuis Supabase.</p>
+                <p class="muted">Établissement actif : ${escapeHtml(currentEtabDisplayName() || state.cloudConfig.etabId)}. Le changement recharge les données depuis Supabase.</p>
               </div>
               <button class="modalClose" type="button" data-close-switch-modal aria-label="Fermer">x</button>
             </div>
@@ -628,7 +630,8 @@ export async function refreshCurrentEtabRoleSafe() {
     return await refreshCurrentEtabRole();
   } catch (error) {
     state.authStatus = `Rôle Établissement non relu : ${error.message || "erreur Supabase"}`;
-    return state.currentEtabRole;
+    setCurrentEtabRole("");
+    return "";
   }
 }
 export async function resolveCurrentUserEtabLegacy() {
@@ -656,7 +659,6 @@ export async function resolveCurrentUserEtabLegacy() {
 export async function resolveCurrentUserEtabs() {
   state.currentUserEtabs = await fetchCurrentUserEtabs();
   if (!state.currentUserEtabs.length) return "";
-  if (!getDefaultEtabId() && state.currentUserEtabs.length === 1) setDefaultEtabId(state.currentUserEtabs[0].etab_id);
   const active = choosePreferredUserEtab(state.currentUserEtabs);
   return setActiveEtabFromRow(active);
 }
@@ -702,13 +704,11 @@ export async function acceptEtabInvite(token = state.authInviteToken, options = 
   if (shouldPreserveCurrent && previousEtab.etab_id) {
     const previousKnownEtab = state.currentUserEtabs.find(item => item.etab_id === previousEtab.etab_id) || previousEtab;
     setActiveEtabFromRow(previousKnownEtab);
-    if (!getDefaultEtabId()) setDefaultEtabId(previousEtab.etab_id);
   } else {
     setActiveEtabFromRow(invitedEtab);
-    if (!getDefaultEtabId()) setDefaultEtabId(etabId);
   }
   state.authInviteToken = "";
-  localStorage.removeItem(state.AUTH_INVITE_KEY);
+  pageMemory.removeItem(state.AUTH_INVITE_KEY);
   return etabId;
 }
 export async function createEtabInvite(role = "member") {
@@ -789,14 +789,14 @@ export async function createEtabForCurrentUser(name) {
   setCurrentEtabName(label);
   setCurrentEtabRole("owner");
   state.currentUserEtabs = await fetchCurrentUserEtabs();
-  setDefaultEtabId(etabId);
   return etabId;
 }
 export async function createAndSwitchToNewEtab(name) {
   const etabId = await createEtabForCurrentUser(name);
   setCurrentEtabRole("owner");
-  clearLocalPlanningStorageForEtabSwitch();
+  clearPlanningMemoryForEtabSwitch();
   resetCloudLoadState();
+  resetPlanningStateFromDefaults();
   state.authStatus = "Nouvel établissement créé. Chargement de son espace indépendant...";
   return etabId;
 }
@@ -834,6 +834,7 @@ export async function signUpAdmin() {
     }
     state.authPassword = "";
     state.authStatus = hadInvite ? "Compte créé. Vous avez rejoint l'équipe EPS." : "Compte et Établissement créés. Vous pouvez sauvegarder ce planning.";
+    state.authReady = true;
     requestInitialCloudLoad(true, true);
   } catch (error) {
     saveAdminSession(null);
@@ -862,7 +863,7 @@ export async function signOutAdmin() {
     autoLoad: true
   };
   saveAdminSession(null);
-  ["planningEpsTeachers2026", "planningEpsClassConfig2026", "planningEpsFacilities2026", "planningEpsActivities2026", "planningEpsFacilityActivities2026", "planningEpsActivityProgramByLevel2026", "planningEpsActivityProgramByClass2026", "planningEpsYearPlan2026", "planningEpsCycles2026", "planningEpsCyclesByLevel2026", "planningEpsServiceHoursByLevel2026", "planningEpsServiceAssignments2026", "planningEpsSchoolConstraints2026", state.PREREQUISITE_LOCKS_KEY, state.YEAR_PREREQUISITE_LOCKS_KEY, state.PREREQUISITES_LOCK_KEY, "planningEpsConstructionWorkspaceMode2026", "planningEpsConstructionVersions2026", "planningEpsConstructionLocks2026", "planningEpsConstructionRuleSettings2026", "planningEpsConstructionRules2026", "planningEpsConstruction2026", "planningEpsBlockExclusions2026", "planningEpsAcceptedConflicts2026", "planningEpsSportEvents2026", "planningEpsAsSessions2026", "planningEpsFacilityUnavailability2026", "planningEpsEventExclusions2026", "planningEpsAsExclusions2026", "planningEpsHiddenConstructionBlocksReport2026", state.CLOUD_LOCAL_UNSYNCED_KEY, state.CLOUD_DIRTY_KEYS_KEY, state.AUTH_INVITE_KEY, state.AUTH_ETAB_NAME_KEY, state.AUTH_ROLE_KEY].forEach(key => localStorage.removeItem(key));
+  ["planningEpsTeachers2026", "planningEpsClassConfig2026", "planningEpsFacilities2026", "planningEpsActivities2026", "planningEpsFacilityActivities2026", "planningEpsActivityProgramByLevel2026", "planningEpsActivityProgramByClass2026", "planningEpsYearPlan2026", "planningEpsCycles2026", "planningEpsCyclesByLevel2026", "planningEpsServiceHoursByLevel2026", "planningEpsServiceAssignments2026", "planningEpsSchoolConstraints2026", state.PREREQUISITE_LOCKS_KEY, state.YEAR_PREREQUISITE_LOCKS_KEY, state.PREREQUISITES_LOCK_KEY, "planningEpsConstructionWorkspaceMode2026", "planningEpsConstructionVersions2026", "planningEpsConstructionLocks2026", "planningEpsConstructionRuleSettings2026", "planningEpsConstructionRules2026", "planningEpsConstruction2026", "planningEpsBlockExclusions2026", "planningEpsAcceptedConflicts2026", "planningEpsSportEvents2026", "planningEpsAsSessions2026", "planningEpsFacilityUnavailability2026", "planningEpsEventExclusions2026", "planningEpsAsExclusions2026", "planningEpsHiddenConstructionBlocksReport2026", state.CLOUD_LOCAL_UNSYNCED_KEY, state.CLOUD_DIRTY_KEYS_KEY, state.AUTH_INVITE_KEY, state.AUTH_ETAB_NAME_KEY, state.AUTH_ROLE_KEY].forEach(key => pageMemory.removeItem(key));
   state.cloudConfig = keptCloudConfig;
   saveCloudConfig();
   state.authPassword = "";

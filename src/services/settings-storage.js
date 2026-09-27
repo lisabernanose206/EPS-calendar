@@ -1,3 +1,4 @@
+import { pageMemory } from "./page-memory.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { blockClassLabel, classParts, classesForBlock, constructionActivityById, normalizedOptionHours, parseYearCellKey, programActivityIdsForClasses, schoolClassLabel, serviceFreeActivityId, serviceFreeOptionById, teacherClassForBlock, teacherIdsForBlock, teacherLabelForBlock, yearCellKey } from "../domain/assignments.js";
@@ -13,10 +14,10 @@ import { compactClassName } from "../ui/format.js";
 
 export function loadTeachers() {
   try {
-    const saved = localStorage.getItem("planningEpsTeachers2026");
-    if (saved === null) return [...state.defaultTeachers];
+    const saved = pageMemory.getItem("planningEpsTeachers2026");
+    if (saved === null) return structuredClone(state.defaultTeachers);
     const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return [...state.defaultTeachers];
+    if (!Array.isArray(parsed)) return structuredClone(state.defaultTeachers);
     return parsed.map((teacher, index) => {
       const paletteItem = state.teacherPalette.find(item => item.color === teacher.color) || state.teacherPalette[index % state.teacherPalette.length];
       return {
@@ -26,20 +27,20 @@ export function loadTeachers() {
       };
     });
   } catch {
-    return [...state.defaultTeachers];
+    return structuredClone(state.defaultTeachers);
   }
 }
 export function saveTeachers() {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsTeachers2026", JSON.stringify(state.teachers));
+  pageMemory.setItem("planningEpsTeachers2026", JSON.stringify(state.teachers));
   saveCloudNowIfPossible(["teachers"]);
 }
 export function loadSchoolConstraints() {
   try {
-    const saved = localStorage.getItem("planningEpsSchoolConstraints2026");
+    const saved = pageMemory.getItem("planningEpsSchoolConstraints2026");
     return normalizeSchoolConstraints(saved ? JSON.parse(saved) : {});
   } catch {
-    return state.defaultSchoolConstraints;
+    return structuredClone(state.defaultSchoolConstraints);
   }
 }
 export function normalizeSchoolConstraints(value = {}) {
@@ -125,7 +126,7 @@ export function normalizeSchoolConstraints(value = {}) {
   };
 }
 export function saveSchoolConstraints() {
-  localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
+  pageMemory.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
   scheduleCloudSave(["schoolConstraints"]);
 }
 export function syncSchoolSlots() {
@@ -160,17 +161,17 @@ export function applyEstablishmentTypeChange(nextType) {
   state.blockExclusions = {};
   pruneClassReferences();
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
-  localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
-  localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
-  localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
-  localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
-  localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
-  localStorage.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
-  localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
-  localStorage.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
-  localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
-  localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
+  pageMemory.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
+  pageMemory.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
+  pageMemory.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
+  pageMemory.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
+  pageMemory.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
+  pageMemory.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
+  pageMemory.setItem("planningEpsCyclesByLevel2026", JSON.stringify(state.cyclesByLevel));
+  pageMemory.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
+  pageMemory.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
+  pageMemory.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
+  pageMemory.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
   saveCloudNowIfPossible(["schoolConstraints", "classConfig", "activityProgramByLevel", "activityProgramByClass", "serviceHoursByLevel", "serviceAssignments", "cyclesByLevel", "constructionRules", "constructionPlan", "constructionVersions", "blockExclusions", "facilityUnavailability", "sportEvents"]);
 }
 export function makeSlotId(prefix, existingIds) {
@@ -515,16 +516,16 @@ export function importClassesFromCsvText(text) {
   state.classConfig = normalizeClassConfig(nextConfig);
   state.specialClassDraftName = "";
   state.specialClassDraftBaseIds = [];
-  localStorage.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
-  localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
-  localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
+  pageMemory.setItem("planningEpsSchoolConstraints2026", JSON.stringify(state.schoolConstraints));
+  pageMemory.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
+  pageMemory.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
   saveClassConfig();
   if (importedTypeChanged) saveCloudNowIfPossible(["schoolConstraints", "activityProgramByLevel", "serviceHoursByLevel"]);
   return total;
 }
 export function loadClassConfig() {
   try {
-    const saved = localStorage.getItem("planningEpsClassConfig2026");
+    const saved = pageMemory.getItem("planningEpsClassConfig2026");
     const rawConfig = saved ? JSON.parse(saved) : state.defaultClassConfig;
     applyImportedClassLevels(rawConfig);
     return normalizeClassConfig(rawConfig);
@@ -677,18 +678,18 @@ export function saveClassConfig() {
   pruneClassReferences();
   state.activityProgramByClass = normalizeActivityProgramByClass(state.activityProgramByClass);
   state.sportEvents = normalizePlanningItems(state.sportEvents);
-  localStorage.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
-  localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
-  localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
-  localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
-  localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
-  localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
-  localStorage.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
+  pageMemory.setItem("planningEpsClassConfig2026", JSON.stringify(state.classConfig));
+  pageMemory.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
+  pageMemory.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
+  pageMemory.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
+  pageMemory.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
+  pageMemory.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
+  pageMemory.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
   saveCloudNowIfPossible(["classConfig", "activityProgramByClass", "serviceAssignments", "facilityUnavailability", "sportEvents", "constructionRules", "constructionPlan"]);
 }
 export function loadServiceHoursByLevel() {
   try {
-    const saved = localStorage.getItem("planningEpsServiceHoursByLevel2026");
+    const saved = pageMemory.getItem("planningEpsServiceHoursByLevel2026");
     return normalizeLevelKeyedObject(saved ? JSON.parse(saved) : {}, state.defaultServiceHours, value => Math.max(0, Number(value) || 0));
   } catch {
     return {
@@ -699,7 +700,7 @@ export function loadServiceHoursByLevel() {
 export function saveServiceHoursByLevel(immediateCloud = true) {
   invalidateConstructionChecksCache();
   state.serviceHoursByLevel = normalizeLevelKeyedObject(state.serviceHoursByLevel, state.defaultServiceHours, value => Math.max(0, Number(value) || 0));
-  localStorage.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
+  pageMemory.setItem("planningEpsServiceHoursByLevel2026", JSON.stringify(state.serviceHoursByLevel));
   if (immediateCloud) saveCloudNowIfPossible(["serviceHoursByLevel"]);else scheduleCloudSave(["serviceHoursByLevel"]);
 }
 export function normalizeServiceAssignments(assignments) {
@@ -710,7 +711,7 @@ export function normalizeServiceAssignments(assignments) {
 }
 export function loadServiceAssignments() {
   try {
-    const saved = localStorage.getItem("planningEpsServiceAssignments2026");
+    const saved = pageMemory.getItem("planningEpsServiceAssignments2026");
     return normalizeServiceAssignments(saved ? JSON.parse(saved) : {});
   } catch {
     return {};
@@ -719,7 +720,7 @@ export function loadServiceAssignments() {
 export function saveServiceAssignments(immediateCloud = true) {
   invalidateConstructionChecksCache();
   state.serviceAssignments = normalizeServiceAssignments(state.serviceAssignments);
-  localStorage.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
+  pageMemory.setItem("planningEpsServiceAssignments2026", JSON.stringify(state.serviceAssignments));
   if (immediateCloud) saveCloudNowIfPossible(["serviceAssignments"]);else scheduleCloudSave(["serviceAssignments"]);
 }
 export function shadeColor(hex, amount) {
@@ -733,9 +734,9 @@ export function shadeColor(hex, amount) {
 }
 export function loadConstructionRules() {
   try {
-    const saved = localStorage.getItem("planningEpsConstructionRules2026");
+    const saved = pageMemory.getItem("planningEpsConstructionRules2026");
     if (saved) return JSON.parse(saved);
-    const legacy = localStorage.getItem("planningEpsConstruction2026");
+    const legacy = pageMemory.getItem("planningEpsConstruction2026");
     if (!legacy) return [];
     const legacyPlan = JSON.parse(legacy);
     const seen = new Set();
@@ -779,24 +780,24 @@ export function loadConstructionRules() {
 }
 export function saveConstructionRules(immediateCloud = true) {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
+  pageMemory.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
   if (immediateCloud) saveCloudNowIfPossible(["constructionRules"]);
 }
 export function loadConstructionWorkspaceMode() {
   try {
-    const saved = localStorage.getItem("planningEpsConstructionWorkspaceMode2026");
+    const saved = pageMemory.getItem("planningEpsConstructionWorkspaceMode2026");
     return ["manual", "optimized"].includes(saved) ? saved : "manual";
   } catch {
     return "manual";
   }
 }
 export function saveConstructionWorkspaceMode() {
-  localStorage.setItem("planningEpsConstructionWorkspaceMode2026", state.constructionWorkspaceMode);
+  pageMemory.setItem("planningEpsConstructionWorkspaceMode2026", state.constructionWorkspaceMode);
   scheduleCloudSave(["constructionWorkspaceMode"]);
 }
 export function loadConstructionVersions() {
   try {
-    const saved = localStorage.getItem("planningEpsConstructionVersions2026");
+    const saved = pageMemory.getItem("planningEpsConstructionVersions2026");
     const parsed = saved ? JSON.parse(saved) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -804,7 +805,7 @@ export function loadConstructionVersions() {
   }
 }
 export function saveConstructionVersions() {
-  localStorage.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
+  pageMemory.setItem("planningEpsConstructionVersions2026", JSON.stringify(state.constructionVersions));
   scheduleCloudSave(["constructionVersions"]);
 }
 export function defaultConstructionLocks() {
@@ -822,7 +823,7 @@ export function normalizeConstructionLocks(value) {
 }
 export function loadConstructionLocks() {
   try {
-    const saved = localStorage.getItem("planningEpsConstructionLocks2026");
+    const saved = pageMemory.getItem("planningEpsConstructionLocks2026");
     return normalizeConstructionLocks(saved ? JSON.parse(saved) : defaultConstructionLocks());
   } catch {
     return defaultConstructionLocks();
@@ -830,7 +831,7 @@ export function loadConstructionLocks() {
 }
 export function saveConstructionLocks() {
   state.constructionLocks = normalizeConstructionLocks(state.constructionLocks);
-  localStorage.setItem("planningEpsConstructionLocks2026", JSON.stringify(state.constructionLocks));
+  pageMemory.setItem("planningEpsConstructionLocks2026", JSON.stringify(state.constructionLocks));
   saveLocksToCloudNow(["constructionLocks"]);
 }
 export function constructionBuildLocked(mode = state.constructionBuildMode, cycleId = state.activeConstructionCycleId) {
@@ -863,7 +864,7 @@ export function normalizeConstructionRuleSettings(items) {
 }
 export function loadConstructionRuleSettings() {
   try {
-    const saved = localStorage.getItem("planningEpsConstructionRuleSettings2026");
+    const saved = pageMemory.getItem("planningEpsConstructionRuleSettings2026");
     return normalizeConstructionRuleSettings(saved ? JSON.parse(saved) : state.defaultConstructionRuleSettings);
   } catch {
     return normalizeConstructionRuleSettings(state.defaultConstructionRuleSettings);
@@ -871,7 +872,7 @@ export function loadConstructionRuleSettings() {
 }
 export function saveConstructionRuleSettings() {
   state.constructionRuleSettings = normalizeConstructionRuleSettings(state.constructionRuleSettings);
-  localStorage.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(state.constructionRuleSettings));
+  pageMemory.setItem("planningEpsConstructionRuleSettings2026", JSON.stringify(state.constructionRuleSettings));
   saveCloudNowIfPossible(["constructionRuleSettings"]);
 }
 export function resetConstructionRuleSettings() {
@@ -880,7 +881,7 @@ export function resetConstructionRuleSettings() {
 }
 export function loadBlockExclusions() {
   try {
-    const saved = localStorage.getItem("planningEpsBlockExclusions2026");
+    const saved = pageMemory.getItem("planningEpsBlockExclusions2026");
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
@@ -888,7 +889,7 @@ export function loadBlockExclusions() {
 }
 export function saveBlockExclusions() {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
+  pageMemory.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
   saveCloudNowIfPossible(["blockExclusions"]);
 }
 export function normalizeAcceptedConflicts(items) {
@@ -902,7 +903,7 @@ export function normalizeAcceptedConflicts(items) {
 }
 export function loadAcceptedConflicts() {
   try {
-    const saved = localStorage.getItem("planningEpsAcceptedConflicts2026");
+    const saved = pageMemory.getItem("planningEpsAcceptedConflicts2026");
     return normalizeAcceptedConflicts(saved ? JSON.parse(saved) : []);
   } catch {
     return [];
@@ -911,7 +912,7 @@ export function loadAcceptedConflicts() {
 export function saveAcceptedConflicts() {
   state.acceptedConflicts = normalizeAcceptedConflicts(state.acceptedConflicts);
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsAcceptedConflicts2026", JSON.stringify(state.acceptedConflicts));
+  pageMemory.setItem("planningEpsAcceptedConflicts2026", JSON.stringify(state.acceptedConflicts));
   saveCloudNowIfPossible(["acceptedConflicts"]);
 }
 export function isBlockExcluded(ruleId, key) {
@@ -1085,14 +1086,14 @@ export function hiddenConstructionRuleReport(rule, reason) {
 }
 export function saveHiddenConstructionReport(items) {
   if (!items.length) return;
-  localStorage.setItem("planningEpsHiddenConstructionBlocksReport2026", JSON.stringify({
+  pageMemory.setItem("planningEpsHiddenConstructionBlocksReport2026", JSON.stringify({
     savedAt: new Date().toISOString(),
     items
   }));
 }
 export function loadHiddenConstructionReport() {
   try {
-    const saved = localStorage.getItem("planningEpsHiddenConstructionBlocksReport2026");
+    const saved = pageMemory.getItem("planningEpsHiddenConstructionBlocksReport2026");
     return saved ? JSON.parse(saved) : null;
   } catch {
     return null;
@@ -1135,9 +1136,9 @@ export function pruneHiddenAndDuplicateConstructionRules() {
 export function refreshConstructionPlanFromRulesLocalOnly() {
   pruneHiddenAndDuplicateConstructionRules();
   state.constructionPlan = buildConstructionPlanFromRules();
-  localStorage.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
-  localStorage.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
-  localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
+  pageMemory.setItem("planningEpsConstructionRules2026", JSON.stringify(state.constructionRules));
+  pageMemory.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
+  pageMemory.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
   invalidateConstructionChecksCache();
 }
 export function rebuildConstructionPlan() {
@@ -1145,12 +1146,12 @@ export function rebuildConstructionPlan() {
   state.constructionPlan = buildConstructionPlanFromRules();
   saveConstructionRules(false);
   saveConstructionPlan(false);
-  localStorage.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
+  pageMemory.setItem("planningEpsBlockExclusions2026", JSON.stringify(state.blockExclusions));
   saveCloudNowIfPossible(["constructionRules", "constructionPlan", "blockExclusions"]);
 }
 export function loadSportEvents() {
   try {
-    const saved = localStorage.getItem("planningEpsSportEvents2026");
+    const saved = pageMemory.getItem("planningEpsSportEvents2026");
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
@@ -1159,12 +1160,12 @@ export function loadSportEvents() {
 export function saveSportEvents(immediateCloud = true) {
   state.sportEvents = normalizePlanningItems(state.sportEvents);
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
+  pageMemory.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
   if (immediateCloud) saveCloudPatchNow(["sportEvents"]);
 }
 export function loadAsSessions() {
   try {
-    const saved = localStorage.getItem("planningEpsAsSessions2026");
+    const saved = pageMemory.getItem("planningEpsAsSessions2026");
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
@@ -1173,7 +1174,7 @@ export function loadAsSessions() {
 export function saveAsSessions() {
   invalidateConstructionChecksCache();
   state.asSessions = normalizePlanningItems(state.asSessions);
-  localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
+  pageMemory.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
   saveCloudPatchNow(["asSessions"]);
 }
 export function inferredFacilityLocationType(facility) {
@@ -1205,7 +1206,7 @@ export function facilityLocationTypeLabel(locationType) {
 }
 export function loadFacilities() {
   try {
-    const saved = localStorage.getItem("planningEpsFacilities2026");
+    const saved = pageMemory.getItem("planningEpsFacilities2026");
     const parsed = saved ? JSON.parse(saved) : null;
     if (!Array.isArray(parsed)) return normalizeFacilities(state.defaultFacilities);
     return normalizeFacilities(parsed);
@@ -1216,7 +1217,7 @@ export function loadFacilities() {
 export function saveFacilities() {
   invalidateConstructionChecksCache();
   state.facilities = normalizeFacilities(state.facilities);
-  localStorage.setItem("planningEpsFacilities2026", JSON.stringify(state.facilities));
+  pageMemory.setItem("planningEpsFacilities2026", JSON.stringify(state.facilities));
   saveCloudNowIfPossible(["facilities", "facilityActivities"]);
 }
 export function syncConstructionFacilityLabel(facilityId, label) {
@@ -1236,7 +1237,7 @@ export function syncConstructionFacilityLabel(facilityId, label) {
 }
 export function loadActivities() {
   try {
-    const saved = localStorage.getItem("planningEpsActivities2026");
+    const saved = pageMemory.getItem("planningEpsActivities2026");
     const parsed = saved ? JSON.parse(saved) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -1245,12 +1246,12 @@ export function loadActivities() {
 }
 export function saveActivities() {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsActivities2026", JSON.stringify(state.activities));
+  pageMemory.setItem("planningEpsActivities2026", JSON.stringify(state.activities));
   saveCloudNowIfPossible(["activities", "facilityActivities", "activityProgramByLevel", "constructionRules"]);
 }
 export function loadFacilityActivities() {
   try {
-    const saved = localStorage.getItem("planningEpsFacilityActivities2026");
+    const saved = pageMemory.getItem("planningEpsFacilityActivities2026");
     const parsed = saved ? JSON.parse(saved) : {};
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
@@ -1292,7 +1293,7 @@ export function activityProgramForRule(rule) {
 }
 export function loadActivityProgramByLevel() {
   try {
-    const saved = localStorage.getItem("planningEpsActivityProgramByLevel2026");
+    const saved = pageMemory.getItem("planningEpsActivityProgramByLevel2026");
     return normalizeActivityProgramByLevel(saved ? JSON.parse(saved) : {});
   } catch {
     return normalizeActivityProgramByLevel({});
@@ -1300,7 +1301,7 @@ export function loadActivityProgramByLevel() {
 }
 export function loadActivityProgramByClass() {
   try {
-    const saved = localStorage.getItem("planningEpsActivityProgramByClass2026");
+    const saved = pageMemory.getItem("planningEpsActivityProgramByClass2026");
     return normalizeActivityProgramByClass(saved ? JSON.parse(saved) : {});
   } catch {
     return normalizeActivityProgramByClass({});
@@ -1309,24 +1310,24 @@ export function loadActivityProgramByClass() {
 export function saveActivityProgramByLevel() {
   invalidateConstructionChecksCache();
   state.activityProgramByLevel = normalizeActivityProgramByLevel(state.activityProgramByLevel);
-  localStorage.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
+  pageMemory.setItem("planningEpsActivityProgramByLevel2026", JSON.stringify(state.activityProgramByLevel));
   saveCloudNowIfPossible(["activityProgramByLevel"]);
 }
 export function saveActivityProgramByClass() {
   invalidateConstructionChecksCache();
   state.activityProgramByClass = normalizeActivityProgramByClass(state.activityProgramByClass);
-  localStorage.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
+  pageMemory.setItem("planningEpsActivityProgramByClass2026", JSON.stringify(state.activityProgramByClass));
   saveCloudNowIfPossible(["activityProgramByClass"]);
 }
 export function saveFacilityActivities(immediateCloud = true) {
   invalidateConstructionChecksCache();
   pruneFacilityActivities();
-  localStorage.setItem("planningEpsFacilityActivities2026", JSON.stringify(state.facilityActivities));
+  pageMemory.setItem("planningEpsFacilityActivities2026", JSON.stringify(state.facilityActivities));
   if (immediateCloud) saveCloudNowIfPossible(["facilityActivities"]);else scheduleCloudSave(["facilityActivities"]);
 }
 export function loadFacilityUnavailability() {
   try {
-    const saved = localStorage.getItem("planningEpsFacilityUnavailability2026");
+    const saved = pageMemory.getItem("planningEpsFacilityUnavailability2026");
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
@@ -1334,12 +1335,12 @@ export function loadFacilityUnavailability() {
 }
 export function saveFacilityUnavailability() {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
+  pageMemory.setItem("planningEpsFacilityUnavailability2026", JSON.stringify(state.facilityUnavailability));
   saveCloudNowIfPossible(["facilityUnavailability"]);
 }
 export function loadEventExclusions() {
   try {
-    const saved = localStorage.getItem("planningEpsEventExclusions2026");
+    const saved = pageMemory.getItem("planningEpsEventExclusions2026");
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
@@ -1347,12 +1348,12 @@ export function loadEventExclusions() {
 }
 export function saveEventExclusions(immediateCloud = true) {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsEventExclusions2026", JSON.stringify(state.eventExclusions));
+  pageMemory.setItem("planningEpsEventExclusions2026", JSON.stringify(state.eventExclusions));
   if (immediateCloud) saveCloudPatchNow(["eventExclusions"]);
 }
 export function loadAsExclusions() {
   try {
-    const saved = localStorage.getItem("planningEpsAsExclusions2026");
+    const saved = pageMemory.getItem("planningEpsAsExclusions2026");
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
@@ -1360,7 +1361,7 @@ export function loadAsExclusions() {
 }
 export function saveAsExclusions() {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsAsExclusions2026", JSON.stringify(state.asExclusions));
+  pageMemory.setItem("planningEpsAsExclusions2026", JSON.stringify(state.asExclusions));
   saveCloudPatchNow(["asExclusions"]);
 }
 export function itemExcludedForCell(exclusions, itemId, key) {

@@ -19,7 +19,7 @@ function client(fetchImpl) {
     console, Date, URL, URLSearchParams, setTimeout, clearTimeout, crypto: webcrypto, TextEncoder, btoa, AbortSignal,
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     window: { location: { protocol: "https:", hostname: "example.invalid", href: "https://example.invalid/", assign: value => redirect = value } },
-    localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
+    localStorage: { getItem() { throw new Error("Local data forbidden"); }, setItem() { throw new Error("Local data forbidden"); }, removeItem() {} },
     fetch: fetchImpl
   });
   vm.runInContext(bundle.outputFiles[0].text, context);
@@ -140,6 +140,18 @@ await check("ENC-02", "Un appel hors du backend configuré ne reçoit aucun jeto
   const c = client(async () => { sent = true; return response([]); });
   await assert.rejects(() => c.cloudFetchWithAuthRetry("https://attacker.invalid/collect"));
   assert.equal(sent, false);
+});
+
+await check("SOURCE-01", "Aucune écriture avant lecture Supabase même avec contournement demandé", async () => {
+  let requests = 0;
+  const c = client(async () => { requests++; return response([]); });
+  c.state.cloudSourceLoaded = false;
+  await c.cloudSaveToRemote(false, { allowBeforeSourceLoaded: true });
+  c.saveCloudNowIfPossible(["teachers"]);
+  c.scheduleCloudSave(["teachers"]);
+  assert.equal(requests, 0);
+  assert.equal(c.state.cloudSaveTimer, null);
+  assert.equal(c.state.cloudDirtyKeys.has("teachers"), true);
 });
 
 await mkdir(new URL("./results/", import.meta.url), { recursive: true });

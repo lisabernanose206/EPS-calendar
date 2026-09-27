@@ -6,7 +6,7 @@ import { displayDateForSchoolWeek, displayedSchoolWeek, holidayFor, homeTimetabl
 import { asBlockLabel, asSessionStyle, asSessionTeacherLabel, asSessionsForCell, asSessionsForDay, eventPeriodLabel, eventTeacherDots, eventsForPeriod, visibleCourseBlocksForCell } from "../domain/events.js";
 import { activeScheduleWeek, statFor, visible } from "../domain/schedule.js";
 import { unavailableCoversFacility, unavailableForCell } from "../domain/unavailability.js";
-import { weekDateLabel, weekWorkingDaysLabel } from "../ui/date-picker.js";
+import { weekDateLabel, weekWorkingDaysLabel } from "../domain/dates.js";
 import { compactClassName } from "../ui/format.js";
 
 export function paletteItems() {

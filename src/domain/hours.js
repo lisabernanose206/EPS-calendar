@@ -6,7 +6,7 @@ import { asSessionsForCell } from "./events.js";
 import { annualConstructionRules } from "./readiness.js";
 import { displayCycleName } from "./settings.js";
 import { blockWithCycleOverride, constructionCyclesForRule } from "../services/settings-storage.js";
-import { dateOnly } from "../ui/date-picker.js";
+import { dateOnly } from "./dates.js";
 
 export function weeksForCycle(cycle) {
   const start = dateOnly(cycle.start);

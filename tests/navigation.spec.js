@@ -4,12 +4,14 @@ import { test, expect } from "@playwright/test";
 
 const establishment = { etab_id: "test-etab", etab_name: "Collège Émile Zola", role: "owner" };
 
-async function mockSession(page, role = "owner") {
+async function mockSession(page, role = "owner", planning = null) {
   // No request can leave the local test server, including mutations.
   await page.route(/^https?:\/\/(?!127\.0\.0\.1:5173)/, async route => {
     const url = route.request().url();
     let data = [];
-    if (url.includes("list_current_user_etabs")) data = [{ ...establishment, role }];
+    if (url.includes("/auth/v1/user")) data = { id: "test-user", email: "test@example.invalid" };
+    else if (url.includes("/eps_plannings")) data = planning ? [{ id: establishment.etab_id, etab_id: establishment.etab_id, updated_at: "2026-09-27T00:00:00Z", data: { etabId: establishment.etab_id, ...planning } }] : [];
+    else if (url.includes("list_current_user_etabs")) data = [{ ...establishment, role }];
     else if (url.includes("get_current_user_etab")) data = { ...establishment, role };
     else if (url.includes("get_current_etab_role")) data = role;
     else if (url.includes("/etab_members")) data = [{ ...establishment, role }];
@@ -17,13 +19,10 @@ async function mockSession(page, role = "owner") {
     await route.fulfill({ contentType: "application/json", body: JSON.stringify(data) });
   });
   await page.addInitScript(({ role, establishment }) => {
-    localStorage.setItem("planningEpsAdminSession2026", JSON.stringify({
+    sessionStorage.setItem("planningEpsAdminSession2026", JSON.stringify({
       access_token: "test-only-token", expires_at: 4102444800,
       user: { id: "test-user", email: "test@example.invalid" }
     }));
-    localStorage.setItem("planningEpsEtabRole2026", role);
-    localStorage.setItem("planningEpsEtabName2026", establishment.etab_name);
-    localStorage.setItem("planningEpsCloudConfig2026", JSON.stringify({ etabId: establishment.etab_id }));
   }, { role, establishment });
 }
 
@@ -82,10 +81,7 @@ for (const entry of ["/", "/standalone.html", "/dist/index.html", pathToFileURL(
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     page.on("console", message => { if (message.type() === "error" && !message.text().includes("resource")) errors.push(message.text()); });
-    await mockSession(page);
-    await page.addInitScript(() => {
-      localStorage.setItem("planningEpsActivities2026", JSON.stringify([{ id: "course", name: "Course à pied" }]));
-    });
+    await mockSession(page, "owner", { activities: [{ id: "course", name: "Course à pied" }] });
     await page.goto(entry);
     await expect(page.locator("#brandEtabName")).toContainText("Émile Zola");
     await page.locator('[data-build-mode="planning"]').click();
@@ -98,7 +94,8 @@ for (const entry of ["/", "/standalone.html", "/dist/index.html", pathToFileURL(
     const teacher = page.locator('[data-rename-teacher]').first();
     await teacher.fill("Élodie Noël");
     await teacher.dispatchEvent("change");
-    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("planningEpsTeachers2026"))[0].name)).toBe("Élodie Noël");
+    await expect(teacher).toHaveValue("Élodie Noël");
+    expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith("planningEps")))).toEqual([]);
     await page.locator('[data-week="year"]').click();
     await page.locator('[data-build-mode="prerequisites"]').click();
     await page.locator('[data-prerequisite-mode="team"]').click();

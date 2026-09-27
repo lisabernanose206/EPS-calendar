@@ -51,11 +51,12 @@ Ces fonctionnalités sont identifiées dans les modules ; elles ne sont pas tout
 
 ## Données et contraintes
 
-- L'année initialisée est 2026/2027 ; plusieurs clés locales sont suffixées `2026`. Le changement d'année n'est pas un parcours généralisé validé.
+- L'année initialisée est 2026/2027 ; plusieurs identifiants internes sont suffixés `2026`. Le changement d'année n'est pas un parcours généralisé validé.
 - Le schéma neuf prévoit un document JSON de planning par établissement ; les versions de construction restent dans ce document.
 - Les noms/adresses des membres, noms de professeurs, contraintes, horaires et messages libres peuvent être des données personnelles. Aucun besoin de fichier nominatif d'élèves n'est établi ici.
 - Les règles de service et valeurs par défaut sont des paramètres applicatifs, pas une attestation réglementaire.
-- Supabase est la référence distante ; les modifications locales en attente ne doivent pas être présentées comme sauvegardées.
+- La construction du planning se fait avec une connexion Internet et repose sur la sauvegarde automatique des modifications dans Supabase. Aucun brouillon durable distinct ni mode de construction hors ligne n’est prévu. Une sauvegarde reste effective uniquement après confirmation du serveur ; les erreurs réseau et les modifications en attente doivent rester visibles.
+- Supabase est l'unique source persistante des données métier. Seule la connexion peut être conservée dans la session du navigateur. Une modification en mémoire n'est sauvegardée qu'après confirmation serveur ; fermer ou recharger la page avant cette confirmation peut la perdre.
 - La construction vise principalement l'ordinateur. Des styles responsives existent ; accessibilité et usage mobile complets restent à valider.
 
 ## Hors du périmètre actuellement établi
@@ -67,7 +68,7 @@ Pas de service worker, de PWA installable déclarée, de synchronisation hors li
 - Un administrateur prépare et construit un planning, puis retrouve sa sauvegarde après reconnexion.
 - Un membre consulte son établissement mais ne peut pas modifier le planning par appel direct à l'API.
 - Deux établissements restent isolés après changement de compte ou d'établissement.
-- Une panne ou une collision de sauvegarde ne produit pas de faux succès.
+- Une panne ou une collision de sauvegarde ne produit pas de faux succès ; un chargement échoué ne présente aucun planning issu du navigateur.
 - Les vues hebdomadaire, annuelle et par cycle restent cohérentes, avec des accents lisibles dans les deux versions.
 - Invitations, promotions, retraits et transferts respectent les permissions serveur.
 

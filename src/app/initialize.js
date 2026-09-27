@@ -1,3 +1,4 @@
+import { pageMemory } from "../services/page-memory.js";
 import { state } from "./state.js";
 import { loadCycles, loadCyclesByLevel } from "../domain/cycles.js";
 import { applyImportedClassLevels, classLevelsForEstablishmentType, defaultClassConfigForLevels } from "../domain/settings.js";
@@ -410,7 +411,7 @@ export function initializeState() {
   state.selectedYearCellKey = "";
   state.displayedCurrentWeekRank = null;
   state.selectedTeacherIds = state.teachers.map(teacher => teacher.id);
-  state.sidebarCollapsed = localStorage.getItem("planningEpsSidebarCollapsed2026") === "true";
+  state.sidebarCollapsed = pageMemory.getItem("planningEpsSidebarCollapsed2026") === "true";
   state.yearPlan = loadYearPlan();
   state.cycles = loadCycles();
   state.cyclesByLevel = loadCyclesByLevel();
@@ -431,8 +432,8 @@ export function initializeState() {
   state.constructionVersions = loadConstructionVersions();
   state.constructionLocks = loadConstructionLocks();
   state.constructionOptimizeConfirmOpen = false;
-  state.constructionServiceSummaryHidden = localStorage.getItem("planningEpsConstructionServiceSummaryHidden2026") === "true";
-  state.constructionConflictsHidden = localStorage.getItem("planningEpsConstructionConflictsHidden2026") === "true";
+  state.constructionServiceSummaryHidden = pageMemory.getItem("planningEpsConstructionServiceSummaryHidden2026") === "true";
+  state.constructionConflictsHidden = pageMemory.getItem("planningEpsConstructionConflictsHidden2026") === "true";
   state.constructionVersionPanelOpen = false;
   state.constructionVersionDraftName = "";
   state.constructionVersionDraftParts = [];
@@ -614,18 +615,19 @@ export function initializeState() {
   state.cloudSaveTimer = null;
   state.cloudSaveQueued = false;
   state.cloudLastUpdatedAt = "";
-  state.localUnsyncedChanges = localStorage.getItem(state.CLOUD_LOCAL_UNSYNCED_KEY) || "";
+  state.localUnsyncedChanges = pageMemory.getItem(state.CLOUD_LOCAL_UNSYNCED_KEY) || "";
   state.cloudDirtyKeys = new Set(loadCloudDirtyKeys());
   state.cloudRefreshTimer = null;
   state.cloudSyncing = false;
   state.cloudSourceLoaded = false;
   state.cloudInitialLoadKey = "";
   state.adminSession = loadAdminSession();
+  state.authReady = false;
   state.authEmail = "";
   state.authPassword = "";
   state.authMode = "signin";
   state.authEtabName = "";
-  state.authInviteToken = inviteTokenFromUrl() || localStorage.getItem(state.AUTH_INVITE_KEY) || "";
+  state.authInviteToken = inviteTokenFromUrl() || pageMemory.getItem(state.AUTH_INVITE_KEY) || "";
   state.authInviteCodeDraft = "";
   state.authInviteLink = "";
   state.authInviteStatus = state.authInviteToken ? "Invitation équipe détectée." : "";
@@ -633,8 +635,8 @@ export function initializeState() {
   state.authInviteModalOpen = false;
   state.authInviteRole = "member";
   state.authSwitchModalOpen = false;
-  state.currentEtabRole = localStorage.getItem(state.AUTH_ROLE_KEY) || "";
-  state.currentEtabName = localStorage.getItem(state.AUTH_ETAB_NAME_KEY) || "";
+  state.currentEtabRole = pageMemory.getItem(state.AUTH_ROLE_KEY) || "";
+  state.currentEtabName = pageMemory.getItem(state.AUTH_ETAB_NAME_KEY) || "";
   state.currentUserEtabs = [];
   state.accountMembersByEtabId = {};
   state.accountMembersRequestKey = "";
@@ -647,8 +649,8 @@ export function initializeState() {
   }
   state.sportEvents = normalizePlanningItems(state.sportEvents);
   state.asSessions = normalizePlanningItems(state.asSessions);
-  localStorage.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
-  localStorage.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
+  pageMemory.setItem("planningEpsSportEvents2026", JSON.stringify(state.sportEvents));
+  pageMemory.setItem("planningEpsAsSessions2026", JSON.stringify(state.asSessions));
   if (state.unavailablePurgeOnLoad) {
     saveBlockExclusions();
     saveConstructionPlan();

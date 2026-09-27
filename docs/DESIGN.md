@@ -12,7 +12,7 @@ Le guide intégré, `src/tabs/guide.js`, décrit le parcours métier. Les indica
 
 ## Identité visuelle existante
 
-La fin de `src/styles.css` définit les variables du thème et surcharge une partie des styles historiques.
+La fin de `src/styles.css` définit les variables du thème et surcharge une partie des styles historiques. Lors d’une intervention, regrouper les doublons du composant en préservant la spécificité, l’ordre effectif et les variantes responsive/impression. Six règles redondantes des tableaux de consultation, des installations et des créneaux d’établissement ont été regroupées ; le thème est conservé.
 
 | Usage | Valeur existante |
 | --- | --- |
@@ -36,7 +36,7 @@ Réutiliser `src/ui/` pour modales, dates, tableaux, navigation et messages. Con
 
 - Donner un libellé explicite aux actions et un nom accessible aux boutons à icône.
 - Afficher semaine A/B, cycle et établissement lorsque ces informations conditionnent l'action.
-- Différencier enregistrement local, sauvegarde en attente, succès distant et échec.
+- Différencier modification en mémoire, sauvegarde Supabase en attente, succès confirmé et échec. Aucun enregistrement métier local n'est proposé.
 - Confirmer suppression ou abandon de modifications ; ne pas effacer silencieusement le travail en attente.
 - Montrer les raisons d'un bouton désactivé et la manière de compléter les prérequis.
 - Conserver les variantes métier « période » / « cycle » selon le type d'établissement.
@@ -55,7 +55,7 @@ Réutiliser `src/ui/` pour modales, dates, tableaux, navigation et messages. Con
 
 ## États et adaptation
 
-Prévoir chargement, vide, succès, erreur, accès refusé et indisponibilité réseau. Le succès d'une sauvegarde doit refléter son accusé serveur.
+Prévoir chargement, vide, succès, erreur, accès refusé et indisponibilité réseau. Le succès d'une sauvegarde doit refléter son accusé serveur. Avant la première lecture Supabase, afficher l'attente ou l'erreur avec une action Réessayer. En cas de modification non sauvegardée, prévenir avant fermeture/rechargement : le brouillon reste seulement en mémoire.
 
 Des media queries existent notamment à 980, 900, 760 et 720 px, ainsi que des styles d'impression. Certains tableaux sont larges : préserver des libellés lisibles et un défilement explicite plutôt que compresser toutes les colonnes. Des styles responsives ne démontrent pas une recette mobile réussie.
 

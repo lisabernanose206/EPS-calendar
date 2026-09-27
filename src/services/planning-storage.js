@@ -1,3 +1,4 @@
+import { pageMemory } from "./page-memory.js";
 import { state } from "../app/state.js";
 import { schoolYearWeeks, yearRows } from "../domain/dates.js";
 import { saveCloudNowIfPossible, scheduleCloudSave } from "./cloud.js";
@@ -8,14 +9,14 @@ export function defaultYearPlan() {
 }
 export function loadYearPlan() {
   try {
-    const saved = localStorage.getItem("planningEpsYearPlan2026");
+    const saved = pageMemory.getItem("planningEpsYearPlan2026");
     return saved ? JSON.parse(saved) : defaultYearPlan();
   } catch {
     return defaultYearPlan();
   }
 }
 export function saveYearPlan() {
-  localStorage.setItem("planningEpsYearPlan2026", JSON.stringify(state.yearPlan));
+  pageMemory.setItem("planningEpsYearPlan2026", JSON.stringify(state.yearPlan));
   scheduleCloudSave(["yearPlan"]);
 }
 export function yearValue(rowId, weekRank) {
@@ -25,7 +26,7 @@ export function yearValue(rowId, weekRank) {
 }
 export function loadConstructionPlan() {
   try {
-    const saved = localStorage.getItem("planningEpsConstruction2026");
+    const saved = pageMemory.getItem("planningEpsConstruction2026");
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
@@ -48,6 +49,6 @@ export function cachedConstructionCheck(key, compute) {
 }
 export function saveConstructionPlan(immediateCloud = true) {
   invalidateConstructionChecksCache();
-  localStorage.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
+  pageMemory.setItem("planningEpsConstruction2026", JSON.stringify(state.constructionPlan));
   if (immediateCloud) saveCloudNowIfPossible(["constructionPlan"]);
 }

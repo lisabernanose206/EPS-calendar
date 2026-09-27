@@ -6,7 +6,7 @@ import { findCycleForRule, weeksForCycle } from "./hours.js";
 import { unavailableTeachersForCell } from "./unavailability.js";
 import { saveCloudPatchNow } from "../services/cloud.js";
 import { itemExcludedForCell, rebuildConstructionPlan, saveAsSessions, saveEventExclusions, saveSportEvents } from "../services/settings-storage.js";
-import { dateOnly } from "../ui/date-picker.js";
+import { dateOnly } from "./dates.js";
 
 export function halfDayForSlot(slotId) {
   if (slotId === "8" || slotId === "10") return "morning";

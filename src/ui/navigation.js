@@ -1,10 +1,11 @@
+import { pageMemory } from "../services/page-memory.js";
 import { safeHtml } from "../security/html.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { adminStepComplete, canAccessConstructionPlanning } from "../domain/readiness.js";
 import { cycleLabel } from "../domain/settings.js";
 import { currentEtabRoleLabel, currentLousticIconSrc, isAdmin, isSignedIn, renderBrandEtabName, renderShareInviteControl, setActiveEtabFromRow, setDefaultEtabId, signOutAdmin, startOAuthProvider } from "../services/auth.js";
-import { clearLocalPlanningStorageForEtabSwitch, discardLocalChangesFromCloudSoon, hasPendingCloudSave, resetCloudLoadState } from "../services/cloud.js";
+import { clearPlanningMemoryForEtabSwitch, discardLocalChangesFromCloudSoon, hasPendingCloudSave, resetCloudLoadState, resetPlanningStateFromDefaults, requestInitialCloudLoad } from "../services/cloud.js";
 import { showValidationPopup } from "./feedback.js";
 import { escapeHtml } from "./format.js";
 
@@ -105,11 +106,17 @@ export function attachAuthControls() {
   const logoutAdmin = document.getElementById("logoutAdmin");
   if (logoutAdmin) logoutAdmin.addEventListener("click", signOutAdmin);
   document.querySelectorAll("[data-set-default-etab]").forEach(button => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const etabId = button.dataset.setDefaultEtab;
       const etab = state.currentUserEtabs.find(item => item.etab_id === etabId) || null;
       if (!etabId) return;
-      setDefaultEtabId(etabId);
+      try {
+        await setDefaultEtabId(etabId);
+      } catch (error) {
+        showValidationPopup(error.message, "error");
+        render();
+        return;
+      }
       state.authStatus = `Établissement par défaut : ${etab?.etab_name || etabId}`;
       showValidationPopup("Établissement défini par défaut");
       render();
@@ -126,16 +133,20 @@ export function attachAuthControls() {
     button.addEventListener("click", () => {
       const selected = state.currentUserEtabs.find(item => item.etab_id === button.dataset.switchEtab);
       if (!selected || selected.etab_id === state.cloudConfig.etabId) return;
-      if (!window.confirm(`Changer vers ${selected.etab_name || selected.etab_id} ?\n\nLa page va se recharger et relire les données Supabase de cet établissement.`)) return;
+      if (!window.confirm(`Changer vers ${selected.etab_name || selected.etab_id} ?\n\nLes données seront relues depuis Supabase pour cet établissement.`)) return;
       if (hasPendingCloudSave() && !window.confirm("Une sauvegarde cloud est encore en attente. Changer d'établissement peut ignorer cette modification locale. Continuer ?")) {
         return;
       }
       discardLocalChangesFromCloudSoon();
       setActiveEtabFromRow(selected);
-      clearLocalPlanningStorageForEtabSwitch();
+      clearPlanningMemoryForEtabSwitch();
       resetCloudLoadState();
       state.authStatus = `Établissement actif : ${selected.etab_name || selected.etab_id}`;
-      window.location.reload();
+      resetPlanningStateFromDefaults();
+      state.authSwitchModalOpen = false;
+      state.week = "current";
+      render();
+      requestInitialCloudLoad(false, true);
     });
   });
 }
@@ -159,7 +170,7 @@ export function bindShellNavigation() {
   if (state.sidebarToggle) {
     state.sidebarToggle.addEventListener("click", () => {
       state.sidebarCollapsed = !state.sidebarCollapsed;
-      localStorage.setItem("planningEpsSidebarCollapsed2026", state.sidebarCollapsed ? "true" : "false");
+      pageMemory.setItem("planningEpsSidebarCollapsed2026", state.sidebarCollapsed ? "true" : "false");
       render();
     });
   }

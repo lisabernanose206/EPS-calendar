@@ -5,7 +5,7 @@ import { asBlockLabel, asSessionStyle, asSessionTeacherLabel, asSessionsForCell,
 import { cycleForWeek, representativeWeekForCycle } from "../domain/hours.js";
 import { cycleLabel, displayCycleName, isCollegeEstablishment } from "../domain/settings.js";
 import { blockWithCycleOverride, itemExcludedForCell } from "../services/settings-storage.js";
-import { dateOnly, weekDateLabel } from "./date-picker.js";
+import { dateOnly, weekDateLabel } from "../domain/dates.js";
 import { escapeHtml, eventClassSummary } from "./format.js";
 
 export function renderConstructionCellStack(items, events, asItems, editable, key, row, alignmentTeacherIds = []) {

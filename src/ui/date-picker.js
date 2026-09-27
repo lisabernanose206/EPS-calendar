@@ -2,36 +2,10 @@ import { escapeHtml } from "./format.js";
 import { render } from "../app/render.js";
 import { state } from "../app/state.js";
 import { activeCycles, saveCycles, validateCycles } from "../domain/cycles.js";
-import { dateKey, dateRangeBlockedReason } from "../domain/dates.js";
+import { dateKey, dateRangeBlockedReason, dateFromMonthKey, monthKeyForDate, dateRangeLabel, shiftMonthKey } from "../domain/dates.js";
 import { rebuildConstructionPlan } from "../services/settings-storage.js";
 import { showValidationPopup } from "./feedback.js";
 
-export function dateOnly(value) {
-  return new Date(`${value}T00:00:00`);
-}
-export function formatDate(value) {
-  return dateOnly(value).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  });
-}
-export function monthKeyForDate(value) {
-  const date = value instanceof Date ? new Date(value) : value ? dateOnly(value) : new Date(state.schoolYear.start);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-export function dateFromMonthKey(value) {
-  const [year, month] = (value || monthKeyForDate(state.schoolYear.start)).split("-").map(Number);
-  return new Date(year, month - 1, 1);
-}
-export function shiftMonthKey(value, delta) {
-  const date = dateFromMonthKey(value);
-  date.setMonth(date.getMonth() + delta);
-  return monthKeyForDate(dateKey(date));
-}
-export function dateRangeLabel(start, end) {
-  return start && end ? `${formatDate(start)} -> ${formatDate(end)}` : "Choisir une periode";
-}
 export function renderDateRangePicker(id, start, end, disabled = false) {
   const isOpen = state.activeDateRangePicker === id;
   const monthDate = dateFromMonthKey(isOpen ? state.dateRangeMonth : monthKeyForDate(start || state.schoolYear.start));
@@ -104,34 +78,7 @@ export function applyDateRangeSelection(id, start, end) {
     rebuildConstructionPlan();
   }
 }
-export function shortDate(value) {
-  return value.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short"
-  });
-}
-export function weekDisplayStart(weekItem) {
-  return weekItem.start;
-}
-export function weekDisplayEnd(weekItem) {
-  const friday = new Date(weekItem.start);
-  friday.setDate(weekItem.start.getDate() + 4);
-  return friday > state.schoolYear.end ? state.schoolYear.end : friday;
-}
-export function weekDateLabel(weekItem) {
-  return `du ${shortDate(weekDisplayStart(weekItem))} au ${shortDate(weekDisplayEnd(weekItem))}`;
-}
-export function weekWorkingDaysLabel(weekItem) {
-  return state.days.map((day, index) => {
-    const date = new Date(weekItem.start);
-    date.setDate(weekItem.start.getDate() + index);
-    return date.toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "short"
-    });
-  }).join(", ");
-}
+
 export function bindDatePickerEvents() {
   document.querySelectorAll("[data-open-date-range]").forEach(button => {
     button.addEventListener("click", () => {

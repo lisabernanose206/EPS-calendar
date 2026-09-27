@@ -22,6 +22,11 @@ async function scan(directory) {
     const text = await readFile(path, "utf8");
     assert.ok(!/\uFFFD|Ã[©¨ª´]|â€™/.test(text), "Encodage UTF-8 incorrect : " + path);
     if (path.endsWith(".html")) continue;
+    // No business or auth persistence in localStorage; the only access is one-way legacy cleanup.
+    assert.ok(!/\blocalStorage\s*(?:\.|\[)/.test(text), "Accès localStorage interdit : " + path);
+    if (text.includes("sessionStorage") && !["src/services/auth.js", "src/security/oauth.js", "src/app/bootstrap.js", "src/services/page-memory.js"].includes(path)) {
+      assert.fail("Stockage de session hors authentification : " + path);
+    }
     walk(parse(text, { sourceType: "module", ecmaVersion: "latest" }), node => {
       let value;
       if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && ["innerHTML", "outerHTML"].includes(node.left.property.name)) value = node.right;

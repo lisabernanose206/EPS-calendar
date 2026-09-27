@@ -1,5 +1,5 @@
 import { state } from "../app/state.js";
-import { dateOnly } from "../ui/date-picker.js";
+
 
 export function getIsoWeekInfo(date) {
   const current = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -184,4 +184,59 @@ export function yearRows() {
       isAs: Boolean(slot.isAs)
     }));
   });
+}
+
+export function dateOnly(value) {
+  return new Date(`${value}T00:00:00`);
+}
+export function formatDate(value) {
+  return dateOnly(value).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+export function monthKeyForDate(value) {
+  const date = value instanceof Date ? new Date(value) : value ? dateOnly(value) : new Date(state.schoolYear.start);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+export function dateFromMonthKey(value) {
+  const [year, month] = (value || monthKeyForDate(state.schoolYear.start)).split("-").map(Number);
+  return new Date(year, month - 1, 1);
+}
+export function shiftMonthKey(value, delta) {
+  const date = dateFromMonthKey(value);
+  date.setMonth(date.getMonth() + delta);
+  return monthKeyForDate(dateKey(date));
+}
+export function dateRangeLabel(start, end) {
+  return start && end ? `${formatDate(start)} -> ${formatDate(end)}` : "Choisir une periode";
+}
+export function shortDate(value) {
+  return value.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short"
+  });
+}
+export function weekDisplayStart(weekItem) {
+  return weekItem.start;
+}
+export function weekDisplayEnd(weekItem) {
+  const friday = new Date(weekItem.start);
+  friday.setDate(weekItem.start.getDate() + 4);
+  return friday > state.schoolYear.end ? state.schoolYear.end : friday;
+}
+export function weekDateLabel(weekItem) {
+  return `du ${shortDate(weekDisplayStart(weekItem))} au ${shortDate(weekDisplayEnd(weekItem))}`;
+}
+export function weekWorkingDaysLabel(weekItem) {
+  return state.days.map((day, index) => {
+    const date = new Date(weekItem.start);
+    date.setDate(weekItem.start.getDate() + index);
+    return date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "short"
+    });
+  }).join(", ");
 }
